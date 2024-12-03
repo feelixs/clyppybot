@@ -18,7 +18,7 @@ class TwitchMisc:
         shard_id = kwargs['shard_id']
         if shard_id is None:
             shard_id = 'nan'
-        self.logger = logging.getLogger("twitch")
+        self.logger = logging.getLogger(__name__ + "(shard" + str(shard_id) + ")")
         self.api = TwitchAPI(key=getenv("TWITCH_ID"), secret=getenv("TWITCH_SECRET"),
                              logger=self.logger,
                              log_path=getenv('TWITCH_API_REMAINING_LOG'),

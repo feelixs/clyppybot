@@ -6,7 +6,7 @@ import os
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("main")
+logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 t = TwitchMisc()
