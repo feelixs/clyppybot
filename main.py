@@ -14,6 +14,7 @@ Bot.twitch = t
 
 
 async def main():
+    Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.autoembed')
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
 
