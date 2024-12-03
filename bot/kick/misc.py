@@ -1,6 +1,7 @@
 from typing import Optional
 import logging
 from bot.kick import KickClip
+import re
 
 
 class KickMisc:
@@ -17,12 +18,12 @@ class KickMisc:
         return slug
 
     @staticmethod
-    def is_twitch_clip_link(message: str):
-        "https://clips.twitch.tv/BombasticSuccessfulMonitorSoonerLater-19gZfam5vc-A5CFh"
-        return message.startswith("https://www.twitch.tv/") or message.startswith("https://www.m.twitch.tv/") \
-            or message.startswith("https://twitch.tv/") or message.startswith("https://m.twitch.tv/") \
-            or message.startswith("https://clips.twitch.tv/") or message.startswith("https://m.clips.twitch.tv/") \
-            or message.startswith("https://www.clips.twitch.tv/") or message.startswith("https://www.m.clips.twitch.tv/")
+    def is_kick_clip_link(url: str) -> bool:
+        # Pattern matches both:
+        # https://kick.com/clip/[clip-id]
+        # https://kick.com/[username]/clip/[clip-id]
+        kick_clip_pattern = r'^https?://(?:www\.)?kick\.com/(?:(?:clip/)|(?:[^/]+/clip/))[\w-]+$'
+        return bool(re.match(kick_clip_pattern, url))
 
     async def get_clip(self, url: str) -> KickClip:
         slug = self.parse_clip_url(url)
