@@ -8,8 +8,8 @@ import subprocess
 
 
 class KickClip:
-    def __init__(self, id):
-        self.id = id
+    def __init__(self, slug):
+        self.id = slug
         self.logger = logging.getLogger(__name__)
 
     def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
