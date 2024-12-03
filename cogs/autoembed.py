@@ -1,5 +1,5 @@
 import interactions.api.events
-from interactions import Extension, Message, Embed, Permissions, listen
+from interactions import Extension, Message, Embed, Permissions, listen, slash_command, SlashContext
 from interactions.api.events import MessageCreate
 from bot.twitch import Clip
 from bot.errors import ClipNotExists, DriverDownloadFailed
@@ -62,6 +62,16 @@ class AutoEmbed(Extension):
                     await self._process_this_clip_link(words[index], event.message, True)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{e.__dict__}")
+
+    @slash_command(name="help", description="Get help using CLYPPY")
+    async def help(self, ctx: SlashContext):
+        about = ("CLYPPY supports uploading Twitch clips in Full HD to your Discord channels! Send a valid Twitch Clip link to get started.\n\n"
+                 "**TROUBLESHOOTING**\nIf CLYPPY isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
+                 " Required permissions are: `Attach Files`, `Send Messages`\n\n"
+                 "**UPDATE Dec 3rd 2024** CLYPPY is back online after a break. Currently, auto-compression has been disabled, so only smaller clips can be processed. We are working on improving the service and adding new features. Stay tuned!")
+        help_embed = Embed(title="About CLYPPY", description=about)
+        help_embed.description += create_nexus_str()
+        await ctx.send(embed=help_embed)
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
