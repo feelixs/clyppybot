@@ -11,7 +11,7 @@ class TwitchMisc:
         tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
             exit("No Twitch API key found")
-        tis = getenv("TWITCH_CLYPP_SECRET")
+        tis = getenv("CLYPP_TWITCH_SECRET")
         if tis is None:
             exit("No Twitch API secret found")
         self.api = TwitchAPI(key=tid, secret=tis,
