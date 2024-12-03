@@ -12,7 +12,7 @@ import re
 import logging
 
 
-class AutoEmbed(Extension):
+class KickAutoEmbed(Extension):
     def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.bot = bot
