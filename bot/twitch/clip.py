@@ -60,7 +60,7 @@ class Clip:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(pool, sync_get_link, self.url)
 
-    async def download(self, filename: Union[str, None], msg_ctx: Message, autocompress=False):
+    async def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
         split = self.thumbnail_url.split('-preview', 1)
         if len(split) == 2:  # indicates old clip
             mp4_url = split[0] + ".mp4"
