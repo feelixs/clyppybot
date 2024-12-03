@@ -8,7 +8,13 @@ from os import getenv, path
 class TwitchMisc:
     def __init__(self, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self.api = TwitchAPI(key=getenv("TWITCH_ID"), secret=getenv("TWITCH_SECRET"),
+        tid = getenv("CLYPP_TWITCH_ID")
+        if tid is None:
+            pass
+        tis =getenv("TWITCH_CLYPP_SECRET")
+        if tis is None:
+            pass
+        self.api = TwitchAPI(key=tid, secret=tis,
                              logger=self.logger,
                              log_path=path.join('logs', 'twitch-api-usage.log'))
 
