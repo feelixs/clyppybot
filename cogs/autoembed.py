@@ -1,22 +1,16 @@
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
-from bot.twitch import Clip, ClipNotExists
+from bot.twitch import Clip, ClipNotExists, DriverDownloadFailed, is_twitch_clip_link
 from bot.tools import create_nexus_str
-from bot.tools import is_twitch_link
 from typing import Union, List
 import asyncio
-import aiohttp
 import os
 import re
 import logging
 
 
-class DriverDownloadFailed(Exception):
-    pass
-
-
 class AutoEmbed(Extension):
-    def __init__(self, bot, **kwargs):
+    def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.bot = bot
         self.too_large_clips = []
