@@ -5,6 +5,7 @@ from bot.kick import KickClip
 from bot.errors import ClipNotExists, DriverDownloadFailed
 from bot.tools import create_nexus_str
 from typing import Union, List
+import concurrent.futures
 import asyncio
 import os
 import re
@@ -27,7 +28,9 @@ class AutoEmbed(Extension):
         async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> Union[KickClip, int]:
             async with self._semaphore:
                 if isinstance(clip, KickClip):
-                    return await clip.download(msg_ctx=root_msg, autocompress=[root_msg.guild.id == 759798762171662399])
+                    loop = asyncio.get_event_loop()
+                    with concurrent.futures.ThreadPoolExecutor() as pool:
+                        return await loop.run_in_executor(pool, clip.download, root_msg, [root_msg.guild.id == 759798762171662399])
                 else:
                     self._parent.logger.error("Invalid clip object passed to download_clip of type %s" % type(clip))
 

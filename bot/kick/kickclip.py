@@ -1,4 +1,6 @@
 import logging
+from typing import Union
+from interactions import Message
 from datetime import datetime, timezone
 import os
 import requests
@@ -10,15 +12,7 @@ class KickClip:
         self.id = id
         self.logger = logging.getLogger(__name__)
 
-    def download(self):
-        """
-            Downloads a Kick clip using the official download endpoint
-
-            Args:
-                clip_id (str): The clip ID (e.g., '01H83005EHN4KQQGGE21WXJ67N')
-                output_dir (str): Directory to save the downloaded file
-            """
-
+    def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
         # Required headers (based on browser request)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
