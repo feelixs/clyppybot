@@ -2,11 +2,13 @@ import logging
 from datetime import datetime, timezone
 import os
 import requests
+import subprocess
 
 
 class KickClip:
     def __init__(self, id):
         self.id = id
+        self.logger = logging.getLogger(__name__)
 
     def download(self):
         """
@@ -51,6 +53,12 @@ class KickClip:
                     print(f"\rProgress: {progress:.1f}%", end="")
 
             print("\nDownload complete!")
+
+            # touch the file to update the modified time
+            touch = subprocess.Popen(["touch", os.path.realpath(filename)],
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+            touch.communicate()
             return filename
 
         except requests.exceptions.RequestException as e:
