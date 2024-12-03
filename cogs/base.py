@@ -47,6 +47,7 @@ class Base(Extension):
             self.logger.info(f"bot logged in as {self.bot.user.username}")
             self.logger.info(f"total shards: {len(self.bot.shards)}")
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
+            self.logger.info(f"CLYPPY Version: {VERSION}")
             self.logger.info("--------------")
 
     @staticmethod
