@@ -24,12 +24,12 @@ class AutoEmbed(Extension):
             max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
             self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-        async def download_twitch_clip(self, clip: Union[TwitchClip, str], root_msg: Message) -> Union[TwitchClip, int]:
+        async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> Union[KickClip, int]:
             async with self._semaphore:
-                if isinstance(clip, TwitchClip):
+                if isinstance(clip, KickClip):
                     return await clip.download(msg_ctx=root_msg, autocompress=[root_msg.guild.id == 759798762171662399])
                 else:
-                    self._parent.logger.error("Invalid clip object passed to download_twitch_clip of type %s" % type(clip))
+                    self._parent.logger.error("Invalid clip object passed to download_clip of type %s" % type(clip))
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
@@ -70,19 +70,19 @@ class AutoEmbed(Extension):
     def _get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
         for i in range(n, len(words)):
             word = words[i]
-            if self.bot.twitch.is_twitch_clip_link(word):
+            if self.bot.kick.is_kick_clip_link(word):
                 return True, i
         return False, 0
 
     def _get_num_clip_links(self, words: List[str]):
         n = 0
         for word in words:
-            if self.bot.twitch.is_twitch_clip_link(word):
+            if self.bot.kick.is_kick_clip_link(word):
                 n += 1
         return n
 
     async def _process_this_clip_link(self, clip_link: str, respond_to: Message, include_link=False):
-        parsed_id = self.bot.twitch.parse_clip_url(clip_link)
+        parsed_id = self.bot.kick.parse_clip_url(clip_link)
         if parsed_id in self.too_large_clips:
             emb = Embed(title="**Whoops...**",
                         description=f"Looks like the video embed failed this clip:\n{clip_link}\n\n "
@@ -94,14 +94,14 @@ class AutoEmbed(Extension):
                 f"Skipping quick embed for clip {parsed_id} in {respond_to.guild.name} - {respond_to.channel.name}, clip was previously reported too large")
             return 1
 
-        clip = await self.bot.twitch.get_clip(clip_link)
+        clip = await self.bot.kick.get_clip(clip_link)
         if clip is None:
             return 1
         try:
-            clip_file = await self._dl.download_twitch_clip(clip, root_msg=respond_to)
+            clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
         except ClipNotExists:
             emb = Embed(title="**Invalid Clip Link**",
-                        description=f"Looks like the Twitch clip `{clip_link}` couldn't be downloaded. Verify that it exists")
+                        description=f"Looks like the Kick clip `{clip_link}` couldn't be downloaded. Verify that it exists")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             return 1

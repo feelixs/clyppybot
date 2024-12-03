@@ -1,1 +1,1 @@
-from bot.kick import kickclip
+from bot.kick.kickclip import KickClip
