@@ -1,3 +1,4 @@
+import traceback
 import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
@@ -64,7 +65,7 @@ class KickAutoEmbed(Extension):
                     await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
                     await self._process_this_clip_link(words[index], event.message, True)
         except Exception as e:
-            self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{e.__dict__}")
+            self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
