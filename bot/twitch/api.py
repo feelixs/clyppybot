@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import aiohttp
 import asyncio
-from os import path
+from os import path, makedirs
 from bot.errors import RateLimitExceededError, TooManyTriesError
 
 
@@ -11,6 +11,9 @@ MY_USAGE_RATE = 800  # default is 800 requests per minute
 
 class TwitchAPI:
     def __init__(self, key: str, secret: str, logger, log_path: str = None, allowed_tries: int = 5):
+        log_dir = path.dirname(log_path)
+        if not path.exists(log_dir):
+            makedirs(log_dir)
         if not path.isfile(log_path):
             with open(log_path, "w") as f:
                 f.close()
