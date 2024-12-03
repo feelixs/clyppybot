@@ -1,6 +1,6 @@
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
-from bot.twitch import Clip, ClipNotExists, DriverDownloadFailed, is_twitch_clip_link
+from bot.twitch import Clip, ClipNotExists, DriverDownloadFailed
 from bot.tools import create_nexus_str
 from typing import Union, List
 import asyncio
@@ -59,19 +59,17 @@ class AutoEmbed(Extension):
     def _getwords(text: str) -> List[str]:
         return re.split(r"[ \n]+", text)
 
-    @staticmethod
-    def _get_next_clip_link_loc(words: List[str], n=0) -> (bool, int):
+    def _get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
         for i in range(n, len(words)):
             word = words[i]
-            if is_twitch_clip_link(word):
+            if self.bot.twitch.is_twitch_clip_link(word):
                 return True, i
         return False, 0
 
-    @staticmethod
-    def _get_num_clip_links(words: List[str]):
+    def _get_num_clip_links(self, words: List[str]):
         n = 0
         for word in words:
-            if is_twitch_clip_link(word):
+            if self.bot.twitch.is_twitch_clip_link(word):
                 n += 1
         return n
 
