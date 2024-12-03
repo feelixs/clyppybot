@@ -36,7 +36,7 @@ class KickClip:
             file_size = int(response.headers.get('content-length', 0))
             block_size = 1024  # 1KB blocks
 
-            print(f"Downloading {filename} ({file_size / 1024 / 1024:.1f} MB)")
+            self.logger.info(f"Downloading {filename} ({file_size / 1024 / 1024:.1f} MB)")
 
             with open(filename, 'wb') as f:
                 downloaded = 0
@@ -46,7 +46,7 @@ class KickClip:
                     progress = (downloaded / file_size) * 100
                     print(f"\rProgress: {progress:.1f}%", end="")
 
-            print("\nDownload complete!")
+            self.logger.info("\nDownload complete!")
 
             # touch the file to update the modified time
             touch = subprocess.Popen(["touch", os.path.realpath(filename)],
@@ -56,5 +56,5 @@ class KickClip:
             return filename
 
         except requests.exceptions.RequestException as e:
-            print(f"Error downloading clip: {e}")
+            self.logger.info(f"Error downloading clip: {e}")
             return None
