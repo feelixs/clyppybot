@@ -15,6 +15,7 @@ class KickMisc:
         slug = str(url).split('/')[-1]
         if "?" in slug:
             slug = slug.split('?')[0]
+        slug = slug.replace("clip_", "")
         return slug
 
     @staticmethod
