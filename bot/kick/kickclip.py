@@ -6,8 +6,6 @@ import requests
 import subprocess
 import time
 import undetected_chromedriver as uc
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 
 
 class KickClip:
