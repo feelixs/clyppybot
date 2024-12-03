@@ -3,17 +3,7 @@ import time
 import aiohttp
 import asyncio
 from os import path
-
-
-class TooManyTriesError(Exception):
-    """Exception raised when the maximum number of retries is exceeded."""
-    pass
-
-
-class RateLimitExceededError(Exception):
-    def __init__(self, resets_when, *args):
-        super().__init__(*args)
-        self.resets_when = resets_when
+from bot.errors import RateLimitExceededError, TooManyTriesError
 
 
 MY_USAGE_RATE = 800  # default is 800 requests per minute
