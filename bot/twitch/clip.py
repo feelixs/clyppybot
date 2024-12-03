@@ -14,7 +14,7 @@ import os
 class Clip:
     def __init__(self, data, api, twitchDL_path=None):
         self.api = api
-        self.logger = logging.getLogger("clip downloader")
+        self.logger = logging.getLogger(__name__)
         if twitchDL_path is None:
             twitchDL_path = os.getenv("TWITCH_DL_PATH")
         self.TWITCH_DL = twitchDL_path
