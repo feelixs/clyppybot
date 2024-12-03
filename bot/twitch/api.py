@@ -112,4 +112,3 @@ class TwitchAPI:
                     else:
                         raise TooManyTriesError
                 return await resp.json()
-            

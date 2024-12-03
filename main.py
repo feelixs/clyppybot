@@ -9,8 +9,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("main")
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
-t = TwitchMisc(logger)
+t = TwitchMisc()
 Bot.twitch = t
 
 
+async def main():
+    Bot.load_extension('cogs.autoembed')
+    await Bot.astart(token=os.getenv('DISCORD_TOKEN'))
 
+
+asyncio.run(main())
