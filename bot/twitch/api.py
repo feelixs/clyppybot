@@ -10,7 +10,7 @@ MY_USAGE_RATE = 800  # default is 800 requests per minute
 
 
 class TwitchAPI:
-    def __init__(self, key: str, secret: str, logger, log_path: str = None, log_name: str = None, allowed_tries: int = 5):
+    def __init__(self, key: str, secret: str, logger, log_path: str = None, allowed_tries: int = 5):
         self.key = key
         self.logger = logger
         self.usage_remaining = MY_USAGE_RATE
@@ -18,11 +18,7 @@ class TwitchAPI:
         self.oauth = None
         self.ALLOWED_TRIES = allowed_tries
         self.AUTH_URL = 'https://id.twitch.tv/oauth2/token'
-        if log_name is None:
-            log_name = "api_usage.log"
-        if log_path is None:
-            log_path = "./"
-        self.logfile = path.join(log_path, log_name)
+        self.logfile = path.join(log_path)
         self.reset_log()
 
     async def req_oauth(self, depth: int = 0):
