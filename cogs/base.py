@@ -26,7 +26,8 @@ class Base(Extension):
     @listen()
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
-            await self.post_servers(len(self.bot.guilds))
+            if os.getenv("TEST") is not None:
+                await self.post_servers(len(self.bot.guilds))
             self.logger.info(f'Joined new guild: {event.guild.name}')
 
     @listen()
