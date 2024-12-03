@@ -15,7 +15,7 @@ Bot.twitch = t
 
 async def main():
     Bot.load_extension('cogs.autoembed')
-    await Bot.astart(token=os.getenv('DISCORD_TOKEN'))
+    await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
 
 
 asyncio.run(main())
