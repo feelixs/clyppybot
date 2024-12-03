@@ -113,7 +113,7 @@ class AutoEmbed(Extension):
             else:
                 await respond_to.reply(file=clip_file)
         except interactions.api.events.Error as e:
-            if e.source == "413":  # Check the error source for 413
+            if e.source == "413":  # Check the error source for 413 (file too large)
                 clipsize = os.stat(clip_file).st_size
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
