@@ -10,8 +10,7 @@ class TwitchMisc:
         self.logger = logging.getLogger(__name__)
         self.api = TwitchAPI(key=getenv("TWITCH_ID"), secret=getenv("TWITCH_SECRET"),
                              logger=self.logger,
-                             log_path=path.join('logs', 'twitch-api-usage.log'),
-                             log_name=path.join('logs', "twitch-api-usage.log"))
+                             log_path=path.join('logs', 'twitch-api-usage.log'))
 
     @staticmethod
     def parse_clip_url(url: str) -> str:
