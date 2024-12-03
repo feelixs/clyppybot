@@ -2,7 +2,7 @@ from .api import TwitchAPI
 from typing import Optional
 import logging
 from bot.twitch.clip import Clip
-from os import getenv
+from os import getenv, path
 
 
 class TwitchMisc:
@@ -10,7 +10,7 @@ class TwitchMisc:
         self.logger = logging.getLogger(__name__)
         self.api = TwitchAPI(key=getenv("TWITCH_ID"), secret=getenv("TWITCH_SECRET"),
                              logger=self.logger,
-                             log_path=getenv('TWITCH_API_REMAINING_LOG'),
+                             log_path=path.join('logs', 'twitch-api-usage.log'),
                              log_name="twitch-api-usage.log")
 
     @staticmethod
