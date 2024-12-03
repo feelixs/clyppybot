@@ -6,6 +6,9 @@ import aiohttp
 import os
 
 
+VERSION = "1.0b"
+
+
 class Base(Extension):
     def __init__(self, bot):
         self.bot = bot
@@ -21,6 +24,7 @@ class Base(Extension):
             "**UPDATE Dec 3rd 2024** CLYPPY is back online after a break. Currently, auto-compression has been disabled, so only smaller clips can be processed. We are working on improving the service and adding new features. Stay tuned!")
         help_embed = Embed(title="About CLYPPY", description=about)
         help_embed.description += create_nexus_str()
+        help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(embed=help_embed)
 
     @listen()
