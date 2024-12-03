@@ -9,6 +9,7 @@ import asyncio
 import os
 import re
 import logging
+import traceback
 
 
 class TwitchAutoEmbed(Extension):
@@ -106,6 +107,7 @@ class TwitchAutoEmbed(Extension):
             await respond_to.reply(embed=emb)
             return 1
         except DriverDownloadFailed:
+            self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip: \n\n\
                                 {clip_link}\nPlease try linking it again.\n"
@@ -125,10 +127,12 @@ class TwitchAutoEmbed(Extension):
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
                                         f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
+                self.logger.info(f"Clip {clip.id} was too large to embed in {respond_to.guild.name} - {respond_to.channel.name}")
                 self.too_large_clips.append(clip.id)
                 await respond_to.reply(embed=emb)
                 return 1
             else:
+                self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
                 emb = Embed(title="**Oops...**",
                             description=f"I messed up while trying to download this clip:\n{clip_link} "
                                         f"\n\nPlease try linking it again.\n"
@@ -137,6 +141,7 @@ class TwitchAutoEmbed(Extension):
                 await respond_to.reply(embed=emb, delete_after=60)
                 return 1
         except:
+            self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"

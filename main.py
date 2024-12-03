@@ -15,6 +15,7 @@ k = KickMisc()
 Bot.twitch = t
 Bot.kick = k
 
+
 async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.twitchautoembed')

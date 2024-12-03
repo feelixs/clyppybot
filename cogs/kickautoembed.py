@@ -102,22 +102,7 @@ class KickAutoEmbed(Extension):
         clip = await self.bot.kick.get_clip(clip_link)
         if clip is None:
             return 1
-        try:
-            clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
-        except ClipNotExists:
-            emb = Embed(title="**Invalid Clip Link**",
-                        description=f"Looks like the Kick clip `{clip_link}` couldn't be downloaded. Verify that it exists")
-            emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb)
-            return 1
-        except DriverDownloadFailed:
-            emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to download this clip: \n\n\
-                                {clip_link}\nPlease try linking it again.\n"
-                                    "If the issue keeps on happening, please contact us on our support server.")
-            emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb, delete_after=60)
-            return 1
+        clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
         try:
             if include_link:
                 await respond_to.reply(clip_link, file=clip_file)
@@ -131,9 +116,11 @@ class KickAutoEmbed(Extension):
                                         f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
                 self.too_large_clips.append(clip.id)
+                self.logger.info(f"Clip {clip.id} was too large to embed in {respond_to.guild.name} - {respond_to.channel.name}")
                 await respond_to.reply(embed=emb)
                 return 1
             else:
+                self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
                 emb = Embed(title="**Oops...**",
                             description=f"I messed up while trying to download this clip:\n{clip_link} "
                                         f"\n\nPlease try linking it again.\n"
@@ -142,6 +129,7 @@ class KickAutoEmbed(Extension):
                 await respond_to.reply(embed=emb, delete_after=60)
                 return 1
         except:
+            self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
