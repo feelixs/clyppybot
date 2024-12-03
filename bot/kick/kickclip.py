@@ -1,7 +1,6 @@
 import logging
 from typing import Union
 from interactions import Message
-from datetime import datetime, timezone
 import os
 import requests
 import subprocess
