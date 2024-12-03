@@ -107,19 +107,12 @@ class AutoEmbed(Extension):
             await respond_to.reply(embed=emb, delete_after=60)
             return 1
         try:
-            clipsize = os.stat(clip_file).st_size
-            if clipsize >= 26210000:
-                emb = Embed(title="**Whoops...**",
-                            description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
-                                        f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
-                emb.description += create_nexus_str()
-                self.too_large_clips.append(clip.id)
-                await respond_to.reply(embed=emb)
-                return 1
+            
             if include_link:
                 await respond_to.reply(clip_link, file=clip_file)
             else:
                 await respond_to.reply(file=clip_file)
+
         except:
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip:\n{clip_link} "
