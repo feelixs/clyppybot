@@ -1,3 +1,2 @@
-from .misc import DriverDownloadFailed, ClipNotExists
-from .clip import Clip
-from .misc import TwitchMisc
+from bot.twitch.misc import TwitchMisc
+from bot.twitch.clip import Clip

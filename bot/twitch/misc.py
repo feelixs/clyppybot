@@ -1,28 +1,17 @@
 from .api import TwitchAPI
 from typing import Optional
 import logging
-from .clip import Clip
+from bot.twitch.clip import Clip
 from os import getenv
-
-
-class DriverDownloadFailed(Exception):
-    pass
-
-
-class ClipNotExists(Exception):
-    pass
 
 
 class TwitchMisc:
     def __init__(self, **kwargs):
-        shard_id = kwargs['shard_id']
-        if shard_id is None:
-            shard_id = 'nan'
-        self.logger = logging.getLogger(__name__ + "(shard" + str(shard_id) + ")")
+        self.logger = logging.getLogger(__name__)
         self.api = TwitchAPI(key=getenv("TWITCH_ID"), secret=getenv("TWITCH_SECRET"),
                              logger=self.logger,
                              log_path=getenv('TWITCH_API_REMAINING_LOG'),
-                             log_name="twitch-api-usage_shard" + str(shard_id) + ".log")
+                             log_name="twitch-api-usage.log")
 
     @staticmethod
     def parse_clip_url(url: str) -> str:

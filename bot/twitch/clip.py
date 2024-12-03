@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from .misc import DriverDownloadFailed, ClipNotExists
+from bot.errors import DriverDownloadFailed, ClipNotExists
 from interactions import Message
 import concurrent.futures
 import subprocess
