@@ -6,7 +6,7 @@ import aiohttp
 import os
 
 
-VERSION = "1.0b"
+VERSION = "1.1b"
 
 
 class Base(Extension):
