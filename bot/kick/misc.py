@@ -22,7 +22,7 @@ class KickMisc:
         # Pattern matches both:
         # https://kick.com/clip/[clip-id]
         # https://kick.com/[username]/clip/[clip-id]
-        kick_clip_pattern = r'^https?://(?:www\.)?kick\.com/(?:(?:clip/)|(?:[^/]+/clip/))[\w-]+$'
+        kick_clip_pattern = r'^https?://(?:www\.)?kick\.com/(?:(?:clips/clip_)|(?:[^/]+/clips/clip_))[\w-]+$'
         return bool(re.match(kick_clip_pattern, url))
 
     async def get_clip(self, url: str) -> KickClip:
