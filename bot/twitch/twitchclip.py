@@ -12,6 +12,7 @@ import logging
 import os
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from selenium import webdriver
 
 
 class TwitchClip:
@@ -45,7 +46,7 @@ class TwitchClip:
         def sync_get_link(query_href_text):
             options = uc.ChromeOptions()
             options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])  # << this
-            driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
             try:
                 driver.get(query_href_text)
                 element = driver.find_element(By.CSS_SELECTOR, f"video[src*='{text}']")
