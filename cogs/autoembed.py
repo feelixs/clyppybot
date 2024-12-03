@@ -33,29 +33,32 @@ class AutoEmbed(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
-        if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
-            # self.logger.info(f"Missing Attach Files permission in {event.message.guild.name} - {event.message.channel.name}, skipping quick embed")
-            return 1
-        if event.message.author.id == self.bot.user.id:
-            return 1  # don't respond to the bot's own messages
-
-        words = self._getwords(event.message.content)
-        # self.logger.info(f"{event.message.guild.name} - {event.message.channel.name}, Content: {event.message.content}, Words: {words}")
-        num_links = self._get_num_clip_links(words)
-        if num_links == 1:
-            contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
-            if not contains_clip_link:
+        try:
+            if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
+                # self.logger.info(f"Missing Attach Files permission in {event.message.guild.name} - {event.message.channel.name}, skipping quick embed")
                 return 1
-            await self._process_this_clip_link(words[index], event.message)
-        elif num_links > 1:
-            next_link_exists = True
-            index = -1  # we will +1 in the next step (setting it to 0 for the start)
-            while next_link_exists:
-                next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
-                if not next_link_exists:
+            if event.message.author.id == self.bot.user.id:
+                return 1  # don't respond to the bot's own messages
+
+            words = self._getwords(event.message.content)
+            # self.logger.info(f"{event.message.guild.name} - {event.message.channel.name}, Content: {event.message.content}, Words: {words}")
+            num_links = self._get_num_clip_links(words)
+            if num_links == 1:
+                contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
+                if not contains_clip_link:
                     return 1
-                await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
-                await self._process_this_clip_link(words[index], event.message, True)
+                await self._process_this_clip_link(words[index], event.message)
+            elif num_links > 1:
+                next_link_exists = True
+                index = -1  # we will +1 in the next step (setting it to 0 for the start)
+                while next_link_exists:
+                    next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
+                    if not next_link_exists:
+                        return 1
+                    await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
+                    await self._process_this_clip_link(words[index], event.message, True)
+        except Exception as e:
+            self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{e.__dict__}")
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
