@@ -24,7 +24,7 @@ class AutoEmbed(Extension):
             max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
             self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-        async def download_twitch_clip(self, clip: Union[TwitchClip, str], root_msg: Message) -> Union[TwitchClip, int]:
+        async def download_clip(self, clip: Union[TwitchClip, str], root_msg: Message) -> Union[TwitchClip, int]:
             async with self._semaphore:
                 if isinstance(clip, TwitchClip):
                     return await clip.download(msg_ctx=root_msg, autocompress=[root_msg.guild.id == 759798762171662399])
@@ -98,7 +98,7 @@ class AutoEmbed(Extension):
         if clip is None:
             return 1
         try:
-            clip_file = await self._dl.download_twitch_clip(clip, root_msg=respond_to)
+            clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
         except ClipNotExists:
             emb = Embed(title="**Invalid Clip Link**",
                         description=f"Looks like the Twitch clip `{clip_link}` couldn't be downloaded. Verify that it exists")
