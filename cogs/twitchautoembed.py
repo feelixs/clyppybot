@@ -11,7 +11,7 @@ import re
 import logging
 
 
-class AutoEmbed(Extension):
+class TwitchAutoEmbed(Extension):
     def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.bot = bot
