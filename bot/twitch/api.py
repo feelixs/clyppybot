@@ -12,7 +12,8 @@ MY_USAGE_RATE = 800  # default is 800 requests per minute
 class TwitchAPI:
     def __init__(self, key: str, secret: str, logger, log_path: str = None, allowed_tries: int = 5):
         if not path.isfile(log_path):
-            
+            with open(log_path, "w") as f:
+                f.close()
         self.key = key
         self.logger = logger
         self.usage_remaining = MY_USAGE_RATE
