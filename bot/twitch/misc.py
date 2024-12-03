@@ -8,7 +8,7 @@ from os import getenv, path
 class TwitchMisc:
     def __init__(self, **kwargs):
         self.logger = logging.getLogger(__name__)
-        tid = getenv("CLPP_TWITCH_ID")
+        tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
             exit("No Twitch API key found")
         tis = getenv("TWITCH_CLYPP_SECRET")
