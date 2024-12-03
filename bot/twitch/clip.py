@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from bot.errors import DriverDownloadFailed, ClipNotExists
 from interactions import Message
 import concurrent.futures
+from typing import Union
 import subprocess
 import asyncio
 import aiohttp
@@ -59,7 +60,7 @@ class Clip:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(pool, sync_get_link, self.url)
 
-    async def download(self, filename: str, msg_ctx: Message, autocompress=False):
+    async def download(self, filename: Union[str, None], msg_ctx: Message, autocompress=False):
         split = self.thumbnail_url.split('-preview', 1)
         if len(split) == 2:  # indicates old clip
             mp4_url = split[0] + ".mp4"
