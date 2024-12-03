@@ -23,7 +23,7 @@ class TwitchMisc:
                              logger=self.logger,
                              log_path=getenv('TWITCH_API_REMAINING_LOG'),
                              log_name="twitch-api-usage_shard" + str(shard_id) + ".log")
-        
+
     @staticmethod
     def parse_clip_url(url: str) -> str:
         if url.endswith("/"):
