@@ -80,7 +80,7 @@ class AutoEmbed(Extension):
             emb = Embed(title="**Whoops...**",
                         description=f"Looks like the video embed failed this clip:\n{clip_link}\n\n "
                                     f"Try linking a shorter clip!\n"
-                                    "This clip file is too large to fit Discord's limit.")
+                                    "This clip file was previously reported as too large to fit Discord's limit.")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             self.logger.info(
