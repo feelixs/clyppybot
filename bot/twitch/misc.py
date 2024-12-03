@@ -1,7 +1,7 @@
 from .api import TwitchAPI
 from typing import Optional
 import logging
-from bot.twitch.clip import Clip
+from bot.twitch.twitchclip import TwitchClip
 from os import getenv, path
 
 
@@ -39,10 +39,10 @@ class TwitchMisc:
             or message.startswith("https://clips.twitch.tv/") or message.startswith("https://m.clips.twitch.tv/") \
             or message.startswith("https://www.clips.twitch.tv/") or message.startswith("https://www.m.clips.twitch.tv/")
 
-    async def get_clip(self, url: str) -> Optional[Clip]:
+    async def get_clip(self, url: str) -> Optional[TwitchClip]:
         slug = self.parse_clip_url(url)
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + slug)
         try:
-            return Clip(info['data'][0], self.api)
+            return TwitchClip(info['data'][0], self.api)
         except IndexError:
             return None

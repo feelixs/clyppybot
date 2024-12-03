@@ -15,7 +15,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 
 
-class Clip:
+class TwitchClip:
     def __init__(self, data, api, twitchDL_path=None):
         self.api = api
         self.logger = logging.getLogger(__name__)
