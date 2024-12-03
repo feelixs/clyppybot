@@ -30,14 +30,10 @@ class KickClip:
         """Uses undetected-chromedriver to get fresh cookies bypassing Cloudflare"""
         self.logger.info("Getting fresh cookies...")
         options = uc.ChromeOptions()
-        options.add_argument('--headless')
+        options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
 
         try:
-            # Initialize undetected-chromedriver
-            driver = uc.Chrome(
-                options=options,
-                service=Service(ChromeDriverManager().install())
-            )
+            driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
             # Load the clip page
             clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
