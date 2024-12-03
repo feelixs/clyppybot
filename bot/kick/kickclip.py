@@ -33,7 +33,7 @@ class KickClip:
         options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
 
         try:
-            driver = uc.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver = uc.Chrome(options=options)  # Will auto-detect Chrome version
 
             # Load the clip page
             clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
