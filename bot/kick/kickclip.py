@@ -173,7 +173,7 @@ class KickClip:
 if __name__ == "__main__":
     # Example usage
     clip_id = "01J9HF8GTSS5MP083YXGJ2WE2X"  # Replace with actual clip ID
-    clip = KickClip(clip_id)
+    clip = KickClip(clip_id, 'xqc')
     result = clip.download(None)  # Pass None for msg_ctx when testing
     if result:
         print(f"Successfully downloaded to: {result}")
