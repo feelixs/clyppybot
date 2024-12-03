@@ -37,6 +37,9 @@ class AutoEmbed(Extension):
             if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
                 # self.logger.info(f"Missing Attach Files permission in {event.message.guild.name} - {event.message.channel.name}, skipping quick embed")
                 return 1
+            if Permissions.SEND_MESSAGES not in event.message.channel.permissions_for(event.message.guild.me):
+                self.logger.info(f"Missing Send Messages permission in {event.message.guild.name} - {event.message.channel.name}, skipping quick embed")
+                return 1
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
 
