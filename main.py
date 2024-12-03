@@ -1,5 +1,6 @@
 from interactions import AutoShardedClient, Intents
 from bot.twitch import TwitchMisc
+from bot.kick import KickMisc
 import logging
 import asyncio
 import os
@@ -10,8 +11,9 @@ logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 t = TwitchMisc()
+k = KickMisc()
 Bot.twitch = t
-
+Bot.kick = k
 
 async def main():
     Bot.load_extension('cogs.base')
