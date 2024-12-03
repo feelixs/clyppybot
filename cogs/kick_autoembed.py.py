@@ -74,6 +74,7 @@ class AutoEmbed(Extension):
         for i in range(n, len(words)):
             word = words[i]
             if self.bot.kick.is_kick_clip_link(word):
+                self.logger.info(f"Found clip link: {word}")
                 return True, i
         return False, 0
 
