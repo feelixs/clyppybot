@@ -31,7 +31,7 @@ class AutoEmbed(Extension):
         async def download_twitch_clip(self, clip: Union[Clip, str], root_msg: Message) -> Union[Clip, int]:
             async with self._semaphore:
                 if isinstance(clip, Clip):
-                    return await clip.download(msg_ctx=root_msg, autocompress=False)
+                    return await clip.download(msg_ctx=root_msg, autocompress=[root_msg.guild.id == 759798762171662399])
                 else:
                     self._parent.logger.error("Invalid clip object passed to download_twitch_clip of type %s" % type(clip))
 
