@@ -18,6 +18,7 @@ class GuildDatabase:
 
     async def save(self):
         """Save database to server if callback exists."""
+        logger.info("Saving database to the server...")
         if self.on_save:
             await self.on_save()
 
