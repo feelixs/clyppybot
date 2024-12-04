@@ -92,10 +92,9 @@ class KickAutoEmbed(Extension):
         try:
             clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to)
         except FailedTrim:
-            clipsize = os.stat(clip_file).st_size
             emb = Embed(title="**Whoops...**",
                         description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
-                                    f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
+                                    f"> The original file size was larger than Discord's Limit for Bots, **25MB**. I tried to trim it to fit, but failed.")
             emb.description += create_nexus_str()
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             await respond_to.reply(embed=emb)
@@ -125,7 +124,7 @@ class KickAutoEmbed(Extension):
             if e.status == 413:  # Check the error source for 413 (file too large)
                 clipsize = os.stat(clip_file).st_size
                 emb = Embed(title="**Whoops...**",
-                            description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
+                            description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
                                         f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
                 self.too_large_clips.append(clip.id)
