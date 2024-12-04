@@ -1,87 +1,95 @@
+import undetected_chromedriver as uc
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
-from typing import Union
-from interactions import Message
-import os
-import requests
-import subprocess
-import time
+import asyncio
+import json
+import traceback
 
 
 class KickClip:
-    def __init__(self, slug):
+    def __init__(self, slug, user):
         self.id = slug
+        self.user = user
         self.logger = logging.getLogger(__name__)
 
-    def _trigger_download(self):
-        """Triggers the download generation via Kick's API"""
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer 53975653|tqHluJONfPWcRCUCjlui30doLaOVaW99wjZo2YaP',
-            'cluster': 'v2'
-        }
+    async def get_m3u8_url(self):
+        """Get m3u8 URL using undetected-chromedriver"""
+        caps = DesiredCapabilities.CHROME
+        caps['goog:loggingPrefs'] = {'performance': 'ALL'}
 
-        url = f"https://kick.com/api/v2/clips/clip_{self.id}/download"
+        options = uc.ChromeOptions()
+        options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
+        options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+
+        driver = uc.Chrome(options=options, desired_capabilities=caps)
+        self.logger.info("Started browser and monitoring network...")
 
         try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            return True
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"Error triggering download generation: {e}")
-            return False
+            # Load clip page
+            clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
+            driver.get(clip_url)
 
-    def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
-        # First trigger the download generation
-        if not self._trigger_download():
+            # Wait a bit for network requests
+            await asyncio.sleep(5)
+
+            # Get and process performance logs
+            browser_log = driver.get_log('performance')
+            events = [json.loads(entry['message'])['message'] for entry in browser_log]
+
+            # Filter for network responses and find m3u8 URL
+            for event in events:
+                try:
+                    if ('Network.requestWillBeSent' == event['method']
+                            and 'request' in event['params']
+                            and 'url' in event['params']['request']):
+                        url = event['params']['request']['url']
+                        if 'playlist.m3u8' in url:
+                            self.logger.info(f"Found m3u8 URL: {url}")
+                            return url
+                except Exception as e:
+                    continue
+
+            self.logger.error("No m3u8 URL found in logs")
             return None
 
-        # Wait a bit for the file to be generated
-        time.sleep(2)  # Adjust this delay if needed
+        except Exception as e:
+            self.logger.error(traceback.format_exc())
+            return None
+        finally:
+            driver.quit()
 
-        # Required headers (based on browser request)
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br'
-        }
+    async def download(self, filename=None):
+        if filename is None:
+            filename = f"clip_{self.id}.mp4"
 
-        # Construct download URL
-        download_url = f"https://clips.kick.com/tmp/clip_{self.id}.mp4"
+        m3u8_url = await self.get_m3u8_url()
+        if not m3u8_url:
+            self.logger.error("Failed to get m3u8 URL")
+            return None
 
+        # Download using ffmpeg
         try:
-            # Stream the download
-            response = requests.get(download_url, headers=headers, stream=True)
-            response.raise_for_status()  # Raises an HTTPError for bad responses
+            command = [
+                'ffmpeg',
+                '-i', m3u8_url,
+                '-c', 'copy',
+                filename
+            ]
 
-            # Get filename from Content-Disposition header or use clip ID
-            if not filename:
-                filename = f"clip_{self.id}.mp4"
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
 
-            # Download with progress tracking
-            file_size = int(response.headers.get('content-length', 0))
-            block_size = 1024  # 1KB blocks
+            await process.communicate()
 
-            self.logger.info(f"Downloading {filename} ({file_size / 1024 / 1024:.1f} MB)")
+            if process.returncode != 0:
+                self.logger.error("FFmpeg download failed")
+                return None
 
-            with open(filename, 'wb') as f:
-                downloaded = 0
-                for data in response.iter_content(block_size):
-                    f.write(data)
-                    downloaded += len(data)
-                    progress = (downloaded / file_size) * 100
-                    print(f"\rProgress: {progress:.1f}%", end="")
-
-            self.logger.info("\nDownload complete!")
-
-            # touch the file to update the modified time
-            touch = subprocess.Popen(["touch", os.path.realpath(filename)],
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
-            touch.communicate()
             return filename
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
             return None
