@@ -48,7 +48,7 @@ class GuildDatabase:
         this_setting = int(s[0])
         this_pos = ["trim", "info", "none"]
         return this_pos[this_setting - 1]
-        
+
     def get_on_error(self, guild_id):
         s = self.get_setting(guild_id)
         error_setting = int(s[1])
