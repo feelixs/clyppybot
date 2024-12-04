@@ -25,7 +25,7 @@ class Base(Extension):
             return await ctx.send("You are not allowed to use this command.")
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
-        await ctx.send("You can now safely exit...")
+        await ctx.send("You can now safely exit.")
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
