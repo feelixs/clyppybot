@@ -1,1 +1,1 @@
-from .misc import create_nexus_str, Tools
+from .misc import create_nexus_str, Tools, DownloadManager

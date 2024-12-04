@@ -1,9 +1,13 @@
 import logging
+from interactions import Message
 import os
 import subprocess
 import concurrent.futures
 import asyncio
-from typing import Optional
+from bot.kick import KickClip
+from bot.twitch import TwitchClip
+from typing import Optional, Union
+from bot.errors import FailedTrim
 
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
@@ -13,6 +17,63 @@ TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 
 def create_nexus_str():
     return f"\n\n**[Invite CLYPPY]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
+
+
+class DownloadManager:
+    def __init__(self, p):
+        self._parent = p
+        max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
+        self._semaphore = asyncio.Semaphore(int(max_concurrent))
+
+    async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> (Union[KickClip, TwitchClip], int):
+        async with self._semaphore:
+            if not isinstance(clip, KickClip) and not isinstance(clip, TwitchClip):
+                self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
+                return None, 0
+
+            # Download clip
+            f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
+            if not f:
+                return None, 0
+
+            # Check file size
+            size_mb = os.path.getsize(f) / (1024 * 1024)
+            if size_mb > 25:
+                # Get guild setting for handling large files
+                too_large_setting = self._parent.bot.guild_settings.get_too_large(root_msg.guild.id)
+
+                if too_large_setting == "trim":
+                    # Calculate target duration and trim
+                    target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.9)
+                    if not target_duration:
+                        self._parent.logger.error("First target_duration() failed")
+                        raise FailedTrim
+                    trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
+                    self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                    if trimmed_file is None:
+                        raise FailedTrim
+
+                    # second pass if necessary
+                    if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
+                        target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.5)
+                        if not target_duration:
+                            self._parent.logger.error("Second target_duration() failed")
+                            raise FailedTrim
+                        trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
+                        self._parent.logger.info(
+                            f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                    if trimmed_file is None:
+                        raise FailedTrim
+                    else:
+                        os.remove(f)  # remove original file
+                        return trimmed_file, 1
+                elif too_large_setting == "info":
+                    await root_msg.channel.send(
+                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
+                        "Unable to upload the file."
+                    )
+                return None
+            return f, 0
 
 
 class Tools:

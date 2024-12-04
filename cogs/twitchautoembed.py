@@ -1,15 +1,13 @@
 import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
-from bot.twitch import TwitchClip
-from bot.errors import ClipNotExists, DriverDownloadFailed, FailedTrim
-from bot.tools import create_nexus_str
-from typing import Union, List
-import asyncio
+from bot.errors import ClipNotExists, DriverDownloadFailed
+from bot.tools import create_nexus_str, DownloadManager
+from typing import List
+import traceback
+import logging
 import os
 import re
-import logging
-import traceback
 
 
 class TwitchAutoEmbed(Extension):
@@ -17,20 +15,7 @@ class TwitchAutoEmbed(Extension):
         self.logger = logging.getLogger(__name__)
         self.bot = bot
         self.too_large_clips = []
-        self._dl = self.DownloadManager(self)
-
-    class DownloadManager:
-        def __init__(self, p):
-            self._parent = p
-            max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
-            self._semaphore = asyncio.Semaphore(int(max_concurrent))
-
-        async def download_clip(self, clip: Union[TwitchClip, str], root_msg: Message) -> Union[TwitchClip, int]:
-            async with self._semaphore:
-                if isinstance(clip, TwitchClip):
-                    return await clip.download(msg_ctx=root_msg, autocompress=[root_msg.guild.id == 759798762171662399])
-                else:
-                    self._parent.logger.error("Invalid clip object passed to download_twitch_clip of type %s" % type(clip))
+        self._dl = DownloadManager(self)
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
