@@ -27,23 +27,20 @@ class Base(Extension):
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
 
-        # Get all tasks before stopping the bot
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        # Schedule the shutdown for after this command completes
+        asyncio.create_task(self._shutdown())
 
-        # Stop the bot first
-        await self.bot.stop()
+    async def _shutdown(self):
+        await asyncio.sleep(1)  # Give a brief moment for the exit command to complete
 
-        # Cancel other tasks
-        for task in tasks:
-            task.cancel()
+        try:
+            await self.bot.stop()
+        except Exception as e:
+            print(f"Error during bot shutdown: {e}")
 
-        # Wait for all tasks to complete/cancel
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Get the loop and stop it
+        # Get the loop and request stop
         loop = asyncio.get_running_loop()
-        loop.stop()
+        loop.call_soon_threadsafe(loop.stop)
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
