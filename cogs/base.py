@@ -1,5 +1,5 @@
+import asyncio
 import traceback
-
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str
@@ -25,7 +25,7 @@ class Base(Extension):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save(self.logger)
         await ctx.send("Exiting...")
-        exit(0)
+        asyncio.get_event_loop().stop()
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
