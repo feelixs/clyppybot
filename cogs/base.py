@@ -67,8 +67,14 @@ class Base(Extension):
             tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
             await ctx.send(embed=tutorial_embed)
         else:
-            possible_can_edits = possible_can_edits.index(can_edit)
-            possible_on_errors = possible_on_errors.index(on_error)
+            try:
+                possible_can_edits = possible_can_edits.index(too_large)
+            except ValueError:
+                await ctx.send("Option not in the **too_large** list.")
+            try:
+                possible_on_errors = possible_on_errors.index(on_error)
+            except ValueError:
+                await ctx.send("Option not in the **on_error** list.")
             # results in "00", "12", etc
             self.bot.guild_settings.set_settings(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
             await ctx.send("Successfully changed settings:\n\n"
