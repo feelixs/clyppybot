@@ -26,27 +26,8 @@ class Base(Extension):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
-        asyncio.create_task(self._shutdown(ctx))
-
-    async def _shutdown(self, ctx):
-        try:
-            await asyncio.sleep(1)
-            await self.bot.stop()
-            loop = asyncio.get_running_loop()
-            pending = asyncio.all_tasks(loop=loop)
-            for task in pending:
-                if task is not asyncio.current_task():
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        pass
-            loop.stop()
-            sys.exit(0)
-
-        except Exception as e:
-            print(f"Error during shutdown: {e}")
-            # Ensure the bot exits even if there's an error
-            sys.exit(1)
+        await self.bot.stop()
+        sys.exit(0)
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
