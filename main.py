@@ -48,7 +48,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 Bot.twitch = TwitchMisc()
 Bot.kick = KickMisc()
 Bot.tools = Tools()
-Bot.guild_settings = GuildDatabase(on_load=None, on_save=None)
+Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
 
 async def main():
