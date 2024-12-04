@@ -70,11 +70,15 @@ class Base(Extension):
             await ctx.send(embed=tutorial_embed)
         else:
             try:
+                if too_large is None:
+                    too_large = possible_on_errors[0]
                 possible_can_edits = possible_can_edits.index(too_large)
             except ValueError:
                 self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **too_large** list.")
             try:
+                if on_error is None:
+                    on_error = possible_on_errors[0]
                 possible_on_errors = possible_on_errors.index(on_error)
             except ValueError:
                 self.logger.error(traceback.format_exc())
