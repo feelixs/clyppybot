@@ -60,7 +60,7 @@ class GuildDatabase:
             settings = possible_too_large[0], possible_on_err[0]
         else:
             settings = possible_too_large[int(sett[0])], possible_on_err[int(sett[1])]
-        return (f"**too_large**: {settings[0]}\n\n"
+        return (f"**too_large**: {settings[0]}\n"
                 f"**on_error**: {settings[1]}")
 
     def get_too_large(self, guild_id):
