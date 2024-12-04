@@ -2,7 +2,7 @@ import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
 from bot.twitch import TwitchClip
-from bot.errors import ClipNotExists, DriverDownloadFailed
+from bot.errors import ClipNotExists, DriverDownloadFailed, FailedTrim
 from bot.tools import create_nexus_str
 from typing import Union, List
 import asyncio
