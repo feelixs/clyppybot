@@ -5,4 +5,4 @@ TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 
 
 def create_nexus_str():
-    return f"\n\n**[Invite CLYPPY]({INVITE_LINK}) | [Top.gg Vote]({TOPGG_VOTE_LINK}) | [Report a Problem]({SUPPORT_SERVER_URL})**"
+    return f"\n\n**[Invite CLYPPY]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
