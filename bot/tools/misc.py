@@ -19,7 +19,7 @@ class Tools:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    async def calculate_target_duration(self, filepath, target_size_mb=24.5):
+    async def calculate_target_duration(self, filepath, target_size_mb=25):
         # Get current size in MB
         current_size_mb = os.path.getsize(filepath) / (1024 * 1024)
 
