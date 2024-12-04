@@ -34,7 +34,7 @@ async def load_from_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
-            headers = {'X-API-Key': 'your-secret-key'}
+            headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             params = {'env': env}
             async with session.get('https://felixcreations.com/api/products/clyppy/get_db/',
                                    headers=headers,
