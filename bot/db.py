@@ -51,7 +51,8 @@ class GuildDatabase:
         # translate to words
         if sett is None:
             settings = possible_too_large[0], possible_on_err[0]
-        settings = possible_too_large[int(sett[0])], possible_on_err[int(sett[1])]
+        else:
+            settings = possible_too_large[int(sett[0])], possible_on_err[int(sett[1])]
         return (f"**too_large**: {settings[0]}\n\n"
                 f"**on_error**: {settings[1]}")
 
