@@ -52,6 +52,8 @@ class Base(Extension):
 
         if not can_edit:
             # respond with tutorial
+            cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
+            self.logger.info(self.bot.guild_settings.get_setting_st(ctx.guild.id))
             about = ("**Configurable Settings:**\n"
                      "Below are the settings you can configure using this command. Each setting name is in **bold**, "
                      "followed by its available options.\n\n"
@@ -63,6 +65,7 @@ class Base(Extension):
                      "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
+                     f"**Current Settings**\n{cs}\n"
                      "Something missing? Please **Suggest a feature** using the link below.")
             if prepend_admin:
                 about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
