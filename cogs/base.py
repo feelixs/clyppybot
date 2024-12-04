@@ -19,7 +19,7 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60*30))  # save db every 30 minutes
 
-    @slash_command(name="save", description="Exit CLYPPY", scopes=[759798762171662399])
+    @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         if ctx.author.user.id != 164115540426752001:
             return await ctx.send("You are not allowed to use this command.")
