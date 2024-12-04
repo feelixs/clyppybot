@@ -10,9 +10,7 @@ def create_nexus_str():
 
 
 async def reply_or_dm(bot, parent: Message, content: str = None, file=None, embed=None, delete_after=None):
-    silent = bot.guild_settings.get_silent(parent.guild.id)
-    if silent is None:
-        silent = True
+    silent = bot.guild_settings.get_silent(parent.guild.id) or True
     if silent:
         # if silent, dm them
         await parent.author.user.get_dm().send(content, embed=embed, file=file)
