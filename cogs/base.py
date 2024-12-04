@@ -34,7 +34,7 @@ class Base(Extension):
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what CLYPPY should do upon error",
                                                required=False)])
-    async def silence(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
         possible_can_edits = ["trim", "info", "none"]
         possible_on_errors = ["info", "none"]
         can_edit = False
