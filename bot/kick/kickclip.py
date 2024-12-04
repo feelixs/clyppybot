@@ -1,4 +1,6 @@
 import undetected_chromedriver as uc
+from interactions import Message
+from typing import Union
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 import logging
@@ -22,7 +24,7 @@ class KickClip:
         options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 
-        driver = uc.Chrome(options=options, desired_capabilities=caps)
+        driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
         self.logger.info("Started browser and monitoring network...")
 
         try:
@@ -61,7 +63,7 @@ class KickClip:
         finally:
             driver.quit()
 
-    async def download(self, filename=None):
+    async def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
         if filename is None:
             filename = f"clip_{self.id}.mp4"
 

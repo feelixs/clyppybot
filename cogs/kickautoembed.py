@@ -3,10 +3,8 @@ import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen
 from interactions.api.events import MessageCreate
 from bot.kick import KickClip
-from bot.errors import ClipNotExists, DriverDownloadFailed
 from bot.tools import create_nexus_str
 from typing import Union, List
-import concurrent.futures
 import asyncio
 import os
 import re
@@ -30,9 +28,7 @@ class KickAutoEmbed(Extension):
             async with self._semaphore:
                 f = None
                 if isinstance(clip, KickClip):
-                    loop = asyncio.get_event_loop()
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        f = await loop.run_in_executor(pool, clip.download, root_msg, [root_msg.guild.id == 759798762171662399])
+                    f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
                 else:
                     self._parent.logger.error("Invalid clip object passed to download_clip of type %s" % type(clip))
                 return f

@@ -43,7 +43,7 @@ class TwitchClip:
         def sync_get_link(query_href_text):
             options = uc.ChromeOptions()
             options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
-            driver = uc.Chrome(options=options)  # Will auto-detect Chrome version
+            driver = uc.Chrome(options=options, version_main=108)
             try:
                 driver.get(query_href_text)
                 element = driver.find_element(By.CSS_SELECTOR, f"video[src*='{text}']")
