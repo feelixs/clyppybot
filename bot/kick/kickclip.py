@@ -2,7 +2,6 @@ import undetected_chromedriver as uc
 from interactions import Message
 from typing import Union
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.support.ui import WebDriverWait
 import logging
 import asyncio
 import json
