@@ -6,6 +6,7 @@ from bot.tools import create_nexus_str
 import logging
 import aiohttp
 import os
+import sys
 
 
 VERSION = "1.1b"
@@ -22,25 +23,30 @@ class Base(Extension):
     async def exit(self, ctx: SlashContext):
         if ctx.author.user.id != 164115540426752001:
             return await ctx.send("You are not allowed to use this command.")
-
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
+        asyncio.create_task(self._shutdown(ctx))
 
-        # Schedule the shutdown for after this command completes
-        asyncio.create_task(self._shutdown())
-
-    async def _shutdown(self):
-        await asyncio.sleep(1)  # Give a brief moment for the exit command to complete
-
+    async def _shutdown(self, ctx):
         try:
+            await asyncio.sleep(1)
             await self.bot.stop()
-        except Exception as e:
-            print(f"Error during bot shutdown: {e}")
+            loop = asyncio.get_running_loop()
+            pending = asyncio.all_tasks(loop=loop)
+            for task in pending:
+                if task is not asyncio.current_task():
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+            loop.stop()
+            sys.exit(0)
 
-        # Get the loop and request stop
-        loop = asyncio.get_running_loop()
-        loop.call_soon_threadsafe(loop.stop)
+        except Exception as e:
+            print(f"Error during shutdown: {e}")
+            # Ensure the bot exits even if there's an error
+            sys.exit(1)
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
