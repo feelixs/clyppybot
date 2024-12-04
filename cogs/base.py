@@ -6,6 +6,7 @@ from bot.tools import create_nexus_str
 import logging
 import aiohttp
 import os
+import sys
 
 
 VERSION = "1.1b"
@@ -26,12 +27,7 @@ class Base(Extension):
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
         await self.bot.stop()
-
-        tasks = asyncio.all_tasks()
-        for task in tasks:
-            task.cancel()
-        loop = asyncio.get_event_loop()
-        loop.close()
+        sys.exit(0)
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
