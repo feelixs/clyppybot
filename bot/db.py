@@ -16,6 +16,11 @@ class GuildDatabase:
         self.on_load = on_load
         self.setup_db()
 
+    async def save(self):
+        """Save database to server if callback exists."""
+        if self.on_save:
+            await self.on_save()
+
     @contextmanager
     def get_db(self):
         conn = sqlite3.connect(self.db_path)
@@ -88,10 +93,6 @@ class GuildDatabase:
                     VALUES (?, ?)
                 ''', (guild_id, str(value)))
                 conn.commit()
-
-                # Call the save callback if it exists
-                if self.on_save:
-                    await self.on_save(guild_id, value)
                 return True
         except sqlite3.Error as e:
             logger.error(f"Database error when setting value for guild {guild_id}: {e}")

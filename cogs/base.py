@@ -1,6 +1,6 @@
 import traceback
 
-from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions
+from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str
 import logging
@@ -16,6 +16,7 @@ class Base(Extension):
         self.bot = bot
         self.ready = False
         self.logger = logging.getLogger(__name__)
+        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60*30))  # save db every 30 minutes
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
@@ -91,6 +92,13 @@ class Base(Extension):
                            f"**too_large**: {too_large}\n"
                            f"**on_error**: {on_error}")
 
+    async def db_save_task(self):
+        if not self.ready:
+            self.logger.info("Bot not ready, skipping database save task")
+            return
+        self.logger.info("Saving database to the server...")
+        await self.bot.guild_settings.save()
+
     @listen()
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
@@ -113,6 +121,7 @@ class Base(Extension):
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
             self.logger.info(f"CLYPPY Version: {VERSION}")
             self.logger.info("--------------")
+            await self.bot.change_presence(activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
     @staticmethod
     async def post_servers(num: int):
