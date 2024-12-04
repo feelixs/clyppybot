@@ -3,6 +3,7 @@ import os
 import subprocess
 import concurrent.futures
 import asyncio
+from typing import Optional
 
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
@@ -52,3 +53,42 @@ class Tools:
         self.logger.info(f"Target duration: {target_duration} seconds")
 
         return target_duration
+
+    async def trim_to_duration(self, input_file: str, target_duration: float) -> Optional[str]:
+        """
+        Trims video to target duration using ffmpeg
+        Returns path to trimmed file or None if failed
+        """
+        output_file = input_file.replace('.mp4', '_trimmed.mp4')
+        self.logger.info(f"Trimming {input_file}...")
+        try:
+            # Use ffmpeg to trim without re-encoding (-c copy)
+            command = [
+                'ffmpeg',
+                '-i', input_file,
+                '-t', str(target_duration),  # Duration to trim to
+                '-c', 'copy',  # Copy streams without re-encoding
+                '-y',  # Overwrite output if exists
+                output_file
+            ]
+
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            await process.communicate()
+
+            if process.returncode != 0:
+                self.logger.error("Failed to trim video")
+                return None
+
+            # Remove original file
+            os.remove(input_file)
+
+            return output_file
+
+        except Exception as e:
+            self.logger.error(f"Error trimming video: {e}")
+            return None

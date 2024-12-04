@@ -47,7 +47,7 @@ class KickAutoEmbed(Extension):
                         target_duration = await self._parent.bot.tools.calculate_target_duration(f)
                         if target_duration:
                             # Trim the file (you'll need to implement the trim function)
-                            trimmed_file = await clip.trim_to_duration(f, target_duration)
+                            trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
                             if trimmed_file is None:
                                 raise FailedTrim
                             else:
