@@ -53,7 +53,7 @@ class Base(Extension):
         if not can_edit:
             # respond with tutorial
             cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
-            self.logger.info(self.bot.guild_settings.get_setting_str(ctx.guild.id))
+            self.logger.info(self.bot.guild_settings.get_setting(ctx.guild.id))
             about = ("**Configurable Settings:**\n"
                      "Below are the settings you can configure using this command. Each setting name is in **bold**, "
                      "followed by its available options.\n\n"
