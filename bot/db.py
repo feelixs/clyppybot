@@ -3,6 +3,7 @@ import logging
 from contextlib import contextmanager
 from typing import Optional, Any, Callable
 
+
 logger = logging.getLogger(__name__)
 
 possible_too_large = ["trim", "info", "none"]
@@ -14,7 +15,6 @@ class GuildDatabase:
         self.db_path = db_path
         self.on_save = on_save
         self.on_load = on_load
-        self.setup_db()
 
     async def save(self):
         """Save database to server if callback exists."""
