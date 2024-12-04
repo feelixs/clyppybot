@@ -60,7 +60,7 @@ class Base(Extension):
                      " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
                      " - `none`: The upload will fail and CLYPPY will do nothing.\n"
                      " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
-                     "**on_error Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
+                     "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
                      "Something missing? Please **Suggest a feature** using the link below.")
