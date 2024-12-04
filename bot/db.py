@@ -16,10 +16,10 @@ class GuildDatabase:
         self.on_save = on_save
         self.on_load = on_load
 
-    async def save(self, logger):
+    async def save(self):
         """Save database to server if callback exists."""
         if self.on_save:
-            await self.on_save(logger)
+            await self.on_save()
 
     @contextmanager
     def get_db(self):
@@ -29,7 +29,7 @@ class GuildDatabase:
         finally:
             conn.close()
 
-    async def setup_db(self, logger):
+    async def setup_db(self):
         """Initialize the database with required tables and load from server."""
         with self.get_db() as conn:
             conn.execute('''
@@ -42,7 +42,7 @@ class GuildDatabase:
 
         # Load from server if callback exists
         if self.on_load:
-            await self.on_load(logger)
+            await self.on_load()
 
     def get_setting(self, guild_id: int) -> Optional[str]:
         try:
