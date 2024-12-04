@@ -84,9 +84,6 @@ class Tools:
                 self.logger.error("Failed to trim video")
                 return None
 
-            # Remove original file
-            os.remove(input_file)
-
             return output_file
 
         except Exception as e:
