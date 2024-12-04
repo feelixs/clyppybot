@@ -47,13 +47,13 @@ class GuildDatabase:
         s = self.get_setting(guild_id)
         this_setting = int(s[0])
         this_pos = ["trim", "info", "none"]
-        return this_pos[this_setting - 1]
+        return this_pos[this_setting]
 
     def get_on_error(self, guild_id):
         s = self.get_setting(guild_id)
         error_setting = int(s[1])
         on_er = ["info", "none"]
-        return on_er[error_setting - 1]
+        return on_er[error_setting]
 
     def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""
