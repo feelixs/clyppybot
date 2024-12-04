@@ -31,6 +31,7 @@ class GuildDatabase:
             conn.close()
 
     async def setup_db(self):
+        logger.info("Setting up database...")
         """Initialize the database with required tables and load from server."""
         with self.get_db() as conn:
             conn.execute('''
