@@ -25,7 +25,6 @@ class Base(Extension):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
-        await self.bot.close()
         exit(0)
 
     @slash_command(name="help", description="Get help using CLYPPY")
