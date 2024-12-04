@@ -1,13 +1,11 @@
 import traceback
 import interactions.api.events
-from interactions import Extension, Message, Embed, Permissions, listen
+from interactions import Extension, Message, Embed, Permissions, listen, Button, ButtonStyle
 from interactions.api.events import MessageCreate
-from bot.kick import KickClip
-from bot.errors import ClipNotExists, DriverDownloadFailed
 from bot.tools import create_nexus_str
-from typing import Union, List
-import concurrent.futures
-import asyncio
+from typing import List
+from bot.tools import DownloadManager
+from bot.errors import FailedTrim
 import os
 import re
 import logging
@@ -18,24 +16,7 @@ class KickAutoEmbed(Extension):
         self.logger = logging.getLogger(__name__)
         self.bot = bot
         self.too_large_clips = []
-        self._dl = self.DownloadManager(self)
-
-    class DownloadManager:
-        def __init__(self, p):
-            self._parent = p
-            max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
-            self._semaphore = asyncio.Semaphore(int(max_concurrent))
-
-        async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> Union[KickClip, int]:
-            async with self._semaphore:
-                f = None
-                if isinstance(clip, KickClip):
-                    loop = asyncio.get_event_loop()
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        f = await loop.run_in_executor(pool, clip.download, root_msg, [root_msg.guild.id == 759798762171662399])
-                else:
-                    self._parent.logger.error("Invalid clip object passed to download_clip of type %s" % type(clip))
-                return f
+        self._dl = DownloadManager(self)
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
@@ -108,27 +89,43 @@ class KickAutoEmbed(Extension):
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             return 1
-        clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
+        try:
+            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to)
+        except FailedTrim:
+            emb = Embed(title="**Whoops...**",
+                        description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
+                                    f"> The original file size was larger than Discord's Limit for Bots, **25MB**. I tried to trim it to fit, but failed.")
+            emb.description += create_nexus_str()
+            self.logger.info(f"Clip {clip.id} failed to trim :/")
+            await respond_to.reply(embed=emb)
+            return 1
         if clip_file is None:
             self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to download this clip: \n\n\
-                                            {clip_link}\nPlease try linking it again.\n"
+                        description=f"I messed up while trying to download this clip: "
+                                    f"\n\n{clip_link}\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb, delete_after=60)
             return 1
+
+        # send video file
         try:
-            if include_link:
-                await respond_to.reply(clip_link, file=clip_file)
+            if not edited:
+                comp = Button(style=ButtonStyle.LINK, label="View On Kick", url=clip_link)
             else:
-                await respond_to.reply(file=clip_file)
+                comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip_link)
+            if include_link:
+                await respond_to.reply(clip_link, file=clip_file, components=[comp])
+            else:
+                await respond_to.reply(file=clip_file, components=[comp])
+
         except interactions.errors.HTTPException as e:
             if e.status == 413:  # Check the error source for 413 (file too large)
                 clipsize = os.stat(clip_file).st_size
                 emb = Embed(title="**Whoops...**",
-                            description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
-                                        f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
+                            description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
+                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
                 self.too_large_clips.append(clip.id)
                 self.logger.info(f"Clip {clip.id} was too large to embed in {respond_to.guild.name} - {respond_to.channel.name}")

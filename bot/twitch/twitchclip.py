@@ -10,9 +10,6 @@ import asyncio
 import aiohttp
 import logging
 import os
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from selenium import webdriver
 
 
 class TwitchClip:
@@ -45,8 +42,8 @@ class TwitchClip:
     async def fetch_link_via_chrome(self, text):
         def sync_get_link(query_href_text):
             options = uc.ChromeOptions()
-            options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])  # << this
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
+            driver = uc.Chrome(options=options, version_main=108)
             try:
                 driver.get(query_href_text)
                 element = driver.find_element(By.CSS_SELECTOR, f"video[src*='{text}']")
