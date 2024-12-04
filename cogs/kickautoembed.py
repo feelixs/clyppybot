@@ -1,6 +1,6 @@
 import traceback
 import interactions.api.events
-from interactions import Extension, Message, Embed, Permissions, listen
+from interactions import Extension, Message, Embed, Permissions, listen, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 from bot.kick import KickClip
 from bot.tools import create_nexus_str
@@ -25,7 +25,7 @@ class KickAutoEmbed(Extension):
             max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
             self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-        async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> Union[KickClip, int]:
+        async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> (KickClip, int):
             async with self._semaphore:
                 if not isinstance(clip, KickClip):
                     self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
@@ -59,14 +59,14 @@ class KickAutoEmbed(Extension):
                                 raise FailedTrim
                             else:
                                 os.remove(f)  # remove original file
-                                return trimmed_file
+                                return trimmed_file, 1
                     elif too_large_setting == "info":
                         await root_msg.channel.send(
                             f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
                             "Unable to upload the file."
                         )
                     return None
-                return f
+                return f, 0
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
@@ -140,7 +140,7 @@ class KickAutoEmbed(Extension):
             await respond_to.reply(embed=emb)
             return 1
         try:
-            clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
+            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to)
         except FailedTrim:
             clipsize = os.stat(clip_file).st_size
             emb = Embed(title="**Whoops...**",
@@ -159,11 +159,18 @@ class KickAutoEmbed(Extension):
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb, delete_after=60)
             return 1
+
+        # send video file
         try:
-            if include_link:
-                await respond_to.reply(clip_link, file=clip_file)
+            if edited:
+                comp = Button(style=ButtonStyle.LINK, label="View On Kick", url=clip_link)
             else:
-                await respond_to.reply(file=clip_file)
+                comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip_link)
+            if include_link:
+                await respond_to.reply(clip_link, file=clip_file, components=[comp])
+            else:
+                await respond_to.reply(file=clip_file, components=[comp])
+
         except interactions.errors.HTTPException as e:
             if e.status == 413:  # Check the error source for 413 (file too large)
                 clipsize = os.stat(clip_file).st_size
