@@ -62,7 +62,7 @@ class Base(Extension):
         else:
             possible_can_edits = possible_can_edits.index(can_edit)
             possible_on_errors = possible_on_errors.index(on_error)
-            # results in "11", "12", etc
+            # results in "00", "12", etc
             self.bot.guild_settings.set_settings(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
             await ctx.send("Successfully changed settings:\n\n"
                            f"**too_large**: {possible_can_edits}"
