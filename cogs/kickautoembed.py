@@ -5,6 +5,7 @@ from interactions.api.events import MessageCreate
 from bot.tools import create_nexus_str
 from typing import List
 from bot.tools import DownloadManager
+from bot.errors import FailedTrim
 import os
 import re
 import logging
