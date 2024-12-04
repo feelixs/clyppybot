@@ -22,16 +22,28 @@ class Base(Extension):
     async def exit(self, ctx: SlashContext):
         if ctx.author.user.id != 164115540426752001:
             return await ctx.send("You are not allowed to use this command.")
+
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
+
+        # Get all tasks before stopping the bot
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+
+        # Stop the bot first
         await self.bot.stop()
 
-        tasks = asyncio.all_tasks()
+        # Cancel other tasks
         for task in tasks:
             task.cancel()
-        loop = asyncio.get_event_loop()
-        loop.close()
+
+        # Wait for all tasks to complete/cancel
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Get the loop and stop it
+        loop = asyncio.get_running_loop()
+        loop.stop()
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
