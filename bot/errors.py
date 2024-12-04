@@ -3,6 +3,10 @@ class DriverDownloadFailed(Exception):
     pass
 
 
+class FailedTrim(Exception):
+    pass
+
+
 class ClipNotExists(Exception):
     pass
 
