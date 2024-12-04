@@ -10,28 +10,34 @@ import aiohttp
 
 
 async def save_to_server():
+    env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             with open("guild_settings.db", "rb") as f:
                 files = {'file': f}
                 await session.post('https://felixcreations.com/api/products/clyppy/save_db/',
-                                   data=files, headers=headers)
+                                   files=files, headers=headers, data={'env': env})
 
         except Exception as e:
             logger.error(f"Failed to save database to server: {e}")
 
 
 async def load_from_server():
+    env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get('https://example.com/directory/guild_settings.db') as response:
+            headers = {'X-API-Key': 'your-secret-key'}
+            params = {'env': env}
+            async with session.get('https://felixcreations.com/api/products/clyppy/get_db/',
+                                   headers=headers,
+                                   params=params) as response:
                 if response.status == 200:
-                    db_bytes = await response.read()
-                    async with aiofiles.open("guild_settings.db", 'wb') as f:
-                        await f.write(db_bytes)
+                    content = await response.read()
+                    with open('guild_settings.db', 'wb') as f:
+                        f.write(content)
         except Exception as e:
-            logger.error(f"Failed to load database from server: {e}")
+            logger.error(f"Failed to get database from server: {e}")
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
