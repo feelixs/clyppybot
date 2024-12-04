@@ -6,6 +6,7 @@ from bot.kick import KickClip
 from bot.tools import create_nexus_str
 from typing import Union, List
 import asyncio
+from bot.errors import FailedTrim
 import os
 import re
 import logging
@@ -26,11 +27,37 @@ class KickAutoEmbed(Extension):
 
         async def download_clip(self, clip: Union[KickClip, str], root_msg: Message) -> Union[KickClip, int]:
             async with self._semaphore:
-                f = None
-                if isinstance(clip, KickClip):
-                    f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
-                else:
-                    self._parent.logger.error("Invalid clip object passed to download_clip of type %s" % type(clip))
+                if not isinstance(clip, KickClip):
+                    self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
+                    return None
+
+                # Download clip
+                f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
+                if not f:
+                    return None
+
+                # Check file size
+                size_mb = os.path.getsize(f) / (1024 * 1024)
+                if size_mb > 25:
+                    # Get guild setting for handling large files
+                    too_large_setting = await self._parent.bot.get_too_large(root_msg.guild.id)
+
+                    if too_large_setting == "trim":
+                        # Calculate target duration and trim
+                        target_duration = await self._parent.bot.tools.calculate_target_duration(f)
+                        if target_duration:
+                            # Trim the file (you'll need to implement the trim function)
+                            trimmed_file = await clip.trim_to_duration(f, target_duration)
+                            if trimmed_file is None:
+                                raise FailedTrim
+                            else:
+                                return trimmed_file
+                    elif too_large_setting == "info":
+                        await root_msg.channel.send(
+                            f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
+                            "Unable to upload the file."
+                        )
+                    return None
                 return f
 
     @listen(MessageCreate)
@@ -104,7 +131,17 @@ class KickAutoEmbed(Extension):
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             return 1
-        clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
+        try:
+            clip_file = await self._dl.download_clip(clip, root_msg=respond_to)
+        except FailedTrim:
+            clipsize = os.stat(clip_file).st_size
+            emb = Embed(title="**Whoops...**",
+                        description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
+                                    f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
+            emb.description += create_nexus_str()
+            self.logger.info(f"Clip {clip.id} failed to trim :/")
+            await respond_to.reply(embed=emb)
+            return 1
         if clip_file is None:
             self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
@@ -124,7 +161,7 @@ class KickAutoEmbed(Extension):
                 clipsize = os.stat(clip_file).st_size
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nTry linking a shorter clip!\n"
-                                        f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
+                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
                 self.too_large_clips.append(clip.id)
                 self.logger.info(f"Clip {clip.id} was too large to embed in {respond_to.guild.name} - {respond_to.channel.name}")
