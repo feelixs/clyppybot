@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 possible_too_large = ["trim", "info", "none"]
 possible_on_err = ["info", "none"]
 
+
 class GuildDatabase:
     def __init__(self, db_path: str = "guild_settings.db"):
         self.db_path = db_path
