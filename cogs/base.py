@@ -40,7 +40,7 @@ class Base(Extension):
         help_embed = Embed(title="About CLYPPY", description=about)
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send("If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.", embed=help_embed)
+        await ctx.send(content="If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.", embed=help_embed)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
