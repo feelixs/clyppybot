@@ -9,7 +9,7 @@ import os
 import aiohttp
 
 
-async def save_to_server():
+async def save_to_server(logger):
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
@@ -23,7 +23,7 @@ async def save_to_server():
             logger.error(f"Failed to save database to server: {e}")
 
 
-async def load_from_server():
+async def load_from_server(logger):
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
@@ -54,7 +54,7 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.twitchautoembed')
     Bot.load_extension('cogs.kickautoembed')
-    await Bot.guild_settings.setup_db()
+    await Bot.guild_settings.setup_db(logger)
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
 
 

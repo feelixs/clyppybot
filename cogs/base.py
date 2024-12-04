@@ -23,7 +23,7 @@ class Base(Extension):
         if ctx.author.user.id != 164115540426752001:
             return await ctx.send("You are not allowed to use this command.")
         await ctx.send("Saving DB...")
-        await self.bot.guild_settings.save()
+        await self.bot.guild_settings.save(self.logger)
         await ctx.send("Exiting...")
         exit(0)
 
