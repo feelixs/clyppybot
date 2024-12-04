@@ -1,4 +1,4 @@
-from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen
+from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str
 import logging
@@ -35,6 +35,8 @@ class Base(Extension):
                                                description="Choose what CLYPPY should do upon error",
                                                required=False)])
     async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+        prepend_admin = False
+
         possible_can_edits = ["trim", "info", "none"]
         possible_on_errors = ["info", "none"]
         can_edit = False
@@ -42,6 +44,9 @@ class Base(Extension):
             can_edit = True
         if on_error in possible_on_errors:
             can_edit = True
+        if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
+            can_edit = False
+            prepend_admin = True
 
         if not can_edit:
             # respond with tutorial
@@ -57,6 +62,8 @@ class Base(Extension):
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
                      "Something missing? Please **Suggest a feature** using the link below.")
+            if prepend_admin:
+                about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
             tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
             await ctx.send(embed=tutorial_embed)
         else:
