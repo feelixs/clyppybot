@@ -53,7 +53,7 @@ class KickAutoEmbed(Extension):
 
                             # second pass if necessary
                             if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
-                                target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_duration=25.5)
+                                target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=25.5)
                                 trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
                             if trimmed_file is None:
                                 raise FailedTrim
