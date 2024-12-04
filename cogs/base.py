@@ -18,6 +18,16 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60*30))  # save db every 30 minutes
 
+    @slash_command(name="exit", description="Exit CLYPPY", scopes=[759798762171662399])
+    async def exit(self, ctx: SlashContext):
+        if ctx.author.user.id != 164115540426752001:
+            return await ctx.send("You are not allowed to use this command.")
+        await ctx.send("Saving DB...")
+        await self.bot.guild_settings.save()
+        await ctx.send("Exiting...")
+        await self.bot.close()
+        exit(0)
+
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
         about = (
