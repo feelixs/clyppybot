@@ -25,16 +25,16 @@ class GuildDatabase:
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS guild_settings (
                     guild_id INTEGER PRIMARY KEY,
-                    silent BOOL
+                    setting TEXT
                 )
             ''')
             conn.commit()
 
-    def get_silent(self, guild_id: int) -> Optional[str]:
+    def get_setting(self, guild_id: int) -> Optional[str]:
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
-                    'SELECT silent FROM guild_settings WHERE guild_id = ?',
+                    'SELECT setting FROM guild_settings WHERE guild_id = ?',
                     (guild_id,)
                 )
                 result = cursor.fetchone()
@@ -43,12 +43,12 @@ class GuildDatabase:
             logger.error(f"Database error when getting setting for guild {guild_id}: {e}")
             return None
 
-    def set_silent(self, guild_id: int, value: Any) -> bool:
+    def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""
         try:
             with self.get_db() as conn:
                 conn.execute('''
-                    INSERT OR REPLACE INTO guild_settings (guild_id, silent)
+                    INSERT OR REPLACE INTO guild_settings (guild_id, setting)
                     VALUES (?, ?)
                 ''', (guild_id, str(value)))
                 conn.commit()
