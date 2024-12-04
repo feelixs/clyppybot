@@ -153,8 +153,8 @@ class KickAutoEmbed(Extension):
         if clip_file is None:
             self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to download this clip: \n\n\
-                                            {clip_link}\nPlease try linking it again.\n"
+                        description=f"I messed up while trying to download this clip: "
+                                    f"\n\n{clip_link}\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb, delete_after=60)
