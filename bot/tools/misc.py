@@ -14,5 +14,5 @@ async def reply_if_loud(bot, parent: Message, content: str = None, file=None, em
     if not silent:
         await parent.reply(content, file=file, embed=embed, delete_after=delete_after)
     else:
-        # if silent, we need to dm them, and we cant use the other params there
-        await parent.author.user.get_dm().send(content)
+        # if silent, we need to dm them
+        await parent.author.user.get_dm().send(content, embed=embed, file=file)
