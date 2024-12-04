@@ -47,9 +47,13 @@ class GuildDatabase:
 
     def get_setting_str(self, guild_id):
         sett = self.get_setting(guild_id)
-        #if sett is None:
-        return possible_too_large[0], possible_on_err[0]
 
+        # translate to words
+        if sett is None:
+            settings = possible_too_large[0], possible_on_err[0]
+        settings = possible_too_large[int(sett[0])], possible_on_err[int(sett[1])]
+        return (f"**too_large**: {settings[0]}\n\n"
+                f"**on_error**: {settings[1]}")
 
     def get_too_large(self, guild_id):
         this_pos = possible_too_large
