@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 import logging
 import asyncio
 import json
+import time
 import traceback
 import os
 
@@ -28,32 +29,35 @@ class KickClip:
         driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
         self.logger.info("Started browser and monitoring network...")
 
+        async def scan_logs_for_m3u8(driver, timeout=10):
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                browser_log = driver.get_log('performance')
+                for entry in browser_log:
+                    event = json.loads(entry['message'])['message']
+                    try:
+                        if ('Network.requestWillBeSent' == event['method']
+                                and 'request' in event['params']
+                                and 'url' in event['params']['request']):
+                            url = event['params']['request']['url']
+                            if 'playlist.m3u8' in url:
+                                return url
+                    except Exception:
+                        continue
+                await asyncio.sleep(0.5)  # Short sleep to prevent CPU thrashing
+            return None
+
         try:
-            # Load clip page
             clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
             driver.get(clip_url)
 
-            # Wait a bit for network requests
-            await asyncio.sleep(5)
-            # Get and process performance logs
-            browser_log = driver.get_log('performance')
-            events = [json.loads(entry['message'])['message'] for entry in browser_log]
-            self.logger.info(f"lenhytj: {len(events)}")
-
-            # Filter for network responses and find m3u8 URL
-            for event in events:
-                try:
-                    if ('Network.requestWillBeSent' == event['method']
-                            and 'request' in event['params']
-                            and 'url' in event['params']['request']):
-                        url = event['params']['request']['url']
-                        if 'playlist.m3u8' in url:
-                            self.logger.info(f"Found m3u8 URL: {url}")
-                            return url
-                except Exception as e:
-                    continue
+            m3u8_url = await scan_logs_for_m3u8(driver)
+            if m3u8_url:
+                self.logger.info(f"Found m3u8 URL: {m3u8_url}")
+                return m3u8_url
 
             self.logger.error("No m3u8 URL found in logs")
+            return None
 
         except Exception as e:
             self.logger.error(traceback.format_exc())
