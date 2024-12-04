@@ -41,6 +41,7 @@ class KickClip:
                                 and 'url' in event['params']['request']):
                             url = event['params']['request']['url']
                             if 'playlist.m3u8' in url:
+                                self.logger.info(f"Found m3u8 URL: {m3u8_url} after {time.time() - start_time}")
                                 return url
                     except Exception:
                         continue
@@ -53,7 +54,6 @@ class KickClip:
 
             m3u8_url = await scan_logs_for_m3u8(driver)
             if m3u8_url:
-                self.logger.info(f"Found m3u8 URL: {m3u8_url}")
                 return m3u8_url
 
             self.logger.error("No m3u8 URL found in logs")
