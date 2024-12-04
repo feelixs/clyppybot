@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 from contextlib import contextmanager
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -10,8 +10,10 @@ possible_on_err = ["info", "none"]
 
 
 class GuildDatabase:
-    def __init__(self, db_path: str = "guild_settings.db"):
+    def __init__(self, db_path: str = "guild_settings.db", on_save: Callable = None, on_load: Callable = None):
         self.db_path = db_path
+        self.on_save = on_save
+        self.on_load = on_load
         self.setup_db()
 
     @contextmanager
@@ -22,8 +24,8 @@ class GuildDatabase:
         finally:
             conn.close()
 
-    def setup_db(self):
-        """Initialize the database with required tables."""
+    async def setup_db(self):
+        """Initialize the database with required tables and load from server."""
         with self.get_db() as conn:
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS guild_settings (
@@ -32,6 +34,10 @@ class GuildDatabase:
                 )
             ''')
             conn.commit()
+
+        # Load from server if callback exists
+        if self.on_load:
+            await self.on_load()
 
     def get_setting(self, guild_id: int) -> Optional[str]:
         try:
@@ -73,7 +79,7 @@ class GuildDatabase:
         error_setting = int(s[1])
         return on_er[error_setting]
 
-    def set_setting(self, guild_id: int, value: Any) -> bool:
+    async def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""
         try:
             with self.get_db() as conn:
@@ -82,6 +88,10 @@ class GuildDatabase:
                     VALUES (?, ?)
                 ''', (guild_id, str(value)))
                 conn.commit()
+
+                # Call the save callback if it exists
+                if self.on_save:
+                    await self.on_save(guild_id, value)
                 return True
         except sqlite3.Error as e:
             logger.error(f"Database error when setting value for guild {guild_id}: {e}")

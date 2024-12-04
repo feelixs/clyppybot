@@ -86,7 +86,7 @@ class Base(Extension):
                 self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **on_error** list.")
             # results in "00", "12", etc
-            self.bot.guild_settings.set_setting(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
+            await self.bot.guild_settings.set_setting(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
             await ctx.send("Successfully changed settings:\n\n"
                            f"**too_large**: {too_large}\n"
                            f"**on_error**: {on_error}")

@@ -6,6 +6,33 @@ from bot.kick import KickMisc
 import logging
 import asyncio
 import os
+import aiohttp
+import aiofiles
+
+
+async def save_to_server():
+    async with aiofiles.open("guild_settings.db", 'rb') as f:
+        db_bytes = await f.read()
+        async with aiohttp.ClientSession() as session:
+            try:
+                await session.put(
+                    'http://example.com/directory/guild_settings.db',
+                    data=db_bytes
+                )
+            except Exception as e:
+                logger.error(f"Failed to save database to server: {e}")
+
+
+async def load_from_server():
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get('http://example.com/directory/guild_settings.db') as response:
+                if response.status == 200:
+                    db_bytes = await response.read()
+                    async with aiofiles.open("guild_settings.db", 'wb') as f:
+                        await f.write(db_bytes)
+        except Exception as e:
+            logger.error(f"Failed to load database from server: {e}")
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -15,7 +42,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 Bot.twitch = TwitchMisc()
 Bot.kick = KickMisc()
 Bot.tools = Tools()
-Bot.guild_settings = GuildDatabase()
+Bot.guild_settings = GuildDatabase(on_load=None, on_save=None)
 
 
 async def main():
