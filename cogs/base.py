@@ -64,7 +64,7 @@ class Base(Extension):
                      "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
-                     f"**Current Settings**\n{cs}\n"
+                     f"**Current Settings:**\n{cs}\n\n"
                      "Something missing? Please **Suggest a Feature** using the link below.")
             if prepend_admin:
                 about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
