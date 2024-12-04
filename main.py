@@ -1,4 +1,5 @@
 from interactions import AutoShardedClient, Intents
+from bot.db import GuildDatabase
 from bot.twitch import TwitchMisc
 from bot.kick import KickMisc
 import logging
@@ -14,6 +15,7 @@ t = TwitchMisc()
 k = KickMisc()
 Bot.twitch = t
 Bot.kick = k
+Bot.guild_settings = GuildDatabase()
 
 
 async def main():
