@@ -5,6 +5,8 @@ from typing import Optional, Any
 
 logger = logging.getLogger(__name__)
 
+possible_too_large = ["trim", "info", "none"]
+possible_on_err = ["info", "none"]
 
 class GuildDatabase:
     def __init__(self, db_path: str = "guild_settings.db"):
@@ -43,8 +45,14 @@ class GuildDatabase:
             logger.error(f"Database error when getting setting for guild {guild_id}: {e}")
             return None
 
+    def get_setting_str(self, guild_id):
+        sett = self.get_setting(guild_id)
+        #if sett is None:
+        return possible_too_large[0], possible_on_err[0]
+
+
     def get_too_large(self, guild_id):
-        this_pos = ["trim", "info", "none"]
+        this_pos = possible_too_large
         s = self.get_setting(guild_id)
         if s is None:
             return this_pos[0]
@@ -52,7 +60,7 @@ class GuildDatabase:
         return this_pos[this_setting]
 
     def get_on_error(self, guild_id):
-        on_er = ["info", "none"]
+        on_er = possible_on_err
         s = self.get_setting(guild_id)
         if s is None:
             return on_er[0]
