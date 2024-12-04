@@ -23,7 +23,7 @@ class KickClip:
         options.arguments.extend(["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 
-        driver = uc.Chrome(options=options, desired_capabilities=caps)
+        driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
         self.logger.info("Started browser and monitoring network...")
 
         try:
