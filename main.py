@@ -8,16 +8,20 @@ import asyncio
 import os
 import aiohttp
 
+from aiohttp import FormData
+
 
 async def save_to_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with aiohttp.ClientSession() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
+            data = FormData()
+            data.add_field('env', env)
             with open("guild_settings.db", "rb") as f:
-                files = {'file': f}
+                data.add_field('file', f)
                 async with session.post('https://felixcreations.com/api/products/clyppy/save_db/',
-                                        files=files, headers=headers, data={'env': env}) as response:
+                                        data=data, headers=headers) as response:
                     if response.status == 200:
                         logger.info("Database saved to server")
                     else:
