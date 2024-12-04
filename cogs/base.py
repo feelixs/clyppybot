@@ -66,7 +66,7 @@ class Base(Extension):
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
                      f"**Current Settings**\n{cs}\n"
-                     "Something missing? Please **Suggest a feature** using the link below.")
+                     "Something missing? Please **Suggest a Feature** using the link below.")
             if prepend_admin:
                 about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
             tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
