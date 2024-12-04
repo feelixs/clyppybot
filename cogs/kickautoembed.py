@@ -45,22 +45,27 @@ class KickAutoEmbed(Extension):
                     if too_large_setting == "trim":
                         # Calculate target duration and trim
                         target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.9)
-                        if target_duration:
+                        if not target_duration:
+                            self._parent.logger.error("First target_duration() failed")
+                            raise FailedTrim
+                        trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
+                        self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                        if trimmed_file is None:
+                            raise FailedTrim
+
+                        # second pass if necessary
+                        if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
+                            target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.5)
+                            if not target_duration:
+                                self._parent.logger.error("Second target_duration() failed")
+                                raise FailedTrim
                             trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
                             self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
-                            if trimmed_file is None:
-                                raise FailedTrim
-
-                            # second pass if necessary
-                            if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
-                                target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.5)
-                                trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
-                                self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
-                            if trimmed_file is None:
-                                raise FailedTrim
-                            else:
-                                os.remove(f)  # remove original file
-                                return trimmed_file, 1
+                        if trimmed_file is None:
+                            raise FailedTrim
+                        else:
+                            os.remove(f)  # remove original file
+                            return trimmed_file, 1
                     elif too_large_setting == "info":
                         await root_msg.channel.send(
                             f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
