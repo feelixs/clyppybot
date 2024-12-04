@@ -12,4 +12,4 @@ def create_nexus_str():
 async def reply_if_loud(bot, parent: Message, content: str = None, file=None, embed=None, delete_after=None):
     silent = bot.guild_settings.get_silent(parent.guild.id)
     if not silent:
-        await parent.reply(content, file=file, embed=embed, delete_after=delete_after)
+        await parent.reply(content, file=file, embed=embed, delete_after=delete_after, ephemeral=True)
