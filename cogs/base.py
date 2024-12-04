@@ -34,14 +34,13 @@ class Base(Extension):
             "**TROUBLESHOOTING**\nIf CLYPPY isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
             " Required permissions are: `Attach Files`, `Send Messages`\n\n"
             "**RECOMMENDATIONS**\n "
-            " - So that CLYPPY can respond correctly, please ensure he has the permission listed above.\n"
-            " - Discord sometimes adds a preview for specific clip links. To reduce clutter, you can disable this feature for yourself in your Discord settings under:"
-            "\n**App Settings > Chat > Display Images, Videos, and LOLCats > When posted as links to chat** - uncheck this settings.\n\n"
+            "Discord sometimes adds a preview for specific clip links. To reduce clutter, you can disable this feature for yourself in your Discord settings under:"
+            "\n**App Settings > Chat > Display Images, Videos, and LOLCats > When posted as links to chat** - uncheck this setting\n\n"
             "**UPDATE Dec 3rd 2024** CLYPPY is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
         help_embed = Embed(title="About CLYPPY", description=about)
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send(embed=help_embed)
+        await ctx.send("If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.", embed=help_embed)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
