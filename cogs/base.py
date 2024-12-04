@@ -1,4 +1,4 @@
-from interactions import Extension, Embed, slash_command, SlashContext, listen
+from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str
 import logging
@@ -26,6 +26,12 @@ class Base(Extension):
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(embed=help_embed)
+
+    @slash_command(name="silence", description="Specify whether CLYPPY should send a message when a download fails",
+                   options=[SlashCommandOption(name="value", type=OptionType.BOOLEAN, description="TRUE=YES, FALSE=NO",
+                                               required=True)])
+    async def silence(self, ctx: SlashContext, value: bool):
+        self.bot.guild_settings.set_silent(ctx.guild.id, value)
 
     @listen()
     async def on_guild_join(self, event: GuildJoin):
