@@ -1,5 +1,6 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.support.ui import WebDriverWait
 import logging
 import asyncio
 import json
@@ -25,18 +26,20 @@ class KickClip:
         self.logger.info("Started browser and monitoring network...")
 
         try:
-            # Load clip page
             clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
             driver.get(clip_url)
 
-            # Wait a bit for network requests
-            await asyncio.sleep(5)
+            def logs_have_enough_events(driver):
+                browser_log = driver.get_log('performance')
+                events = [json.loads(entry['message'])['message'] for entry in browser_log]
+                return len(events) > 50  # Adjust this threshold based on testing
 
-            # Get and process performance logs
+            # Wait up to 5 seconds for enough events, checking every 0.5 seconds
+            WebDriverWait(driver, 5, poll_frequency=0.5).until(logs_have_enough_events)
+
             browser_log = driver.get_log('performance')
             events = [json.loads(entry['message'])['message'] for entry in browser_log]
 
-            # Filter for network responses and find m3u8 URL
             for event in events:
                 try:
                     if ('Network.requestWillBeSent' == event['method']
