@@ -1,3 +1,5 @@
+import traceback
+
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str
@@ -70,10 +72,12 @@ class Base(Extension):
             try:
                 possible_can_edits = possible_can_edits.index(too_large)
             except ValueError:
+                self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **too_large** list.")
             try:
                 possible_on_errors = possible_on_errors.index(on_error)
             except ValueError:
+                self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **on_error** list.")
             # results in "00", "12", etc
             self.bot.guild_settings.set_settings(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
