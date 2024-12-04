@@ -29,12 +29,12 @@ class KickAutoEmbed(Extension):
             async with self._semaphore:
                 if not isinstance(clip, KickClip):
                     self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
-                    return None
+                    return None, 0
 
                 # Download clip
                 f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
                 if not f:
-                    return None
+                    return None, 0
 
                 # Check file size
                 size_mb = os.path.getsize(f) / (1024 * 1024)
