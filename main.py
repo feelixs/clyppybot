@@ -18,7 +18,7 @@ async def save_to_server():
                 files = {'file': f}
                 await session.post('https://felixcreations.com/api/products/clyppy/save_db/',
                                    files=files, headers=headers, data={'env': env})
-
+            logger.info("Database saved to server")
         except Exception as e:
             logger.error(f"Failed to save database to server: {e}")
 
@@ -36,6 +36,7 @@ async def load_from_server():
                     content = await response.read()
                     with open('guild_settings.db', 'wb') as f:
                         f.write(content)
+            logger.info("Database loaded from server")
         except Exception as e:
             logger.error(f"Failed to get database from server: {e}")
 
