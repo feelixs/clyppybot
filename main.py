@@ -7,26 +7,25 @@ import logging
 import asyncio
 import os
 import aiohttp
-import aiofiles
 
 
 async def save_to_server():
-    async with aiofiles.open("guild_settings.db", 'rb') as f:
-        db_bytes = await f.read()
-        async with aiohttp.ClientSession() as session:
-            try:
-                await session.put(
-                    'http://example.com/directory/guild_settings.db',
-                    data=db_bytes
-                )
-            except Exception as e:
-                logger.error(f"Failed to save database to server: {e}")
+    async with aiohttp.ClientSession() as session:
+        try:
+            headers = {'X-API-Key': os.getenv('clyppy_post_key')}
+            with open("guild_settings.db", "rb") as f:
+                files = {'file': f}
+                await session.post('https://felixcreations.com/api/products/clyppy/save_db/',
+                                   data=files, headers=headers)
+
+        except Exception as e:
+            logger.error(f"Failed to save database to server: {e}")
 
 
 async def load_from_server():
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get('http://example.com/directory/guild_settings.db') as response:
+            async with session.get('https://example.com/directory/guild_settings.db') as response:
                 if response.status == 200:
                     db_bytes = await response.read()
                     async with aiofiles.open("guild_settings.db", 'wb') as f:
