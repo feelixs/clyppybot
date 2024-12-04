@@ -10,6 +10,9 @@ def create_nexus_str():
 
 
 async def reply_if_loud(bot, parent: Message, content: str = None, file=None, embed=None, delete_after=None):
-    silent = bot.guild_settings.get_silent(parent.guild.id) or False
+    silent = bot.guild_settings.get_silent(parent.guild.id) or True
     if not silent:
-        await parent.reply(content, file=file, embed=embed, delete_after=delete_after, ephemeral=True)
+        await parent.reply(content, file=file, embed=embed, delete_after=delete_after)
+    else:
+        # if silent, we need to dm them, and we cant use the other params there
+        await parent.author.user.get_dm().send(content)
