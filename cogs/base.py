@@ -27,11 +27,46 @@ class Base(Extension):
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(embed=help_embed)
 
-    @slash_command(name="silence", description="Specify whether CLYPPY should send a message when a download fails",
-                   options=[SlashCommandOption(name="value", type=OptionType.BOOLEAN, description="TRUE=YES, FALSE=NO",
-                                               required=True)])
-    async def silence(self, ctx: SlashContext, value: bool):
-        self.bot.guild_settings.set_silent(ctx.guild.id, value)
+    @slash_command(name="settings", description="Display or change CLYPPY's settings",
+                   options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
+                                               description="Choose what CLYPPY should do with large files",
+                                               required=False),
+                            SlashCommandOption(name="on_error", type=OptionType.STRING,
+                                               description="Choose what CLYPPY should do upon error",
+                                               required=False)])
+    async def silence(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+        possible_can_edits = ["trim", "info", "none"]
+        possible_on_errors = ["info", "none"]
+        can_edit = False
+        if too_large in possible_can_edits:
+            can_edit = True
+        if on_error in possible_on_errors:
+            can_edit = True
+
+        if not can_edit:
+            # respond with tutorial
+            about = ("**Configurable Settings:**\n"
+                     "Below are the settings you can configure using this command. Each setting name is in **bold**, "
+                     "followed by its available options.\n\n"
+                     "**too_large** Choose what CLYPPY should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
+                     " - `trim`: CLYPPY will trim the video until it's within Discord's size limit and upload the resulting file.\n"
+                     " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
+                     " - `none`: The upload will fail and CLYPPY will do nothing.\n"
+                     " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
+                     "**on_error Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
+                     " - `info`: CLYPPY responds with a statement that he can't continue.\n"
+                     " - `none`: CLYPPY will do nothing\n\n"
+                     "Something missing? Please **Suggest a feature** using the link below.")
+            tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about)
+            await ctx.send(embed=tutorial_embed)
+        else:
+            possible_can_edits = possible_can_edits.index(can_edit) + 1
+            possible_on_errors = possible_on_errors.index(on_error) + 1
+            # results in "11", "12", etc
+            self.bot.guild_settings.set_settings(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
+            await ctx.send("Successfully changed settings:\n\n"
+                           f"**too_large**: {possible_can_edits}"
+                           f"**on_error**: {on_error}")
 
     @listen()
     async def on_guild_join(self, event: GuildJoin):
