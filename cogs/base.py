@@ -26,7 +26,12 @@ class Base(Extension):
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
         await self.bot.stop()
-        asyncio.get_running_loop().stop()
+
+        tasks = asyncio.all_tasks()
+        for task in tasks:
+            task.cancel()
+        loop = asyncio.get_event_loop()
+        loop.close()
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
