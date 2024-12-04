@@ -18,8 +18,8 @@ class GuildDatabase:
 
     async def save(self):
         """Save database to server if callback exists."""
-        logger.info("Saving database to the server...")
         if self.on_save:
+            logger.info("Saving database to the server...")
             await self.on_save()
 
     @contextmanager
@@ -43,6 +43,7 @@ class GuildDatabase:
 
         # Load from server if callback exists
         if self.on_load:
+            logger.info("Loading database from the server...")
             await self.on_load()
 
     def get_setting(self, guild_id: int) -> Optional[str]:
