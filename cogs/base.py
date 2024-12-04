@@ -26,6 +26,7 @@ class Base(Extension):
         await self.bot.guild_settings.save()
         await ctx.send("Exiting...")
         await self.bot.stop()
+        asyncio.get_running_loop().stop()
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
