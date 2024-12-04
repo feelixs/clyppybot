@@ -9,7 +9,7 @@ def create_nexus_str():
     return f"\n\n**[Invite CLYPPY]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
-async def reply_if_loud(bot, parent: Message, content: str = None, file=None, embed=None, delete_after=None):
+async def reply_or_dm(bot, parent: Message, content: str = None, file=None, embed=None, delete_after=None):
     silent = bot.guild_settings.get_silent(parent.guild.id) or True
     if not silent:
         await parent.reply(content, file=file, embed=embed, delete_after=delete_after)
