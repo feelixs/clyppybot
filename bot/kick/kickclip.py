@@ -7,6 +7,7 @@ import logging
 import asyncio
 import json
 import traceback
+import os
 
 
 class KickClip:
@@ -28,20 +29,18 @@ class KickClip:
         self.logger.info("Started browser and monitoring network...")
 
         try:
+            # Load clip page
             clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
             driver.get(clip_url)
 
-            def logs_have_enough_events(driver):
-                browser_log = driver.get_log('performance')
-                events = [json.loads(entry['message'])['message'] for entry in browser_log]
-                return len(events) > 50  # Adjust this threshold based on testing
-
-            # Wait up to 5 seconds for enough events, checking every 0.5 seconds
-            WebDriverWait(driver, 5, poll_frequency=0.5).until(logs_have_enough_events)
-
+            # Wait a bit for network requests
+            await asyncio.sleep(5)
+            # Get and process performance logs
             browser_log = driver.get_log('performance')
             events = [json.loads(entry['message'])['message'] for entry in browser_log]
+            self.logger.info(f"lenhytj: {len(events)}")
 
+            # Filter for network responses and find m3u8 URL
             for event in events:
                 try:
                     if ('Network.requestWillBeSent' == event['method']
@@ -55,7 +54,6 @@ class KickClip:
                     continue
 
             self.logger.error("No m3u8 URL found in logs")
-            return None
 
         except Exception as e:
             self.logger.error(traceback.format_exc())
@@ -66,6 +64,9 @@ class KickClip:
     async def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
         if filename is None:
             filename = f"clip_{self.id}.mp4"
+        if os.path.isfile(filename):
+            self.logger.info(f"File `{filename}` already exists, no need to download")
+            return filename
 
         m3u8_url = await self.get_m3u8_url()
         if not m3u8_url:
