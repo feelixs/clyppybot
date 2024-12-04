@@ -27,6 +27,19 @@ class Base(Extension):
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(embed=help_embed)
 
+    @slash_command(name="silence", description="Specify whether CLYPPY should send a message when a download fails",
+                   options=[SlashCommandOption(name="value", type=OptionType.BOOLEAN, description="TRUE=YES, FALSE=NO",
+                                               required=True)])
+    async def silence(self, ctx: SlashContext, value: bool):
+        self.bot.guild_settings.set_silent(ctx.guild.id, value)
+
+    @listen()
+    async def on_guild_join(self, event: GuildJoin):
+        if self.ready:
+            if os.getenv("TEST") is not None:
+                await self.post_servers(len(self.bot.guilds))
+            self.logger.info(f'Joined new guild: {event.guild.name}')
+
     @listen()
     async def on_guild_left(self, event: GuildLeft):
         if self.ready:
