@@ -162,7 +162,7 @@ class KickAutoEmbed(Extension):
 
         # send video file
         try:
-            if edited:
+            if not edited:
                 comp = Button(style=ButtonStyle.LINK, label="View On Kick", url=clip_link)
             else:
                 comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip_link)
