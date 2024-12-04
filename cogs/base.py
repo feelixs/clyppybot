@@ -57,7 +57,7 @@ class Base(Extension):
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
                      " - `none`: CLYPPY will do nothing\n\n"
                      "Something missing? Please **Suggest a feature** using the link below.")
-            tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about)
+            tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
             await ctx.send(embed=tutorial_embed)
         else:
             possible_can_edits = possible_can_edits.index(can_edit) + 1
