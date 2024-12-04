@@ -1,4 +1,6 @@
 import undetected_chromedriver as uc
+from interactions import Message
+from typing import Union
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
 import asyncio
@@ -58,7 +60,7 @@ class KickClip:
         finally:
             driver.quit()
 
-    async def download(self, filename=None):
+    async def download(self, msg_ctx: Message, autocompress=False, filename: Union[str, None] = None):
         if filename is None:
             filename = f"clip_{self.id}.mp4"
 
