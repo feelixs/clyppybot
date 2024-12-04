@@ -1,6 +1,7 @@
 from interactions import AutoShardedClient, Intents
 from bot.db import GuildDatabase
 from bot.twitch import TwitchMisc
+from bot.tools import Tools
 from bot.kick import KickMisc
 import logging
 import asyncio
@@ -11,10 +12,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
-t = TwitchMisc()
-k = KickMisc()
-Bot.twitch = t
-Bot.kick = k
+Bot.twitch = TwitchMisc()
+Bot.kick = KickMisc()
+Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase()
 
 
