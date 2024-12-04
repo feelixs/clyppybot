@@ -47,6 +47,8 @@ class Tools:
 
         # Calculate target duration
         mb_per_second = current_size_mb / current_duration_sec
+        self.logger.info(f"Current size: {current_size_mb} MB, duration: {current_duration_sec} seconds, speed: {mb_per_second} MB/s")
         target_duration = target_size_mb / mb_per_second
+        self.logger.info(f"Target duration: {target_duration} seconds")
 
         return target_duration
