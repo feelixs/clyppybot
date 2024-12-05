@@ -21,10 +21,11 @@ class KickAutoEmbed(Extension):
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
         try:
-            # check if its dm
             if event.message.guild is not None:
+                event.message.guild.id = event.message.author.id  # if we're in dm context, set the guild id to the author id
+            else:
+                # if we're in guild ctx, we need to verify clyppy has the right perms
                 if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
-                    # self.logger.info(f"Missing Attach Files permission in {event.message.guild.name} - {event.message.channel.name}, skipping quick embed")
                     return 1
                 if Permissions.SEND_MESSAGES not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
