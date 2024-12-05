@@ -104,7 +104,7 @@ class KickAutoEmbed(Extension):
 
         # download clip video
         try:
-            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to)
+            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to, ctx_guild=guild)
         except FailedTrim:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             if self.bot.guild_settings.get_on_error(guild.id) == "dm":

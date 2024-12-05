@@ -36,14 +36,14 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message) -> (Union[KickClip, TwitchClip], int):
+    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, ctx_guild: GuildType) -> (Union[KickClip, TwitchClip], int):
         async with self._semaphore:
             if not isinstance(clip, Union[KickClip, TwitchClip]):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None, 0
 
             # Download clip
-            f = await clip.download(root_msg, [root_msg.guild.id == 759798762171662399])
+            f = await clip.download(root_msg, [ctx_guild.id == 759798762171662399])
             if not f:
                 return None, 0
 
@@ -51,7 +51,7 @@ class DownloadManager:
             size_mb = os.path.getsize(f) / (1024 * 1024)
             if size_mb > 25:
                 # Get guild setting for handling large files
-                too_large_setting = self._parent.bot.guild_settings.get_too_large(root_msg.guild.id)
+                too_large_setting = self._parent.bot.guild_settings.get_too_large(ctx_guild.id)
 
                 if too_large_setting == "trim":
                     # Calculate target duration and trim
