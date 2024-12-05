@@ -66,6 +66,7 @@ class DownloadManager:
 
                     if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
                         if trimmed_file is not None:
+                            self._parent.logger.info("Deleting original file...")
                             os.remove(f)  # remove original file
                             return trimmed_file, 1
 
@@ -81,6 +82,8 @@ class DownloadManager:
                     self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
                                              f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024))}MB")
                     if second_trimmed_file is not None:
+                        self._parent.logger.info("Deleting both original files...\n"
+                                                 f"And returning {second_trimmed_file}")
                         os.remove(f)
                         os.remove(trimmed_file)  # remove original files
                         return second_trimmed_file, 1
