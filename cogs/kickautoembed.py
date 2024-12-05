@@ -77,7 +77,7 @@ class KickAutoEmbed(Extension):
         if parsed_id in self.too_large_clips:
             self.logger.info(
                 f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
-            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to,
                                                      f"The clip {clip_link} was previously reported as too large to fit Discord's limit.")
                 return 1
@@ -92,7 +92,7 @@ class KickAutoEmbed(Extension):
         clip = await self.bot.kick.get_clip(clip_link)
         if clip is None:
             self.logger.info(f"Failed to download clip: **Invalid Clip Link** {clip_link}")
-            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to,
                                                      f"Failed to download clip: **Invalid Clip Link** {clip_link}")
                 return 1
@@ -108,7 +108,7 @@ class KickAutoEmbed(Extension):
 
             if clip_file is None:
                 self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
-                if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+                if self.bot.guild_settings.is_dm_on_error(guild.id):
                     await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                     return 1
                 emb = Embed(title="**Oops...**",
@@ -120,7 +120,7 @@ class KickAutoEmbed(Extension):
                 return 1
         except FailedTrim:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
-            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to, guild,
                                                      f"The clip `{clip_link}` was too large to upload to Discord, "
                                                      f"and I failed to properly trim the video from it.")
@@ -136,7 +136,7 @@ class KickAutoEmbed(Extension):
             return 1
         except:
             self.logger.info(f"Unhandled exception in download - notifying: {traceback.format_exc()}")
-            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                 return 1
             emb = Embed(title="**Oops...**",
@@ -163,7 +163,7 @@ class KickAutoEmbed(Extension):
                 self.too_large_clips.append(clip.id)
                 clipsize = os.stat(clip_file).st_size
                 self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
-                if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+                if self.bot.guild_settings.is_dm_on_error(guild.id):
                     await self.bot.tools.send_dm_err_msg(respond_to, guild,
                                                          f"The clip {clip_link} was too large to embed in {guild.name} "
                                                          f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)")
@@ -176,7 +176,7 @@ class KickAutoEmbed(Extension):
                 return 1
             else:
                 self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
-                if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+                if self.bot.guild_settings.is_dm_on_error(guild.id):
                     await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                     return 1
                 emb = Embed(title="**Oops...**",
@@ -188,7 +188,7 @@ class KickAutoEmbed(Extension):
                 return 1
         except:
             self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
-            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                 return 1
             emb = Embed(title="**Oops...**",
