@@ -8,7 +8,7 @@ import os
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
 
 
-VERSION = "1.1b"
+VERSION = "1.2b"
 
 
 class Base(Extension):

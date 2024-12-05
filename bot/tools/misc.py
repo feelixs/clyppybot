@@ -9,6 +9,8 @@ from bot.kick import KickClip
 from bot.twitch import TwitchClip
 from typing import Optional, Union
 from bot.errors import FailedTrim
+from dataclasses import dataclass
+
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["info", "dm"]
@@ -16,6 +18,12 @@ POSSIBLE_ON_ERRORS = ["info", "dm"]
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
 INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
 TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
+
+
+@dataclass
+class GuildType:
+    id: int
+    name: str
 
 
 def create_nexus_str():
@@ -83,10 +91,10 @@ class Tools:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    async def send_dm_err_msg(self, ctx, content):
+    async def send_dm_err_msg(self, ctx, guild, content):
         try:
             await ctx.author.send(f"{content}\n\n"
-                                  f"This error occurred while trying to embed the clip in {ctx.guild.name} - <#{ctx.channel.id}>")
+                                  f"This error occurred while trying to embed the clip in {guild.name}")
         except:
             self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
 

@@ -21,8 +21,9 @@ class TwitchAutoEmbed(Extension):
     async def on_message_create(self, event: MessageCreate):
         try:
             if event.message.guild is None:
-                event.message.guild.id = event.message.author.id  # if we're in dm context, set the guild id to the author id
+                guild_id = event.message.author.id  # if we're in dm context, set the guild id to the author id
             else:
+                guild_id = event.message.guild.id
                 # if we're in guild ctx, we need to verify clyppy has the right perms
                 if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
