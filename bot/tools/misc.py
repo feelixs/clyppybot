@@ -66,7 +66,7 @@ class DownloadManager:
 
                     # second pass if necessary
                     if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
-                        target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.5)
+                        target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24)
                         if not target_duration:
                             self._parent.logger.error("Second target_duration() failed")
                             raise FailedTrim
