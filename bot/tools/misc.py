@@ -73,8 +73,7 @@ class DownloadManager:
                         trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
                         if trimmed_file is None:
                             raise FailedTrim
-                        self._parent.logger.info(
-                            f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                        self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
                     if trimmed_file is not None:
                         os.remove(f)  # remove original file
                         return trimmed_file, 1
