@@ -51,7 +51,7 @@ class DownloadManager:
             size_mb = os.path.getsize(f) / (1024 * 1024)
             if size_mb > 25:
                 # Get guild setting for handling large files
-                too_large_setting = self._parent.bot.guild_settings.get_too_large(guild_ctx.id).setting_str
+                too_large_setting = self._parent.bot.guild_settings.get_too_large(guild_ctx.id)
 
                 if too_large_setting == "trim":
                     # Calculate target duration and trim
