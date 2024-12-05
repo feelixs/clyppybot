@@ -18,7 +18,7 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60*30))  # save db every 30 minutes
 
-    @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399, 921442433097662575])
+    @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
