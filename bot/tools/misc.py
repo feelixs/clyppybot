@@ -118,7 +118,9 @@ class Tools:
     async def send_dm_err_msg(self, ctx, guild, content):
         try:
             await ctx.author.send(f"{content}\n\n"
-                                  f"This error occurred while trying to embed the clip in {guild.name}")
+                                  f"This error occurred while trying to embed the clip in {guild.name}. "
+                                  f"You're receiving this message because that server has the 'dm' setting"
+                                  f"enabled for one of its `/settings`")
         except:
             self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
 
