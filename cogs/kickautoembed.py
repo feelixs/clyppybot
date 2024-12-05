@@ -135,7 +135,7 @@ class KickAutoEmbed(Extension):
             self.logger.info("Failed to download clip, dm/info triggered")
             return 1
         except:
-            self.logger.info("Unhandled exception in download - notifying")
+            self.logger.info(f"Unhandled exception in download - notifying: {traceback.format_exc()}")
             if self.bot.guild_settings.get_on_error(guild.id) == "dm":
                 await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                 return 1
