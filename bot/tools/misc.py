@@ -62,21 +62,29 @@ class DownloadManager:
                     if trimmed_file is None:
                         self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
-                    self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                    self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024))}MB")
 
-                    # second pass if necessary
-                    if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
-                        target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24)
-                        if not target_duration:
-                            self._parent.logger.error("Second target_duration() failed")
-                            raise FailedTrim
-                        trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
-                        if trimmed_file is None:
-                            raise FailedTrim
-                        self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
-                    if trimmed_file is not None:
-                        os.remove(f)  # remove original file
-                        return trimmed_file, 1
+                    if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
+                        if trimmed_file is not None:
+                            os.remove(f)  # remove original file
+                            return trimmed_file, 1
+
+                    # second pass is necessary
+                    second_target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24)
+                    if not second_target_duration:
+                        self._parent.logger.error("Second target_duration() failed")
+                        raise FailedTrim
+                    second_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, second_target_duration)
+                    if second_trimmed_file is None:
+                        self._parent.logger.error("Second trim_to_duration() failed")
+                        raise FailedTrim
+                    self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
+                                             f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024))}MB")
+                    if second_trimmed_file is not None:
+                        os.remove(f)
+                        os.remove(trimmed_file)  # remove original files
+                        return second_trimmed_file, 1
+
                 elif too_large_setting == "info":
                     await root_msg.reply(
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
