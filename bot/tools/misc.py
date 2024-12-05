@@ -64,11 +64,10 @@ class DownloadManager:
                             self._parent.logger.error("Second target_duration() failed")
                             raise FailedTrim
                         trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
-                        self._parent.logger.info(
-                            f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
-                    if trimmed_file is None:
-                        raise FailedTrim
-                    else:
+                        if trimmed_file is None:
+                            raise FailedTrim
+                        self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                    if trimmed_file is not None:
                         os.remove(f)  # remove original file
                         return trimmed_file, 1
                 elif too_large_setting == "info":
