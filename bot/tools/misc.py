@@ -92,7 +92,9 @@ class DownloadManager:
                                                                          f"Please either\n"
                                                                          f" - upload a shorter clip\n"
                                                                          f" - ask a server admin to change CLYPPY "
-                                                                         f"settings to `too_large='trim'`")
+                                                                         f"settings to `too_large='trim'`\n"
+                                                                         f" - resend the link in this DM and I'll"
+                                                                         f"upload a trimmed version")
                     raise FailureHandled
                 else:
                     self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
