@@ -49,7 +49,7 @@ class KickAutoEmbed(Extension):
                     if not next_link_exists:
                         return 1
                     await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
-                    await self._process_this_clip_link(words[index], event.message, True)
+                    await self._process_this_clip_link(words[index], event.message, guild, True)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
