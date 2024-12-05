@@ -85,7 +85,8 @@ class DownloadManager:
                     )
                     raise FailureHandled
                 elif too_large_setting == "dm":
-                    self._parent.bot.tools.send_dm_err_msg(f"Sorry, this clip is too large ({size_mb:.1f}MB) "
+                    self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
+                                                           content=f"Sorry, this clip is too large ({size_mb:.1f}MB) "
                                                            f"for Discord's 25MB limit. Unable to upload the file.")
                     raise FailureHandled
                 raise Exception(f"Unhandled Exception in {__name__}")
