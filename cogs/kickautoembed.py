@@ -21,7 +21,7 @@ class KickAutoEmbed(Extension):
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
         try:
-            if event.message.guild is not None:
+            if event.message.guild is None:
                 event.message.guild.id = event.message.author.id  # if we're in dm context, set the guild id to the author id
             else:
                 # if we're in guild ctx, we need to verify clyppy has the right perms
