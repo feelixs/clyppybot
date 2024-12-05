@@ -62,7 +62,7 @@ class DownloadManager:
                     if trimmed_file is None:
                         self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
-                    self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024))}MB")
+                    self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
 
                     if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
                         if trimmed_file is not None:
@@ -80,7 +80,7 @@ class DownloadManager:
                         self._parent.logger.error("Second trim_to_duration() failed")
                         raise FailedTrim
                     self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
-                                             f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024))}MB")
+                                             f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024), 1)}MB")
                     if second_trimmed_file is not None:
                         self._parent.logger.info("Deleting both original files...\n"
                                                  f"({f}, {trimmed_file}"
