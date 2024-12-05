@@ -98,6 +98,9 @@ class GuildDatabase:
     def is_dm_on_error(self, guild_id) -> bool:
         return str(self.get_on_error(guild_id)) == "dm"
 
+    def is_trim_enabled(self, guild_id) -> bool:
+        return str(self.get_too_large(guild_id)) == "trim"
+
     async def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""
         try:
