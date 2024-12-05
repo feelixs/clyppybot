@@ -3,6 +3,7 @@ from typing import Optional
 import logging
 from bot.twitch.twitchclip import TwitchClip
 from os import getenv, path
+import re
 
 
 class TwitchMisc:
@@ -32,12 +33,12 @@ class TwitchMisc:
         return slug
 
     @staticmethod
-    def is_twitch_clip_link(message: str):
-        "https://clips.twitch.tv/BombasticSuccessfulMonitorSoonerLater-19gZfam5vc-A5CFh"
-        return message.startswith("https://www.twitch.tv/") or message.startswith("https://www.m.twitch.tv/") \
-            or message.startswith("https://twitch.tv/") or message.startswith("https://m.twitch.tv/") \
-            or message.startswith("https://clips.twitch.tv/") or message.startswith("https://m.clips.twitch.tv/") \
-            or message.startswith("https://www.clips.twitch.tv/") or message.startswith("https://www.m.clips.twitch.tv/")
+    def is_twitch_clip_link(url: str) -> bool:
+        patterns = [
+            r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
+            r'https?://(?:www\.|m\.)?twitch\.tv/[a-zA-Z0-9_-]+/clip/[a-zA-Z0-9_-]+'
+        ]
+        return any(re.match(pattern, url) for pattern in patterns)
 
     async def get_clip(self, url: str) -> Optional[TwitchClip]:
         slug = self.parse_clip_url(url)
