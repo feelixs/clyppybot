@@ -35,8 +35,7 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (
-    Union[KickClip, TwitchClip], int):
+    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[KickClip, TwitchClip], int):
         async with self._semaphore:
             if not isinstance(clip, Union[KickClip, TwitchClip]):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
