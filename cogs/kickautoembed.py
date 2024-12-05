@@ -74,17 +74,22 @@ class KickAutoEmbed(Extension):
 
     async def _process_this_clip_link(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
         parsed_id = self.bot.kick.parse_clip_url(clip_link)
-        if parsed_id in self.too_large_clips:
-            self.logger.info(
-                f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
+        if parsed_id in self.too_large_clips and not self.bot.guild_settings.is_trim_enabled(guild.id):
+            self.logger.info(f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
             if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to,
-                                                     f"The clip {clip_link} was previously reported as too large to fit Discord's limit.")
+                await self.bot.tools.send_dm_err_msg(respond_to,  f"The clip {clip_link} was previously reported as too large to fit Discord's limit.\n\n"
+                                                                  f"You can either:"
+                                                                  f" - upload a shorter clip\n"
+                                                                  f" - ask a server admin to change CLYPPY "
+                                                                  f"settings to `too_large='trim'`\n"
+                                                                  f" - resend the link in this DM and I'll"
+                                                                  f" upload a trimmed version"
+                                                     )
                 return 1
             emb = Embed(title="**Whoops...**",
-                        description=f"Looks like the video embed failed this clip:\n{clip_link}\n\n "
-                                    f"Try linking a shorter clip!\n"
-                                    "This clip file was previously reported as too large to fit Discord's limit.")
+                        description=f"Looks like the video embed failed this clip as it was too large:\n{clip_link}\n\n "
+                                    f"Either: link a shorter clip, ask an admin to enable `too_large='trim'` "
+                                    f"using /settings, or DM me the link and I'll trim it for you.")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             return 1
@@ -93,8 +98,7 @@ class KickAutoEmbed(Extension):
         if clip is None:
             self.logger.info(f"Failed to download clip: **Invalid Clip Link** {clip_link}")
             if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to,
-                                                     f"Failed to download clip: **Invalid Clip Link** {clip_link}")
+                await self.bot.tools.send_dm_err_msg(respond_to, f"Failed to download clip: **Invalid Clip Link** {clip_link}")
                 return 1
             emb = Embed(title="**Invalid Clip Link**",
                         description=f"Looks like the Kick clip `{clip_link}` couldn't be downloaded. Verify that it exists")
