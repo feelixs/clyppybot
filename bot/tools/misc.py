@@ -88,7 +88,11 @@ class DownloadManager:
                     await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
                                                                  content=f"Sorry, this clip is too large "
                                                                          f"({size_mb:.1f}MB) for Discord's 25MB "
-                                                                         f"limit. Unable to upload the file.")
+                                                                         f"limit. Unable to upload the file.\n\n"
+                                                                         f"Please either\n"
+                                                                         f" - upload a shorter clip\n"
+                                                                         f" - ask a server admin to change CLYPPY"
+                                                                         f"settings to `too_large='trim'`")
                     raise FailureHandled
                 else:
                     self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
