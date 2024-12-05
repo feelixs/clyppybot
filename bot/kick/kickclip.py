@@ -14,7 +14,7 @@ class KickClip:
     def __init__(self, slug, user):
         self.id = slug
         self.user = user
-        self.url = f"https://kick.com/{user}/clip_{slug}"
+        self.url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.logger = logging.getLogger(__name__)
 
     async def get_m3u8_url(self):
