@@ -75,7 +75,7 @@ class DownloadManager:
                     if not second_target_duration:
                         self._parent.logger.error("Second target_duration() failed")
                         raise FailedTrim
-                    second_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, second_target_duration)
+                    second_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, second_target_duration, append="_trimmed2")
                     if second_trimmed_file is None:
                         self._parent.logger.error("Second trim_to_duration() failed")
                         raise FailedTrim
@@ -171,12 +171,14 @@ class Tools:
 
         return target_duration
 
-    async def trim_to_duration(self, input_file: str, target_duration: float) -> Optional[str]:
+    async def trim_to_duration(self, input_file: str, target_duration: float, append=None) -> Optional[str]:
         """
         Trims video to target duration using ffmpeg
         Returns path to trimmed file or None if failed
         """
-        output_file = input_file.replace('.mp4', '_trimmed.mp4')
+        if append is None:
+            append = "_trimmed"
+        output_file = input_file.replace('.mp4', f'{append}.mp4')
         self.logger.info(f"Trimming {input_file}...")
         try:
             # Use ffmpeg to trim without re-encoding (-c copy)
