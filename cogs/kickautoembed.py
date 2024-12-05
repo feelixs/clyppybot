@@ -122,6 +122,7 @@ class KickAutoEmbed(Extension):
                 emb.description += create_nexus_str()
                 await respond_to.reply(embed=emb, delete_after=60)
                 return
+
         except FailedTrim:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             if self.bot.guild_settings.is_dm_on_error(guild.id):
