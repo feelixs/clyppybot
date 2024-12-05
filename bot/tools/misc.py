@@ -11,7 +11,6 @@ from typing import Optional, Union
 from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
 
-
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["info", "dm"]
 
@@ -36,7 +35,8 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[KickClip, TwitchClip], int):
+    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (
+    Union[KickClip, TwitchClip], int):
         async with self._semaphore:
             if not isinstance(clip, Union[KickClip, TwitchClip]):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
@@ -74,7 +74,8 @@ class DownloadManager:
                         trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
                         if trimmed_file is None:
                             raise FailedTrim
-                        self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
+                        self._parent.logger.info(
+                            f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
                     if trimmed_file is not None:
                         os.remove(f)  # remove original file
                         return trimmed_file, 1
@@ -86,15 +87,14 @@ class DownloadManager:
                     raise FailureHandled
                 elif too_large_setting == "dm":
                     await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
-                                                           content=f"Sorry, this clip is too large ({size_mb:.1f}MB) "
-                                                           f"for Discord's 25MB limit. Unable to upload the file.")
+                                                                 content=f"Sorry, this clip is too large ({size_mb:.1f}MB) "
+                                                                         f"for Discord's 25MB limit. Unable to upload the file.")
                     raise FailureHandled
                 else:
                     self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
-                    await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
-                                                           content=f"Your settings were out of whack!\n\n"
-                                                                   f"For `too_large` got: **{too_large_setting}**\n"
-                                                                   f"Expected: {POSSIBLE_TOO_LARGE}")
+                    await root_msg.reply(f"Your server's settings were out of whack!\n\n"
+                                         f"For `too_large` got: '{too_large_setting}'\n"
+                                         f"Expected: {POSSIBLE_TOO_LARGE}")
                     raise FailureHandled
                 raise Exception(f"Unhandled Exception in bot.tools.misc")
             return f, 0
