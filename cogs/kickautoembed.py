@@ -146,13 +146,11 @@ class KickAutoEmbed(Extension):
             if e.status == 413:  # Check the error source for 413 (file too large)
                 self.too_large_clips.append(clip.id)
                 clipsize = os.stat(clip_file).st_size
-                self.logger.info(
-                    f"Clip {clip.id} was too large to embed in {guild.name} - {respond_to.channel.name}")
+                self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
                 if self.bot.guild_settings.get_on_error(guild.id) == "dm":
                     await self.bot.tools.send_dm_err_msg(respond_to, guild,
                                                          f"The clip {clip_link} was too large to embed in {guild.name} "
-                                                         f"- {respond_to.channel.name} ({round(clipsize / (1024 * 1024), 1)}MB, "
-                                                         f"Discord's Limit is 25MB)")
+                                                         f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)")
                     return 1
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
