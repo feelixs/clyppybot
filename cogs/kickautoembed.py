@@ -115,10 +115,8 @@ class KickAutoEmbed(Extension):
                 if self.bot.guild_settings.is_dm_on_error(guild.id):
                     await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                     return
-                emb = Embed(title="**Oops...**",
-                            description=f"I messed up while trying to download this clip: "
-                                        f"\n\n{clip_link}\nPlease try linking it again.\n"
-                                        "If the issue keeps on happening, please contact us on our support server.")
+                emb = Embed(title="**Invalid Clip Link**",
+                            description=f"Looks like the Kick clip `{clip_link}` couldn't be downloaded. Verify that it exists")
                 emb.description += create_nexus_str()
                 await respond_to.reply(embed=emb, delete_after=60)
                 return
