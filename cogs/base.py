@@ -51,19 +51,22 @@ class Base(Extension):
             await ctx.send("This command is only available in servers.")
             return
 
-        # Check permissions first
         if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
             await self._send_settings_help(ctx, True)
             return
 
-        # If no parameters, show help
         if too_large is None and on_error is None:
             await self._send_settings_help(ctx, False)
             return
 
-        # Validate and update settings
-        too_large = too_large or POSSIBLE_TOO_LARGE[0]
-        on_error = on_error or POSSIBLE_ON_ERRORS[0]
+        # Get current settings
+        current_setting = self.bot.guild_settings.get_setting(ctx.guild.id)
+        current_too_large = POSSIBLE_TOO_LARGE[int(current_setting[0])]
+        current_on_error = POSSIBLE_ON_ERRORS[int(current_setting[1])]
+
+        # Use current values if not specified
+        too_large = too_large or current_too_large
+        on_error = on_error or current_on_error
 
         if too_large not in POSSIBLE_TOO_LARGE:
             await ctx.send("Option not in the **too_large** list.")
@@ -73,7 +76,6 @@ class Base(Extension):
             await ctx.send("Option not in the **on_error** list.")
             return
 
-        # Update settings
         too_idx = POSSIBLE_TOO_LARGE.index(too_large)
         err_idx = POSSIBLE_ON_ERRORS.index(on_error)
         await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
