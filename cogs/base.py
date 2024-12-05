@@ -1,4 +1,3 @@
-import asyncio
 import traceback
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
@@ -6,7 +5,7 @@ from bot.tools import create_nexus_str
 import logging
 import aiohttp
 import os
-import sys
+from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
 
 
 VERSION = "1.1b"
@@ -21,8 +20,6 @@ class Base(Extension):
 
     @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
-        if ctx.author.user.id != 164115540426752001:
-            return await ctx.send("You are not allowed to use this command.")
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
@@ -51,13 +48,10 @@ class Base(Extension):
                                                required=False)])
     async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
         prepend_admin = False
-
-        possible_can_edits = ["trim", "info", "none"]
-        possible_on_errors = ["info", "none"]
         can_edit = False
-        if too_large in possible_can_edits:
+        if too_large in POSSIBLE_TOO_LARGE:
             can_edit = True
-        if on_error in possible_on_errors:
+        if on_error in POSSIBLE_ON_ERRORS:
             can_edit = True
         if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
             can_edit = False
@@ -72,11 +66,11 @@ class Base(Extension):
                      "**too_large** Choose what CLYPPY should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
                      " - `trim`: CLYPPY will trim the video until it's within Discord's size limit and upload the resulting file.\n"
                      " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
-                     " - `none`: The upload will fail and CLYPPY will do nothing.\n"
+                     " - `dm`: The upload will fail and CLYPPY will attempt to DM the author to notify them.\n"
                      " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
                      "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
                      " - `info`: CLYPPY responds with a statement that he can't continue.\n"
-                     " - `none`: CLYPPY will do nothing\n\n"
+                     " - `dm`: CLYPPY will attempt to DM the author to notify them of the error.\n\n"
                      f"**Current Settings:**\n{cs}\n\n"
                      "Something missing? Please **Suggest a Feature** using the link below.")
             if prepend_admin:
@@ -86,20 +80,22 @@ class Base(Extension):
         else:
             try:
                 if too_large is None:
-                    too_large = possible_on_errors[0]
-                possible_can_edits = possible_can_edits.index(too_large)
+                    too_large = POSSIBLE_TOO_LARGE[0]
+                too = POSSIBLE_TOO_LARGE.index(too_large)
             except ValueError:
                 self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **too_large** list.")
+                return 1
             try:
                 if on_error is None:
-                    on_error = possible_on_errors[0]
-                possible_on_errors = possible_on_errors.index(on_error)
+                    on_error = POSSIBLE_ON_ERRORS[0]
+                err = POSSIBLE_ON_ERRORS.index(on_error)
             except ValueError:
                 self.logger.error(traceback.format_exc())
                 await ctx.send("Option not in the **on_error** list.")
+                return 1
             # results in "00", "12", etc
-            await self.bot.guild_settings.set_setting(ctx.guild.id, str(possible_can_edits) + str(possible_on_errors))
+            await self.bot.guild_settings.set_setting(ctx.guild.id, str(too) + str(err))
             await ctx.send("Successfully changed settings:\n\n"
                            f"**too_large**: {too_large}\n"
                            f"**on_error**: {on_error}")

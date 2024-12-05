@@ -2,12 +2,10 @@ import sqlite3
 import logging
 from contextlib import contextmanager
 from typing import Optional, Any, Callable
+from bot.tools import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 
 
 logger = logging.getLogger(__name__)
-
-possible_too_large = ["trim", "info", "none"]
-possible_on_err = ["info", "none"]
 
 
 class GuildDatabase:
@@ -65,14 +63,14 @@ class GuildDatabase:
 
         # translate to words
         if sett is None:
-            settings = possible_too_large[0], possible_on_err[0]
+            settings = POSSIBLE_TOO_LARGE[0], POSSIBLE_ON_ERRORS[0]
         else:
-            settings = possible_too_large[int(sett[0])], possible_on_err[int(sett[1])]
+            settings = POSSIBLE_TOO_LARGE[int(sett[0])], POSSIBLE_ON_ERRORS[int(sett[1])]
         return (f"**too_large**: {settings[0]}\n"
                 f"**on_error**: {settings[1]}")
 
     def get_too_large(self, guild_id):
-        this_pos = possible_too_large
+        this_pos = POSSIBLE_TOO_LARGE
         s = self.get_setting(guild_id)
         if s is None:
             return this_pos[0]
@@ -80,7 +78,7 @@ class GuildDatabase:
         return this_pos[this_setting]
 
     def get_on_error(self, guild_id):
-        on_er = possible_on_err
+        on_er = POSSIBLE_ON_ERRORS
         s = self.get_setting(guild_id)
         if s is None:
             return on_er[0]

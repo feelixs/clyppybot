@@ -10,6 +10,9 @@ from typing import Optional, Union
 from bot.errors import FailedTrim
 
 
+POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
+POSSIBLE_ON_ERRORS = ["info", "dm"]
+
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
 INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
 TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
