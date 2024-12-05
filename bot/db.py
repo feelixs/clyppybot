@@ -8,6 +8,16 @@ from bot.tools import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 logger = logging.getLogger(__name__)
 
 
+class DbResponseFormat:
+    def __init__(self, possible_values: [str], stored_int: int):
+        self.all_values = possible_values
+        self.id = stored_int
+        self.setting_str = possible_values[self.id]
+
+    def __str__(self):
+        return self.setting_str
+
+
 class GuildDatabase:
     def __init__(self, db_path: str = "guild_settings.db", on_save: Callable = None, on_load: Callable = None):
         self.db_path = db_path
@@ -69,21 +79,21 @@ class GuildDatabase:
         return (f"**too_large**: {settings[0]}\n"
                 f"**on_error**: {settings[1]}")
 
-    def get_too_large(self, guild_id):
+    def get_too_large(self, guild_id) -> DbResponseFormat:
         this_pos = POSSIBLE_TOO_LARGE
         s = self.get_setting(guild_id)
         if s is None:
             return this_pos[0]
         this_setting = int(s[0])
-        return this_pos[this_setting]
+        return DbResponseFormat(POSSIBLE_TOO_LARGE, this_setting)
 
-    def get_on_error(self, guild_id):
+    def get_on_error(self, guild_id) -> DbResponseFormat:
         on_er = POSSIBLE_ON_ERRORS
         s = self.get_setting(guild_id)
         if s is None:
             return on_er[0]
         error_setting = int(s[1])
-        return on_er[error_setting]
+        return DbResponseFormat(POSSIBLE_ON_ERRORS, error_setting)
 
     async def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""

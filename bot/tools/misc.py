@@ -1,4 +1,5 @@
 import logging
+import traceback
 from interactions import Message
 import os
 import subprocess
@@ -8,7 +9,6 @@ from bot.kick import KickClip
 from bot.twitch import TwitchClip
 from typing import Optional, Union
 from bot.errors import FailedTrim
-
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["info", "dm"]
@@ -52,9 +52,10 @@ class DownloadManager:
                         self._parent.logger.error("First target_duration() failed")
                         raise FailedTrim
                     trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
-                    self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
                     if trimmed_file is None:
+                        self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
+                    self._parent.logger.info(f"trimmed {clip.id} to {os.path.getsize(trimmed_file) / (1024 * 1024)}")
 
                     # second pass if necessary
                     if os.path.getsize(trimmed_file) / (1024 * 1024) > 25:
@@ -82,6 +83,13 @@ class DownloadManager:
 class Tools:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+
+    async def send_dm_err_msg(self, ctx, content):
+        try:
+            await ctx.author.send(f"{content}\n\n"
+                                  f"This error occurred while trying to embed the clip in {ctx.guild.name} - <#{ctx.channel.id}>")
+        except:
+            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
 
     async def calculate_target_duration(self, filepath, target_size_mb=25):
         # Get current size in MB
@@ -112,7 +120,8 @@ class Tools:
 
         # Calculate target duration
         mb_per_second = current_size_mb / current_duration_sec
-        self.logger.info(f"Current size: {current_size_mb} MB, duration: {current_duration_sec} seconds, speed: {mb_per_second} MB/s")
+        self.logger.info(
+            f"Current size: {current_size_mb} MB, duration: {current_duration_sec} seconds, speed: {mb_per_second} MB/s")
         target_duration = target_size_mb / mb_per_second
         self.logger.info(f"Target duration: {target_duration} seconds")
 
