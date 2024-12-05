@@ -43,7 +43,7 @@ class DownloadManager:
                 return None, 0
 
             # Download clip
-            f = await clip.download(root_msg, [ctx_guild.id == 759798762171662399])
+            f = await clip.download(root_msg, [guild_ctx.id == 759798762171662399])
             if not f:
                 return None, 0
 
@@ -51,7 +51,7 @@ class DownloadManager:
             size_mb = os.path.getsize(f) / (1024 * 1024)
             if size_mb > 25:
                 # Get guild setting for handling large files
-                too_large_setting = self._parent.bot.guild_settings.get_too_large(ctx_guild.id)
+                too_large_setting = self._parent.bot.guild_settings.get_too_large(guild_ctx.id)
 
                 if too_large_setting == "trim":
                     # Calculate target duration and trim
