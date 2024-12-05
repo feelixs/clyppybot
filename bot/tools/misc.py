@@ -83,7 +83,10 @@ class DownloadManager:
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
                         "Unable to upload the file."
                     )
-                return None
+                elif too_large_setting == "dm":
+                    self._parent.bot.tools.send_dm_err_msg(f"Sorry, this clip is too large ({size_mb:.1f}MB) "
+                                                           f"for Discord's 25MB limit. Unable to upload the file.")
+                return None, 0
             return f, 0
 
 
