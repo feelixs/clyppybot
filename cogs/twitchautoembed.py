@@ -122,7 +122,7 @@ class TwitchAutoEmbed(Extension):
         except:
             self.logger.info(f"Unhandled exception in download - notifying: {traceback.format_exc()}")
             if self.bot.guild_settings.get_on_error(guild.id) == "dm":
-                await self.bot.tools.send_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
+                await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
                 return 1
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip: "

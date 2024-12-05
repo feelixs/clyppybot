@@ -85,14 +85,14 @@ class DownloadManager:
                     )
                     raise FailureHandled
                 elif too_large_setting == "dm":
-                    await self._parent.bot.tools.send_err_msg(ctx=root_msg, guild=guild_ctx,
-                                                              content=f"Sorry, this clip is too large ({size_mb:.1f}MB) "
+                    await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
+                                                           content=f"Sorry, this clip is too large ({size_mb:.1f}MB) "
                                                            f"for Discord's 25MB limit. Unable to upload the file.")
                     raise FailureHandled
                 else:
                     self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
-                    await self._parent.bot.tools.send_err_msg(ctx=root_msg, guild=guild_ctx,
-                                                              content=f"Your settings were out of whack!\n\n"
+                    await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
+                                                           content=f"Your settings were out of whack!\n\n"
                                                                    f"For `too_large` got: **{too_large_setting}**\n"
                                                                    f"Expected: {POSSIBLE_TOO_LARGE}")
                     raise FailureHandled
@@ -104,7 +104,7 @@ class Tools:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    async def send_err_msg(self, ctx, guild, content):
+    async def send_dm_err_msg(self, ctx, guild, content):
         try:
             await ctx.author.send(f"{content}\n\n"
                                   f"This error occurred while trying to embed the clip in {guild.name}")
