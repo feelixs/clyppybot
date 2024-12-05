@@ -79,7 +79,7 @@ class DownloadManager:
                         os.remove(f)  # remove original file
                         return trimmed_file, 1
                 elif too_large_setting == "info":
-                    await root_msg.channel.send(
+                    await root_msg.reply(
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
                         "Unable to upload the file.\n\nYou can either:"
                         f" - upload a shorter clip\n"
