@@ -83,7 +83,8 @@ class DownloadManager:
                                              f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024))}MB")
                     if second_trimmed_file is not None:
                         self._parent.logger.info("Deleting both original files...\n"
-                                                 f"And returning {second_trimmed_file}")
+                                                 f"({f}, {trimmed_file}"
+                                                 f"\nAnd returning {second_trimmed_file}")
                         os.remove(f)
                         os.remove(trimmed_file)  # remove original files
                         return second_trimmed_file, 1
