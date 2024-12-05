@@ -89,9 +89,9 @@ class DownloadManager:
                                                                  content=f"Sorry, this clip is too large "
                                                                          f"({size_mb:.1f}MB) for Discord's 25MB "
                                                                          f"limit. Unable to upload the file.\n\n"
-                                                                         f"Please either\n"
+                                                                         f"Please either"
                                                                          f" - upload a shorter clip\n"
-                                                                         f" - ask a server admin to change CLYPPY"
+                                                                         f" - ask a server admin to change CLYPPY "
                                                                          f"settings to `too_large='trim'`")
                     raise FailureHandled
                 else:
@@ -111,7 +111,7 @@ class Tools:
     async def send_dm_err_msg(self, ctx, guild, content):
         try:
             await ctx.author.send(f"{content}\n\n"
-                                  f"This error occurred while trying to embed the clip in {guild.name}")
+                                  f"This error occurred while trying to embed the clip in <&{guild.id}>")
         except:
             self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
 
