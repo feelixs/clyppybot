@@ -95,6 +95,11 @@ class TwitchAutoEmbed(Extension):
 
         clip = await self.bot.twitch.get_clip(clip_link)
         if clip is None:
+            self.logger.info(f"Invalid Twitch Clip link (get_clip() failed): {clip_link}")
+            if self.bot.guild_settings.is_dm_on_error(guild.id):
+                await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Looks like the Twitch clip `{clip_link}` "
+                                                                        f"couldn't be fetched. Verify that it exists")
+                return
             emb = Embed(title="**Invalid Clip Link**",
                         description=f"Looks like the Twitch clip `{clip_link}` couldn't be downloaded. Verify that it exists")
             emb.description += create_nexus_str()
@@ -105,7 +110,7 @@ class TwitchAutoEmbed(Extension):
         try:
             clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
         except ClipNotExists:
-            self.logger.info(f"Invalid Twitch Clip link: {clip_link}")
+            self.logger.info(f"Invalid Twitch Clip link (download_clip() failed): {clip_link}")
             if self.bot.guild_settings.is_dm_on_error(guild.id):
                 await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Looks like the Twitch clip `{clip_link}` "
                                                                         f"couldn't be downloaded. Verify that it exists")
