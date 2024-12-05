@@ -123,8 +123,6 @@ class Base(Extension):
     @listen()
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
-            if os.getenv("TEST") is not None:
-                await self.post_servers(len(self.bot.guilds))
             self.logger.info(f'Joined new guild: {event.guild.name}')
 
     @listen()
@@ -141,6 +139,8 @@ class Base(Extension):
             self.logger.info(f"total shards: {len(self.bot.shards)}")
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
             self.logger.info(f"CLYPPY Version: {VERSION}")
+            if os.getenv("TEST") is not None:
+                await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
             await self.bot.change_presence(activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
