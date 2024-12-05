@@ -81,7 +81,7 @@ class DownloadManager:
                 elif too_large_setting == "info":
                     await root_msg.reply(
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
-                        "Unable to upload the file.\n\nYou can either:"
+                        "Unable to upload the file.\n\nYou can either:\n"
                         f" - upload a shorter clip\n"
                         f" - ask a server admin to change CLYPPY "
                         f"settings to `too_large='trim'`\n"
