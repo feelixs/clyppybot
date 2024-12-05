@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 from contextlib import contextmanager
-from typing import Optional, Any, Callable
+from typing import Any, Callable
 from bot.tools import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 
 
@@ -55,7 +55,7 @@ class GuildDatabase:
             logger.info("Loading database from the server...")
             await self.on_load()
 
-    def get_setting(self, guild_id: int) -> Optional[str]:
+    def get_setting(self, guild_id: int) -> str:
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
@@ -63,10 +63,10 @@ class GuildDatabase:
                     (guild_id,)
                 )
                 result = cursor.fetchone()
-                return result[0] if result else None
+                return result[0] if result else "00"
         except sqlite3.Error as e:
             logger.error(f"Database error when getting setting for guild {guild_id}: {e}")
-            return None
+            return "00"
 
     def get_setting_str(self, guild_id):
         sett = self.get_setting(guild_id)
