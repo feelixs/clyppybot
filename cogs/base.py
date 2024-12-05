@@ -47,6 +47,9 @@ class Base(Extension):
                                                description="Choose what CLYPPY should do upon error",
                                                required=False)])
     async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+        if ctx.guild is None:
+            await ctx.send("This command is only available in servers.")
+            return
         prepend_admin = False
         can_edit = False
         if too_large in POSSIBLE_TOO_LARGE:
