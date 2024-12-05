@@ -20,12 +20,14 @@ class Base(Extension):
 
     @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
+        await ctx.defer()
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
 
     @slash_command(name="help", description="Get help using CLYPPY")
     async def help(self, ctx: SlashContext):
+        await ctx.defer()
         about = (
             "CLYPPY supports uploading Twitch clips in Full HD to your Discord channels! Send a valid Twitch Clip link to get started.\n\n"
             "**TROUBLESHOOTING**\nIf CLYPPY isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
@@ -47,6 +49,7 @@ class Base(Extension):
                                                description="Choose what CLYPPY should do upon error",
                                                required=False)])
     async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+        await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
             return
