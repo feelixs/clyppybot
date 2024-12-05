@@ -117,8 +117,8 @@ class Base(Extension):
         if not self.ready:
             self.logger.info("Bot not ready, skipping database save task")
             return
-        self.logger.info("POST len(guilds) to top.gg")
         if os.getenv("TEST") is not None:
+            self.logger.info("POST len(guilds) to top.gg")
             await self.post_servers(len(self.bot.guilds))
         self.logger.info("Saving database to the server...")
         await self.bot.guild_settings.save()
