@@ -2,7 +2,7 @@ import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 from bot.errors import ClipNotExists, DriverDownloadFailed, FailedTrim
-from bot.tools import create_nexus_str, DownloadManager
+from bot.tools import create_nexus_str, DownloadManager, GuildType
 from typing import List
 import traceback
 import logging
@@ -21,9 +21,10 @@ class TwitchAutoEmbed(Extension):
     async def on_message_create(self, event: MessageCreate):
         try:
             if event.message.guild is None:
-                guild_id = event.message.author.id  # if we're in dm context, set the guild id to the author id
+                # if we're in dm context, set the guild id to the author id
+                guild = GuildType(event.message.author.id, event.message.author.username)
             else:
-                guild_id = event.message.guild.id
+                guild = GuildType(event.message.guild.id, event.message.guild.name)
                 # if we're in guild ctx, we need to verify clyppy has the right perms
                 if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
@@ -33,13 +34,12 @@ class TwitchAutoEmbed(Extension):
                 return 1  # don't respond to the bot's own messages
 
             words = self._getwords(event.message.content)
-            # self.logger.info(f"{event.message.guild.name} - {event.message.channel.name}, Content: {event.message.content}, Words: {words}")
             num_links = self._get_num_clip_links(words)
             if num_links == 1:
                 contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
-                await self._process_this_clip_link(words[index], event.message)
+                await self._process_this_clip_link(words[index], event.message, guild)
             elif num_links > 1:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
@@ -48,7 +48,7 @@ class TwitchAutoEmbed(Extension):
                     if not next_link_exists:
                         return 1
                     await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
-                    await self._process_this_clip_link(words[index], event.message, True)
+                    await self._process_this_clip_link(words[index], event.message, guild, True)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
@@ -70,7 +70,7 @@ class TwitchAutoEmbed(Extension):
                 n += 1
         return n
 
-    async def _process_this_clip_link(self, clip_link: str, respond_to: Message, include_link=False):
+    async def _process_this_clip_link(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
         parsed_id = self.bot.twitch.parse_clip_url(clip_link)
         if parsed_id in self.too_large_clips:
             emb = Embed(title="**Whoops...**",
@@ -79,8 +79,7 @@ class TwitchAutoEmbed(Extension):
                                     "This clip file was previously reported as too large to fit Discord's limit.")
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
-            self.logger.info(
-                f"Skipping quick embed for clip {parsed_id} in {respond_to.guild.name} - {respond_to.channel.name}, clip was previously reported too large")
+            self.logger.info(f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
             return 1
 
         clip = await self.bot.twitch.get_clip(clip_link)
@@ -91,7 +90,7 @@ class TwitchAutoEmbed(Extension):
             await respond_to.reply(embed=emb)
             return 1
         try:
-            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to)
+            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
         except ClipNotExists:
             emb = Embed(title="**Invalid Clip Link**",
                         description=f"Looks like the Twitch clip `{clip_link}` couldn't be downloaded. Verify that it exists")
@@ -134,8 +133,7 @@ class TwitchAutoEmbed(Extension):
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
                                         f"> File size was **{round(clipsize / (1024 * 1024))}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
-                self.logger.info(
-                    f"Clip {clip.id} was too large to embed in {respond_to.guild.name} - {respond_to.channel.name}")
+                self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
                 self.too_large_clips.append(clip.id)
                 await respond_to.reply(embed=emb)
                 return 1
