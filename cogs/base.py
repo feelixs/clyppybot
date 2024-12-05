@@ -50,58 +50,63 @@ class Base(Extension):
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
             return
-        prepend_admin = False
-        can_edit = False
-        if too_large in POSSIBLE_TOO_LARGE:
-            can_edit = True
-        if on_error in POSSIBLE_ON_ERRORS:
-            can_edit = True
-        if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
-            can_edit = False
-            prepend_admin = True
 
-        if not can_edit:
-            # respond with tutorial
-            cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
-            about = ("**Configurable Settings:**\n"
-                     "Below are the settings you can configure using this command. Each setting name is in **bold**, "
-                     "followed by its available options.\n\n"
-                     "**too_large** Choose what CLYPPY should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
-                     " - `trim`: CLYPPY will trim the video until it's within Discord's size limit and upload the resulting file.\n"
-                     " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
-                     " - `dm`: The upload will fail and CLYPPY will attempt to DM the author to notify them.\n"
-                     " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
-                     "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
-                     " - `info`: CLYPPY responds with a statement that he can't continue.\n"
-                     " - `dm`: CLYPPY will attempt to DM the author to notify them of the error.\n\n"
-                     f"**Current Settings:**\n{cs}\n\n"
-                     "Something missing? Please **Suggest a Feature** using the link below.")
-            if prepend_admin:
-                about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
-            tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
-            await ctx.send(embed=tutorial_embed)
-        else:
-            try:
-                if too_large is None:
-                    too_large = POSSIBLE_TOO_LARGE[0]
-                too = POSSIBLE_TOO_LARGE.index(too_large)
-            except ValueError:
-                self.logger.error(traceback.format_exc())
-                await ctx.send("Option not in the **too_large** list.")
-                return 1
-            try:
-                if on_error is None:
-                    on_error = POSSIBLE_ON_ERRORS[0]
-                err = POSSIBLE_ON_ERRORS.index(on_error)
-            except ValueError:
-                self.logger.error(traceback.format_exc())
-                await ctx.send("Option not in the **on_error** list.")
-                return 1
-            # results in "00", "12", etc
-            await self.bot.guild_settings.set_setting(ctx.guild.id, str(too) + str(err))
-            await ctx.send("Successfully changed settings:\n\n"
-                           f"**too_large**: {too_large}\n"
-                           f"**on_error**: {on_error}")
+        # Check permissions first
+        if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
+            await self._send_settings_help(ctx, True)
+            return
+
+        # If no parameters, show help
+        if too_large is None and on_error is None:
+            await self._send_settings_help(ctx, False)
+            return
+
+        # Validate and update settings
+        too_large = too_large or POSSIBLE_TOO_LARGE[0]
+        on_error = on_error or POSSIBLE_ON_ERRORS[0]
+
+        if too_large not in POSSIBLE_TOO_LARGE:
+            await ctx.send("Option not in the **too_large** list.")
+            return
+
+        if on_error not in POSSIBLE_ON_ERRORS:
+            await ctx.send("Option not in the **on_error** list.")
+            return
+
+        # Update settings
+        too_idx = POSSIBLE_TOO_LARGE.index(too_large)
+        err_idx = POSSIBLE_ON_ERRORS.index(on_error)
+        await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
+
+        await ctx.send(
+            "Successfully changed settings:\n\n"
+            f"**too_large**: {too_large}\n"
+            f"**on_error**: {on_error}"
+        )
+
+    async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
+        cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
+        about = (
+            "**Configurable Settings:**\n"
+            "Below are the settings you can configure using this command. Each setting name is in **bold**, "
+            "followed by its available options.\n\n"
+            "**too_large** Choose what CLYPPY should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
+            " - `trim`: CLYPPY will trim the video until it's within Discord's size limit and upload the resulting file.\n"
+            " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
+            " - `dm`: The upload will fail and CLYPPY will attempt to DM the author to notify them.\n"
+            " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
+            "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
+            " - `info`: CLYPPY responds with a statement that he can't continue.\n"
+            " - `dm`: CLYPPY will attempt to DM the author to notify them of the error.\n\n"
+            f"**Current Settings:**\n{cs}\n\n"
+            "Something missing? Please **Suggest a Feature** using the link below."
+        )
+
+        if prepend_admin:
+            about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
+
+        tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
+        await ctx.send(embed=tutorial_embed)
 
     async def db_save_task(self):
         if not self.ready:
