@@ -7,6 +7,10 @@ class FailedTrim(Exception):
     pass
 
 
+class FailureHandled(Exception):
+    pass
+
+
 class ClipNotExists(Exception):
     pass
 

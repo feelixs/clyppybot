@@ -8,7 +8,7 @@ import asyncio
 from bot.kick import KickClip
 from bot.twitch import TwitchClip
 from typing import Optional, Union
-from bot.errors import FailedTrim
+from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
 
 
@@ -83,10 +83,12 @@ class DownloadManager:
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
                         "Unable to upload the file."
                     )
+                    raise FailureHandled
                 elif too_large_setting == "dm":
                     self._parent.bot.tools.send_dm_err_msg(f"Sorry, this clip is too large ({size_mb:.1f}MB) "
                                                            f"for Discord's 25MB limit. Unable to upload the file.")
-                return None, 0
+                    raise FailureHandled
+                raise Exception(f"Unhandled Exception in {__name__}")
             return f, 0
 
 

@@ -1,7 +1,7 @@
 import interactions.api.events
 from interactions import Extension, Message, Embed, Permissions, listen, Button, ButtonStyle
 from interactions.api.events import MessageCreate
-from bot.errors import ClipNotExists, DriverDownloadFailed, FailedTrim
+from bot.errors import ClipNotExists, DriverDownloadFailed, FailedTrim, FailureHandled
 from bot.tools import create_nexus_str, DownloadManager, GuildType
 from typing import List
 import traceback
@@ -89,6 +89,8 @@ class TwitchAutoEmbed(Extension):
             emb.description += create_nexus_str()
             await respond_to.reply(embed=emb)
             return 1
+
+        # download clip video
         try:
             clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
         except ClipNotExists:
@@ -113,6 +115,21 @@ class TwitchAutoEmbed(Extension):
             emb.description += create_nexus_str()
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             await respond_to.reply(embed=emb)
+            return 1
+        except FailureHandled:
+            self.logger.info("Failed to download clip, dm/info triggered")
+            return 1
+        except:
+            self.logger.info("Unhandled exception in download - notifying")
+            if self.bot.guild_settings.get_on_error(guild.id) == "dm":
+                await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
+                return 1
+            emb = Embed(title="**Oops...**",
+                        description=f"I messed up while trying to download this clip: "
+                                    f"\n\n{clip_link}\nPlease try linking it again.\n"
+                                    "If the issue keeps on happening, please contact us on our support server.")
+            emb.description += create_nexus_str()
+            await respond_to.reply(embed=emb, delete_after=60)
             return 1
 
         # send the video file
