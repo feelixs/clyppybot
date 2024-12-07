@@ -11,12 +11,12 @@ import os
 
 
 class AutoEmbedder(Extension):
-    def __init__(self, bot, platform_tools, logger):
+    def __init__(self, bot, **kwargs):
         self.bot = bot
         self.too_large_clips = []
         self._dl = DownloadManager(self)
-        self.logger = logger
-        self.platform_tools = platform_tools
+        self.logger = kwargs['logger']
+        self.platform_tools = kwargs['platform_tools']
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
