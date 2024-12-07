@@ -37,7 +37,6 @@ class AutoEmbedder:
                 n += 1
         return n
 
-    @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
         try:
             if event.message.guild is None:
