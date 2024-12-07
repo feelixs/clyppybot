@@ -27,7 +27,7 @@ class MedalClip:
         ])
         options.set_capability('goog:loggingPrefs', caps['goog:loggingPrefs'])
 
-        driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=131)
+        driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
         self.logger.info("Started browser...")
 
         try:
