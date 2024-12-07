@@ -64,12 +64,10 @@ class DownloadManager:
                         self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
                     self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
-
                     if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
-                        if trimmed_file is not None:
-                            self._parent.logger.info("Deleting original file...")
-                            os.remove(f)  # remove original file
-                            return trimmed_file, 1
+                        self._parent.logger.info("Deleting original file...")
+                        os.remove(f)  # remove original file
+                        return trimmed_file, 1
 
                     # second pass is necessary
                     second_target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24)
@@ -82,13 +80,30 @@ class DownloadManager:
                         raise FailedTrim
                     self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
                                              f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024), 1)}MB")
-                    if second_trimmed_file is not None:
+                    if os.path.getsize(second_trimmed_file) / (1024 * 1024) <= 25:
                         self._parent.logger.info("Deleting both original files...\n"
                                                  f"({f}, {trimmed_file}"
                                                  f"\nAnd returning {second_trimmed_file}")
                         os.remove(f)
                         os.remove(trimmed_file)  # remove original files
                         return second_trimmed_file, 1
+
+                    # third pass is necessary
+                    target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=20)
+                    if not target_duration:
+                        self._parent.logger.error("Third target_duration() failed")
+                        raise FailedTrim
+                    third_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration, append="_trimmed3")
+                    if third_trimmed_file is None:
+                        self._parent.logger.error("Third trim_to_duration() failed")
+                        raise FailedTrim
+                    self._parent.logger.info(f"(third pass) trimmed {clip.id} to {round(os.path.getsize(third_trimmed_file) / (1024 * 1024), 1)}MB")
+                    if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= 25:
+                        self._parent.logger.info("Deleting original file...")
+                        os.remove(f)
+                        os.remove(trimmed_file)
+                        os.remove(second_trimmed_file)  # remove original files
+                        return third_trimmed_file, 1
 
                 elif too_large_setting == "info":
                     await root_msg.reply(
