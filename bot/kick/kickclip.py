@@ -65,7 +65,7 @@ class KickClip:
         finally:
             driver.quit()
 
-    async def download(self, autocompress=False, filename: Union[str, None] = None):
+    async def download(self, filename: Union[str, None] = None):
         if filename is None:
             filename = f"clip_{self.id}.mp4"
         if os.path.isfile(filename):

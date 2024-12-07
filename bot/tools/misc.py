@@ -43,7 +43,7 @@ class DownloadManager:
                 return None, 0
 
             # Download clip
-            f = await clip.download(autocompress=[guild_ctx.id == 759798762171662399])
+            f = await clip.download()
             if not f:
                 return None, 0
 
