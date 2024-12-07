@@ -15,6 +15,7 @@ class TwitchMisc:
         tis = getenv("CLYPP_TWITCH_SECRET")
         if tis is None:
             exit("No Twitch API secret found")
+        self.platform_name = "Twitch"
         self.api = TwitchAPI(key=tid, secret=tis,
                              logger=self.logger,
                              log_path=path.join('logs', 'twitch-api-usage.log'))

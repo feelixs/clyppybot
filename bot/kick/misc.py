@@ -7,6 +7,7 @@ import re
 class KickMisc:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.platform_name = "Kick"
 
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):
@@ -20,7 +21,7 @@ class KickMisc:
         return slug, user
 
     @staticmethod
-    def is_kick_clip_link(url: str) -> bool:
+    def is_clip_link(url: str) -> bool:
         # Pattern matches both:
         # https://kick.com/clip/[clip-id]
         # https://kick.com/[username]/clip/[clip-id]

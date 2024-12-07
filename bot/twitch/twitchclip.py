@@ -82,7 +82,7 @@ class TwitchClip:
                                 break
                             fd.write(chunk)
             if not os.path.isfile(filename):
-                raise ClipNotExists
+                return False
             self.logger.info(f"downloaded {filename}")
 
             # touch the file to update the modified time
