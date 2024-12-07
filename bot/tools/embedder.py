@@ -1,4 +1,4 @@
-from interactions import Extension, Permissions, Embed, Message, Button, ButtonStyle, listen
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, listen
 from interactions import errors
 from interactions.api.events import MessageCreate
 from bot.tools import DownloadManager, GuildType
@@ -10,7 +10,7 @@ import re
 import os
 
 
-class AutoEmbedder(Extension):
+class AutoEmbedder:
     def __init__(self, bot, platform_tools, logger):
         self.bot = bot
         self.too_large_clips = []
