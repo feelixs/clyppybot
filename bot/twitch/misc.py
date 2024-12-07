@@ -34,7 +34,7 @@ class TwitchMisc:
         return slug
 
     @staticmethod
-    def is_twitch_clip_link(url: str) -> bool:
+    def is_clip_link(url: str) -> bool:
         patterns = [
             r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
             r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+'
