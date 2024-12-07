@@ -1,6 +1,7 @@
 from interactions import AutoShardedClient, Intents
 from bot.db import GuildDatabase
 from bot.twitch import TwitchMisc
+from bot.medal import MedalMisc
 from bot.tools import Tools
 from bot.kick import KickMisc
 import logging
@@ -55,6 +56,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 Bot.twitch = TwitchMisc()
 Bot.kick = KickMisc()
+Bot.medal = MedalMisc()
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
@@ -63,6 +65,7 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.twitchautoembed')
     Bot.load_extension('cogs.kickautoembed')
+    Bot.load_extension('cogs.medalautoembed')
     await Bot.guild_settings.setup_db()
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
 
