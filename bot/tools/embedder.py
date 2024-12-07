@@ -1,4 +1,4 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, listen
+from interactions import Permissions, Embed, Message, Button, ButtonStyle
 from interactions import errors
 from interactions.api.events import MessageCreate
 from bot.tools import DownloadManager, GuildType
