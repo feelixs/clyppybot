@@ -8,7 +8,7 @@ import os
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
 
 
-VERSION = "1.2b"
+VERSION = "1.3b"
 
 
 class Base(Extension):
@@ -37,6 +37,50 @@ class Base(Extension):
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(content="If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.", embed=help_embed)
+
+    @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
+                   options=[SlashCommandOption(name="user",
+                                               description="the Twitch user to check logs for",
+                                               required=True,
+                                               type=OptionType.STRING),
+                            SlashCommandOption(name="channel",
+                                               description="the Twitch channel (username) where they sent chat messages",
+                                               required=True,
+                                               type=OptionType.STRING),
+                            SlashCommandOption(name="year",
+                                               description="the year to retrieve logs from",
+                                               required=False,
+                                               type=OptionType.INTEGER),
+                            SlashCommandOption(name="month",
+                                               description="the month to retrieve logs from",
+                                               required=False,
+                                               type=OptionType.INTEGER)
+                            ])
+    async def logs(self, ctx: SlashContext, user: str, channel: str, year: int = None, month: int = None):
+        try:
+            async with aiohttp.ClientSession() as session:
+                if year is not None and month is not None:
+                    async with session.get(f"https://logs.ivr.fi/channel/{channel}/user/{user}/{year}/{month}") as resp:
+                        logs_output = await resp.text()
+                elif year is None and month is None:
+                    async with session.get(f"https://logs.ivr.fi/channel/{channel}/user/{user}") as resp:
+                        logs_output = await resp.text()
+                else:
+                    return await ctx.send("An error occurred: year & month must be either both filled out, or none filled out", ephemeral=True)
+                if logs_output.count("\n") == 0:
+                    if "[" in logs_output:
+                        return await ctx.send(logs_output)
+                    else:
+                        return await ctx.send(f'for user `{user}` on Twitch channel `{channel}`:\n`' + logs_output + '`')
+                else:
+                    logs_output = self._get_last_lines(logs_output)
+                    logs_output = self._format_log(logs_output)
+                    if logs_output == "":
+                        return await ctx.send(f"No logs available for `{user}` in Twitch channel `{channel}`")
+                    else:
+                        return await ctx.send(logs_output)
+        except:
+            return await ctx.send("An error occurred retrieving Twitch logs, please contact out support team if the issue persists", ephemeral=True)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
@@ -150,3 +194,60 @@ class Base(Extension):
             async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                     headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                 await resp.json()
+
+    @staticmethod
+    def _format_log(string):
+        """
+        [2023-04-13 00:43:30]  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
+        [2023-04-13 00:43:30]  hesmen has been timed out for 30 seconds
+        [2023-04-13 00:49:33]  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
+        [2023-04-13 00:49:33]  hesmen has been timed out for 30 seconds
+        [2023-04-14 00:50:18]  hesmen: h
+        [2023-04-14 00:50:32]  hesmen: BBoomer RAVE Fire
+
+        becomes
+
+        [2023-04-13 ]
+        00:43:30 hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
+        00:43:30  hesmen has been timed out for 30 seconds
+        00:49:33  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
+        00:49:33 hesmen has been timed out for 30 seconds
+
+        [2023-04-13]
+        00:50:18 hesmen: h
+        00:50:32 hesmen: BBoomer RAVE Fire
+        """
+        formatted_logs = ""
+        eachdate = ""
+        for ind, line in enumerate(string.split("\n")):
+            if ind == 0:
+                continue
+            if line.strip():
+                tmst, txt = line.split(" ", 1)
+
+                if eachdate != tmst.split(" ")[0]:
+                    eachdate = tmst.split(" ")[0]
+                    formatted_logs += f"\n{eachdate}]\n"
+                actime, txt = txt.split(']', 1)
+                for c in range(len(txt)):
+                    if txt[c] == "#":
+                        while txt[c] != " ":
+                            c += 1
+                        txt = txt[:c] + "`" + txt[c:]
+                        break
+                formatted_logs += f"`{actime} {txt}\n"
+        return formatted_logs
+
+    @staticmethod
+    def _get_last_lines(string):
+        if len(string) > 2000:
+            string = string[-1980:]  # the last 1980 characters
+        string = string.split("\n")
+        fuldate = ""
+        for c in string[1]:  # this line guaranteed to not be messed up from the trim (the line[0] will be messed up)
+            fuldate += c
+            if c == "]":
+                break
+        string[0] = fuldate
+        string = "\n".join(string)
+        return string
