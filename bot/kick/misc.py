@@ -15,7 +15,9 @@ class KickMisc:
         if url.endswith("/"):
             url = url[:-1]  # remove trailing slash
         slug = str(url).split('/')[-1]
-        if "?" in slug:
+        if "?clip=" in slug:
+            slug = slug.split("=")[-1]
+        elif "?" in slug:
             slug = slug.split('?')[0]
         slug = slug.replace("clip_", "")
         return slug, user
@@ -25,8 +27,8 @@ class KickMisc:
         # Pattern matches both:
         # https://kick.com/clip/[clip-id]
         # https://kick.com/[username]/clip/[clip-id]
-        kick_clip_pattern = r'^https?://(?:www\.)?kick\.com/(?:(?:clips/clip_)|(?:[^/]+/clips/clip_))[\w-]+$'
-        return bool(re.match(kick_clip_pattern, url))
+        pattern = r'^https?://kick\.com/[\w-]+(?:/clips/|/\?clip=)clip_[A-Z0-9]+$'
+        return bool(re.match(pattern, url))
 
     async def get_clip(self, url: str) -> KickClip:
         slug, user = self.parse_clip_url(url)
