@@ -18,6 +18,9 @@ class TwitchClip:
         self.id, self.url = slug, f"clips.twitch.tv/{slug}"
 
     async def download(self, filename: Union[str, None] = None):
+        if filename is None:
+            filename = f'clyppy_{self.service}_{self.id}.mp4'
+        self.logger.info(f"Downloading with yt-dlp: {filename}")
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
