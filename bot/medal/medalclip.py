@@ -19,6 +19,9 @@ class MedalClip:
         if filename is None:
             filename = f'clyppy_{self.service}_{self.id}.mp4'
         self.logger.info(f"Downloading with yt-dlp: {filename}")
+        if os.path.isfile(filename):
+            self.logger.info(f"{filename} already exists, no need to download")
+            return filename
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
