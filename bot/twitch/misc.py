@@ -43,8 +43,4 @@ class TwitchMisc:
 
     async def get_clip(self, url: str) -> Optional[TwitchClip]:
         slug = self.parse_clip_url(url)
-        info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + slug)
-        try:
-            return TwitchClip(info['data'][0], self.api)
-        except IndexError:
-            return None
+        return TwitchClip(slug)
