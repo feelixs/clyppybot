@@ -158,9 +158,8 @@ class Base(Extension):
         if not self.ready:
             self.logger.info("Bot not ready, skipping database save task")
             return
-        if os.getenv("TEST") is not None:
-            self.logger.info("POST len(guilds) to top.gg")
-            await self.post_servers(len(self.bot.guilds))
+
+        await self.post_servers(len(self.bot.guilds))
         self.logger.info("Saving database to the server...")
         await self.bot.guild_settings.save()
 
@@ -190,6 +189,8 @@ class Base(Extension):
 
     @staticmethod
     async def post_servers(num: int):
+        if os.getenv("TEST") is not None:
+            return
         async with aiohttp.ClientSession() as session:
             async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                     headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
