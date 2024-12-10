@@ -1,13 +1,10 @@
 import undetected_chromedriver as uc
-from interactions import Message
-from typing import Union
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
 import asyncio
 import json
 import time
 import traceback
-import os
 
 
 class KickClip:
@@ -65,13 +62,7 @@ class KickClip:
         finally:
             driver.quit()
 
-    async def download(self, filename: Union[str, None] = None):
-        if filename is None:
-            filename = f"clip_{self.id}.mp4"
-        if os.path.isfile(filename):
-            self.logger.info(f"File `{filename}` already exists, no need to download")
-            return filename
-
+    async def download(self, filename: str):
         m3u8_url = await self.get_m3u8_url()
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")

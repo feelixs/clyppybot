@@ -36,17 +36,32 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[MedalClip, KickClip, TwitchClip], int):
+    async def download_clip(self, clip: Union[MedalClip, KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[MedalClip, KickClip, TwitchClip], int):
         async with self._semaphore:
             if not isinstance(clip, Union[MedalClip, KickClip, TwitchClip]):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None, 0
 
-            # Download clip
-            self._parent.logger.info("Run clip.download()")
-            f = await clip.download()
-            if not f:
-                return None, 0
+            # check for existing clip file
+            filename = f'clyppy_{clip.service}_{clip.id}.mp4'
+            file_variants = [
+                filename,
+                filename.replace(".mp4", "_trimmed.mp4"),
+                filename.replace(".mp4", "_trimmed2.mp4"),
+                filename.replace(".mp4", "_trimmed3.mp4")
+            ]
+            f = None
+            for variant in file_variants:
+                if os.path.isfile(variant):
+                    self._parent.logger.info(f"{variant} already exists, no need to download")
+                    f = variant
+                    break
+            if f is None:
+                # Download clip
+                self._parent.logger.info("Run clip.download()")
+                f = await clip.download(filename=filename)
+                if not f:
+                    return None, 0
 
             # Check file size
             size_mb = os.path.getsize(f) / (1024 * 1024)
