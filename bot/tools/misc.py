@@ -42,6 +42,7 @@ class DownloadManager:
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None, 0
 
+            was_edited = 0
             # check for existing clip file
             filename = f'clyppy_{clip.service}_{clip.id}.mp4'
             file_variants = [
@@ -56,8 +57,9 @@ class DownloadManager:
                     self._parent.logger.info(f"{variant} already exists, no need to download")
                     if os.path.getsize(variant) == 0:  # check for corrupt file
                         os.remove(variant)
+                        self._parent.logger.info(f"{variant} was corrupt, so we are downloading and overwriting it")
                     else:
-                        f = variant
+                        f, was_edited = variant, 1
                     break
             if f is None:
                 # Download clip
@@ -154,7 +156,7 @@ class DownloadManager:
                                          f"Expected: {POSSIBLE_TOO_LARGE}")
                     raise FailureHandled
                 raise Exception(f"Unhandled Exception in bot.tools.misc")
-            return f, 0
+            return f, was_edited
 
 
 class Tools:
