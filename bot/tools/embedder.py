@@ -152,11 +152,11 @@ class AutoEmbedder:
         # send video file
         try:
             if not edited:
-                comp = Button(style=ButtonStyle.LINK, label=f"View On {self.platform_tools.platform_name}", url=clip_link)
+                comp = Button(style=ButtonStyle.LINK, label=f"View On {self.platform_tools.platform_name}", url=clip.url)
             else:
-                comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip_link)
+                comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip.url)
             if include_link:
-                await respond_to.reply(clip_link, file=clip_file, components=[comp])
+                await respond_to.reply(clip.url, file=clip_file, components=[comp])
             else:
                 await respond_to.reply(file=clip_file, components=[comp])
 
