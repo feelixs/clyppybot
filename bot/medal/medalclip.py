@@ -16,6 +16,7 @@ class MedalClip:
         self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str = None):
+        self.logger("Downloading with yt-dlp")
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
