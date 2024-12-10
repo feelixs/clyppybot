@@ -16,7 +16,7 @@ class MedalClip:
         self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str = None):
-        self.logger("Downloading with yt-dlp")
+        self.logger.info("Downloading with yt-dlp")
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
@@ -33,12 +33,9 @@ class MedalClip:
                     lambda: ydl.download([self.url])
                 )
 
-            # Find the downloaded file
-            for ext in ['mp4', 'webm']:
-                filename = f'clyppy_{self.service}_{self.id}.{ext}'
-                if os.path.exists(filename):
-                    return filename
-
+            if os.path.exists(filename):
+                return filename
+            self.logger.info(f"Could not find file")
             return None
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")

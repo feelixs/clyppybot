@@ -34,11 +34,8 @@ class TwitchClip:
                     lambda: ydl.download([self.url])
                 )
 
-            # Find the downloaded file
-            for ext in ['mp4', 'webm']:
-                filename = f'clyppy_{self.service}_{self.id}.{ext}'
-                if os.path.exists(filename):
-                    return filename
+            if os.path.exists(filename):
+                return filename
 
             return None
         except Exception as e:
