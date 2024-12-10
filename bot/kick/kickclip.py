@@ -11,6 +11,7 @@ class KickClip:
     def __init__(self, slug, user):
         self.id = slug
         self.user = user
+        self.service = "kick"
         self.url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.logger = logging.getLogger(__name__)
 
