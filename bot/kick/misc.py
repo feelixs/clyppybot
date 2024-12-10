@@ -25,10 +25,10 @@ class KickMisc:
     @staticmethod
     def is_clip_link(url: str) -> bool:
         # Pattern matches both:
-        # https://kick.com/clip/[clip-id]
-        # https://kick.com/[username]/clip/[clip-id]
-        clip_pattern = r'https?://kick\.com/[a-zA-Z0-9-_]+/clips/[a-zA-Z0-9_]+(?:[A-Z0-9]+)?'
-        query_pattern = r'https?://kick\.com/[a-zA-Z0-9-_]+\?clip=[a-zA-Z0-9_]+(?:[A-Z0-9]+)?'
+        # https://kick.com/[username]/clips/[clip-id]
+        # https://kick.com/[username]?clip=[clip-id]
+        clip_pattern = r'https?://kick\.com/[a-zA-Z0-9_-]+/clips/clip_[a-zA-Z0-9]+'
+        query_pattern = r'https?://kick\.com/[a-zA-Z0-9_-]+\?clip=clip_[a-zA-Z0-9]+'
         return bool(re.match(clip_pattern, url) or re.match(query_pattern, url))
 
     async def get_clip(self, url: str) -> KickClip:
