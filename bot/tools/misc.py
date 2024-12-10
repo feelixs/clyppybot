@@ -43,6 +43,7 @@ class DownloadManager:
                 return None, 0
 
             # Download clip
+            self._parent.logger.info("Run clip.download()")
             f = await clip.download()
             if not f:
                 return None, 0
