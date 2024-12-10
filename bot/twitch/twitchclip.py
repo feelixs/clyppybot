@@ -8,7 +8,7 @@ class TwitchClip:
     def __init__(self, slug):
         self.logger = logging.getLogger(__name__)
         self.service = "twitch"
-        self.id, self.url = slug, f"clips.twitch.tv/{slug}"
+        self.id, self.url = slug, f"https://clips.twitch.tv/{slug}"
 
     async def download(self, filename: str):
         self.logger.info(f"Downloading with yt-dlp: {filename}")
