@@ -189,9 +189,10 @@ class Base(Extension):
 
     @staticmethod
     async def post_servers(num: int):
-
+        if os.getenv("TEST") is not None:
+            return
         async with aiohttp.ClientSession() as session:
-            async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': 380},
+            async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                     headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                 await resp.json()
 
