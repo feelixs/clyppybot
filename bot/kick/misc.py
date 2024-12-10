@@ -12,6 +12,8 @@ class KickMisc:
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):
         user = url.split('kick.com/')[-1].split("/")[0]
+        if "?" in user:
+            user = user.split("?")[0]
         if url.endswith("/"):
             url = url[:-1]  # remove trailing slash
         slug = str(url).split('/')[-1]
