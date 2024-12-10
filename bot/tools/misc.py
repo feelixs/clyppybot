@@ -54,7 +54,10 @@ class DownloadManager:
             for variant in file_variants:
                 if os.path.isfile(variant):
                     self._parent.logger.info(f"{variant} already exists, no need to download")
-                    f = variant
+                    if os.path.getsize(variant) == 0:  # check for corrupt file
+                        os.remove(variant)
+                    else:
+                        f = variant
                     break
             if f is None:
                 # Download clip
