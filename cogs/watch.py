@@ -48,7 +48,7 @@ Be casual and friendly, but keep it under 2 sentences. You can be slightly humor
 a rare condition where they are triggered by professionalism or anything related, so even being rude is encouraged"""
                     }]
                 )
-
+                self.logger.info(response.content)
                 response_text = response.content[0].text
 
                 # Send the response
@@ -57,4 +57,3 @@ a rare condition where they are triggered by professionalism or anything related
             except Exception as e:
                 self.logger.error(f"Error generating response: {e}")
                 pass
-            
