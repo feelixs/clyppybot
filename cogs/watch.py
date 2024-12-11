@@ -1,7 +1,6 @@
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 import logging
-import anthropic
 import os
 from datetime import datetime, timedelta
 
