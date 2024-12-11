@@ -10,8 +10,6 @@ class Watch(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
-        # Initialize the Anthropic client
-        self.client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
