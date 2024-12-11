@@ -15,4 +15,3 @@ class Watch(Extension):
                              f"@{event.message.author.username} - \"{event.message.content}\"")
         if '1111723928604381314' in event.message.content:
             await event.message.reply("shut up")
-            
