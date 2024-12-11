@@ -11,4 +11,5 @@ class Watch(Extension):
     @listen(MessageCreate)
     async def on_message_create(self, event):
         if "clyppy" in event.message.content:
-            self.logger.info(f"{event.guild.name}: #{event.channel.name} @{event.author.username} - \"{event.message.content}\"")
+            self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
+                             f"@{event.message.author.username} - \"{event.message.content}\"")
