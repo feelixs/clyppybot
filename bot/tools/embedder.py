@@ -12,7 +12,7 @@ import os
 
 
 async def publish_interaction(interaction_data, apikey):
-    url = 'https://clyppy.com/api/publish-interaction/'
+    url = 'https://clyppy.com/api/publish/'
     headers = {
         'X-API-Key': apikey,
         'Content-Type': 'application/json'
