@@ -34,7 +34,7 @@ class Watch(Extension):
 
             try:
                 # Generate a response using Claude
-                response = await self.client.messages.create(
+                response = self.client.messages.create(
                     model="claude-3-sonnet-20240229",
                     max_tokens=150,
                     messages=[{
