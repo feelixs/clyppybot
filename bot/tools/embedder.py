@@ -6,12 +6,30 @@ from bot.tools import create_nexus_str
 from bot.errors import FailedTrim, FailureHandled
 from typing import List
 import traceback
+import aiohttp
 import re
 import os
 
 
+async def publish_interaction(interaction_data, apikey):
+    url = 'https://clyppy.com/api/publish-interaction/'
+    headers = {
+        'X-API-Key': apikey,
+        'Content-Type': 'application/json'
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=interaction_data, headers=headers) as response:
+            if response.status == 201:  # Successfully created
+                return await response.json()
+            else:
+                error_data = await response.json()
+                raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
+
+
 class AutoEmbedder:
     def __init__(self, bot, platform_tools, logger):
+        self.api_key = os.getenv('clyppy_post_key')
         self.bot = bot
         self.too_large_clips = []
         self._dl = DownloadManager(self)
@@ -159,6 +177,25 @@ class AutoEmbedder:
                 await respond_to.reply(clip.url, file=clip_file, components=[comp])
             else:
                 await respond_to.reply(file=clip_file, components=[comp])
+
+            # post successful interaction to api
+            interaction_data = {
+                'server_name': guild.name,
+                'channel_name': respond_to.channel.name,
+                'user_name': respond_to.author.username,
+                'server_id': str(guild.id),
+                'channel_id': str(respond_to.channel.id),
+                'user_id': str(respond_to.author.id),
+                'embedded_url': clip_link,
+                'url_platform': self.platform_tools.platform_name,
+            }
+
+            try:
+                result = await publish_interaction(interaction_data, apikey=self.api_key)
+                # Handle success
+            except Exception as e:
+                # Handle error
+                self.logger.info(f"Failed to post interaction to API: {e}")
 
         except errors.HTTPException as e:
             if e.status == 413:  # Check the error source for 413 (file too large)
