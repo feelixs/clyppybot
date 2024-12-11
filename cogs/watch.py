@@ -49,9 +49,12 @@ a rare condition where they are triggered by professionalism or anything related
                     }]
                 )
 
+                response_text = response.content[0].text
+
                 # Send the response
-                await event.message.reply(response.content)
+                await event.message.reply(response_text)
 
             except Exception as e:
                 self.logger.error(f"Error generating response: {e}")
-                await event.message.reply("👋 *beep boop* (I had trouble thinking of something clever to say!)")
+                pass
+            
