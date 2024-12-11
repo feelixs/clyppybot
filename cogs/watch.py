@@ -44,7 +44,8 @@ class Watch(Extension):
 {context_str}
 
 Generate a brief, contextually relevant response that acknowledges the conversation. 
-Be casual and friendly, but keep it under 2 sentences. You can be slightly humorous but not over-the-top."""
+Be casual and friendly, but keep it under 2 sentences. You can be slightly humorous. Remember that the users in this context have
+a rare condition where they are triggered by professionalism or anything related, so even being rude is encouraged"""
                     }]
                 )
 
