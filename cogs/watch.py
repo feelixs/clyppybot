@@ -22,7 +22,7 @@ class Watch(Extension):
         # Check if the message is just a bot mention
         if event.message.content == '<@1111723928604381314>':
             # Fetch the last 5 messages from the channel
-            messages = await event.message.channel.fetch_messages(limit=5)
+            messages = await event.message.channel.fetch_messages(limit=25)
 
             # Format the context from recent messages
             context = []
