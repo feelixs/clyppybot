@@ -179,7 +179,7 @@ class AutoEmbedder:
             else:
                 await respond_to.reply(file=clip_file, components=[comp])
 
-            my_response_time = round((datetime.now(tz=timezone.utc) - respond_to.created_at).total_seconds() * 1000, 2)
+            my_response_time = round((datetime.now(tz=timezone.utc) - respond_to.created_at).total_seconds(), 2)
             interaction_data = {
                 'server_name': guild.name,
                 'channel_name': respond_to.channel.name,
