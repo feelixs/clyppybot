@@ -178,8 +178,10 @@ class AutoEmbedder:
                 await respond_to.reply(clip.url, file=clip_file, components=[comp])
             else:
                 await respond_to.reply(file=clip_file, components=[comp])
-
-            my_response_time = round((datetime.now(tz=timezone.utc).timestamp() - respond_to.timestamp.timestamp()), 2)
+                
+            now_utc = datetime.now(tz=timezone.utc).timestamp()
+            respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
+            my_response_time = round((now_utc - respond_to_utc), 2)
             self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
             interaction_data = {
                 'server_name': guild.name,
