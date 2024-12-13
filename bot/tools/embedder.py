@@ -4,6 +4,7 @@ from interactions.api.events import MessageCreate
 from bot.tools import DownloadManager, GuildType
 from bot.tools import create_nexus_str
 from bot.errors import FailedTrim, FailureHandled
+from datetime import datetime, timezone
 from typing import List
 import traceback
 import aiohttp
@@ -178,7 +179,7 @@ class AutoEmbedder:
             else:
                 await respond_to.reply(file=clip_file, components=[comp])
 
-            # post successful interaction to api
+            my_response_time = round((datetime.now(tz=timezone.utc) - respond_to.created_at).total_seconds() * 1000, 2)
             interaction_data = {
                 'server_name': guild.name,
                 'channel_name': respond_to.channel.name,
@@ -188,6 +189,7 @@ class AutoEmbedder:
                 'user_id': str(respond_to.author.id),
                 'embedded_url': clip_link,
                 'url_platform': self.platform_tools.platform_name,
+                'response_time_seconds': my_response_time,
             }
 
             try:
