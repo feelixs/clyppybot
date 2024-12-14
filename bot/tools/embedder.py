@@ -1,7 +1,7 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle
 from interactions import errors
 from interactions.api.events import MessageCreate
-from bot.tools import DownloadManager, GuildType
+from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from bot.errors import FailedTrim, FailureHandled
 from datetime import datetime, timezone
@@ -33,7 +33,6 @@ class AutoEmbedder:
         self.api_key = os.getenv('clyppy_post_key')
         self.bot = bot
         self.too_large_clips = []
-        self._dl = DownloadManager(self)
         self.logger = logger
         self.platform_tools = platform_tools
 
@@ -126,7 +125,7 @@ class AutoEmbedder:
 
         # download clip video
         try:
-            clip_file, edited = await self._dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
+            clip_file, edited = await self.bot.tools.dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
 
             if clip_file is None:
                 self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")

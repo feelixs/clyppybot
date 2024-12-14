@@ -163,6 +163,7 @@ class DownloadManager:
 class Tools:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.dl = DownloadManager(self)
 
     async def send_dm_err_msg(self, ctx, guild, content):
         try:
