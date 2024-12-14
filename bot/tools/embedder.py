@@ -193,6 +193,7 @@ class AutoEmbedder:
                 'embedded_url': clip_link,
                 'url_platform': self.platform_tools.platform_name,
                 'response_time_seconds': my_response_time,
+                'total_servers_now': len(self.bot.guilds)
             }
 
             try:
