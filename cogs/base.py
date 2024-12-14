@@ -5,6 +5,7 @@ from bot.tools import create_nexus_str
 import logging
 import aiohttp
 import os
+from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
 
 
@@ -81,6 +82,21 @@ class Base(Extension):
                         return await ctx.send(logs_output)
         except:
             return await ctx.send("An error occurred retrieving Twitch logs, please contact out support team if the issue persists", ephemeral=True)
+
+    @slash_command(name="twitch", description="Embed a Twitch clip with chat",
+                   options=[SlashCommandOption(name="clip_url", type=OptionType.STRING,
+                                               description="Link to the Twitch clip",
+                                               required=True)]
+                   )
+    async def twitch(self, ctx, clip_url: str):
+        await ctx.defer()
+        if not self.bot.twitch.is_clip_link(clip_url):
+            await ctx.reply(f"`{clip_url}` was not a valid twitch clip link")
+        clip = await self.bot.twitch.get_clip(clip_url)
+        clip_ctx = await clip.fetch_data()
+        clipfile = await clip.download()
+        videofile = await clip_ctx.add_chat(clipfile)
+        return await ctx.reply(files=videofile)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
