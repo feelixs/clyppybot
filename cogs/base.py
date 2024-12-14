@@ -102,8 +102,11 @@ class Base(Extension):
             root_msg=ctx.message,
             too_large_setting='trim'
         )
-        videofile = await clip_ctx.add_chat(clipfile)
-        await ctx.send(files=videofile)
+        try:
+            videofile = await clip_ctx.add_chat(clipfile)
+            await ctx.send(files=videofile)
+        except Exception as e:
+            return await ctx.send(f"Failed to render chat: {e}")
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
