@@ -1,4 +1,3 @@
-from .api import TwitchAPI
 from typing import Optional
 import logging
 from bot.twitch.twitchclip import TwitchClip
@@ -16,9 +15,6 @@ class TwitchMisc:
         if tis is None:
             exit("No Twitch API secret found")
         self.platform_name = "Twitch"
-        self.api = TwitchAPI(key=tid, secret=tis,
-                             logger=self.logger,
-                             log_path=path.join('logs', 'twitch-api-usage.log'))
 
     @staticmethod
     def parse_clip_url(url: str) -> str:
