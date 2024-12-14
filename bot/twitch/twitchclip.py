@@ -51,7 +51,12 @@ class TwitchClip:
 
     async def fetch_data(self) -> 'TwitchClipProcessor':
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + self.id)
-        return TwitchClipProcessor(info['data'][0], self.api, self.logger)
+        print(info)
+        return TwitchClipProcessor(
+            data=info['data'][0],
+            api=self.api,
+            logger=self.logger
+        )
 
 
 class TwitchClipProcessor:
