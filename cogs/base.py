@@ -94,7 +94,7 @@ class Base(Extension):
             await ctx.reply(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
-        clipfile = await clip.download()
+        clipfile = await self.bot.tools.download_clip(clip)
         videofile = await clip_ctx.add_chat(clipfile)
         return await ctx.reply(files=videofile)
 

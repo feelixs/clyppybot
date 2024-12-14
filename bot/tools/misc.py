@@ -37,6 +37,7 @@ class DownloadManager:
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
     async def download_clip(self, clip: Union[MedalClip, KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[MedalClip, KickClip, TwitchClip], int):
+        """Download and trim to 25MB"""
         async with self._semaphore:
             if not isinstance(clip, Union[MedalClip, KickClip, TwitchClip]):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
