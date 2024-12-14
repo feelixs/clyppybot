@@ -288,26 +288,28 @@ class TwitchClipProcessor:
 
         try:
             # Download and render chat
+            self.logger.info("Downloading chat...")
             chat_json = await self._download_chat()
+            self.logger.info("Rendering chat...")
             chat_render = await self._render_chat(
                 infile=chat_json,
                 outfile=str(base_path.parent / f"rendered_{base_path.name}")
             )
-
+            self.logger.info("Combining videos...")
             # Combine videos
             final_video = await self._combine_videos(
                 clip_path=clip_path,
                 chat_path=chat_render,
                 output_path=chat_video_path
             )
-
+            self.logger.info("Cleanup...")
             # Cleanup temporary files
             for file in [chat_json, chat_render]:
                 try:
                     os.remove(file)
                 except OSError as e:
                     self.logger.warning(f"Error removing temporary file {file}: {e}")
-
+            self.logger.info("Done")
             return final_video
 
         except Exception as e:
