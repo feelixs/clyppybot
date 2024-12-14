@@ -140,9 +140,10 @@ class TwitchClipProcessor:
                     self.TWITCH_DL,
                     "--mode", "chatdownload",
                     "--id", str(self.video_id),
-                    "--outfile", outfile,
+                    "--output", outfile,
                     "--beginning", f"{self.vod_offset}s",
-                    "--ending", f"{self.vod_offset + self.duration}s"
+                    "--ending", f"{self.vod_offset + self.duration}s",
+                    "--collision", "exit",
                 ]
 
                 process = await asyncio.create_subprocess_exec(
