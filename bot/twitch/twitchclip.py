@@ -3,6 +3,7 @@ import yt_dlp
 import logging
 import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
