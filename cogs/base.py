@@ -94,16 +94,15 @@ class Base(Extension):
             return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
+        if not clip_ctx.video_id:
+            return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
         clipfile, _ = await self.bot.tools.dl.download_clip(
             clip=clip,
             guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
             root_msg=ctx.message,
             too_large_setting='trim'
         )
-        try:
-            videofile = await clip_ctx.add_chat(clipfile)
-        except ValueError:
-            return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
+        videofile = await clip_ctx.add_chat(clipfile)
         await ctx.send(files=videofile)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
