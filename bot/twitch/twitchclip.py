@@ -2,7 +2,7 @@ import asyncio
 import yt_dlp
 import logging
 import os
-from moviepy.editor import VideoFileClip, clips_array
+from moviepy.video.io.VideoFileClip import VideoFileClip
 import time
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
