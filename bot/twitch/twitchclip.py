@@ -145,6 +145,7 @@ class TwitchClipProcessor:
                     "--ending", f"{int(self.vod_offset) + int(self.duration)}s",
                     "--collision", "exit",
                 ]
+                self.logger.info(" ".join(cmd))
 
                 process = await asyncio.create_subprocess_exec(
                     *cmd,
