@@ -91,7 +91,7 @@ class Base(Extension):
     async def twitch(self, ctx, clip_url: str):
         await ctx.defer()
         if not self.bot.twitch.is_clip_link(clip_url):
-            await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
+            return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
         clipfile = await self.bot.tools.download_clip(clip)
