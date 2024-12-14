@@ -17,7 +17,8 @@ class TwitchClip:
         self.api = TwitchAPI(
             key=os.getenv("CLYPP_TWITCH_ID"),
             secret=os.getenv("CLYPP_TWITCH_SECRET"),
-            logger=self.logger
+            logger=self.logger,
+            log_path=os.path.join('logs', 'twitch-api-usage.log')
         )
         self.service = "twitch"
         self.id, self.url = slug, f"https://clips.twitch.tv/{slug}"
