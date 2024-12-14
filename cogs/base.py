@@ -1,7 +1,7 @@
 import traceback
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
-from bot.tools import create_nexus_str
+from bot.tools import create_nexus_str, GuildType
 import logging
 import aiohttp
 import os
@@ -94,7 +94,11 @@ class Base(Extension):
             return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
-        clipfile = await self.bot.tools.dl.download_clip(clip)
+        clipfile = await self.bot.tools.dl.download_clip(
+            clip=clip,
+            guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
+            root_msg=ctx.message
+        )
         videofile = await clip_ctx.add_chat(clipfile)
         await ctx.send(files=videofile)
 
