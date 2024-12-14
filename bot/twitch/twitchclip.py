@@ -142,7 +142,7 @@ class TwitchClipProcessor:
                     "--id", str(self.video_id),
                     "--output", outfile,
                     "--beginning", f"{self.vod_offset}s",
-                    "--ending", f"{self.vod_offset + self.duration}s",
+                    "--ending", f"{int(self.vod_offset) + int(self.duration)}s",
                     "--collision", "exit",
                 ]
 
