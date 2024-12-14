@@ -94,7 +94,7 @@ class Base(Extension):
             return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
-        clipfile = await self.bot.tools.dl.download_clip(
+        clipfile, _ = await self.bot.tools.dl.download_clip(
             clip=clip,
             guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
             root_msg=ctx.message
