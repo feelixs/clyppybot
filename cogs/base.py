@@ -91,12 +91,12 @@ class Base(Extension):
     async def twitch(self, ctx, clip_url: str):
         await ctx.defer()
         if not self.bot.twitch.is_clip_link(clip_url):
-            await ctx.reply(f"`{clip_url}` was not a valid twitch clip link")
+            await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
         clip = await self.bot.twitch.get_clip(clip_url)
         clip_ctx = await clip.fetch_data()
         clipfile = await self.bot.tools.download_clip(clip)
         videofile = await clip_ctx.add_chat(clipfile)
-        return await ctx.reply(files=videofile)
+        await ctx.send(files=videofile)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
