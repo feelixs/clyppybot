@@ -125,7 +125,12 @@ class AutoEmbedder:
 
         # download clip video
         try:
-            clip_file, edited = await self.bot.tools.dl.download_clip(clip, root_msg=respond_to, guild_ctx=guild)
+            clip_file, edited = await self.bot.tools.dl.download_clip(
+                clip=clip,
+                root_msg=respond_to,
+                guild_ctx=guild,
+                too_large_setting=str(self.bot.guild_settings.get_too_large(guild.id))
+            )
 
             if clip_file is None:
                 self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")

@@ -36,7 +36,7 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[MedalClip, KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType) -> (Union[MedalClip, KickClip, TwitchClip], int):
+    async def download_clip(self, clip: Union[MedalClip, KickClip, TwitchClip], root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
         """Download and trim to 25MB"""
         async with self._semaphore:
             if not isinstance(clip, Union[MedalClip, KickClip, TwitchClip]):
@@ -72,16 +72,13 @@ class DownloadManager:
             # Check file size
             size_mb = os.path.getsize(f) / (1024 * 1024)
             if size_mb > 25:
-                # Get guild setting for handling large files
-                too_large_setting = str(self._parent.bot.guild_settings.get_too_large(guild_ctx.id))
-
                 if too_large_setting == "trim":
                     # Calculate target duration and trim
-                    target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24.9)
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24.9)
                     if not target_duration:
                         self._parent.logger.error("First target_duration() failed")
                         raise FailedTrim
-                    trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration)
+                    trimmed_file = await self._parent.trim_to_duration(f, target_duration)
                     if trimmed_file is None:
                         self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
@@ -92,11 +89,11 @@ class DownloadManager:
                         return trimmed_file, 1
 
                     # second pass is necessary
-                    second_target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=24)
+                    second_target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24)
                     if not second_target_duration:
                         self._parent.logger.error("Second target_duration() failed")
                         raise FailedTrim
-                    second_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, second_target_duration, append="_trimmed2")
+                    second_trimmed_file = await self._parent.trim_to_duration(f, second_target_duration, append="_trimmed2")
                     if second_trimmed_file is None:
                         self._parent.logger.error("Second trim_to_duration() failed")
                         raise FailedTrim
@@ -111,11 +108,11 @@ class DownloadManager:
                         return second_trimmed_file, 1
 
                     # third pass is necessary
-                    target_duration = await self._parent.bot.tools.calculate_target_duration(f, target_size_mb=20)
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=20)
                     if not target_duration:
                         self._parent.logger.error("Third target_duration() failed")
                         raise FailedTrim
-                    third_trimmed_file = await self._parent.bot.tools.trim_to_duration(f, target_duration, append="_trimmed3")
+                    third_trimmed_file = await self._parent.trim_to_duration(f, target_duration, append="_trimmed3")
                     if third_trimmed_file is None:
                         self._parent.logger.error("Third trim_to_duration() failed")
                         raise FailedTrim
@@ -139,7 +136,7 @@ class DownloadManager:
                     )
                     raise FailureHandled
                 elif too_large_setting == "dm":
-                    await self._parent.bot.tools.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
+                    await self._parent.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
                                                                  content=f"Sorry, the clip {clip.url} is too large "
                                                                          f"({size_mb:.1f}MB) for Discord's 25MB "
                                                                          f"limit. Unable to upload the file.\n\n"

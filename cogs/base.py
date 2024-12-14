@@ -97,7 +97,8 @@ class Base(Extension):
         clipfile, _ = await self.bot.tools.dl.download_clip(
             clip=clip,
             guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
-            root_msg=ctx.message
+            root_msg=ctx.message,
+            too_large_setting='trim'
         )
         videofile = await clip_ctx.add_chat(clipfile)
         await ctx.send(files=videofile)
