@@ -100,7 +100,10 @@ class Base(Extension):
             root_msg=ctx.message,
             too_large_setting='trim'
         )
-        videofile = await clip_ctx.add_chat(clipfile)
+        try:
+            videofile = await clip_ctx.add_chat(clipfile)
+        except ValueError:
+            return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
         await ctx.send(files=videofile)
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
