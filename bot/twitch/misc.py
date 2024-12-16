@@ -33,7 +33,7 @@ class TwitchMisc:
     def is_clip_link(url: str) -> bool:
         patterns = [
             r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
-            r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+'
+            r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+',
             r'https?://(?:www\.)?clyppy\.com/?clips/[a-zA-Z0-9_-]+'
         ]
         return any(re.match(pattern, url) for pattern in patterns)
