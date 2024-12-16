@@ -83,30 +83,30 @@ class Base(Extension):
         except:
             return await ctx.send("An error occurred retrieving Twitch logs, please contact out support team if the issue persists", ephemeral=True)
 
-    @slash_command(name="twitch", description="Embed a Twitch clip with chat",
-                   options=[SlashCommandOption(name="clip_url", type=OptionType.STRING,
-                                               description="Link to the Twitch clip",
-                                               required=True)]
-                   )
-    async def twitch(self, ctx, clip_url: str):
-        await ctx.defer()
-        if not self.bot.twitch.is_clip_link(clip_url):
-            return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
-        clip = await self.bot.twitch.get_clip(clip_url)
-        clip_ctx = await clip.fetch_data()
-        if not clip_ctx.video_id:
-            return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
-        clipfile, _ = await self.bot.tools.dl.download_clip(
-            clip=clip,
-            guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
-            root_msg=ctx.message,
-            too_large_setting='trim'
-        )
-        try:
-            videofile = await clip_ctx.add_chat(clipfile)
-            await ctx.send(files=videofile)
-        except Exception as e:
-            return await ctx.send(f"Failed to render chat: {e}")
+    #@slash_command(name="twitch", description="Embed a Twitch clip with chat",
+    #               options=[SlashCommandOption(name="clip_url", type=OptionType.STRING,
+    #                                           description="Link to the Twitch clip",
+    #                                           required=True)]
+    #               )
+    #async def twitch(self, ctx, clip_url: str):
+    #    await ctx.defer()
+    #    if not self.bot.twitch.is_clip_link(clip_url):
+    #        return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
+    #    clip = await self.bot.twitch.get_clip(clip_url)
+    #    clip_ctx = await clip.fetch_data()
+    #    if not clip_ctx.video_id:
+    #        return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
+    #    clipfile, _ = await self.bot.tools.dl.download_clip(
+    #        clip=clip,
+    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
+    #        root_msg=ctx.message,
+    #        too_large_setting='trim'
+    #    )
+    #    try:
+    #        videofile = await clip_ctx.add_chat(clipfile)
+    #        await ctx.send(files=videofile)
+    #    except Exception as e:
+    #        return await ctx.send(f"Failed to render chat: {e}")
 
     @slash_command(name="settings", description="Display or change CLYPPY's settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
