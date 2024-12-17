@@ -146,10 +146,10 @@ class Base(Extension):
         if (e := self.bot.get_channel(error_channel)) is None:
             return await ctx.send(f"Channel #{error_channel} not found.\n\n"
                                   f"Please make sure Clyppy has the `VIEW_CHANNELS` permission & try again.")
-        try:
-            self.bot.guild_settings.set_error_channel(ctx.guild.id, error_channel)
+        res = self.bot.guild_settings.set_error_channel(ctx.guild.id, error_channel)
+        if res:
             return await ctx.send(f"Success! Error channel set to {e.mention}")
-        except:
+        else:
             return await ctx.send("An error occurred while setting the error channel. Please try again.")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
