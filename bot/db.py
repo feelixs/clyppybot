@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from typing import Any, Callable
 from bot.tools import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -43,12 +42,17 @@ class GuildDatabase:
         """Initialize the database with required tables and load from server."""
         with self.get_db() as conn:
             conn.execute('''
-                CREATE TABLE IF NOT EXISTS guild_settings (
-                    guild_id INTEGER PRIMARY KEY,
-                    setting TEXT,
-                    error_channel INTEGER
-                )
-            ''')
+                            CREATE TABLE IF NOT EXISTS guild_settings (
+                                guild_id INTEGER PRIMARY KEY,
+                                setting TEXT
+                            )
+                        ''')
+            conn.execute('''
+                            CREATE TABLE IF NOT EXISTS error_channel (
+                                guild_id INTEGER PRIMARY KEY,
+                                channel INTEGER
+                            )
+                        ''')
             conn.commit()
 
         # Load from server if callback exists
@@ -60,7 +64,7 @@ class GuildDatabase:
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
-                    'SELECT error_channel FROM guild_settings WHERE guild_id = ?',
+                    'SELECT channel FROM error_channel WHERE guild_id = ?',
                     (guild_id,)
                 )
                 result = cursor.fetchone()
@@ -73,7 +77,7 @@ class GuildDatabase:
         try:
             with self.get_db() as conn:
                 conn.execute('''
-                    INSERT OR REPLACE INTO guild_settings (guild_id, error_channel)
+                    INSERT OR REPLACE INTO error_channel (guild_id, channel)
                     VALUES (?, ?)
                 ''', (guild_id, channel_id))
                 conn.commit()
