@@ -132,8 +132,9 @@ class Base(Extension):
                     cur_chn = self.bot.get_channel(ec)
                     return await ctx.send(f"Current error channel: {cur_chn.mention}")
                 except:
-                    cur_chn = ("Channel not found\n\n"
-                               "When not configured, Clyppy will send error messages to the same channel as the interaction.")
+                    cur_chn = ("Channel not found - error channel was reset to **Unconfigured**\n\n"
+                               "Make sure Clyppy has the `VIEW_CHANNELS` permission, and that the channel still exists."
+                               "\nWhen not configured, Clyppy will send error messages to the same channel as the interaction.")
                     self.bot.guild_settings.set_error_channel(ctx.guild.id, 0)
                     return await ctx.send("Current error channel: " + cur_chn)
 
@@ -141,8 +142,11 @@ class Base(Extension):
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
             return
+        if e := self.bot.get_channel(error_channel.id) is None:
+            return await ctx.send(f"Channel #{e} not found.\n\n"
+                                  f"Please make sure Clyppy has the `VIEW_CHANNELS` permission & try again.")
         self.bot.guild_settings.set_error_channel(ctx.guild.id, error_channel.id)
-        return await ctx.send(f"Error channel set to {error_channel.mention}")
+        return await ctx.send(f"Success! Error channel set to {error_channel.mention}")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
