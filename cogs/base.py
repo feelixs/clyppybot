@@ -134,7 +134,8 @@ class Base(Extension):
                 except:
                     cur_chn = ("Channel not found - error channel was reset to **Unconfigured**\n\n"
                                "Make sure Clyppy has the `VIEW_CHANNELS` permission, and that the channel still exists."
-                               "\nWhen not configured, Clyppy will send error messages to the same channel as the interaction.")
+                               "\nWhen not configured, Clyppy will send error messages to the same channel as the interaction.\n\n"
+                               f"More info:\nTried to retrieve channel with id {ec} but failed.")
                     self.bot.guild_settings.set_error_channel(ctx.guild.id, 0)
                     return await ctx.send("Current error channel: " + cur_chn)
 
