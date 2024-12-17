@@ -40,6 +40,11 @@ class GuildDatabase:
     async def setup_db(self):
         logger.info("Setting up database...")
         """Initialize the database with required tables and load from server."""
+        # Load from server if callback exists
+        if self.on_load:
+            logger.info("Loading database from the server...")
+            await self.on_load()
+
         with self.get_db() as conn:
             conn.execute('''
                             CREATE TABLE IF NOT EXISTS guild_settings (
@@ -54,11 +59,6 @@ class GuildDatabase:
                             )
                         ''')
             conn.commit()
-
-        # Load from server if callback exists
-        if self.on_load:
-            logger.info("Loading database from the server...")
-            await self.on_load()
 
     def get_error_channel(self, guild_id: int) -> int:
         try:
