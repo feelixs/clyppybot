@@ -45,7 +45,8 @@ class GuildDatabase:
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS guild_settings (
                     guild_id INTEGER PRIMARY KEY,
-                    setting TEXT
+                    setting TEXT,
+                    error_channel INTEGER
                 )
             ''')
             conn.commit()
