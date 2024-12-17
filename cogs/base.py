@@ -1,4 +1,3 @@
-import traceback
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
     Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
