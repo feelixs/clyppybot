@@ -1,5 +1,6 @@
 import traceback
-from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, Permissions, ActivityType, Activity, Task, IntervalTrigger
+from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
+    Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str, GuildType
 import logging
@@ -7,7 +8,6 @@ import aiohttp
 import os
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
-
 
 VERSION = "1.3.2b"
 
@@ -17,7 +17,7 @@ class Base(Extension):
         self.bot = bot
         self.ready = False
         self.logger = logging.getLogger(__name__)
-        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60*30))  # save db every 30 minutes
+        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
     @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
@@ -37,7 +37,9 @@ class Base(Extension):
         help_embed = Embed(title="About CLYPPY", description=about)
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send(content="If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.", embed=help_embed)
+        await ctx.send(
+            content="If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.",
+            embed=help_embed)
 
     @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
                    options=[SlashCommandOption(name="user",
@@ -67,12 +69,15 @@ class Base(Extension):
                     async with session.get(f"https://logs.ivr.fi/channel/{channel}/user/{user}") as resp:
                         logs_output = await resp.text()
                 else:
-                    return await ctx.send("An error occurred: year & month must be either both filled out, or none filled out", ephemeral=True)
+                    return await ctx.send(
+                        "An error occurred: year & month must be either both filled out, or none filled out",
+                        ephemeral=True)
                 if logs_output.count("\n") == 0:
                     if "[" in logs_output:
                         return await ctx.send(logs_output)
                     else:
-                        return await ctx.send(f'for user `{user}` on Twitch channel `{channel}`:\n`' + logs_output + '`')
+                        return await ctx.send(
+                            f'for user `{user}` on Twitch channel `{channel}`:\n`' + logs_output + '`')
                 else:
                     logs_output = self._get_last_lines(logs_output)
                     logs_output = self._format_log(logs_output)
@@ -81,14 +86,16 @@ class Base(Extension):
                     else:
                         return await ctx.send(logs_output)
         except:
-            return await ctx.send("An error occurred retrieving Twitch logs, please contact out support team if the issue persists", ephemeral=True)
+            return await ctx.send(
+                "An error occurred retrieving Twitch logs, please contact out support team if the issue persists",
+                ephemeral=True)
 
-    #@slash_command(name="twitch", description="Embed a Twitch clip with chat",
+    # @slash_command(name="twitch", description="Embed a Twitch clip with chat",
     #               options=[SlashCommandOption(name="clip_url", type=OptionType.STRING,
     #                                           description="Link to the Twitch clip",
     #                                           required=True)]
     #               )
-    #async def twitch(self, ctx, clip_url: str):
+    # async def twitch(self, ctx, clip_url: str):
     #    await ctx.defer()
     #    if not self.bot.twitch.is_clip_link(clip_url):
     #        return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
@@ -108,7 +115,29 @@ class Base(Extension):
     #    except Exception as e:
     #        return await ctx.send(f"Failed to render chat: {e}")
 
-    @slash_command(name="settings", description="Display or change CLYPPY's settings",
+    @slash_command(name="setup", description="Display or change Clyppy's general settings",
+                   options=[SlashCommandOption(name="error_channel", type=OptionType.CHANNEL,
+                                               description="The channel where Clyppy should send error messages",
+                                               required=False)])
+    async def setup(self, ctx: SlashContext, error_channel=None):
+        if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
+            await ctx.send("Only members with the **Administrator** permission can change Clyppy's settings.")
+            return
+        if error_channel is None:
+            if ec := self.bot.guild_settings.get_error_channel(ctx.guild.id) == 0:
+                cur_chn = ("Unconfigured\n\n"
+                           "When not configured, Clyppy will send error messages to the same channel as the interaction.")
+                return await ctx.send("Current error channel: " + cur_chn)
+            else:
+                cur_chn = self.bot.get_channel(ec)
+                return await ctx.send(f"Current error channel: {cur_chn.mention}")
+        await ctx.defer()
+        if ctx.guild is None:
+            await ctx.send("This command is only available in servers.")
+            return
+
+
+    @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
                                                description="Choose what CLYPPY should do with large files",
                                                required=False),
@@ -211,7 +240,8 @@ class Base(Extension):
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
-            await self.bot.change_presence(activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
+            await self.bot.change_presence(
+                activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
     @staticmethod
     async def post_servers(num: int):

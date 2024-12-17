@@ -56,6 +56,32 @@ class GuildDatabase:
             logger.info("Loading database from the server...")
             await self.on_load()
 
+    def get_error_channel(self, guild_id: int) -> int:
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT error_channel FROM guild_settings WHERE guild_id = ?',
+                    (guild_id,)
+                )
+                result = cursor.fetchone()
+                return result[0] if result else 0
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting error channel for guild {guild_id}: {e}")
+            return 0
+
+    def set_error_channel(self, guild_id: int, channel_id: int) -> bool:
+        try:
+            with self.get_db() as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO guild_settings (guild_id, error_channel)
+                    VALUES (?, ?)
+                ''', (guild_id, channel_id))
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting error channel for guild {guild_id}: {e}")
+            return False
+
     def get_setting(self, guild_id: int) -> str:
         try:
             with self.get_db() as conn:
