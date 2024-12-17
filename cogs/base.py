@@ -136,7 +136,7 @@ class Base(Extension):
                                "Make sure Clyppy has the `VIEW_CHANNELS` permission, and that the channel still exists."
                                "\nWhen not configured, Clyppy will send error messages to the same channel as the interaction.\n\n"
                                f"More info:\nTried to retrieve channel with id {ec} but failed.")
-                    self.bot.guild_settings.set_error_channel(int(ctx.guild.id), 0)
+                    self.bot.guild_settings.set_error_channel(ctx.guild.id, 0)
                     return await ctx.send("Current error channel: " + cur_chn)
 
         await ctx.defer()
@@ -146,7 +146,7 @@ class Base(Extension):
         if (e := self.bot.get_channel(error_channel)) is None:
             return await ctx.send(f"Channel #{error_channel} not found.\n\n"
                                   f"Please make sure Clyppy has the `VIEW_CHANNELS` permission & try again.")
-        res = self.bot.guild_settings.set_error_channel(int(ctx.guild.id), error_channel)
+        res = self.bot.guild_settings.set_error_channel(ctx.guild.id, e.id)
         if res:
             return await ctx.send(f"Success! Error channel set to {e.mention}")
         else:
