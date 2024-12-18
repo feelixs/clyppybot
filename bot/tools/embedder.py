@@ -8,8 +8,10 @@ from datetime import datetime, timezone
 from typing import List
 import traceback
 import aiohttp
+import time
 import re
 import os
+import asyncio
 
 
 async def publish_interaction(interaction_data, apikey):
@@ -35,6 +37,7 @@ class AutoEmbedder:
         self.too_large_clips = []
         self.logger = logger
         self.platform_tools = platform_tools
+        self.currently_downloading = []
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
@@ -76,7 +79,7 @@ class AutoEmbedder:
                 contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
-                await self._process_this_clip_link(words[index], event.message, guild)
+                await self._process_clip_one_at_a_time(words[index], event.message, guild)
             elif num_links > 1:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
@@ -85,12 +88,34 @@ class AutoEmbedder:
                     if not next_link_exists:
                         return 1
                     await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
-                    await self._process_this_clip_link(words[index], event.message, guild, True)
+                    await self._process_clip_one_at_a_time(words[index], event.message, guild, True)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
-    async def _process_this_clip_link(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
+    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
+        if parsed_id in self.currently_downloading:
+            await self._wait_for_download(parsed_id)
+        else:
+            self.currently_downloading.append(parsed_id)
+        try:
+            await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
+        except Exception as e:
+            print(f"Error in processing this clip link one at a time: {clip_link} - {e}")
+        finally:
+            try:
+                self.currently_downloading.remove(parsed_id)
+            except ValueError:
+                pass
+
+    async def _wait_for_download(self, clip_id: str, timeout: float = 30):
+        start_time = time.time()
+        while clip_id in self.currently_downloading:
+            if time.time() - start_time > timeout:
+                raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
+            await asyncio.sleep(0.1)
+
+    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
         if parsed_id in self.too_large_clips and not self.bot.guild_settings.is_trim_enabled(guild.id):
             self.logger.info(f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
             if self.bot.guild_settings.is_dm_on_error(guild.id):
