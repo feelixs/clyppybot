@@ -118,34 +118,34 @@ class AutoEmbedder:
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
         if parsed_id in self.too_large_clips and not self.bot.guild_settings.is_trim_enabled(guild.id):
             self.logger.info(f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
-            if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to,  f"The clip {clip_link} was previously reported as too large to fit Discord's limit.\n\n"
-                                                                  f"You can either:"
-                                                                  f" - upload a shorter clip\n"
-                                                                  f" - ask a server admin to change CLYPPY "
-                                                                  f"settings to `too_large='trim'`\n"
-                                                                  f" - resend the link in this DM and I'll"
-                                                                  f" upload a trimmed version"
-                                                     )
-                return
             emb = Embed(title="**Whoops...**",
-                        description=f"Looks like the video embed failed this clip as it was too large:\n{clip_link}\n\n "
-                                    f"Either: link a shorter clip, ask an admin to enable `too_large='trim'` "
+                        description=f"Looks like the video embed failed this clip as it was too large:\n{clip_link}\n\n"
+                                    f" Either: link a shorter clip, ask an admin to enable `too_large='trim'` "
                                     f"using /settings, or DM me the link and I'll trim it for you.")
             emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb)
+            await self.bot.tools.send_error_message(
+                msg_embed=emb,
+                dm_content=f"The clip {clip_link} was previously reported as too large to fit Discord's limit.\n\n"
+                           f"You can either:\n - upload a shorter clip\n - ask a server admin to change CLYPPY "
+                           f"settings to `too_large='trim'`"
+                           f"\n - resend the link in this DM and I'll upload a trimmed version",
+                bot=self.bot,
+                guild=guild
+            )
             return
 
         clip = await self.platform_tools.get_clip(clip_link)
         if clip is None:
             self.logger.info(f"Failed to download clip: **Invalid Clip Link** {clip_link}")
-            if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to, f"Failed to download clip: **Invalid Clip Link** {clip_link}")
-                return
             emb = Embed(title="**Invalid Clip Link**",
                         description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
             emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb)
+            await self.bot.tools.send_error_message(
+                msg_embed=emb,
+                dm_content=f"Failed to download clip: **Invalid Clip Link** {clip_link}",
+                bot=self.bot,
+                guild=guild
+            )
             return
 
         # download clip video
@@ -159,42 +159,48 @@ class AutoEmbedder:
 
             if clip_file is None:
                 self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
-                if self.bot.guild_settings.is_dm_on_error(guild.id):
-                    await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
-                    return
                 emb = Embed(title="**Invalid Clip Link**",
                             description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
                 emb.description += create_nexus_str()
-                await respond_to.reply(embed=emb, delete_after=60)
+                await self.bot.tools.send_error_message(
+                    msg_embed=emb,
+                    dm_content=f"Failed to download clip {clip_link}",
+                    bot=self.bot,
+                    guild=guild,
+                    delete_after_on_reply=60
+                )
                 return
 
         except FailedTrim:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
-            if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to, guild,
-                                                     f"The clip `{clip_link}` was too large to upload to Discord, "
-                                                     f"and I failed to properly trim the video from it.")
-                return
             emb = Embed(title="**Whoops...**",
                         description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
                                     f"> The original file size was larger than Discord's Limit for Bots, **25MB**. I tried to trim it to fit, but failed.")
             emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb)
+            await self.bot.tools.send_error_message(
+                msg_embed=emb,
+                dm_content=f"The clip `{clip_link}` was too large to upload to Discord, and I failed to properly trim the video from it.",
+                bot=self.bot,
+                guild=guild
+            )
             return
         except FailureHandled:
             self.logger.info("Failed to download clip, dm/info triggered")
             return
         except:
             self.logger.info(f"Unhandled exception in download - notifying: {traceback.format_exc()}")
-            if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
-                return
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip: "
                                     f"\n\n{clip_link}\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb, delete_after=60)
+            await self.bot.tools.send_error_message(
+                msg_embed=emb,
+                dm_content=f"Failed to download clip {clip_link}",
+                bot=self.bot,
+                guild=guild,
+                delete_after_on_reply=60
+            )
             return
 
         # send video file
@@ -237,38 +243,45 @@ class AutoEmbedder:
                 self.too_large_clips.append(clip.id)
                 clipsize = os.stat(clip_file).st_size
                 self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
-                if self.bot.guild_settings.is_dm_on_error(guild.id):
-                    await self.bot.tools.send_dm_err_msg(respond_to, guild,
-                                                         f"The clip {clip_link} was too large to embed in {guild.name} "
-                                                         f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)")
-                    return
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
                                         f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
-                await respond_to.reply(embed=emb)
+                await self.bot.tools.send_error_message(
+                    msg_embed=emb,
+                    dm_content=f"The clip {clip_link} was too large to embed in {guild.name} "
+                               f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)",
+                    guild=guild,
+                    bot=self.bot
+                )
                 return
             else:
                 self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
-                if self.bot.guild_settings.is_dm_on_error(guild.id):
-                    await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
-                    return
                 emb = Embed(title="**Oops...**",
                             description=f"I messed up while trying to download this clip:\n{clip_link} "
                                         f"\n\nPlease try linking it again.\n"
                                         "If the issue keeps on happening, please contact us on our support server.")
                 emb.description += create_nexus_str()
-                await respond_to.reply(embed=emb, delete_after=60)
+                await self.bot.tools.send_error_message(
+                    msg_embed=emb,
+                    dm_content=f"Failed to download clip {clip_link}",
+                    guild=guild,
+                    bot=self.bot,
+                    delete_after_on_reply=60
+                )
                 return
         except Exception:
             self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
-            if self.bot.guild_settings.is_dm_on_error(guild.id):
-                await self.bot.tools.send_dm_err_msg(respond_to, guild, f"Failed to download clip {clip_link}")
-                return
             emb = Embed(title="**Oops...**",
                         description=f"I messed up while trying to download this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
-            await respond_to.reply(embed=emb, delete_after=60)
+            await self.bot.tools.send_error_message(
+                msg_embed=emb,
+                dm_content=f"Failed to download clip {clip_link}",
+                guild=guild,
+                bot=self.bot,
+                delete_after_on_reply=60
+            )
             return
