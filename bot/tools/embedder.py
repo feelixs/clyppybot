@@ -124,6 +124,7 @@ class AutoEmbedder:
                                     f"using /settings, or DM me the link and I'll trim it for you.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
+                ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"The clip {clip_link} was previously reported as too large to fit Discord's limit.\n\n"
                            f"You can either:\n - upload a shorter clip\n - ask a server admin to change CLYPPY "
@@ -141,6 +142,7 @@ class AutoEmbedder:
                         description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
+                ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"Failed to download clip: **Invalid Clip Link** {clip_link}",
                 bot=self.bot,
@@ -163,6 +165,7 @@ class AutoEmbedder:
                             description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
                 emb.description += create_nexus_str()
                 await self.bot.tools.send_error_message(
+                    ctx=respond_to,
                     msg_embed=emb,
                     dm_content=f"Failed to download clip {clip_link}",
                     bot=self.bot,
@@ -178,6 +181,7 @@ class AutoEmbedder:
                                     f"> The original file size was larger than Discord's Limit for Bots, **25MB**. I tried to trim it to fit, but failed.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
+                ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"The clip `{clip_link}` was too large to upload to Discord, and I failed to properly trim the video from it.",
                 bot=self.bot,
@@ -195,6 +199,7 @@ class AutoEmbedder:
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
+                ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"Failed to download clip {clip_link}",
                 bot=self.bot,
@@ -248,6 +253,7 @@ class AutoEmbedder:
                                         f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
                 emb.description += create_nexus_str()
                 await self.bot.tools.send_error_message(
+                    ctx=respond_to,
                     msg_embed=emb,
                     dm_content=f"The clip {clip_link} was too large to embed in {guild.name} "
                                f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)",
@@ -263,6 +269,7 @@ class AutoEmbedder:
                                         "If the issue keeps on happening, please contact us on our support server.")
                 emb.description += create_nexus_str()
                 await self.bot.tools.send_error_message(
+                    ctx=respond_to,
                     msg_embed=emb,
                     dm_content=f"Failed to download clip {clip_link}",
                     guild=guild,
@@ -278,6 +285,7 @@ class AutoEmbedder:
                                     "If the issue keeps on happening, please contact us on our support server.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
+                ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"Failed to download clip {clip_link}",
                 guild=guild,
