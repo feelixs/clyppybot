@@ -169,6 +169,7 @@ class Tools:
             return
 
         if error_channel_id := bot.guild_settings.get_error_channel(guild.id):
+            self.logger.info(f"Retrieved {error_channel_id}")
             if error_channel := await bot.get_channel(error_channel_id):
                 try:
                     await error_channel.send(embed=msg_embed)
