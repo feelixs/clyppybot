@@ -8,7 +8,7 @@ import os
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
 
-VERSION = "1.3.3b"
+VERSION = "1.3.2b"
 
 
 class Base(Extension):
