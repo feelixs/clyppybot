@@ -58,7 +58,7 @@ class AutoEmbedder:
                 n += 1
         return n
 
-    async def on_message_create(self, event: MessageCreate):
+    async def on_message_create(self, event: MessageCreate, silence_invalid_url=False):
         try:
             if event.message.guild is None:
                 # if we're in dm context, set the guild id to the author id
@@ -79,7 +79,7 @@ class AutoEmbedder:
                 contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
-                await self._process_clip_one_at_a_time(words[index], event.message, guild)
+                await self._process_clip_one_at_a_time(words[index], event.message, guild, silence_invalid_url=silence_invalid_url)
             elif num_links > 1:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
@@ -88,18 +88,18 @@ class AutoEmbedder:
                     if not next_link_exists:
                         return 1
                     await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
-                    await self._process_clip_one_at_a_time(words[index], event.message, guild, True)
+                    await self._process_clip_one_at_a_time(words[index], event.message, guild, True, silence_invalid_url=silence_invalid_url)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
-    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
+    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False, silence_invalid_url=False):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         if parsed_id in self.currently_downloading:
             await self._wait_for_download(parsed_id)
         else:
             self.currently_downloading.append(parsed_id)
         try:
-            await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
+            await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link, silence_invalid_url=silence_invalid_url)
         except Exception as e:
             print(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
@@ -115,7 +115,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
+    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False, silence_invalid_url=False) -> None:
         if parsed_id in self.too_large_clips and not self.bot.guild_settings.is_trim_enabled(guild.id):
             self.logger.info(f"Skipping quick embed for clip {parsed_id} in {guild.name}, clip was previously reported too large")
             emb = Embed(title="**Whoops...**",
@@ -137,17 +137,18 @@ class AutoEmbedder:
 
         clip = await self.platform_tools.get_clip(clip_link)
         if clip is None:
-            self.logger.info(f"Failed to download clip: **Invalid Clip Link** {clip_link}")
-            emb = Embed(title="**Invalid Clip Link**",
-                        description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
-            emb.description += create_nexus_str()
-            await self.bot.tools.send_error_message(
-                ctx=respond_to,
-                msg_embed=emb,
-                dm_content=f"Failed to download clip: **Invalid Clip Link** {clip_link}",
-                bot=self.bot,
-                guild=guild
-            )
+            if not silence_invalid_url:
+                self.logger.info(f"Failed to download clip: **Invalid Clip Link** {clip_link}")
+                emb = Embed(title="**Invalid Clip Link**",
+                            description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
+                emb.description += create_nexus_str()
+                await self.bot.tools.send_error_message(
+                    ctx=respond_to,
+                    msg_embed=emb,
+                    dm_content=f"Failed to download clip: **Invalid Clip Link** {clip_link}",
+                    bot=self.bot,
+                    guild=guild
+                )
             return
 
         # download clip video
@@ -160,18 +161,19 @@ class AutoEmbedder:
             )
 
             if clip_file is None:
-                self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
-                emb = Embed(title="**Invalid Clip Link**",
-                            description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
-                emb.description += create_nexus_str()
-                await self.bot.tools.send_error_message(
-                    ctx=respond_to,
-                    msg_embed=emb,
-                    dm_content=f"Failed to download clip {clip_link}",
-                    bot=self.bot,
-                    guild=guild,
-                    delete_after_on_reply=60
-                )
+                if not silence_invalid_url:
+                    self.logger.info(f"Failed to download clip {clip_link}: {traceback.format_exc()}")
+                    emb = Embed(title="**Invalid Clip Link**",
+                                description=f"Looks like the clip `{clip_link}` couldn't be downloaded. Verify that it exists")
+                    emb.description += create_nexus_str()
+                    await self.bot.tools.send_error_message(
+                        ctx=respond_to,
+                        msg_embed=emb,
+                        dm_content=f"Failed to download clip {clip_link}",
+                        bot=self.bot,
+                        guild=guild,
+                        delete_after_on_reply=60
+                    )
                 return
 
         except FailedTrim:
