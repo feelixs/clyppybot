@@ -56,7 +56,7 @@ class RedditClip:
     async def download(self, filename: str):
         self.logger.info(f"Downloading with yt-dlp: {filename}")
         ydl_opts = {
-            'format': 'best',
+            'format': 'best/bv*+ba',
             'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
