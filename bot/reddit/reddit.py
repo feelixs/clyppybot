@@ -5,6 +5,7 @@ import asyncio
 import aiohttp
 import os
 from typing import Optional
+from bot.kick import KickClip, KickMisc
 
 
 class RedditMisc:
@@ -12,14 +13,13 @@ class RedditMisc:
         self.logger = logging.getLogger(__name__)
         self.platform_name = "Reddit"
         self.silence_invalid_url = True
-        self.VALID_VIDEO_DOMAINS = [
+        self.VALID_EXT_VIDEO_DOMAINS = [
             'twitch.tv',
             'www.twitch.tv',
             'kick.com',
             'www.kick.com',
             'medal.tv',
             'www.medal.tv',
-            'v.redd.it'
         ]
 
     @staticmethod
@@ -60,9 +60,8 @@ class RedditMisc:
 
         Returns:
             tuple[bool, Optional[str]]: (True if video found, domain name if found else None)
-
-        Raises:
-            aiohttp.ClientError: If there's an error fetching the URL
+            For v.redd.it videos, returns (True, None)
+            For external platforms, returns (True, full_platform_url)
         """
         if max_redirects <= 0:
             logging.warning(f"Max redirects reached for URL: {url}")
@@ -75,7 +74,6 @@ class RedditMisc:
                         logging.warning(f"Got status {response.status} for URL: {url}")
                         return False, None
                     txt = await response.text()
-
                     # Handle shreddit redirects
                     if "redd.it" in url and "shreddit-redirect" in txt:
                         try:
@@ -85,12 +83,18 @@ class RedditMisc:
                         except IndexError:
                             logging.error(f"Failed to parse shreddit redirect in: {url}")
                             return False, None
-
-                    # Check for embedded video or video platform links
-                    for domain in self.VALID_VIDEO_DOMAINS:
+                    # First check for v.redd.it videos
+                    if 'v.redd.it' in txt:
+                        return True, None
+                    # Check for external platform links
+                    for domain in self.VALID_EXT_VIDEO_DOMAINS:
                         if domain in txt:
-                            return True, domain
-
+                            try:
+                                matches = re.findall(f'https?://(?:www\.)?{domain}[^\s"\'<>]+', txt)
+                                if matches:
+                                    return True, matches[0]
+                            except Exception as e:
+                                self.logger.error(f"Error extracting external URL: {str(e)}")
                     return False, None
 
         except aiohttp.ClientError as e:
@@ -134,12 +138,12 @@ class RedditMisc:
 
     async def get_clip(self, url: str) -> 'RedditClip':
         slug = self.parse_clip_url(url)
-        is_vid, platform = await self.is_video(url)
+        is_vid, ext_info = await self.is_video(url)
         if not is_vid:
             self.logger.info(f"{url} is_video=False")
             return None
         self.logger.info(f"{url} is_video=True")
-        return RedditClip(slug, platform)
+        return RedditClip(slug, ext_info)
 
 
 class RedditClip:
@@ -148,13 +152,15 @@ class RedditClip:
         self.service = "reddit"
         self.url = f"https://redd.it/{slug}"
         self.logger = logging.getLogger(__name__)
-        self.external_platform = ext
+        self.external_link = ext
 
     async def _download_kick(self, filename):
-        return None
+        k = KickMisc()
+        kclip = await k.get_clip(self.external_link)
+        return await kclip.download(filename)
 
     async def download(self, filename: str):
-        if 'kick' in self.external_platform:  # external_platform is a domain
+        if 'kick' in self.external_link:  # external_platform is a domain
             return await self._download_kick(filename)
         self.logger.info(f"Downloading with yt-dlp: {filename}")
         ydl_opts = {
