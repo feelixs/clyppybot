@@ -161,6 +161,7 @@ class RedditClip:
 
     async def download(self, filename: str):
         if 'kick' in self.external_link:  # external_platform is a domain
+            self.logger.info(f"Running download for external link {self.external_link}")
             return await self._download_kick(filename)
         self.logger.info(f"Downloading with yt-dlp: {filename}")
         ydl_opts = {
