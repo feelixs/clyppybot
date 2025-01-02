@@ -62,6 +62,8 @@ class DownloadManager:
                         self._parent.logger.info(f"{variant} was corrupt, so we are downloading and overwriting it")
                     else:
                         f, was_edited = variant, 1
+                        if variant == filename:
+                            was_edited = 0
                     break
             if f is None:
                 # Download clip
