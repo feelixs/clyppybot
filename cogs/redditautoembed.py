@@ -10,4 +10,4 @@ class RedditAutoEmbed(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        await self.embedder.on_message_create(event, silence_invalid_url=True)
+        await self.embedder.on_message_create(event)

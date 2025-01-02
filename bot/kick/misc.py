@@ -8,6 +8,7 @@ class KickMisc:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.platform_name = "Kick"
+        self.silence_invalid_url = False
 
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):

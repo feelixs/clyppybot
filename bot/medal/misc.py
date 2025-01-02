@@ -8,6 +8,7 @@ class MedalMisc:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.platform_name = "Medal"
+        self.silence_invalid_url = False
 
     @staticmethod
     def parse_clip_url(url: str) -> Optional[str]:

@@ -15,6 +15,7 @@ class TwitchMisc:
         if tis is None:
             exit("No Twitch API secret found")
         self.platform_name = "Twitch"
+        self.silence_invalid_url = False
 
     @staticmethod
     def parse_clip_url(url: str) -> str:

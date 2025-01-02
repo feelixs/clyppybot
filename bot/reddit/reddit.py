@@ -10,6 +10,7 @@ class RedditMisc:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.platform_name = "Reddit"
+        self.silence_invalid_url = True
 
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):
