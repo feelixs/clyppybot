@@ -42,7 +42,9 @@ class RedditMisc:
     async def get_clip(self, url: str) -> 'RedditClip':
         slug, subreddit = self.parse_clip_url(url)
         if not self.is_video(url):
+            self.logger.info(f"{url} is_video=False")
             return None
+        self.logger.info(f"{url} is_video=True")
         return RedditClip(slug, subreddit)
 
 
