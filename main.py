@@ -4,6 +4,7 @@ from bot.twitch import TwitchMisc
 from bot.medal import MedalMisc
 from bot.tools import Tools
 from bot.kick import KickMisc
+from bot.reddit import RedditMisc
 import logging
 import asyncio
 import os
@@ -57,6 +58,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 Bot.twitch = TwitchMisc()
 Bot.kick = KickMisc()
 Bot.medal = MedalMisc()
+Bot.medal = RedditMisc()
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
