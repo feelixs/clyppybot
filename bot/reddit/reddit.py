@@ -50,7 +50,7 @@ class RedditClip:
     def __init__(self, slug, sub):
         self.id = slug
         self.service = "reddit"
-        self.url = f"https://reddit.com/{sub}/comments/{slug}"
+        self.url = f"https://reddit.com/r/{sub}/comments/{slug}"
         self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str):
