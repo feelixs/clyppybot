@@ -4,6 +4,7 @@ import re
 import asyncio
 import aiohttp
 import os
+from typing import Optional
 
 
 class RedditMisc:
@@ -49,7 +50,7 @@ class RedditMisc:
                 return match.group(1)
         return None
 
-    async def is_video(self, url: str, max_redirects: int = 3) -> bool:
+    async def is_video(self, url: str, max_redirects: int = 3) -> tuple[bool, Optional[str]]:
         """
         Check if a Reddit post contains a video or links to a video platform.
 
@@ -58,20 +59,21 @@ class RedditMisc:
             max_redirects (int): Maximum number of redirects to follow for shreddit-redirect
 
         Returns:
-            bool: True if the post contains a video or links to a video platform
+            tuple[bool, Optional[str]]: (True if video found, domain name if found else None)
 
         Raises:
             aiohttp.ClientError: If there's an error fetching the URL
         """
         if max_redirects <= 0:
             logging.warning(f"Max redirects reached for URL: {url}")
-            return False
+            return False, None
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=10) as response:
                     if response.status != 200:
                         logging.warning(f"Got status {response.status} for URL: {url}")
-                        return False
+                        return False, None
                     txt = await response.text()
 
                     # Handle shreddit redirects
@@ -82,20 +84,21 @@ class RedditMisc:
                             return await self.is_video(redirect_url, max_redirects - 1)
                         except IndexError:
                             logging.error(f"Failed to parse shreddit redirect in: {url}")
-                            return False
+                            return False, None
 
                     # Check for embedded video or video platform links
-                    return any(
-                        domain in txt
-                        for domain in self.VALID_VIDEO_DOMAINS
-                    )
+                    for domain in self.VALID_VIDEO_DOMAINS:
+                        if domain in txt:
+                            return True, domain
+
+                    return False, None
 
         except aiohttp.ClientError as e:
             logging.error(f"Error fetching URL {url}: {str(e)}")
-            return False
+            return False, None
         except Exception as e:
             logging.error(f"Unexpected error checking video for {url}: {str(e)}")
-            return False
+            return False, None
 
     @staticmethod
     def is_clip_link(url: str) -> bool:
@@ -131,21 +134,28 @@ class RedditMisc:
 
     async def get_clip(self, url: str) -> 'RedditClip':
         slug = self.parse_clip_url(url)
-        if not await self.is_video(url):
+        is_vid, platform = await self.is_video(url)
+        if not is_vid:
             self.logger.info(f"{url} is_video=False")
             return None
         self.logger.info(f"{url} is_video=True")
-        return RedditClip(slug)
+        return RedditClip(slug, platform)
 
 
 class RedditClip:
-    def __init__(self, slug):
+    def __init__(self, slug, ext):
         self.id = slug
         self.service = "reddit"
         self.url = f"https://redd.it/{slug}"
         self.logger = logging.getLogger(__name__)
+        self.external_platform = ext
+
+    async def _download_kick(self, filename):
+        return None
 
     async def download(self, filename: str):
+        if 'kick' in self.external_platform:  # external_platform is a domain
+            return await self._download_kick(filename)
         self.logger.info(f"Downloading with yt-dlp: {filename}")
         ydl_opts = {
             'format': 'best/bv*+ba',
