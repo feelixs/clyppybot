@@ -25,7 +25,7 @@ class KickClip:
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 
         driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
-        self.logger.info("Started browser and monitoring network...")
+        self.logger.info(f"Started browser and monitoring network on url: {self.url}...")
 
         async def scan_logs_for_m3u8(driver, timeout=10):
             start_time = time.time()
