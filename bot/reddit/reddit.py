@@ -40,12 +40,14 @@ class RedditMisc:
                 return match.group(1)
         return None
 
-    @staticmethod
-    async def is_video(url):
+    async def is_video(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 txt = await response.text()
                 video_post = "v.redd.it" in txt
+                if "redd.it" in url and "shreddit-redirect" in txt:
+                    return self.is_video("https://reddit.com/" + txt.split("shreddit-redirect href=\"")[-1].split("\"")[0])
+
                 valid_link_post = (
                     ('https://twitch.tv' or 'https://www.twitch.tv') in txt or
                     ('https://kick.com' or 'https://www.kick.com') in txt or
