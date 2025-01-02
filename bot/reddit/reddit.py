@@ -15,15 +15,30 @@ class RedditMisc:
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):
         """
-        Extracts post ID and subreddit from Reddit URL
-        Returns: (post_id, subreddit_name)
+        Extracts the post ID from a Reddit URL if present.
+        Works with all supported URL formats.
+
+        Args:
+            url (str): Reddit URL
+
+        Returns:
+            str | None: Post ID if found, None otherwise
         """
-        pattern = r'https?://(?:www\.|old\.)?reddit\.com/r/([a-zA-Z0-9_-]+)/comments/([a-zA-Z0-9]+)'
-        match = re.match(pattern, url)
-        if not match:
-            raise ValueError("Invalid Reddit URL")
-        subreddit, post_id = match.groups()
-        return post_id, subreddit
+        # Try to extract post ID from various URL formats
+        patterns = [
+            r'reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+            r'redd\.it/([a-zA-Z0-9]+)',                      # Short links
+            r'reddit\.com/gallery/([a-zA-Z0-9]+)',          # Gallery links
+            r'reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+            r'reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',   # Crossposts
+            r'reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'          # Share links
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
     @staticmethod
     async def is_video(url):
@@ -33,27 +48,50 @@ class RedditMisc:
 
     @staticmethod
     def is_clip_link(url: str) -> bool:
-        # Pattern matches Reddit post URLs like:
-        # https://www.reddit.com/r/subreddit/comments/postid/title
-        # https://old.reddit.com/r/subreddit/comments/postid/title
-        # https://reddit.com/r/subreddit/comments/postid/title
-        pattern = r'https?://(?:www\.|old\.)?reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?'
-        return bool(re.match(pattern, url))
+        """
+                Checks if a URL is a valid Reddit link format.
+                Handles various Reddit URL patterns including short links, galleries,
+                user posts, crossposts, and mobile versions.
+
+                Args:
+                    url (str): URL to check
+                Returns:
+                    bool: True if URL matches any known Reddit format
+                """
+        patterns = [
+            # Standard post URLs (www, old, and bare domain)
+            r'https?://(?:www\.|old\.)?reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?(?:\?[^/]+)?',
+            # Short links
+            r'https?://(?:www\.)?redd\.it/[a-zA-Z0-9]+',
+            # Gallery links
+            r'https?://(?:www\.)?reddit\.com/gallery/[a-zA-Z0-9]+',
+            # User profile posts
+            r'https?://(?:www\.)?reddit\.com/user/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?',
+            # Crosspost/duplicate links
+            r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/duplicates/[a-zA-Z0-9]+(?:/[^/]+/?)?',
+            # Mobile versions (i.reddit and m.reddit)
+            r'https?://[im]\.reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?',
+            # Share links
+            r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+'
+        ]
+        # Combine all patterns with OR operator
+        combined_pattern = '|'.join(f'({pattern})' for pattern in patterns)
+        return bool(re.match(combined_pattern, url))
 
     async def get_clip(self, url: str) -> 'RedditClip':
-        slug, subreddit = self.parse_clip_url(url)
+        slug = self.parse_clip_url(url)
         if not await self.is_video(url):
             self.logger.info(f"{url} is_video=False")
             return None
         self.logger.info(f"{url} is_video=True")
-        return RedditClip(slug, subreddit)
+        return RedditClip(slug)
 
 
 class RedditClip:
-    def __init__(self, slug, sub):
+    def __init__(self, slug):
         self.id = slug
         self.service = "reddit"
-        self.url = f"https://reddit.com/r/{sub}/comments/{slug}"
+        self.url = f"https://redd.it/{slug}"
         self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str):
