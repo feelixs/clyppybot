@@ -44,7 +44,14 @@ class RedditMisc:
     async def is_video(url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
-                return "v.redd.it" in await response.text()
+                txt = await response.text()
+                video_post = "v.redd.it" in txt
+                valid_link_post = 'external-preview.redd.it' in txt and (
+                    'twitch.tv' in txt or
+                    'kick.com' in txt or
+                    'medal.tv' in txt
+                )
+                return video_post or valid_link_post
 
     @staticmethod
     def is_clip_link(url: str) -> bool:
