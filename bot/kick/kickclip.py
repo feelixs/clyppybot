@@ -64,7 +64,10 @@ class KickClip:
             driver.quit()
 
     async def download(self, filename: str):
-        m3u8_url = await self.get_m3u8_url()
+        try:
+            m3u8_url = await self.get_m3u8_url()
+        except:
+            m3u8_url = None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
             return None
