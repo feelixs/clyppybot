@@ -58,7 +58,7 @@ class RedditClip:
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
-            'quiet': False,
+            'quiet': True,
             'no_warnings': True,
         }
 
