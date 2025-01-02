@@ -46,10 +46,10 @@ class RedditMisc:
             async with session.get(url) as response:
                 txt = await response.text()
                 video_post = "v.redd.it" in txt
-                valid_link_post = 'external-preview.redd.it' in txt and (
-                    'twitch.tv' in txt or
-                    'kick.com' in txt or
-                    'medal.tv' in txt
+                valid_link_post = (
+                    ('https://twitch.tv' or 'https://www.twitch.tv') in txt or
+                    ('https://kick.com' or 'https://www.kick.com') in txt or
+                    ('https://medal.tv' or 'https://www.medal.tv') in txt
                 )
                 return video_post or valid_link_post
 
@@ -73,7 +73,7 @@ class RedditMisc:
             # Gallery links
             r'https?://(?:www\.)?reddit\.com/gallery/[a-zA-Z0-9]+',
             # User profile posts
-            r'https?://(?:www\.)?reddit\.com/user/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?',
+            r'https?://(?:www\.|old\.)?reddit\.com/user/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?(?:\?[^/]*)?',
             # Crosspost/duplicate links
             r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/duplicates/[a-zA-Z0-9]+(?:/[^/]+/?)?',
             # Mobile versions (i.reddit and m.reddit)
