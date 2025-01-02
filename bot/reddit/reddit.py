@@ -11,6 +11,15 @@ class RedditMisc:
         self.logger = logging.getLogger(__name__)
         self.platform_name = "Reddit"
         self.silence_invalid_url = True
+        self.VALID_VIDEO_DOMAINS = [
+            'twitch.tv',
+            'www.twitch.tv',
+            'kick.com',
+            'www.kick.com',
+            'medal.tv',
+            'www.medal.tv',
+            'v.redd.it'
+        ]
 
     @staticmethod
     def parse_clip_url(url: str) -> (str, str):
@@ -40,20 +49,53 @@ class RedditMisc:
                 return match.group(1)
         return None
 
-    async def is_video(self, url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                txt = await response.text()
-                video_post = "v.redd.it" in txt
-                if "redd.it" in url and "shreddit-redirect" in txt:
-                    return self.is_video("https://reddit.com/" + txt.split("shreddit-redirect href=\"")[-1].split("\"")[0])
+    async def is_video(self, url: str, max_redirects: int = 3) -> bool:
+        """
+        Check if a Reddit post contains a video or links to a video platform.
 
-                valid_link_post = (
-                    ('https://twitch.tv' or 'https://www.twitch.tv') in txt or
-                    ('https://kick.com' or 'https://www.kick.com') in txt or
-                    ('https://medal.tv' or 'https://www.medal.tv') in txt
-                )
-                return video_post or valid_link_post
+        Args:
+            url (str): The Reddit post URL to check
+            max_redirects (int): Maximum number of redirects to follow for shreddit-redirect
+
+        Returns:
+            bool: True if the post contains a video or links to a video platform
+
+        Raises:
+            aiohttp.ClientError: If there's an error fetching the URL
+        """
+        if max_redirects <= 0:
+            logging.warning(f"Max redirects reached for URL: {url}")
+            return False
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=10) as response:
+                    if response.status != 200:
+                        logging.warning(f"Got status {response.status} for URL: {url}")
+                        return False
+                    txt = await response.text()
+
+                    # Handle shreddit redirects
+                    if "redd.it" in url and "shreddit-redirect" in txt:
+                        try:
+                            redirect_url = "https://reddit.com/" + \
+                                           txt.split("shreddit-redirect href=\"")[-1].split("\"")[0]
+                            return await self.is_video(redirect_url, max_redirects - 1)
+                        except IndexError:
+                            logging.error(f"Failed to parse shreddit redirect in: {url}")
+                            return False
+
+                    # Check for embedded video or video platform links
+                    return any(
+                        domain in txt
+                        for domain in self.VALID_VIDEO_DOMAINS
+                    )
+
+        except aiohttp.ClientError as e:
+            logging.error(f"Error fetching URL {url}: {str(e)}")
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error checking video for {url}: {str(e)}")
+            return False
 
     @staticmethod
     def is_clip_link(url: str) -> bool:
