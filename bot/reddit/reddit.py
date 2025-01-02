@@ -92,7 +92,7 @@ class RedditMisc:
                             try:
                                 matches = re.findall(f'https?://(?:www\.)?{domain}[^\s"\'<>]+', txt)
                                 if matches:
-                                    return True, matches[0]
+                                    return True, matches[0].split("&")[0]
                             except Exception as e:
                                 self.logger.error(f"Error extracting external URL: {str(e)}")
                     return False, None
