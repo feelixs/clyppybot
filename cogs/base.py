@@ -224,24 +224,23 @@ class Base(Extension):
         es = self.bot.guild_settings.get_embed_setting(ctx.guild.id)
         es = POSSIBLE_EMBED_SETTINGS[es]
         about = (
-            "**Configurable Settings:**\n"
-            "Below are the settings you can configure using this command. Each setting name is in **bold**, "
-            "followed by its available options.\n\n"
-            "**too_large** Choose what Clyppy should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
-            " - `trim`: Clyppy will trim the video until it's within Discord's size limit and upload the resulting file.\n"
-            " - `info`: Clyppy will respond with a short statement saying he's unable to continue and the upload will fail.\n"
-            " - `dm`: The upload will fail and Clyppy will attempt to DM the author to notify them.\n"
-            " - `compress`: Clyppy will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
-            "**on_error** Choose what Clyppy should do when it encounters an error while downloading a file:\n"
-            " - `info`: Clyppy responds with a statement that he can't continue.\n"
-            " - `dm`: Clyppy will attempt to DM the author to notify them of the error.\n\n"
-            "**embed_setting** Choose which buttons Clyppy shows under embedded videos:\n"
-            " - `none`: No buttons, just the video.\n"
-            " - `view`: A button to view the original video file wherever it's hosted.\n"
-            " - `dl`: A button that directs users to download the original, untrimmed, video file.\n"
-            " - `all`: Show all available buttons.\n"
-            f"**Current Settings:**\n{cs}\n**embed_setting**: {es}\n\n"
-            "Something missing? Please **Suggest a Feature** using the link below."
+            '**Configurable Settings:**\n'
+            'Below are the settings you can configure using this command. Each setting name is in **bold**, '
+            'followed by its available options.\n\n'
+            '**too_large** Choose what Clyppy should do with downloaded clips that are larger than Discord\'s limits of 25MB:\n'
+            ' - `trim`: Clyppy will trim the video until it\'s within Discord\'s size limit and upload the resulting file.\n'
+            ' - `info`: Clyppy will respond with a short statement saying he\'s unable to continue and the upload will fail.\n'
+            ' - `dm`: The upload will fail and Clyppy will attempt to DM the author to notify them.\n'
+            '**on_error** Choose what Clyppy should do when it encounters an error while downloading a file:\n'
+            ' - `info`: Clyppy responds with a statement that he can\'t continue.\n'
+            ' - `dm`: Clyppy will attempt to DM the author to notify them of the error.\n\n'
+            '**embed_setting** Choose which buttons Clyppy shows under embedded videos:\n'
+            ' - `none`: No buttons, just the video.\n'
+            ' - `view`: A button to view the original video file wherever it\'s hosted.\n'
+            '- `dl`: A button that\'s displayed on compatible clips, directing users to download the original, untrimmed, video file.\n'
+            ' - `all`: Show all available buttons.\n'
+            f'**Current Settings:**\n{cs}\n**embed_setting**: {es}\n\n'
+            'Something missing? Please **Suggest a Feature** using the link below.'
         )
 
         if prepend_admin:
