@@ -238,7 +238,7 @@ class Base(Extension):
             ' - `none`: No buttons, just the video.\n'
             ' - `view`: A button to the original clip.\n'
             '- `dl`: A button to download the original, untrimmed, video file (on compatible clips).\n'
-            ' - `all`: Show all available buttons.\n'
+            ' - `all`: Shows all available buttons.\n'
             f'**Current Settings:**\n{cs}\n**embed_buttons**: {es}\n\n'
             'Something missing? Please **Suggest a Feature** using the link below.'
         )
