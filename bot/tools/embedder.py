@@ -15,7 +15,7 @@ import asyncio
 
 
 async def publish_interaction(interaction_data, apikey):
-    url = 'https://clyppy.com/api/publish/'
+    url = 'https://clyppy.io/api/publish/'
     headers = {
         'X-API-Key': apikey,
         'Content-Type': 'application/json'
