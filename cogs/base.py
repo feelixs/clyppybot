@@ -225,7 +225,7 @@ class Base(Extension):
         es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
             '**Configurable Settings:**\n'
-            'Below are the settings you can configure using this command. Each setting name is in **bold**, '
+            'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
             '**too_large** Choose what Clyppy does with files larger than Discord\'s limit (25MB):\n'
             ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
