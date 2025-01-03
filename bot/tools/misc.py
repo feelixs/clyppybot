@@ -22,6 +22,13 @@ INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=111172392860438131
 TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 
 
+def tryremove(f):
+    try:
+        os.remove(f)
+    except:
+        pass
+
+
 @dataclass
 class GuildType:
     id: int
@@ -59,7 +66,7 @@ class DownloadManager:
                 if os.path.isfile(variant):
                     self._parent.logger.info(f"{variant} already exists, no need to download")
                     if os.path.getsize(variant) == 0:  # check for corrupt file
-                        os.remove(variant)
+                        tryremove(variant)
                         self._parent.logger.info(f"{variant} was corrupt, so we are downloading and overwriting it")
                     else:
                         f, was_edited = variant, 1
@@ -89,7 +96,7 @@ class DownloadManager:
                     self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
                     if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
                         self._parent.logger.info("Deleting original file...")
-                        os.remove(f)  # remove original file
+                        tryremove(f)  # remove original file
                         return trimmed_file, 1
 
                     # second pass is necessary
@@ -107,8 +114,8 @@ class DownloadManager:
                         self._parent.logger.info("Deleting both original files...\n"
                                                  f"({f}, {trimmed_file}"
                                                  f"\nAnd returning {second_trimmed_file}")
-                        os.remove(f)
-                        os.remove(trimmed_file)  # remove original files
+                        tryremove(f)
+                        tryremove(trimmed_file)  # remove original files
                         return second_trimmed_file, 1
 
                     # third pass is necessary
@@ -123,9 +130,9 @@ class DownloadManager:
                     self._parent.logger.info(f"(third pass) trimmed {clip.id} to {round(os.path.getsize(third_trimmed_file) / (1024 * 1024), 1)}MB")
                     if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= 25:
                         self._parent.logger.info("Deleting original file...")
-                        os.remove(f)
-                        os.remove(trimmed_file)
-                        os.remove(second_trimmed_file)  # remove original files
+                        tryremove(f)
+                        tryremove(trimmed_file)
+                        tryremove(second_trimmed_file)  # remove original files
                         return third_trimmed_file, 1
 
                 elif too_large_setting == "info":
