@@ -6,7 +6,7 @@ import logging
 import aiohttp
 import os
 from bot.twitch.twitchclip import TwitchClipProcessor
-from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE
+from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_SETTINGS
 
 VERSION = "1.3.3b"
 
@@ -154,12 +154,15 @@ class Base(Extension):
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
                    options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
-                                               description="Choose what CLYPPY should do with large files",
+                                               description="Choose what Clyppy should do with large files",
                                                required=False),
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
-                                               description="Choose what CLYPPY should do upon error",
+                                               description="Choose what Clyppy should do upon error",
+                                               required=False),
+                            SlashCommandOption(name="embed_setting", type=OptionType.STRING,
+                                               description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)])
-    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None):
+    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_setting: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -183,21 +186,37 @@ class Base(Extension):
         on_error = on_error or current_on_error
 
         if too_large not in POSSIBLE_TOO_LARGE:
-            await ctx.send("Option not in the **too_large** list.")
+            await ctx.send(f"Option '{too_large}' not a valid **too_large** setting!\n"
+                           f"Must be one of `{POSSIBLE_TOO_LARGE}`")
             return
 
         if on_error not in POSSIBLE_ON_ERRORS:
-            await ctx.send("Option not in the **on_error** list.")
+            await ctx.send(f"Option '{on_error}' not a valid **on_error** setting!\n"
+                           f"Must be one of `{POSSIBLE_ON_ERRORS}`")
             return
 
         too_idx = POSSIBLE_TOO_LARGE.index(too_large)
         err_idx = POSSIBLE_ON_ERRORS.index(on_error)
-        await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
 
+        # Handle embed settings
+        current_embed_setting: int = self.bot.guild_settings.get_embed_setting(ctx.guild.id)
+        current_embed_setting: str = POSSIBLE_EMBED_SETTINGS[current_embed_setting]
+        embed_setting = embed_setting or current_embed_setting  # switch to current_embed_setting if it's not None
+
+        if embed_setting not in POSSIBLE_EMBED_SETTINGS:
+            await ctx.send(f"Option '{embed_setting}' not a valid **embed_setting** setting!\n"
+                           f"Must be one of `{POSSIBLE_EMBED_SETTINGS}`")
+            return
+
+        embed_idx = POSSIBLE_EMBED_SETTINGS.index(embed_setting)
+
+        await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
+        await self.bot.guild_settings.set_setting(ctx.guild.id, embed_idx)
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**too_large**: {too_large}\n"
-            f"**on_error**: {on_error}"
+            f"**on_error**: {on_error}\n"
+            f"**embed_setting**: {embed_setting}"
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
