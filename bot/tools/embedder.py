@@ -13,6 +13,8 @@ import re
 import os
 import asyncio
 
+VALID_DL_PLATFORMS = ['twitch', 'medal']
+
 
 async def publish_interaction(interaction_data, apikey):
     url = 'https://clyppy.io/api/publish/'
@@ -222,7 +224,7 @@ class AutoEmbedder:
                 else:
                     txt = "Trimmed - View Full Clip"
                 comp.append(Button(style=ButtonStyle.LINK, label=txt, url=clip.url))
-            if btn_idx == 0 or btn_idx == 2:
+            if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() in VALID_DL_PLATFORMS:
                 if not edited:
                     txt = "Download"
                 else:
