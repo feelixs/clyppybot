@@ -6,7 +6,7 @@ import logging
 import aiohttp
 import os
 from bot.twitch.twitchclip import TwitchClipProcessor
-from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_SETTINGS
+from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 
 VERSION = "1.3.3b"
 
@@ -159,10 +159,10 @@ class Base(Extension):
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
                                                required=False),
-                            SlashCommandOption(name="embed_setting", type=OptionType.STRING,
+                            SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)])
-    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_setting: str = None):
+    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -199,30 +199,30 @@ class Base(Extension):
         err_idx = POSSIBLE_ON_ERRORS.index(on_error)
 
         # Handle embed settings
-        current_embed_setting: int = self.bot.guild_settings.get_embed_setting(ctx.guild.id)
-        current_embed_setting: str = POSSIBLE_EMBED_SETTINGS[current_embed_setting]
-        embed_setting = embed_setting or current_embed_setting  # switch to current_embed_setting if it's not None
+        current_embed_setting: int = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
+        current_embed_setting: str = POSSIBLE_EMBED_BUTTONS[current_embed_setting]
+        embed_buttons = embed_buttons or current_embed_setting  # switch to current_embed_setting if it's not None
 
-        if embed_setting not in POSSIBLE_EMBED_SETTINGS:
-            await ctx.send(f"Option '{embed_setting}' not a valid **embed_setting** setting!\n"
-                           f"Must be one of `{POSSIBLE_EMBED_SETTINGS}`")
+        if embed_buttons not in POSSIBLE_EMBED_BUTTONS:
+            await ctx.send(f"Option '{embed_buttons}' not a valid **embed_buttons** setting!\n"
+                           f"Must be one of `{POSSIBLE_EMBED_BUTTONS}`")
             return
 
-        embed_idx = POSSIBLE_EMBED_SETTINGS.index(embed_setting)
+        embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
 
         await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
-        await self.bot.guild_settings.set_setting(ctx.guild.id, embed_idx)
+        await self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**too_large**: {too_large}\n"
             f"**on_error**: {on_error}\n"
-            f"**embed_setting**: {embed_setting}"
+            f"**embed_buttons**: {embed_buttons}"
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
-        es = self.bot.guild_settings.get_embed_setting(ctx.guild.id)
-        es = POSSIBLE_EMBED_SETTINGS[es]
+        es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
+        es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold**, '
@@ -234,12 +234,12 @@ class Base(Extension):
             '**on_error** Choose what Clyppy should do when it encounters an error while downloading a file:\n'
             ' - `info`: Clyppy responds with a statement that he can\'t continue.\n'
             ' - `dm`: Clyppy will attempt to DM the author to notify them of the error.\n\n'
-            '**embed_setting** Choose which buttons Clyppy shows under embedded videos:\n'
+            '**embed_buttons** Choose which buttons Clyppy shows under embedded videos:\n'
             ' - `none`: No buttons, just the video.\n'
             ' - `view`: A button to view the original video file wherever it\'s hosted.\n'
             '- `dl`: A button that\'s displayed on compatible clips, directing users to download the original, untrimmed, video file.\n'
             ' - `all`: Show all available buttons.\n'
-            f'**Current Settings:**\n{cs}\n**embed_setting**: {es}\n\n'
+            f'**Current Settings:**\n{cs}\n**embed_buttons**: {es}\n\n'
             'Something missing? Please **Suggest a Feature** using the link below.'
         )
 

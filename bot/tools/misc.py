@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["info", "dm"]
-POSSIBLE_EMBED_SETTINGS = ["all", "view", "dl", "none"]
+POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
 INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
