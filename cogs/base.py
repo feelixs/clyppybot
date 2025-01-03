@@ -172,7 +172,7 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if too_large is None and on_error is None:
+        if too_large is None and on_error is None and embed_buttons is None:
             await self._send_settings_help(ctx, False)
             return
 
