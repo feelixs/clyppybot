@@ -143,7 +143,8 @@ class RedditMisc:
                     logging.warning(f"Got status {response.status} for URL: {share_url}")
                     raise IndexError
                 txt = await response.text()
-                return txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
+                link = txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
+                return self.parse_clip_url(link)
 
     async def get_clip(self, url: str) -> 'RedditClip':
         slug = self.parse_clip_url(url)
@@ -155,7 +156,7 @@ class RedditMisc:
 
         if re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url):  # retrieve the actual slug from a share link
             try:
-                slug = self.parse_clip_url(await self._get_actual_slug(url))
+                slug = await self._get_actual_slug(url)
                 self.logger.info(f"Retrieving actual slug from shared url {url}")
             except:
                 return None
