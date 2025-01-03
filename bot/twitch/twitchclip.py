@@ -5,6 +5,7 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
+from bot.classes import BaseClip
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
@@ -12,9 +13,9 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 
 
-class TwitchClip:
+class TwitchClip(BaseClip):
     def __init__(self, slug):
-        self.logger = logging.getLogger(__name__)
+        super().__init__(slug)
         self.api = TwitchAPI(
             key=os.getenv("CLYPP_TWITCH_ID"),
             secret=os.getenv("CLYPP_TWITCH_SECRET"),
@@ -22,7 +23,7 @@ class TwitchClip:
             log_path=os.path.join('logs', 'twitch-api-usage.log')
         )
         self.service = "twitch"
-        self.id, self.url = slug, f"https://clips.twitch.tv/{slug}"
+        self.url = f"https://clips.twitch.tv/{slug}"
 
     async def download(self, filename: str):
         self.logger.info(f"Downloading with yt-dlp: {filename}")

@@ -5,6 +5,7 @@ import os
 import subprocess
 import concurrent.futures
 import asyncio
+from bot.classes import BaseClip
 from bot.kick import KickClip
 from bot.twitch import TwitchClip
 from bot.medal import MedalClip
@@ -45,10 +46,10 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: Union[MedalClip, KickClip, TwitchClip, RedditClip], root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
+    async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
         """Download and trim to 25MB"""
         async with self._semaphore:
-            if not isinstance(clip, Union[MedalClip, KickClip, TwitchClip, RedditClip]):
+            if not isinstance(clip, BaseClip):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None, 0
 
