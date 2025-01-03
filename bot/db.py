@@ -164,7 +164,7 @@ class GuildDatabase:
     def is_trim_enabled(self, guild_id) -> bool:
         return str(self.get_too_large(guild_id)) == "trim"
 
-    async def set_setting(self, guild_id: int, value: Any) -> bool:
+    def set_setting(self, guild_id: int, value: Any) -> bool:
         """Set or update setting for a specific guild."""
         try:
             with self.get_db() as conn:

@@ -210,8 +210,8 @@ class Base(Extension):
 
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
 
-        await self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
-        await self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
+        self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
+        self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**too_large**: {too_large}\n"
