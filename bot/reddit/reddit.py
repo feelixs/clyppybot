@@ -136,6 +136,15 @@ class RedditMisc:
         combined_pattern = '|'.join(f'({pattern})' for pattern in patterns)
         return bool(re.match(combined_pattern, url))
 
+    async def _get_actual_slug(self, share_url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(share_url, timeout=10) as response:
+                if response.status != 200:
+                    logging.warning(f"Got status {response.status} for URL: {share_url}")
+                    raise IndexError
+                txt = await response.text()
+                return txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
+
     async def get_clip(self, url: str) -> 'RedditClip':
         slug = self.parse_clip_url(url)
         is_vid, ext_info = await self.is_video(url)
@@ -143,6 +152,13 @@ class RedditMisc:
             self.logger.info(f"{url} is_video=False")
             return None
         self.logger.info(f"{url} is_video=True")
+
+        if re.match(r'reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)', url):  # retrieve the actual slug from a share link
+            try:
+                slug = await self._get_actual_slug(url)
+            except:
+                return None
+
         return RedditClip(slug, ext_info)
 
 
