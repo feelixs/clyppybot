@@ -58,7 +58,39 @@ class GuildDatabase:
                                 channel INTEGER
                             )
                         ''')
+            conn.execute('''
+                            CREATE TABLE IF NOT EXISTS embed_setting (
+                                guild_id INTEGER PRIMARY KEY,
+                                setting INTEGER
+                            )
+                        ''')
             conn.commit()
+
+    def get_embed_setting(self, guild_id: int) -> int:
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT channel FROM embed_setting WHERE guild_id = ?',
+                    (guild_id,)
+                )
+                result = cursor.fetchone()
+                return result[0] if result else 0
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting embed_setting for guild {guild_id}: {e}")
+            return 0
+
+    def set_embed_setting(self, guild_id: int, new_setting: int) -> bool:
+        try:
+            with self.get_db() as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO embed_setting (guild_id, setting)
+                    VALUES (?, ?)
+                ''', (guild_id, new_setting))
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting embed_setting for guild {guild_id}: {e}")
+            return False
 
     def get_error_channel(self, guild_id: int) -> int:
         try:
