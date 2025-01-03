@@ -29,7 +29,7 @@ class GuildType:
 
 
 def create_nexus_str():
-    return f"\n\n**[Invite CLYPPY]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
+    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
 class DownloadManager:
@@ -133,7 +133,7 @@ class DownloadManager:
                         f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
                         "Unable to upload the file.\n\nYou can either:\n"
                         f" - upload a shorter clip\n"
-                        f" - ask a server admin to change CLYPPY "
+                        f" - ask a server admin to change Clyppy "
                         f"settings to `too_large='trim'`\n"
                         f" - DM me the link and I'll"
                         f" upload a trimmed version"
@@ -146,7 +146,7 @@ class DownloadManager:
                                                                          f"limit. Unable to upload the file.\n\n"
                                                                          f"Please either\n"
                                                                          f" - upload a shorter clip\n"
-                                                                         f" - ask a server admin to change CLYPPY "
+                                                                         f" - ask a server admin to change Clyppy "
                                                                          f"settings to `too_large='trim'`\n"
                                                                          f" - resend the link in this DM and I'll"
                                                                          f" upload a trimmed version")

@@ -128,7 +128,7 @@ class AutoEmbedder:
                 ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"The clip {clip_link} was previously reported as too large to fit Discord's limit.\n\n"
-                           f"You can either:\n - upload a shorter clip\n - ask a server admin to change CLYPPY "
+                           f"You can either:\n - upload a shorter clip\n - ask a server admin to change Clyppy "
                            f"settings to `too_large='trim'`"
                            f"\n - resend the link in this DM and I'll upload a trimmed version",
                 bot=self.bot,

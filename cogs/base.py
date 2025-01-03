@@ -18,22 +18,22 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
-    @slash_command(name="save", description="Save CLYPPY DB", scopes=[759798762171662399])
+    @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         await ctx.defer()
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
 
-    @slash_command(name="help", description="Get help using CLYPPY")
+    @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         about = (
-            "CLYPPY supports uploading Twitch clips in Full HD to your Discord channels! Send a valid Twitch Clip link to get started.\n\n"
-            "**TROUBLESHOOTING**\nIf CLYPPY isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
+            "Clyppy supports uploading Twitch clips in Full HD to your Discord channels! Send a valid Twitch Clip link to get started.\n\n"
+            "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
             " Required permissions are: `Attach Files`, `Send Messages`\n\n"
-            "**UPDATE Dec 3rd 2024** CLYPPY is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
-        help_embed = Embed(title="About CLYPPY", description=about)
+            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
+        help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(
@@ -221,19 +221,26 @@ class Base(Extension):
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
+        es = self.bot.guild_settings.get_embed_setting(ctx.guild.id)
+        es = POSSIBLE_EMBED_SETTINGS[es]
         about = (
             "**Configurable Settings:**\n"
             "Below are the settings you can configure using this command. Each setting name is in **bold**, "
             "followed by its available options.\n\n"
-            "**too_large** Choose what CLYPPY should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
-            " - `trim`: CLYPPY will trim the video until it's within Discord's size limit and upload the resulting file.\n"
-            " - `info`: CLYPPY will respond with a short statement saying he's unable to continue and the upload will fail.\n"
-            " - `dm`: The upload will fail and CLYPPY will attempt to DM the author to notify them.\n"
-            " - `compress`: CLYPPY will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
-            "**on_error** Choose what CLYPPY should do when it encounters an error while downloading a file:\n"
-            " - `info`: CLYPPY responds with a statement that he can't continue.\n"
-            " - `dm`: CLYPPY will attempt to DM the author to notify them of the error.\n\n"
-            f"**Current Settings:**\n{cs}\n\n"
+            "**too_large** Choose what Clyppy should do with downloaded clips that are larger than Discord's limits of 25MB:\n"
+            " - `trim`: Clyppy will trim the video until it's within Discord's size limit and upload the resulting file.\n"
+            " - `info`: Clyppy will respond with a short statement saying he's unable to continue and the upload will fail.\n"
+            " - `dm`: The upload will fail and Clyppy will attempt to DM the author to notify them.\n"
+            " - `compress`: Clyppy will compress the file until it's within Discord's size limit and upload the resulting file (currently unavailable).\n\n"
+            "**on_error** Choose what Clyppy should do when it encounters an error while downloading a file:\n"
+            " - `info`: Clyppy responds with a statement that he can't continue.\n"
+            " - `dm`: Clyppy will attempt to DM the author to notify them of the error.\n\n"
+            "**embed_setting** Choose which buttons Clyppy shows under embedded videos:\n"
+            " - `none`: No buttons, just the video.\n"
+            " - `view`: A button to view the original video file wherever it's hosted.\n"
+            " - `dl`: A button that directs users to download the original, untrimmed, video file.\n"
+            " - `all`: Show all available buttons.\n"
+            f"**Current Settings:**\n{cs}\n**embed_setting**: {es}\n\n"
             "Something missing? Please **Suggest a Feature** using the link below."
         )
 
@@ -270,7 +277,7 @@ class Base(Extension):
             self.logger.info(f"bot logged in as {self.bot.user.username}")
             self.logger.info(f"total shards: {len(self.bot.shards)}")
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
-            self.logger.info(f"CLYPPY Version: {VERSION}")
+            self.logger.info(f"CLYPPY VERSION: {VERSION}")
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
