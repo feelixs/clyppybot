@@ -70,7 +70,7 @@ class GuildDatabase:
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
-                    'SELECT channel FROM embed_buttons WHERE guild_id = ?',
+                    'SELECT setting FROM embed_buttons WHERE guild_id = ?',
                     (guild_id,)
                 )
                 result = cursor.fetchone()
