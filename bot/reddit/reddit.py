@@ -156,6 +156,7 @@ class RedditMisc:
         if re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url):  # retrieve the actual slug from a share link
             try:
                 slug = await self._get_actual_slug(url)
+                self.logger.info(f"Retrieving actual slug from shared url {url}")
             except:
                 return None
 
