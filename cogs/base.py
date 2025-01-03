@@ -231,7 +231,7 @@ class Base(Extension):
             ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
             ' - `info`: Don\'t upload large files at all.\n'
             ' - `dm`: Don\'t upload, and DM the message author.\n\n'
-            '**on_error** Choose what Clyppy should do when it encounters an error while downloading a file:\n'
+            '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'
             '**embed_buttons** Choose which buttons Clyppy shows under embedded videos:\n'
