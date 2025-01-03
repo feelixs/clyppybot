@@ -2,14 +2,14 @@ import logging
 import asyncio
 import yt_dlp
 import os
+from bot.classes import BaseClip
 
 
-class MedalClip:
+class MedalClip(BaseClip):
     def __init__(self, slug):
-        self.id = slug
+        super().__init__(slug)
         self.service = "medal"
         self.url = f"https://medal.tv/clips/{slug}"
-        self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str):
         self.logger.info(f"Downloading with yt-dlp: {filename}")

@@ -5,15 +5,15 @@ import asyncio
 import json
 import time
 import traceback
+from bot.classes import BaseClip
 
 
-class KickClip:
+class KickClip(BaseClip):
     def __init__(self, slug, user):
-        self.id = slug
+        super().__init__(slug)
         self.user = user
         self.service = "kick"
         self.url = f"https://kick.com/{user}/clips/clip_{slug}"
-        self.logger = logging.getLogger(__name__)
 
     async def get_m3u8_url(self):
         """Get m3u8 URL using undetected-chromedriver"""

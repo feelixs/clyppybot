@@ -5,7 +5,8 @@ import asyncio
 import aiohttp
 import os
 from typing import Optional
-from bot.kick import KickClip, KickMisc
+from bot.kick import KickMisc
+from bot.classes import BaseClip
 
 
 class RedditMisc:
@@ -164,12 +165,11 @@ class RedditMisc:
         return RedditClip(slug, ext_info)
 
 
-class RedditClip:
+class RedditClip(BaseClip):
     def __init__(self, slug, ext):
-        self.id = slug
+        super().__init__(slug)
         self.service = "reddit"
         self.url = f"https://redd.it/{slug}"
-        self.logger = logging.getLogger(__name__)
         self.external_link = ext
 
     async def _download_kick(self, filename):
