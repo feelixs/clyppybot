@@ -70,6 +70,8 @@ async def main():
     Bot.load_extension('cogs.twitchautoembed')
     Bot.load_extension('cogs.kickautoembed')
     Bot.load_extension('cogs.medalautoembed')
+    Bot.load_extension('cogs.redditautoembed')
+    Bot.load_extension('cogs.ytautoembed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
