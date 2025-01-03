@@ -213,14 +213,29 @@ class AutoEmbedder:
 
         # send video file
         try:
-            if not edited:
-                comp = Button(style=ButtonStyle.LINK, label=f"View On {self.platform_tools.platform_name}", url=clip.url)
-            else:
-                comp = Button(style=ButtonStyle.LINK, label="Trimmed - View Full Clip", url=clip.url)
+            comp = []
+            # refer to: ["all", "view", "dl", "none"]
+            btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
+            if btn_idx <= 1:
+                if not edited:
+                    txt = f"View On {self.platform_tools.platform_name}"
+                else:
+                    txt = "Trimmed - View Full Clip"
+                comp.append(Button(style=ButtonStyle.LINK, label=txt, url=clip.url))
+            if btn_idx == 0 or btn_idx == 2:
+                if not edited:
+                    txt = "Download"
+                else:
+                    txt = "Download Full Clip"
+                comp.append(Button(
+                    style=ButtonStyle.LINK,
+                    label=txt,
+                    url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
+                ))
             if include_link:
-                await respond_to.reply(clip.url, file=clip_file, components=[comp])
+                await respond_to.reply(clip.url, file=clip_file, components=comp)
             else:
-                await respond_to.reply(file=clip_file, components=[comp])
+                await respond_to.reply(file=clip_file, components=comp)
                 
             now_utc = datetime.now(tz=timezone.utc).timestamp()
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
