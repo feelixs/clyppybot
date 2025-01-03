@@ -227,7 +227,7 @@ class Base(Extension):
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold**, '
             'followed by its available options.\n\n'
-            '**too_large** Choose what Clyppy should do with downloaded clips that are larger than Discord\'s limits of 25MB:\n'
+            '**too_large** Choose what Clyppy does with files larger than Discord\'s limit (25MB):\n'
             ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
             ' - `info`: Don\'t upload large files at all.\n'
             ' - `dm`: Don\'t upload, and DM the message author.\n\n'
