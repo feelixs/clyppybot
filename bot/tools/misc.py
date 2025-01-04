@@ -15,7 +15,7 @@ from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
-POSSIBLE_ON_ERRORS = ["info", "dm"]
+POSSIBLE_ON_ERRORS = ["dm", "info"]
 POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
