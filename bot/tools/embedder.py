@@ -13,7 +13,7 @@ import re
 import os
 import asyncio
 
-VALID_DL_PLATFORMS = ['twitch', 'medal', 'reddit']
+VALID_DL_PLATFORMS = ['twitch', 'medal']
 
 
 async def publish_interaction(interaction_data, apikey):
