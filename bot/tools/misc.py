@@ -176,6 +176,7 @@ class Tools:
 
     async def send_error_message(self, msg_embed, dm_content, guild, ctx, bot, delete_after_on_reply=None):
         err = ""
+        self.logger.info(ctx.__dict__)
         if guild is None:
             pass  # don't use 'dm' setting if we're already in a dm, just reply
         elif bot.guild_settings.is_dm_on_error(guild.id):
