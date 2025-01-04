@@ -29,8 +29,8 @@ class Base(Extension):
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         about = (
-            "Clyppy supports uploading Twitch clips in Full HD to your Discord channels! Send a valid Twitch Clip link to get started.\n\n"
-            "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your Twitch Clip links, it could be because it has incorrect permissions for your Discord channel."
+            "Clyppy automatically converts video links into native Discord uploads! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
+            "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your links, please check that it has the correct permissions in your Discord channel."
             " Required permissions are: `Attach Files`, `Send Messages`\n\n"
             "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
