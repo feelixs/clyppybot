@@ -3,6 +3,7 @@ import yt_dlp
 import asyncio
 import os
 import re
+from bot.classes import BaseClip
 
 
 class YtMisc:
@@ -75,15 +76,14 @@ class YtMisc:
         return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)))
 
 
-class YtClip:
+class YtClip(BaseClip):
     def __init__(self, slug, short):
-        self.id = slug
+        super().__init__(slug)
         self.service = "youtube"
         if short:
             self.url = f"https://youtube.com/shorts/{slug}"
         else:
             self.url = f"https://youtube.com/watch/?v={slug}"
-        self.logger = logging.getLogger(__name__)
 
     async def download(self, filename: str):
         ydl_opts = {
