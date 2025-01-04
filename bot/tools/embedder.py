@@ -243,9 +243,12 @@ class AutoEmbedder:
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
             my_response_time = round((now_utc - respond_to_utc), 2)
             self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
+            chn = respond_to.channel.name
+            if chn is None:
+                chn = "dm"
             interaction_data = {
                 'server_name': guild.name,
-                'channel_name': respond_to.channel.name,
+                'channel_name': chn,
                 'user_name': respond_to.author.username,
                 'server_id': str(guild.id),
                 'channel_id': str(respond_to.channel.id),
