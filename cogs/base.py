@@ -119,6 +119,13 @@ class Base(Extension):
                                                description="The channel where Clyppy should send error messages",
                                                required=False)])
     async def setup(self, ctx: SlashContext, error_channel=None):
+        if ctx.guild is None:
+            await ctx.send("This command is only available in servers.")
+            return
+        if ctx.guild.id == ctx.author.id:  # in case they patch the "dm guild is None" situation
+            await ctx.send("This command is only available in servers.")
+            return
+
         if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
             await ctx.send("Only members with the **Administrator** permission can change Clyppy's settings.")
             return
@@ -165,6 +172,9 @@ class Base(Extension):
     async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
+            await ctx.send("This command is only available in servers.")
+            return
+        if ctx.guild.id == ctx.author.id:  # in case they patch the "dm guild is None" situation
             await ctx.send("This command is only available in servers.")
             return
 
