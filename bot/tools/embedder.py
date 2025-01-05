@@ -243,8 +243,12 @@ class AutoEmbedder:
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
             my_response_time = round((now_utc - respond_to_utc), 2)
             self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
-            chn = respond_to.channel.name
-            chnid = respond_to.channel.id
+            chn, chnid = None, None
+            try:
+                chn = respond_to.channel.name
+                chnid = respond_to.channel.id
+            except:
+                pass
             if chn is None:
                 chn = "dm"
                 chnid = 0
