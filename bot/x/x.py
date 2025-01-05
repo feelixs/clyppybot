@@ -1,7 +1,3 @@
-import logging
-import yt_dlp
-import asyncio
-import os
 import re
 from bot.classes import BaseClip, BaseMisc
 
