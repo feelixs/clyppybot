@@ -20,7 +20,6 @@ class Xmisc(BaseMisc):
         patterns = [
             r'twitter\.com/\w+/status/(\d+)',
             r'x\.com/\w+/status/(\d+)',
-            r't\.co/(\w+)'
         ]
 
         for pattern in patterns:
@@ -37,7 +36,11 @@ class Xmisc(BaseMisc):
             return None
         self.logger.info(f"{url} is_shortform=True")
 
-        return Xclip(slug)
+        # Extract user from URL
+        user_match = re.search(r'(?:twitter\.com|x\.com)/(\w+)/status/', url)
+        user = user_match.group(1) if user_match else None
+
+        return Xclip(slug, user)
 
 
 class Xclip(BaseClip):
