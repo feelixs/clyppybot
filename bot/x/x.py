@@ -79,6 +79,7 @@ class Xclip(BaseClip):
     def __init__(self, slug):
         super().__init__(slug)
         self.service = "twitter"
+        self.url = f"https://x.com/VideoCardz/status/{slug}"
 
     async def download(self, filename: str):
         ydl_opts = {
