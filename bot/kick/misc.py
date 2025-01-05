@@ -1,17 +1,14 @@
-from typing import Optional
-import logging
+from bot.classes import BaseMisc
 from bot.kick import KickClip
 import re
 
 
-class KickMisc:
+class KickMisc(BaseMisc):
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
         self.platform_name = "Kick"
-        self.silence_invalid_url = False
 
-    @staticmethod
-    def parse_clip_url(url: str) -> (str, str):
+    def parse_clip_url(self, url: str) -> (str, str):
         user = url.split('kick.com/')[-1].split("/")[0]
         if "?" in user:
             user = user.split("?")[0]
@@ -25,8 +22,7 @@ class KickMisc:
         slug = slug.replace("clip_", "")
         return slug, user
 
-    @staticmethod
-    def is_clip_link(url: str) -> bool:
+    def is_clip_link(self, url: str) -> bool:
         # Pattern matches both:
         # https://kick.com/[username]/clips/[clip-id]
         # https://kick.com/[username]?clip=[clip-id]

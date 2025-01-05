@@ -1,13 +1,13 @@
 from typing import Optional
-import logging
 from bot.twitch.twitchclip import TwitchClip
-from os import getenv, path
+from os import getenv
 import re
+from bot.classes import BaseMisc
 
 
-class TwitchMisc:
+class TwitchMisc(BaseMisc):
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
         tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
             exit("No Twitch API key found")
@@ -15,10 +15,8 @@ class TwitchMisc:
         if tis is None:
             exit("No Twitch API secret found")
         self.platform_name = "Twitch"
-        self.silence_invalid_url = False
 
-    @staticmethod
-    def parse_clip_url(url: str) -> str:
+    def parse_clip_url(self, url: str) -> str:
         if url.endswith("/"):
             url = url[:-1]  # remove trailing slash
 
@@ -30,8 +28,7 @@ class TwitchMisc:
             slug = slug.split('?')[0]
         return slug
 
-    @staticmethod
-    def is_clip_link(url: str) -> bool:
+    def is_clip_link(self, url: str) -> bool:
         patterns = [
             r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
             r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+',

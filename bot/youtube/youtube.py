@@ -3,17 +3,16 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip
+from bot.classes import BaseClip, BaseMisc
 
 
-class YtMisc:
+class YtMisc(BaseMisc):
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
         self.platform_name = "YouTube"
         self.silence_invalid_url = True
 
-    @staticmethod
-    def parse_clip_url(url: str) -> str:
+    def parse_clip_url(self, url: str) -> str:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -30,40 +29,6 @@ class YtMisc:
             if match:
                 return match.group(1)
         return None
-
-    def is_clip_link(self, url: str) -> bool:
-        """
-            Checks if a URL is a valid Youtube link format.
-        """
-        return bool(self.parse_clip_url(url))
-
-    async def is_shortform(self, url: str) -> bool:
-        """
-            Uses yt-dlp to determine if the provided YouTube url is short-form (60 seconds or less)
-        """
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'extract_flat': True,  # Only extract metadata, don't download
-        }
-
-        try:
-            # Run yt-dlp in an executor to avoid blocking
-            def get_duration():
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    return info.get('duration', 0)
-
-            duration = await asyncio.get_event_loop().run_in_executor(
-                None, get_duration
-            )
-
-            # Check if duration is 60 seconds or less
-            return duration <= 60
-
-        except Exception as e:
-            self.logger.error(f"Error checking video length for {url}: {str(e)}")
-            return False
 
     async def get_clip(self, url: str) -> 'YtClip':
         slug = self.parse_clip_url(url)

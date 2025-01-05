@@ -6,12 +6,12 @@ import aiohttp
 import os
 from typing import Optional
 from bot.kick import KickMisc
-from bot.classes import BaseClip
+from bot.classes import BaseClip, BaseMisc
 
 
-class RedditMisc:
+class RedditMisc(BaseMisc):
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
         self.platform_name = "Reddit"
         self.silence_invalid_url = True
         self.VALID_EXT_VIDEO_DOMAINS = [
@@ -23,8 +23,7 @@ class RedditMisc:
             'www.medal.tv',
         ]
 
-    @staticmethod
-    def parse_clip_url(url: str) -> (str, str):
+    def parse_clip_url(self, url: str) -> (str, str):
         """
         Extracts the post ID from a Reddit URL if present.
         Works with all supported URL formats.
@@ -105,8 +104,7 @@ class RedditMisc:
             logging.error(f"Unexpected error checking video for {url}: {str(e)}")
             return False, None
 
-    @staticmethod
-    def is_clip_link(url: str) -> bool:
+    def is_clip_link(self, url: str) -> bool:
         """
                 Checks if a URL is a valid Reddit link format.
                 Handles various Reddit URL patterns including short links, galleries,
@@ -161,6 +159,12 @@ class RedditMisc:
                 self.logger.info(f"Retrieving actual slug from shared url {url}")
             except:
                 return None
+
+        valid = await self.is_shortform(url)
+        if not valid:
+            self.logger.info(f"{url} is_shortform=False")
+            return None
+        self.logger.info(f"{url} is_shortform=True")
 
         return RedditClip(slug, ext_info)
 
