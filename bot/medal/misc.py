@@ -1,17 +1,16 @@
 from typing import Optional
 import logging
 from bot.medal import MedalClip
+from bot.classes import BaseMisc
 import re
 
 
-class MedalMisc:
+class MedalMisc(BaseMisc):
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
         self.platform_name = "Medal"
-        self.silence_invalid_url = False
 
-    @staticmethod
-    def parse_clip_url(url: str) -> Optional[str]:
+    def parse_clip_url(self, url: str) -> Optional[str]:
         """
         Parses a Medal.tv clip URL to extract just the clip ID.
 
@@ -25,8 +24,7 @@ class MedalMisc:
             return match.group(1)
         return None
 
-    @staticmethod
-    def is_clip_link(url: str) -> bool:
+    def is_clip_link(self, url: str) -> bool:
         """
         Validates if a given URL is a valid Medal.tv clip link.
         """
