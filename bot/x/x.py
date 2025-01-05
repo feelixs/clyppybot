@@ -14,12 +14,12 @@ class Xmisc(BaseMisc):
         Returns None if the URL is not a valid Twitter URL.
         """
         patterns = [
-            r'twitter\.com/\w+/status/(\d+)',
-            r'x\.com/\w+/status/(\d+)',
+            r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
+            r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, url)
             if match:
                 return match.group(1)
         return None
