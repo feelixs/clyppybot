@@ -6,6 +6,7 @@ from bot.tools import Tools
 from bot.kick import KickMisc
 from bot.reddit import RedditMisc
 from bot.youtube import YtMisc
+from bot.x import Xmisc
 import logging
 import asyncio
 import os
@@ -61,6 +62,7 @@ Bot.kick = KickMisc()
 Bot.medal = MedalMisc()
 Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
+Bot.x = Xmisc()
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
@@ -72,6 +74,7 @@ async def main():
     Bot.load_extension('cogs.medalautoembed')
     Bot.load_extension('cogs.redditautoembed')
     Bot.load_extension('cogs.ytautoembed')
+    Bot.load_extension('cogs.xautoembed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
