@@ -55,10 +55,12 @@ class VideoProcessor:
 
         # Try compression first (usually better quality than trimming)
         compressed_file = await self.compress_video(input_file)
+        self.logger.info(f"Compressing {input_file}...")
         if compressed_file and os.path.getsize(compressed_file) / (1024 * 1024) <= self.target_size_mb:
             return compressed_file, "compressed"
 
         # If compression alone isn't enough, try trim + compress
+        self.logger.info(f"We must also trim {input_file}...")
         trimmed_file = await self.trim_video(input_file)
         if trimmed_file:
             compressed_trimmed = await self.compress_video(trimmed_file)
@@ -67,10 +69,12 @@ class VideoProcessor:
                 return compressed_trimmed, "trimmed_and_compressed"
 
         # Last resort: aggressive compression
+        self.logger.info(f"Last resort: aggressive compression for {input_file}...")
         aggressive_file = await self.compress_video(input_file, aggressive=True)
         if aggressive_file and os.path.getsize(aggressive_file) / (1024 * 1024) <= self.target_size_mb:
             return aggressive_file, "aggressive_compression"
 
+        self.logger.info(f"Could not process this video file: {input_file}")
         raise ValueError("Could not process video to meet size requirements")
 
     async def compress_video(self, input_file: str, aggressive: bool = False) -> Optional[str]:
