@@ -183,7 +183,7 @@ class AutoEmbedder:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             emb = Embed(title="**Whoops...**",
                         description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
-                                    f"> The original file size was larger than Discord's Limit for Bots, **25MB**. I tried to trim it to fit, but failed.")
+                                    f"> The original file size was larger than Discord's Limit for Bots, **8MB**. I tried to trim it to fit, but failed.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
                 ctx=respond_to,
@@ -243,8 +243,12 @@ class AutoEmbedder:
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
             my_response_time = round((now_utc - respond_to_utc), 2)
             self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
-            chn = respond_to.channel.name
-            chnid = respond_to.channel.id
+            chn, chnid = None, None
+            try:
+                chn = respond_to.channel.name
+                chnid = respond_to.channel.id
+            except:
+                pass
             if chn is None:
                 chn = "dm"
                 chnid = 0
@@ -275,13 +279,13 @@ class AutoEmbedder:
                 self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
-                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **25MB**")
+                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **8MB**")
                 emb.description += create_nexus_str()
                 await self.bot.tools.send_error_message(
                     ctx=respond_to,
                     msg_embed=emb,
                     dm_content=f"The clip {clip_link} was too large to embed in {guild.name} "
-                               f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 25MB)",
+                               f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 8MB)",
                     guild=guild,
                     bot=self.bot
                 )

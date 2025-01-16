@@ -12,6 +12,10 @@ class Watch(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        if "clyppy" in event.message.content or '1111723928604381314' in event.message.content:
-            self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
-                             f"@{event.message.author.username} - \"{event.message.content}\"")
+        try:
+            if "clyppy" in event.message.content or '1111723928604381314' in event.message.content:
+                self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
+                                 f"@{event.message.author.username} - \"{event.message.content}\"")
+        except:
+            # in dms it wont work
+            pass

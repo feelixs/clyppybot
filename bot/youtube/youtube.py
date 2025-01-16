@@ -58,10 +58,20 @@ class YtClip(BaseClip):
             'no_warnings': True,
         }
 
-        # Download using yt-dlp
         try:
+            # First extract info to check duration
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
+                info = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: ydl.extract_info(self.url, download=False)
+                )
+
+                # Check if duration exists and is longer than 60 seconds
+                if 'duration' in info and info['duration'] > 60:
+                    self.logger.info(f"Video duration {info['duration']}s exceeds 60s limit")
+                    return None
+
+                # Proceed with download if duration is acceptable
                 await asyncio.get_event_loop().run_in_executor(
                     None,
                     lambda: ydl.download([self.url])

@@ -10,7 +10,8 @@ from bot.kick import KickClip
 from bot.twitch import TwitchClip
 from bot.medal import MedalClip
 from bot.reddit import RedditClip
-from typing import Optional, Union
+import ffmpeg
+from typing import Optional, Union, Tuple
 from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
 
@@ -40,14 +41,104 @@ def create_nexus_str():
     return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
+class VideoProcessor:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.target_size_mb = 7.9  # Staying safely under 8MB limit
+
+    async def process_video(self, input_file: str) -> Tuple[str, str]:
+        """
+        Processes video to fit Discord's 8MB limit using a multi-stage approach.
+        Returns: (output_file_path, method_used)
+        """
+        original_size = os.path.getsize(input_file) / (1024 * 1024)
+
+        # Try compression first (usually better quality than trimming)
+        compressed_file = await self.compress_video(input_file)
+        self.logger.info(f"Compressing {input_file}...")
+        if compressed_file and os.path.getsize(compressed_file) / (1024 * 1024) <= self.target_size_mb:
+            return compressed_file, "compressed"
+
+        # If compression alone isn't enough, try trim + compress
+        self.logger.info(f"We must also trim {input_file}...")
+        trimmed_file = await self.trim_video(input_file)
+        if trimmed_file:
+            compressed_trimmed = await self.compress_video(trimmed_file)
+            if compressed_trimmed and os.path.getsize(compressed_trimmed) / (1024 * 1024) <= self.target_size_mb:
+                os.remove(trimmed_file)  # Clean up intermediate file
+                return compressed_trimmed, "trimmed_and_compressed"
+
+        # Last resort: aggressive compression
+        self.logger.info(f"Last resort: aggressive compression for {input_file}...")
+        aggressive_file = await self.compress_video(input_file, aggressive=True)
+        if aggressive_file and os.path.getsize(aggressive_file) / (1024 * 1024) <= self.target_size_mb:
+            return aggressive_file, "aggressive_compression"
+
+        self.logger.info(f"Could not process this video file: {input_file}")
+        raise ValueError("Could not process video to meet size requirements")
+
+    async def compress_video(self, input_file: str, aggressive: bool = False) -> Optional[str]:
+        """Compresses video while trying to maintain quality"""
+        output_file = input_file.replace('.mp4', '_compressed.mp4')
+
+        # Base compression settings
+        settings = {
+            'c:v': 'libx264',
+            'crf': 28 if not aggressive else 32,
+            'preset': 'medium',
+            'c:a': 'aac',
+            'b:a': '96k' if not aggressive else '64k',
+        }
+
+        try:
+            stream = ffmpeg.input(input_file)
+            stream = ffmpeg.output(stream, output_file, **settings)
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: ffmpeg.run(stream, overwrite_output=True, quiet=True)
+            )
+            return output_file
+        except:
+            self.logger.info(traceback.format_exc())
+            return None
+
+    async def trim_video(self, input_file: str) -> Optional[str]:
+        """Trims video to approximate target size based on original file size ratio"""
+        output_file = input_file.replace('.mp4', '_trimmed.mp4')
+        original_size = os.path.getsize(input_file) / (1024 * 1024)
+
+        # Get video duration
+        probe = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: ffmpeg.probe(input_file)
+        )
+        duration = float(probe['streams'][0]['duration'])
+
+        # Calculate target duration based on size ratio
+        target_duration = duration * (self.target_size_mb / original_size)
+
+        try:
+            stream = ffmpeg.input(input_file, t=target_duration)
+            stream = ffmpeg.output(stream, output_file, c='copy')
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: ffmpeg.run(stream, overwrite_output=True, quiet=True)
+            )
+            return output_file
+        except:
+            self.logger.info(traceback.format_exc())
+            return None
+
+
 class DownloadManager:
     def __init__(self, p):
         self._parent = p
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
-        """Download and trim to 25MB"""
+    async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (
+    Union[MedalClip, KickClip, TwitchClip], int):
+        """Download and process video to fit Discord's 8MB limit"""
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
@@ -58,10 +149,12 @@ class DownloadManager:
             filename = f'clyppy_{clip.service}_{clip.id}.mp4'
             file_variants = [
                 filename,
-                filename.replace(".mp4", "_trimmed.mp4"),
-                filename.replace(".mp4", "_trimmed2.mp4"),
-                filename.replace(".mp4", "_trimmed3.mp4")
+                filename.replace(".mp4", "_compressed.mp4"),
+                filename.replace(".mp4", "_trimmed_compressed.mp4"),
+                filename.replace(".mp4", "_aggressive_compressed.mp4")
             ]
+
+            # Check for existing processed files
             f = None
             for variant in file_variants:
                 if os.path.isfile(variant):
@@ -73,7 +166,8 @@ class DownloadManager:
                         f, was_edited = variant, 1
                         if variant == filename:
                             was_edited = 0
-                    break
+                        break
+
             if f is None:
                 # Download clip
                 self._parent.logger.info("Run clip.download()")
@@ -83,89 +177,61 @@ class DownloadManager:
 
             # Check file size
             size_mb = os.path.getsize(f) / (1024 * 1024)
-            if size_mb > 25:
+            if size_mb > 8:  # New Discord limit
                 if too_large_setting == "trim":
-                    # Calculate target duration and trim
-                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24.9)
-                    if not target_duration:
-                        self._parent.logger.error("First target_duration() failed")
-                        raise FailedTrim
-                    trimmed_file = await self._parent.trim_to_duration(f, target_duration)
-                    if trimmed_file is None:
-                        self._parent.logger.error("First trim_to_duration() failed")
-                        raise FailedTrim
-                    self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
-                        self._parent.logger.info("Deleting original file...")
-                        tryremove(f)  # remove original file
-                        return trimmed_file, 1
+                    try:
+                        processor = VideoProcessor()
+                        processed_file, method = await processor.process_video(f)
+                        self._parent.logger.info(f"Processed video using {method}")
 
-                    # second pass is necessary
-                    second_target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24)
-                    if not second_target_duration:
-                        self._parent.logger.error("Second target_duration() failed")
-                        raise FailedTrim
-                    second_trimmed_file = await self._parent.trim_to_duration(f, second_target_duration, append="_trimmed2")
-                    if second_trimmed_file is None:
-                        self._parent.logger.error("Second trim_to_duration() failed")
-                        raise FailedTrim
-                    self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
-                                             f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(second_trimmed_file) / (1024 * 1024) <= 25:
-                        self._parent.logger.info("Deleting both original files...\n"
-                                                 f"({f}, {trimmed_file}"
-                                                 f"\nAnd returning {second_trimmed_file}")
-                        tryremove(f)
-                        tryremove(trimmed_file)  # remove original files
-                        return second_trimmed_file, 1
+                        # Clean up original if processing succeeded
+                        if processed_file != f:
+                            tryremove(f)
 
-                    # third pass is necessary
-                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=20)
-                    if not target_duration:
-                        self._parent.logger.error("Third target_duration() failed")
+                        return processed_file, 1
+
+                    except ValueError as e:
+                        self._parent.logger.error(f"Failed to process video: {e}")
                         raise FailedTrim
-                    third_trimmed_file = await self._parent.trim_to_duration(f, target_duration, append="_trimmed3")
-                    if third_trimmed_file is None:
-                        self._parent.logger.error("Third trim_to_duration() failed")
-                        raise FailedTrim
-                    self._parent.logger.info(f"(third pass) trimmed {clip.id} to {round(os.path.getsize(third_trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= 25:
-                        self._parent.logger.info("Deleting original file...")
-                        tryremove(f)
-                        tryremove(trimmed_file)
-                        tryremove(second_trimmed_file)  # remove original files
-                        return third_trimmed_file, 1
 
                 elif too_large_setting == "info":
                     await root_msg.reply(
-                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
+                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 8MB limit. "
                         "Unable to upload the file.\n\nYou can either:\n"
                         f" - upload a shorter clip\n"
                         f" - ask a server admin to change Clyppy "
                         f"settings to `too_large='trim'`\n"
                         f" - DM me the link and I'll"
-                        f" upload a trimmed version"
+                        f" upload a processed version"
                     )
                     raise FailureHandled
+
                 elif too_large_setting == "dm":
-                    await self._parent.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
-                                                                 content=f"Sorry, the clip {clip.url} is too large "
-                                                                         f"({size_mb:.1f}MB) for Discord's 25MB "
-                                                                         f"limit. Unable to upload the file.\n\n"
-                                                                         f"Please either\n"
-                                                                         f" - upload a shorter clip\n"
-                                                                         f" - ask a server admin to change Clyppy "
-                                                                         f"settings to `too_large='trim'`\n"
-                                                                         f" - resend the link in this DM and I'll"
-                                                                         f" upload a trimmed version")
+                    await self._parent.send_dm_err_msg(
+                        ctx=root_msg,
+                        guild=guild_ctx,
+                        content=f"Sorry, the clip {clip.url} is too large "
+                                f"({size_mb:.1f}MB) for Discord's 8MB "
+                                f"limit. Unable to upload the file.\n\n"
+                                f"Please either\n"
+                                f" - upload a shorter clip\n"
+                                f" - ask a server admin to change Clyppy "
+                                f"settings to `too_large='trim'`\n"
+                                f" - resend the link in this DM and I'll"
+                                f" upload a processed version"
+                    )
                     raise FailureHandled
                 else:
                     self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
-                    await root_msg.reply(f"Your server's settings were out of whack!\n\n"
-                                         f"For `too_large` got: '{too_large_setting}'\n"
-                                         f"Expected: {POSSIBLE_TOO_LARGE}")
+                    await root_msg.reply(
+                        f"Your server's settings were out of whack!\n\n"
+                        f"For `too_large` got: '{too_large_setting}'\n"
+                        f"Expected: {POSSIBLE_TOO_LARGE}"
+                    )
                     raise FailureHandled
+
                 raise Exception(f"Unhandled Exception in bot.tools.misc")
+
             return f, was_edited
 
 
