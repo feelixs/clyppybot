@@ -43,6 +43,7 @@ def create_nexus_str():
 
 class VideoProcessor:
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.target_size_mb = 7.9  # Staying safely under 8MB limit
 
     async def process_video(self, input_file: str) -> Tuple[str, str]:
@@ -93,7 +94,8 @@ class VideoProcessor:
                 lambda: ffmpeg.run(stream, overwrite_output=True, quiet=True)
             )
             return output_file
-        except ffmpeg.Error:
+        except:
+            self.logger.info(traceback.format_exc())
             return None
 
     async def trim_video(self, input_file: str) -> Optional[str]:
@@ -119,7 +121,8 @@ class VideoProcessor:
                 lambda: ffmpeg.run(stream, overwrite_output=True, quiet=True)
             )
             return output_file
-        except ffmpeg.Error:
+        except:
+            self.logger.info(traceback.format_exc())
             return None
 
 
