@@ -8,7 +8,7 @@ import os
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 
-VERSION = "1.4.2b"
+VERSION = "1.4.3b"
 
 
 class Base(Extension):
