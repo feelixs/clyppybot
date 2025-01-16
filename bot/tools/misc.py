@@ -138,7 +138,7 @@ class DownloadManager:
 
                 elif too_large_setting == "info":
                     await root_msg.reply(
-                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
+                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 8MB limit. "
                         "Unable to upload the file.\n\nYou can either:\n"
                         f" - upload a shorter clip\n"
                         f" - ask a server admin to change Clyppy "
@@ -150,7 +150,7 @@ class DownloadManager:
                 elif too_large_setting == "dm":
                     await self._parent.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
                                                                  content=f"Sorry, the clip {clip.url} is too large "
-                                                                         f"({size_mb:.1f}MB) for Discord's 25MB "
+                                                                         f"({size_mb:.1f}MB) for Discord's 8MB "
                                                                          f"limit. Unable to upload the file.\n\n"
                                                                          f"Please either\n"
                                                                          f" - upload a shorter clip\n"
