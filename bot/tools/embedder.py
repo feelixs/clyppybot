@@ -12,6 +12,8 @@ import time
 import re
 import os
 import asyncio
+from bot.classes import TARGET_SIZE_MB
+
 
 VALID_DL_PLATFORMS = ['twitch', 'medal']
 
@@ -183,7 +185,7 @@ class AutoEmbedder:
             self.logger.info(f"Clip {clip.id} failed to trim :/")
             emb = Embed(title="**Whoops...**",
                         description=f"I failed to trim that video file. If this keeps on happening, you should probably let us know...\n"
-                                    f"> The original file size was larger than Discord's Limit for Bots, **8MB**. I tried to trim it to fit, but failed.")
+                                    f"> The original file size was larger than Discord's Limit for Bots, *{TARGET_SIZE_MB}MB**. I tried to trim it to fit, but failed.")
             emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
                 ctx=respond_to,
@@ -279,13 +281,13 @@ class AutoEmbedder:
                 self.logger.info(f"Clip {clip.id} was too large to embed in {guild.name}")
                 emb = Embed(title="**Whoops...**",
                             description=f"Looks like the video embed failed for:\n{clip_link} \n\nYou should probably report this error to us\n"
-                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **8MB**")
+                                        f"> File size was **{round(clipsize / (1024 * 1024), 1)}MB**, while Discord's Limit for Bots is **{TARGET_SIZE_MB}MB**")
                 emb.description += create_nexus_str()
                 await self.bot.tools.send_error_message(
                     ctx=respond_to,
                     msg_embed=emb,
                     dm_content=f"The clip {clip_link} was too large to embed in {guild.name} "
-                               f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is 8MB)",
+                               f"({round(clipsize / (1024 * 1024), 1)}MB, Discord's Limit is {TARGET_SIZE_MB}MB)",
                     guild=guild,
                     bot=self.bot
                 )

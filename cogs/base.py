@@ -5,10 +5,11 @@ from bot.tools import create_nexus_str, GuildType
 import logging
 import aiohttp
 import os
+from bot.classes import TARGET_SIZE_MB
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 
-VERSION = "1.4.3b"
+VERSION = "1.4.2b"
 
 
 class Base(Extension):
@@ -237,7 +238,7 @@ class Base(Extension):
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
-            '**too_large** Choose what Clyppy does with files larger than Discord\'s limit (8MB):\n'
+            f'**too_large** Choose what Clyppy does with files larger than Discord\'s limit ({TARGET_SIZE_MB}MB):\n'
             ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
             ' - `info`: Don\'t upload large files at all.\n'
             ' - `dm`: Don\'t upload, and DM the message author.\n\n'
