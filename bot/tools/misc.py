@@ -13,6 +13,7 @@ from bot.reddit import RedditClip
 from typing import Optional, Union
 from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
+from bot.classes import TARGET_SIZE_MB
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["dm", "info"]
@@ -47,7 +48,7 @@ class DownloadManager:
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
     async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
-        """Download and trim to 25MB"""
+        """Download and trim to discord's limit"""
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
@@ -83,10 +84,10 @@ class DownloadManager:
 
             # Check file size
             size_mb = os.path.getsize(f) / (1024 * 1024)
-            if size_mb > 25:
+            if size_mb > TARGET_SIZE_MB:
                 if too_large_setting == "trim":
                     # Calculate target duration and trim
-                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24.9)
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 0.1)
                     if not target_duration:
                         self._parent.logger.error("First target_duration() failed")
                         raise FailedTrim
@@ -95,13 +96,13 @@ class DownloadManager:
                         self._parent.logger.error("First trim_to_duration() failed")
                         raise FailedTrim
                     self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(trimmed_file) / (1024 * 1024) <= 25:
+                    if os.path.getsize(trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
                         self._parent.logger.info("Deleting original file...")
                         tryremove(f)  # remove original file
                         return trimmed_file, 1
 
                     # second pass is necessary
-                    second_target_duration = await self._parent.calculate_target_duration(f, target_size_mb=24)
+                    second_target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 1)
                     if not second_target_duration:
                         self._parent.logger.error("Second target_duration() failed")
                         raise FailedTrim
@@ -111,7 +112,7 @@ class DownloadManager:
                         raise FailedTrim
                     self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
                                              f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(second_trimmed_file) / (1024 * 1024) <= 25:
+                    if os.path.getsize(second_trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
                         self._parent.logger.info("Deleting both original files...\n"
                                                  f"({f}, {trimmed_file}"
                                                  f"\nAnd returning {second_trimmed_file}")
@@ -120,7 +121,7 @@ class DownloadManager:
                         return second_trimmed_file, 1
 
                     # third pass is necessary
-                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=20)
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 3)
                     if not target_duration:
                         self._parent.logger.error("Third target_duration() failed")
                         raise FailedTrim
@@ -129,7 +130,7 @@ class DownloadManager:
                         self._parent.logger.error("Third trim_to_duration() failed")
                         raise FailedTrim
                     self._parent.logger.info(f"(third pass) trimmed {clip.id} to {round(os.path.getsize(third_trimmed_file) / (1024 * 1024), 1)}MB")
-                    if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= 25:
+                    if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
                         self._parent.logger.info("Deleting original file...")
                         tryremove(f)
                         tryremove(trimmed_file)
@@ -138,7 +139,7 @@ class DownloadManager:
 
                 elif too_large_setting == "info":
                     await root_msg.reply(
-                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 25MB limit. "
+                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 8MB limit. "
                         "Unable to upload the file.\n\nYou can either:\n"
                         f" - upload a shorter clip\n"
                         f" - ask a server admin to change Clyppy "
@@ -150,7 +151,7 @@ class DownloadManager:
                 elif too_large_setting == "dm":
                     await self._parent.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
                                                                  content=f"Sorry, the clip {clip.url} is too large "
-                                                                         f"({size_mb:.1f}MB) for Discord's 25MB "
+                                                                         f"({size_mb:.1f}MB) for Discord's {TARGET_SIZE_MB}MB "
                                                                          f"limit. Unable to upload the file.\n\n"
                                                                          f"Please either\n"
                                                                          f" - upload a shorter clip\n"
@@ -205,7 +206,7 @@ class Tools:
         except:
             self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
 
-    async def calculate_target_duration(self, filepath, target_size_mb=25):
+    async def calculate_target_duration(self, filepath, target_size_mb=TARGET_SIZE_MB):
         # Get current size in MB
         current_size_mb = os.path.getsize(filepath) / (1024 * 1024)
 

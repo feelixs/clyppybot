@@ -4,6 +4,8 @@ import asyncio
 import yt_dlp
 import os
 
+TARGET_SIZE_MB = 8
+
 
 class BaseClip(ABC):
     """Base class for all clip types"""
