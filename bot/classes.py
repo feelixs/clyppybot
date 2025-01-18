@@ -1,44 +1,74 @@
 from abc import ABC, abstractmethod
 import logging
 import asyncio
-import yt_dlp
 import os
+from yt_dlp import YoutubeDL
+from typing import Tuple, Optional
+
 
 TARGET_SIZE_MB = 8
 
 
 class BaseClip(ABC):
     """Base class for all clip types"""
-    def __init__(self, slug):
+
+    def __init__(self, slug: str):
         self.service = None
         self.url = None
         self.id = slug
         self.logger = logging.getLogger(__name__)
 
-    async def download(self, filename: str):
+    async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+        """
+        Gets direct media URL and duration from the clip URL without downloading.
+        Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
+        """
         ydl_opts = {
-            'format': 'best',
-            'outtmpl': filename,
+            'format': dlp_format,  # Prefer MP4 format
             'quiet': True,
             'no_warnings': True,
+            'extract_flat': True,  # Don't download playlists
         }
 
-        # Download using yt-dlp
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                return filename
-            self.logger.info(f"Could not find file")
-            return None
+            # Run extraction in a thread pool to avoid blocking
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._extract_info,
+                ydl_opts
+            )
         except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
+            self.logger.error(f"Failed to get direct URL: {str(e)}")
             return None
+
+    def _extract_info(self, ydl_opts: dict) -> Tuple[str, float]:
+        """
+        Helper method to extract URL and duration information using yt-dlp.
+        Runs in thread pool to avoid blocking the event loop.
+        """
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(self.url, download=False)
+            if not info:
+                raise ValueError("Could not extract video information")
+            # Get duration
+            duration = info.get('duration', 0)
+
+            # Get direct URL
+            if 'url' in info:
+                return info['url'], duration
+            elif 'formats' in info and info['formats']:
+                # Get best MP4 format
+                mp4_formats = [f for f in info['formats'] if f.get('ext') == 'mp4']
+                if mp4_formats:
+                    # Sort by quality (typically bitrate or filesize)
+                    best_format = sorted(
+                        mp4_formats,
+                        key=lambda x: x.get('filesize', 0) or x.get('tbr', 0),
+                        reverse=True
+                    )[0]
+                    return best_format['url'], duration
+
+            raise ValueError("No suitable URL found in video info")
 
 
 class BaseMisc(ABC):
@@ -61,9 +91,9 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
-    async def is_shortform(self, url: str) -> bool:
+    async def get_len(self, url: str) -> Optional[float]:
         """
-            Uses yt-dlp to determine if the provided url is short-form (60 seconds or less)
+            Uses yt-dlp to check video length of the provided url
         """
         ydl_opts = {
             'quiet': True,
@@ -74,17 +104,21 @@ class BaseMisc(ABC):
         try:
             # Run yt-dlp in an executor to avoid blocking
             def get_duration():
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                with YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=False)
                     return info.get('duration', 0)
 
             duration = await asyncio.get_event_loop().run_in_executor(
                 None, get_duration
             )
-
-            # Check if duration is 60 seconds or less
-            return duration <= 60
+            return duration
 
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
+            return None
+
+    async def is_shortform(self, url: str) -> bool:
+        d = await self.get_len(url)
+        if d is None:
             return False
+        return d <= 60
