@@ -35,6 +35,7 @@ def tryremove(f):
 class GuildType:
     id: int
     name: str
+    is_dm: bool
 
 
 def create_nexus_str():

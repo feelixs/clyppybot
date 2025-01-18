@@ -105,7 +105,7 @@ class Base(Extension):
     #        return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
     #    clipfile, _ = await self.bot.tools.dl.download_clip(
     #        clip=clip,
-    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
+    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name, True),
     #        root_msg=ctx.message,
     #        too_large_setting='trim'
     #    )

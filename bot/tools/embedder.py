@@ -67,9 +67,9 @@ class AutoEmbedder:
         try:
             if event.message.guild is None:
                 # if we're in dm context, set the guild id to the author id
-                guild = GuildType(event.message.author.id, event.message.author.username)
+                guild = GuildType(event.message.author.id, event.message.author.username, True)
             else:
-                guild = GuildType(event.message.guild.id, event.message.guild.name)
+                guild = GuildType(event.message.guild.id, event.message.guild.name, False)
                 # if we're in guild ctx, we need to verify clyppy has the right perms
                 if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
