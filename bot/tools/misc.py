@@ -39,7 +39,7 @@ class GuildType:
 
 
 def create_nexus_str():
-    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
+    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Suggest a Feature]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
 class DownloadManager:
@@ -49,7 +49,7 @@ class DownloadManager:
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
     async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
-        """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
+        """Download and trim to discord's limit"""
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
@@ -58,11 +58,116 @@ class DownloadManager:
             was_edited = 0
             # check for existing clip file
             filename = f'clyppy_{clip.service}_{clip.id}.mp4'
-            # Download clip
-            self._parent.logger.info("Run clip.download()")
-            f, dur = await clip.download(filename=filename)
-            if not f:
-                return None, 0
+            file_variants = [
+                filename,
+                filename.replace(".mp4", "_trimmed.mp4"),
+                filename.replace(".mp4", "_trimmed2.mp4"),
+                filename.replace(".mp4", "_trimmed3.mp4")
+            ]
+            f = None
+            for variant in file_variants:
+                if os.path.isfile(variant):
+                    self._parent.logger.info(f"{variant} already exists, no need to download")
+                    if os.path.getsize(variant) == 0:  # check for corrupt file
+                        tryremove(variant)
+                        self._parent.logger.info(f"{variant} was corrupt, so we are downloading and overwriting it")
+                    else:
+                        f, was_edited = variant, 1
+                        if variant == filename:
+                            was_edited = 0
+                    break
+            if f is None:
+                # Download clip
+                self._parent.logger.info("Run clip.download()")
+                f = await clip.download(filename=filename)
+                if not f:
+                    return None, 0
+
+            # Check file size
+            size_mb = os.path.getsize(f) / (1024 * 1024)
+            if size_mb > TARGET_SIZE_MB:
+                if too_large_setting == "trim":
+                    # Calculate target duration and trim
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 0.1)
+                    if not target_duration:
+                        self._parent.logger.error("First target_duration() failed")
+                        raise FailedTrim
+                    trimmed_file = await self._parent.trim_to_duration(f, target_duration)
+                    if trimmed_file is None:
+                        self._parent.logger.error("First trim_to_duration() failed")
+                        raise FailedTrim
+                    self._parent.logger.info(f"trimmed {clip.id} to {round(os.path.getsize(trimmed_file) / (1024 * 1024), 1)}MB")
+                    if os.path.getsize(trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
+                        self._parent.logger.info("Deleting original file...")
+                        tryremove(f)  # remove original file
+                        return trimmed_file, 1
+
+                    # second pass is necessary
+                    second_target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 1)
+                    if not second_target_duration:
+                        self._parent.logger.error("Second target_duration() failed")
+                        raise FailedTrim
+                    second_trimmed_file = await self._parent.trim_to_duration(f, second_target_duration, append="_trimmed2")
+                    if second_trimmed_file is None:
+                        self._parent.logger.error("Second trim_to_duration() failed")
+                        raise FailedTrim
+                    self._parent.logger.info(f"(second pass) trimmed {clip.id} to "
+                                             f"{round(os.path.getsize(second_trimmed_file) / (1024 * 1024), 1)}MB")
+                    if os.path.getsize(second_trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
+                        self._parent.logger.info("Deleting both original files...\n"
+                                                 f"({f}, {trimmed_file}"
+                                                 f"\nAnd returning {second_trimmed_file}")
+                        tryremove(f)
+                        tryremove(trimmed_file)  # remove original files
+                        return second_trimmed_file, 1
+
+                    # third pass is necessary
+                    target_duration = await self._parent.calculate_target_duration(f, target_size_mb=TARGET_SIZE_MB - 3)
+                    if not target_duration:
+                        self._parent.logger.error("Third target_duration() failed")
+                        raise FailedTrim
+                    third_trimmed_file = await self._parent.trim_to_duration(f, target_duration, append="_trimmed3")
+                    if third_trimmed_file is None:
+                        self._parent.logger.error("Third trim_to_duration() failed")
+                        raise FailedTrim
+                    self._parent.logger.info(f"(third pass) trimmed {clip.id} to {round(os.path.getsize(third_trimmed_file) / (1024 * 1024), 1)}MB")
+                    if os.path.getsize(third_trimmed_file) / (1024 * 1024) <= TARGET_SIZE_MB:
+                        self._parent.logger.info("Deleting original file...")
+                        tryremove(f)
+                        tryremove(trimmed_file)
+                        tryremove(second_trimmed_file)  # remove original files
+                        return third_trimmed_file, 1
+
+                elif too_large_setting == "info":
+                    await root_msg.reply(
+                        f"Sorry, this clip is too large ({size_mb:.1f}MB) for Discord's 8MB limit. "
+                        "Unable to upload the file.\n\nYou can either:\n"
+                        f" - upload a shorter clip\n"
+                        f" - ask a server admin to change Clyppy "
+                        f"settings to `too_large='trim'`\n"
+                        f" - DM me the link and I'll"
+                        f" upload a trimmed version"
+                    )
+                    raise FailureHandled
+                elif too_large_setting == "dm":
+                    await self._parent.send_dm_err_msg(ctx=root_msg, guild=guild_ctx,
+                                                                 content=f"Sorry, the clip {clip.url} is too large "
+                                                                         f"({size_mb:.1f}MB) for Discord's {TARGET_SIZE_MB}MB "
+                                                                         f"limit. Unable to upload the file.\n\n"
+                                                                         f"Please either\n"
+                                                                         f" - upload a shorter clip\n"
+                                                                         f" - ask a server admin to change Clyppy "
+                                                                         f"settings to `too_large='trim'`\n"
+                                                                         f" - resend the link in this DM and I'll"
+                                                                         f" upload a trimmed version")
+                    raise FailureHandled
+                else:
+                    self._parent.logger.info(f"Unhandled value for too_large_setting: {too_large_setting}")
+                    await root_msg.reply(f"Your server's settings were out of whack!\n\n"
+                                         f"For `too_large` got: '{too_large_setting}'\n"
+                                         f"Expected: {POSSIBLE_TOO_LARGE}")
+                    raise FailureHandled
+                raise Exception(f"Unhandled Exception in bot.tools.misc")
             return f, was_edited
 
 

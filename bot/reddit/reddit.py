@@ -4,7 +4,7 @@ import re
 import asyncio
 import aiohttp
 import os
-from typing import Optional, Tuple
+from typing import Optional
 from bot.kick import KickMisc
 from bot.classes import BaseClip, BaseMisc
 
@@ -176,15 +176,38 @@ class RedditClip(BaseClip):
         self.url = f"https://redd.it/{slug}"
         self.external_link = ext
 
-    async def _download_kick(self, filename, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def _download_kick(self, filename):
         k = KickMisc()
         kclip = await k.get_clip(self.external_link)
-        return await kclip.download(filename, dlp_format)
+        return await kclip.download(filename)
 
-    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def download(self, filename: str):
         if self.external_link is None:
             pass
         elif 'kick' in self.external_link:  # external_platform is a domain
             self.logger.info(f"Running download for external link {self.external_link}")
-            return await self._download_kick(filename, dlp_format)
-        return await super().download(dlp_format='best/bv*+ba')
+            return await self._download_kick(filename)
+        self.logger.info(f"Downloading with yt-dlp: {filename}")
+        ydl_opts = {
+            'format': 'best/bv*+ba',
+            'outtmpl': filename,
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        # Download using yt-dlp
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Run download in a thread pool to avoid blocking
+                await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: ydl.download([self.url])
+                )
+
+            if os.path.exists(filename):
+                return filename
+            self.logger.info(f"Could not find file")
+            return None
+        except Exception as e:
+            self.logger.error(f"yt-dlp download error: {str(e)}")
+            return None

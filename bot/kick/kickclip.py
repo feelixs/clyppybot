@@ -1,7 +1,6 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
-from typing import Optional, Tuple
 import asyncio
 import json
 import time
@@ -64,7 +63,7 @@ class KickClip(BaseClip):
         finally:
             driver.quit()
 
-    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def download(self, filename: str):
         try:
             m3u8_url = await self.get_m3u8_url()
         except:
