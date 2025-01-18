@@ -262,6 +262,7 @@ class AutoEmbedder:
                 'channel_id': str(chnid),
                 'user_id': str(respond_to.author.id),
                 'embedded_url': clip_link,
+                'remote_file_url': clip_link,  # todo
                 'url_platform': self.platform_tools.platform_name,
                 'response_time_seconds': my_response_time,
                 'total_servers_now': len(self.bot.guilds)
