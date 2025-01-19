@@ -74,7 +74,7 @@ class YtClip(BaseClip):
                 elif 'duration' not in info:
                     self.logger.info(f"Video duration not found")
                     return None
-
+                self.logger.info(f"Video duration {info['duration']}s is acceptable")
                 # Proceed with download if duration is acceptable
                 await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -82,6 +82,7 @@ class YtClip(BaseClip):
                 )
 
             if os.path.exists(filename):
+                self.logger.info(f"Uploading the downloaded yt video to clyppy.io: {filename}")
                 try:
                     response = await upload_video(filename)
                 except Exception as e:
