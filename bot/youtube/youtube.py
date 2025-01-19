@@ -88,7 +88,7 @@ class YtClip(BaseClip):
                 except Exception as e:
                     self.logger.error(f"Failed to upload video: {str(e)}")
                     return None
-                if response['success'] == 'success':
+                if response['success']:
                     self.logger.info(f"Uploaded video: {response['file_path']}")
                     return DownloadResponse(
                         remote_url=response['file_path'],
