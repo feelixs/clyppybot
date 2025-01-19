@@ -9,7 +9,7 @@ from bot.classes import TARGET_SIZE_MB
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 
-VERSION = "1.4.2b"
+VERSION = "1.4.4b"
 
 
 class Base(Extension):
