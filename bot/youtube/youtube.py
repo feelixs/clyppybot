@@ -3,7 +3,7 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video
+from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details
 from typing import Optional
 
 
@@ -98,10 +98,14 @@ class YtClip(BaseClip):
                     return None
                 if response['success']:
                     self.logger.info(f"Uploaded video: {response['file_path']}")
+                    i = get_video_details(filename, response['file_path'])
                     return DownloadResponse(
                         remote_url=response['file_path'],
                         local_file_path=filename,
-                        duration=info['duration']
+                        duration=info['duration'],
+                        filesize=i['filesize'],
+                        height=i['height'],
+                        width=i['width']
                     )
                 else:
                     self.logger.error(f"Failed to upload video: {response}")
