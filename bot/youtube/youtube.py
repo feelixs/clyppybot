@@ -102,7 +102,7 @@ class YtClip(BaseClip):
                     return DownloadResponse(
                         remote_url=response['file_path'],
                         local_file_path=filename,
-                        duration=info['duration'],
+                        duration=i['duration'],
                         filesize=i['filesize'],
                         height=i['height'],
                         width=i['width']
