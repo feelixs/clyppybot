@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import base64
 import aiohttp
 import hashlib
-from moviepy.editor import VideoFileClip
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 
 TARGET_SIZE_MB = 8
