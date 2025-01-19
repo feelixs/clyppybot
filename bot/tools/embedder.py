@@ -154,7 +154,7 @@ class AutoEmbedder:
                     label="Download",
                     url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
                 ))
-            await respond_to.reply(clip.clyppy_url, components=comp)
+            await respond_to.reply(clip.clyppy_id, components=comp)
 
             now_utc = datetime.now(tz=timezone.utc).timestamp()
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
