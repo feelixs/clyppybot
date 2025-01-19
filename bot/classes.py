@@ -143,6 +143,7 @@ class BaseClip(ABC):
                     with YoutubeDL(ydl_opts) as tmpdl:
                         tmpdl.download([self.url])
                     format_info = get_video_details(f'temp{self.id}.mp4', info['url'])
+                    os.remove(f'temp{self.id}.mp4')
 
                 self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
