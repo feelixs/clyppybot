@@ -48,13 +48,22 @@ async def upload_video(video_file_path):
 class BaseClip(ABC):
     """Base class for all clip types"""
 
+    @abstractmethod
     def __init__(self, slug: str):
-        self.service = None
-        self.url = None
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(slug)
-        self.clyppy_url = f"https://clyppy.io/{self.service}/{self.clyppy_id}"
         self.logger = logging.getLogger(__name__)
+
+    @property
+    @abstractmethod
+    def service(self) -> str:
+        """Service name must be implemented by child classes"""
+        pass
+
+    @property
+    def clyppy_url(self) -> str:
+        """Generate the clyppy URL using the service and ID"""
+        return f"https://clyppy.io/{self.service}/{self.clyppy_id}"
 
     async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         """
