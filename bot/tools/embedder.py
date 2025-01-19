@@ -119,7 +119,6 @@ class AutoEmbedder:
             await asyncio.sleep(0.1)
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
-        self.logger.info(f"Fetcbh clip {parsed_id}")
         clip = await self.platform_tools.get_clip(clip_link)
         self.logger.info(clip.id)
         if clip is None:
@@ -141,7 +140,6 @@ class AutoEmbedder:
 
         # send embed
         try:
-            self.logger.info("begin send e")
             comp = []
             # refer to: ["all", "view", "dl", "none"]
             btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
@@ -161,7 +159,6 @@ class AutoEmbedder:
             now_utc = datetime.now(tz=timezone.utc).timestamp()
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
             my_response_time = round((now_utc - respond_to_utc), 2)
-            self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
             if guild.is_dm:
                 chn = "dm"
                 chnid = 0
@@ -188,6 +185,7 @@ class AutoEmbedder:
             try:
                 result = await publish_interaction(interaction_data, apikey=self.api_key)
                 await respond_to.reply(clip.clyppy_url, components=comp)
+                self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Failed to post interaction to API: {e}")
