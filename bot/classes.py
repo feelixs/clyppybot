@@ -14,6 +14,16 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 TARGET_SIZE_MB = 8
 
 
+async def is_404(url: str) -> bool:
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                return response.status == 404
+    except aiohttp.ClientError:
+        # Handle connection errors, invalid URLs etc
+        return True  # Consider failed connections as effectively 404
+
+
 def get_video_details(file_path, url):
     try:
         clip = VideoFileClip(file_path)
