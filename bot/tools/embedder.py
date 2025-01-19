@@ -154,7 +154,6 @@ class AutoEmbedder:
                     label="Download",
                     url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
                 ))
-            await respond_to.reply(clip.clyppy_id, components=comp)
 
             now_utc = datetime.now(tz=timezone.utc).timestamp()
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
@@ -185,7 +184,7 @@ class AutoEmbedder:
 
             try:
                 result = await publish_interaction(interaction_data, apikey=self.api_key)
-                # Handle success
+                await respond_to.reply(clip.clyppy_url, components=comp)
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Failed to post interaction to API: {e}")
