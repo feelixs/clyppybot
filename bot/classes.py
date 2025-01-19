@@ -8,8 +8,25 @@ from dataclasses import dataclass
 import base64
 import aiohttp
 import hashlib
+import ffmpeg
+
 
 TARGET_SIZE_MB = 8
+
+
+def get_video_details(file_path):
+    probe = ffmpeg.probe(file_path)
+    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+    if not video_stream:
+        raise ValueError("No video stream found")
+
+    width = int(video_stream['width'])
+    height = int(video_stream['height'])
+    duration = float(probe['format']['duration']) * 1000  # Convert to milliseconds
+    return {
+        'width': width,
+        'height': height,
+    }
 
 
 @dataclass
@@ -61,6 +78,11 @@ class BaseClip(ABC):
     @abstractmethod
     def service(self) -> str:
         """Service name must be implemented by child classes"""
+        pass
+
+    @property
+    @abstractmethod
+    def url(self) -> str:
         pass
 
     @property
@@ -116,6 +138,19 @@ class BaseClip(ABC):
             if 'url' in info:
                 # Direct URL available in info
                 format_info = extract_format_info(info)
+                if format_info['width'] is None:
+                    self.logger.info("width was 0 lets check manually")
+                    # we need to download the file now, and determine the width
+                    o = ydl_opts.copy()
+                    o.update({'filename': f'temp{self.id}.mp4'})
+                    with YoutubeDL(ydl_opts) as tmpdl:
+                        tmpdl.download([self.url])
+                    format_info = get_video_details(f'temp{self.id}.mp4')
+                    format_info.update({
+                        'url': info['url'],
+                        'filesize': 0
+                    })
+
                 self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
                     remote_url=format_info['url'],
