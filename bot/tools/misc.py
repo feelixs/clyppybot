@@ -13,7 +13,7 @@ from bot.reddit import RedditClip
 from typing import Optional, Union
 from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
-from bot.classes import TARGET_SIZE_MB, DownloadResponse, generate_video_id
+from bot.classes import TARGET_SIZE_MB, DownloadResponse
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
