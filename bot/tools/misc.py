@@ -13,7 +13,8 @@ from bot.reddit import RedditClip
 from typing import Optional, Union
 from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
-from bot.classes import TARGET_SIZE_MB
+from bot.classes import TARGET_SIZE_MB, DownloadResponse, generate_video_id
+
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["dm", "info"]
@@ -48,22 +49,15 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: BaseClip, root_msg: Message, guild_ctx: GuildType, too_large_setting=None) -> (Union[MedalClip, KickClip, TwitchClip], int):
+    async def download_clip(self, clip: BaseClip, guild_ctx: GuildType) -> Optional[DownloadResponse]:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
+        desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
-                return None, 0
-
-            was_edited = 0
-            # check for existing clip file
-            filename = f'clyppy_{clip.service}_{clip.id}.mp4'
-            # Download clip
+                return None
             self._parent.logger.info("Run clip.download()")
-            f, dur = await clip.download(filename=filename)
-            if not f:
-                return None, 0
-            return f, was_edited
+            return await clip.download(filename=desired_filename)
 
 
 class Tools:

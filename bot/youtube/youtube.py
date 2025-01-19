@@ -3,7 +3,8 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video
+from typing import Optional
 
 
 class YtMisc(BaseMisc):
@@ -12,7 +13,7 @@ class YtMisc(BaseMisc):
         self.platform_name = "YouTube"
         self.silence_invalid_url = True
 
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str) -> Optional[str]:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -30,7 +31,7 @@ class YtMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str) -> 'YtClip':
+    async def get_clip(self, url: str) -> Optional['YtClip']:
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:
@@ -50,7 +51,7 @@ class YtClip(BaseClip):
         else:
             self.url = f"https://youtube.com/watch/?v={slug}"
 
-    async def download(self, filename: str):
+    async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         ydl_opts = {
             'format': 'best',
             'outtmpl': filename,
@@ -70,6 +71,9 @@ class YtClip(BaseClip):
                 if 'duration' in info and info['duration'] > 60:
                     self.logger.info(f"Video duration {info['duration']}s exceeds 60s limit")
                     return None
+                elif 'duration' not in info:
+                    self.logger.info(f"Video duration not found")
+                    return None
 
                 # Proceed with download if duration is acceptable
                 await asyncio.get_event_loop().run_in_executor(
@@ -78,7 +82,21 @@ class YtClip(BaseClip):
                 )
 
             if os.path.exists(filename):
-                return filename
+                try:
+                    response = await upload_video(filename)
+                except Exception as e:
+                    self.logger.error(f"Failed to upload video: {str(e)}")
+                    return None
+                if response['success'] == 'success':
+                    self.logger.info(f"Uploaded video: {response['file_path']}")
+                    return DownloadResponse(
+                        remote_url=response['file_path'],
+                        local_file_path=filename,
+                        duration=info['duration']
+                    )
+                else:
+                    self.logger.error(f"Failed to upload video: {response}")
+                    return None
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:

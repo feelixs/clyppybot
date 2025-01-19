@@ -12,6 +12,7 @@ import time
 import re
 import os
 import asyncio
+from bot.classes import DownloadResponse
 from bot.classes import TARGET_SIZE_MB
 
 
@@ -24,7 +25,6 @@ async def publish_interaction(interaction_data, apikey):
         'X-API-Key': apikey,
         'Content-Type': 'application/json'
     }
-
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=interaction_data, headers=headers) as response:
             if response.status == 201:  # Successfully created
@@ -41,7 +41,6 @@ class AutoEmbedder:
         self.too_large_clips = []
         self.logger = logger
         self.platform_tools = platform_tools
-        self.silence_invalid_url = self.platform_tools.silence_invalid_url
         self.currently_downloading = []
 
     @staticmethod
@@ -71,7 +70,7 @@ class AutoEmbedder:
             else:
                 guild = GuildType(event.message.guild.id, event.message.guild.name, False)
                 # if we're in guild ctx, we need to verify clyppy has the right perms
-                if Permissions.ATTACH_FILES not in event.message.channel.permissions_for(event.message.guild.me):
+                if Permissions.EMBED_LINKS not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
                 if Permissions.SEND_MESSAGES not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
@@ -92,7 +91,6 @@ class AutoEmbedder:
                     next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
                     if not next_link_exists:
                         return 1
-                    await event.message.reply(f"Processing link: {words[index]}", delete_after=10)
                     await self._process_clip_one_at_a_time(words[index], event.message, guild, True)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
@@ -123,63 +121,20 @@ class AutoEmbedder:
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link)
         if clip is None:
-            if not self.silence_invalid_url:
-                self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
-                emb = Embed(title="**Invalid Clip Link**",
-                            description=f"I couldn't find the clip at {clip_link}. Verify that it exists")
-                emb.description += create_nexus_str()
-                await self.bot.tools.send_error_message(
-                    ctx=respond_to,
-                    msg_embed=emb,
-                    dm_content=f"Failed to fetch clip: **Invalid Clip Link** {clip_link}",
-                    bot=self.bot,
-                    guild=guild
-                )
+            self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
+            # should silently fail
             return
-
         # retrieve clip video url
         try:
-            remote_file, edited = await self.bot.tools.dl.download_clip(
+            response: DownloadResponse = await self.bot.tools.dl.download_clip(
                 clip=clip,
-                root_msg=respond_to,
-                guild_ctx=guild,
-                too_large_setting=str(self.bot.guild_settings.get_too_large(guild.id))
+                guild_ctx=guild
             )
-
-            if remote_file is None:
-                if not self.silence_invalid_url:
-                    self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
-                    emb = Embed(title="**Invalid Clip Link**",
-                                description=f"I couldn't find the clip at {clip_link}. Verify that it exists")
-                    emb.description += create_nexus_str()
-                    await self.bot.tools.send_error_message(
-                        ctx=respond_to,
-                        msg_embed=emb,
-                        dm_content=f"Failed to fetch clip {clip_link}",
-                        bot=self.bot,
-                        guild=guild,
-                        delete_after_on_reply=60
-                    )
+            if response is None:
+                self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
                 return
-
-        except FailureHandled:
-            self.logger.info("Failed to download clip, dm/info triggered")
-            return
         except:
-            self.logger.info(f"Unhandled exception in download - notifying: {traceback.format_exc()}")
-            emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to fetch this clip: "
-                                    f"\n\n{clip_link}\nPlease try linking it again.\n"
-                                    "If the issue keeps on happening, please contact us on our support server.")
-            emb.description += create_nexus_str()
-            await self.bot.tools.send_error_message(
-                ctx=respond_to,
-                msg_embed=emb,
-                dm_content=f"Failed to fetch clip {clip_link}",
-                bot=self.bot,
-                guild=guild,
-                delete_after_on_reply=60
-            )
+            self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")
             return
 
         # send embed
@@ -199,21 +154,18 @@ class AutoEmbedder:
                     label="Download",
                     url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
                 ))
-            await respond_to.reply(remote_file, components=comp)
-                
+            await respond_to.reply(clip.clyppy_url, components=comp)
+
             now_utc = datetime.now(tz=timezone.utc).timestamp()
             respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
             my_response_time = round((now_utc - respond_to_utc), 2)
             self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
-            chn, chnid = None, None
-            try:
-                chn = respond_to.channel.name
-                chnid = respond_to.channel.id
-            except:
-                pass
-            if chn is None:
+            if guild.is_dm:
                 chn = "dm"
                 chnid = 0
+            else:
+                chn = respond_to.channel.name
+                chnid = respond_to.channel.id
             interaction_data = {
                 'server_name': guild.name,
                 'channel_name': chn,
@@ -222,12 +174,11 @@ class AutoEmbedder:
                 'channel_id': str(chnid),
                 'user_id': str(respond_to.author.id),
                 'embedded_url': clip_link,
-                'remote_file_url': remote_file,
+                'remote_file_url': response.remote_url,
                 'url_platform': self.platform_tools.platform_name,
                 'response_time_seconds': my_response_time,
                 'total_servers_now': len(self.bot.guilds),
-                'generated_id': None, # todo
-                'upload_this_file': None,
+                'generated_id': clip.clyppy_id,
                 'video_file_size': 10,
                 'video_file_dur': 10,
             }

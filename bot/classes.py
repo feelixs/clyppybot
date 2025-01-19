@@ -4,9 +4,43 @@ import asyncio
 import os
 from yt_dlp import YoutubeDL
 from typing import Tuple, Optional
-
+from dataclasses import dataclass
+import base64
+import aiohttp
+import hashlib
 
 TARGET_SIZE_MB = 8
+
+
+@dataclass
+class DownloadResponse:
+    remote_url: Optional[str]
+    local_file_path: Optional[str]
+    duration: float
+
+
+async def upload_video(video_file_path):
+    # Read and encode the file
+    with open(video_file_path, 'rb') as f:
+        file_data = base64.b64encode(f.read()).decode()
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            headers = {
+                'X-API-Key': os.getenv('clyppy_post_key'),
+                'Content-Type': 'application/json'
+            }
+            data = aiohttp.FormData()
+            data.add_field('file', file_data)
+            data.add_field('filename', os.path.basename(video_file_path))
+            async with session.post('https://clyppy.io/api/addclip/',
+                                    data=data, headers=headers) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    return None
+        except Exception as e:
+            raise e
 
 
 class BaseClip(ABC):
@@ -16,15 +50,17 @@ class BaseClip(ABC):
         self.service = None
         self.url = None
         self.id = slug
+        self.clyppy_id = self._generate_clyppy_id(slug)
+        self.clyppy_url = f"https://clyppy.io/{self.clyppy_id}"
         self.logger = logging.getLogger(__name__)
 
-    async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
         """
         ydl_opts = {
-            'format': dlp_format,  # Prefer MP4 format
+            'format': dlp_format,
             'quiet': True,
             'no_warnings': True,
             'extract_flat': True,  # Don't download playlists
@@ -41,7 +77,7 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             return None
 
-    def _extract_info(self, ydl_opts: dict) -> Tuple[str, float]:
+    def _extract_info(self, ydl_opts: dict) -> DownloadResponse:
         """
         Helper method to extract URL and duration information using yt-dlp.
         Runs in thread pool to avoid blocking the event loop.
@@ -52,10 +88,16 @@ class BaseClip(ABC):
                 raise ValueError("Could not extract video information")
             # Get duration
             duration = info.get('duration', 0)
-
             # Get direct URL
             if 'url' in info:
-                return info['url'], duration
+                # the file is hosted by the service's cdn
+                rmurl = info['url']
+                self.logger.info(f"Found [best] direct URL: {rmurl}")
+                return DownloadResponse(
+                    remote_url=rmurl,
+                    local_file_path=None,
+                    duration=duration
+                )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
                 mp4_formats = [f for f in info['formats'] if f.get('ext') == 'mp4']
@@ -66,9 +108,47 @@ class BaseClip(ABC):
                         key=lambda x: x.get('filesize', 0) or x.get('tbr', 0),
                         reverse=True
                     )[0]
-                    return best_format['url'], duration
-
+                    rmurl = best_format['url']
+                    self.logger.info(f"Found direct URL: {rmurl}")
+                    return DownloadResponse(
+                        remote_url=rmurl,
+                        local_file_path=None,
+                        duration=duration
+                    )
+            # the file cannot be retrieved directly and needs to be downloaded by another means, then uploaded to clyppy.io
             raise ValueError("No suitable URL found in video info")
+
+    @staticmethod
+    def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
+        """
+        Generates a fixed-length lowercase ID from any input string.
+        Will always return the same ID for the same input.
+
+        Args:
+            input_str: Any string input to generate ID from
+            length: Desired length of output ID (default 8)
+
+        Returns:
+            A fixed-length lowercase alphanumeric string
+        """
+        # Create hash of input
+        hash_object = hashlib.sha256(input_str.encode())
+        hash_hex = hash_object.hexdigest()
+
+        # Convert to base36 (lowercase letters + numbers)
+        # First convert hex to int, then to base36
+        hash_int = int(hash_hex, 16)
+        base36 = '0123456789abcdefghijklmnopqrstuvwxyz'
+        base36_str = ''
+
+        while hash_int:
+            hash_int, remainder = divmod(hash_int, 36)
+            base36_str = base36[remainder] + base36_str
+        # Take first 'length' characters, pad with 'a' if too short
+        result = base36_str[:length]
+        if len(result) < length:
+            result = result + 'a' * (length - len(result))
+        return result
 
 
 class BaseMisc(ABC):
