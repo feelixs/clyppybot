@@ -24,17 +24,22 @@ async def upload_video(video_file_path):
     with open(video_file_path, 'rb') as f:
         file_data = base64.b64encode(f.read()).decode()
 
+    data = {
+        'file': file_data,
+        'filename': os.path.basename(video_file_path)
+    }
+
     async with aiohttp.ClientSession() as session:
         try:
             headers = {
                 'X-API-Key': os.getenv('clyppy_post_key'),
                 'Content-Type': 'application/json'
             }
-            data = aiohttp.FormData()
-            data.add_field('file', file_data)
-            data.add_field('filename', os.path.basename(video_file_path))
-            async with session.post('https://clyppy.io/api/addclip/',
-                                    data=data, headers=headers) as response:
+            async with session.post(
+                    'https://clyppy.io/api/addclip/',
+                    json=data,
+                    headers=headers
+            ) as response:
                 return await response.json()
         except Exception as e:
             raise e
