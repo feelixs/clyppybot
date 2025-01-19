@@ -11,10 +11,18 @@ from bot.classes import BaseClip, upload_video, DownloadResponse
 
 class KickClip(BaseClip):
     def __init__(self, slug, user):
-        super().__init__(slug)
+        self._service = "kick"
+        self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
-        self.service = "kick"
-        self.url = f"https://kick.com/{user}/clips/clip_{slug}"
+        super().__init__(slug)
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
 
     async def get_m3u8_url(self):
         """Get m3u8 URL using undetected-chromedriver"""
