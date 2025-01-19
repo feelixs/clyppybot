@@ -6,7 +6,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip
+from bot.classes import BaseClip, upload_video, DownloadResponse
 
 
 class KickClip(BaseClip):
@@ -94,7 +94,22 @@ class KickClip(BaseClip):
                 self.logger.error("FFmpeg download failed")
                 return None
 
-            return filename
+            self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
+            try:
+                response = await upload_video(filename)
+            except Exception as e:
+                self.logger.error(f"Failed to upload video: {str(e)}")
+                return None
+            if response['success']:
+                self.logger.info(f"Uploaded video: {response['file_path']}")
+                return DownloadResponse(
+                    remote_url=response['file_path'],
+                    local_file_path=filename,
+                    duration=0
+                )
+            else:
+                self.logger.error(f"Failed to upload video: {response}")
+                return None
 
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
