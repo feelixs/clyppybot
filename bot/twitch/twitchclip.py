@@ -15,15 +15,15 @@ from pathlib import Path
 
 class TwitchClip(BaseClip):
     def __init__(self, slug):
+        self._service = "twitch"
+        self._url = f"https://clips.twitch.tv/{slug}"
+        super().__init__(slug)
         self.api = TwitchAPI(
             key=os.getenv("CLYPP_TWITCH_ID"),
             secret=os.getenv("CLYPP_TWITCH_SECRET"),
             logger=self.logger,
             log_path=os.path.join('logs', 'twitch-api-usage.log')
         )
-        self._service = "twitch"
-        self._url = f"https://clips.twitch.tv/{slug}"
-        super().__init__(slug)
 
     @property
     def service(self) -> str:
