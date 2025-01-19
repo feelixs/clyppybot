@@ -53,7 +53,7 @@ class BaseClip(ABC):
         self.url = None
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(slug)
-        self.clyppy_url = f"https://clyppy.io/{self.clyppy_id}"
+        self.clyppy_url = f"https://clyppy.io/{self.service}/{self.clyppy_id}"
         self.logger = logging.getLogger(__name__)
 
     async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
