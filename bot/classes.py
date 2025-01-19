@@ -35,10 +35,7 @@ async def upload_video(video_file_path):
             data.add_field('filename', os.path.basename(video_file_path))
             async with session.post('https://clyppy.io/api/addclip/',
                                     data=data, headers=headers) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+                return await response.json()
         except Exception as e:
             raise e
 
