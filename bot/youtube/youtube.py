@@ -82,7 +82,7 @@ class YtClip(BaseClip):
                 )
 
             if os.path.exists(filename):
-                self.logger.info(f"Uploading the downloaded yt video to clyppy.io: {filename}")
+                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io: {filename}")
                 try:
                     response = await upload_video(filename)
                 except Exception as e:
@@ -101,5 +101,5 @@ class YtClip(BaseClip):
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
+            self.logger.error(f"error: {str(e)}")
             return None
