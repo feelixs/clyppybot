@@ -38,5 +38,4 @@ class TwitchMisc(BaseMisc):
 
     async def get_clip(self, url: str) -> Optional[TwitchClip]:
         slug = self.parse_clip_url(url)
-        self.logger.info(f"fetch clip {url}")
         return TwitchClip(slug)
