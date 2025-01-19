@@ -1,17 +1,11 @@
 import logging
 import traceback
-from interactions import Message
 import os
 import subprocess
 import concurrent.futures
 import asyncio
 from bot.classes import BaseClip
-from bot.kick import KickClip
-from bot.twitch import TwitchClip
-from bot.medal import MedalClip
-from bot.reddit import RedditClip
 from typing import Optional, Union
-from bot.errors import FailedTrim, FailureHandled
 from dataclasses import dataclass
 from bot.classes import TARGET_SIZE_MB, DownloadResponse
 
@@ -95,77 +89,3 @@ class Tools:
                                   f"enabled for one of its `/settings`")
         except:
             self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
-
-    async def calculate_target_duration(self, filepath, target_size_mb=TARGET_SIZE_MB):
-        # Get current size in MB
-        current_size_mb = os.path.getsize(filepath) / (1024 * 1024)
-
-        # Get video duration using ffprobe
-        try:
-            loop = asyncio.get_event_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                result = await loop.run_in_executor(
-                    pool,
-                    lambda: subprocess.run([
-                        'ffprobe',
-                        '-v', 'error',
-                        '-show_entries', 'format=duration',
-                        '-of', 'default=noprint_wrappers=1:nokey=1',
-                        filepath
-                    ], capture_output=True, text=True)
-                )
-
-            if result.returncode != 0:
-                return None
-
-            current_duration_sec = float(result.stdout.strip())  # Added strip()
-        except (ValueError, subprocess.SubprocessError) as e:
-            self.logger.error(f"Error getting duration: {e}")
-            return None
-
-        # Calculate target duration
-        mb_per_second = current_size_mb / current_duration_sec
-        self.logger.info(
-            f"Current size: {current_size_mb} MB, duration: {current_duration_sec} seconds, speed: {mb_per_second} MB/s")
-        target_duration = target_size_mb / mb_per_second
-        self.logger.info(f"Target duration: {target_duration} seconds")
-
-        return target_duration
-
-    async def trim_to_duration(self, input_file: str, target_duration: float, append=None) -> Optional[str]:
-        """
-        Trims video to target duration using ffmpeg
-        Returns path to trimmed file or None if failed
-        """
-        if append is None:
-            append = "_trimmed"
-        output_file = input_file.replace('.mp4', f'{append}.mp4')
-        self.logger.info(f"Trimming {input_file}...")
-        try:
-            # Use ffmpeg to trim without re-encoding (-c copy)
-            command = [
-                'ffmpeg',
-                '-i', input_file,
-                '-t', str(target_duration),  # Duration to trim to
-                '-c', 'copy',  # Copy streams without re-encoding
-                '-y',  # Overwrite output if exists
-                output_file
-            ]
-
-            process = await asyncio.create_subprocess_exec(
-                *command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-
-            await process.communicate()
-
-            if process.returncode != 0:
-                self.logger.error("Failed to trim video")
-                return None
-
-            return output_file
-
-        except Exception as e:
-            self.logger.error(f"Error trimming video: {e}")
-            return None
