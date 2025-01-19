@@ -6,7 +6,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse
+from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details
 
 
 class KickClip(BaseClip):
@@ -72,7 +72,7 @@ class KickClip(BaseClip):
         finally:
             driver.quit()
 
-    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         try:
             m3u8_url = await self.get_m3u8_url()
         except:
@@ -110,10 +110,14 @@ class KickClip(BaseClip):
                 return None
             if response['success']:
                 self.logger.info(f"Uploaded video: {response['file_path']}")
+                i = get_video_details(filename, response['file_path'])
                 return DownloadResponse(
                     remote_url=response['file_path'],
                     local_file_path=filename,
-                    duration=0
+                    duration=i['duration'],
+                    filesize=i['filesize'],
+                    height=i['height'],
+                    width=i['width']
                 )
             else:
                 self.logger.error(f"Failed to upload video: {response}")
