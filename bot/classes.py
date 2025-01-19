@@ -19,17 +19,15 @@ class DownloadResponse:
     duration: float
 
 
-async def upload_video(video_file_path: str) -> dict:
-    """
-    Uploads a video file to the clyppy.io API.
-    Returns the JSON response from the server.
-    """
+async def upload_video(video_file_path):
     # Read and encode the file
-    try:
-        with open(video_file_path, 'rb') as f:
-            file_data = base64.b64encode(f.read()).decode()
-    except Exception as e:
-        raise Exception(f"Failed to read video file: {str(e)}")
+    with open(video_file_path, 'rb') as f:
+        file_data = base64.b64encode(f.read()).decode()
+
+    data = {
+        'file': file_data,
+        'filename': os.path.basename(video_file_path)
+    }
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -37,36 +35,15 @@ async def upload_video(video_file_path: str) -> dict:
                 'X-API-Key': os.getenv('clyppy_post_key'),
                 'Content-Type': 'application/json'
             }
-
-            # Send as JSON payload
-            data = {
-                'file': file_data,
-                'filename': os.path.basename(video_file_path)
-            }
-
             async with session.post(
                     'https://clyppy.io/api/addclip/',
-                    json=data,  # Use json parameter to properly serialize
+                    json=data,
                     headers=headers
             ) as response:
-                if response.status == 413:
-                    raise Exception("File too large for upload")
-
-                if not response.headers.get('content-type', '').startswith('application/json'):
-                    text = await response.text()
-                    raise Exception(f"Server returned non-JSON response: {text[:200]}")
-
-                response_data = await response.json()
-                if not response_data.get('success'):
-                    raise Exception(f"Upload failed: {response_data.get('error', 'Unknown error')}")
-
-                return response_data
-
-        except aiohttp.ClientError as e:
-            raise Exception(f"Network error during upload: {str(e)}")
+                return await response.json()
         except Exception as e:
-            raise Exception(f"Failed to upload video: {str(e)}")
-        
+            raise e
+
 
 class BaseClip(ABC):
     """Base class for all clip types"""
