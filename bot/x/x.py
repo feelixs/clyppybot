@@ -41,6 +41,14 @@ class Xmisc(BaseMisc):
 
 class Xclip(BaseClip):
     def __init__(self, slug, user):
+        self._service = "twitter"
+        self._url = f"https://x.com/{user}/status/{slug}"
         super().__init__(slug)
-        self.service = "twitter"
-        self.url = f"https://x.com/{user}/status/{slug}"
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url

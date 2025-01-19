@@ -171,10 +171,18 @@ class RedditMisc(BaseMisc):
 
 class RedditClip(BaseClip):
     def __init__(self, slug, ext):
-        super().__init__(slug)
-        self.service = "reddit"
-        self.url = f"https://redd.it/{slug}"
+        self._service = "reddit"
+        self._url = f"https://redd.it/{slug}"
         self.external_link = ext
+        super().__init__(slug)
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
 
     async def _download_kick(self, filename, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
         k = KickMisc()
