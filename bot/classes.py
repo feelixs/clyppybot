@@ -140,7 +140,7 @@ class BaseClip(ABC):
                     # we need to download the file now, and determine the width
                     o = ydl_opts.copy()
                     fn = f'temp{self.id}.mp4'
-                    o['filename'] = fn
+                    o['outtmpl'] = fn
                     with YoutubeDL(o) as tmpdl:
                         tmpdl.download([self.url])
                     self.logger.info(os.path.isfile(fn))
