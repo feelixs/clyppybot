@@ -12,8 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse
-from bot.classes import TARGET_SIZE_MB
+from bot.classes import DownloadResponse, is_404
 
 
 VALID_DL_PLATFORMS = ['twitch', 'medal']
@@ -125,15 +124,27 @@ class AutoEmbedder:
             # should silently fail
             return
         # retrieve clip video url
+        video_doesnt_exist = is_404(clip.clyppy_url)
         try:
-            response: DownloadResponse = await self.bot.tools.dl.download_clip(
-                clip=clip,
-                guild_ctx=guild
-            )
-            if response is None:
-                self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
-                return
-            self.logger.info(response.__dict__)
+            if video_doesnt_exist:
+                response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                    clip=clip,
+                    guild_ctx=guild
+                )
+                if response is None:
+                    self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
+                    return
+            else:
+                self.logger.info("Video already exists!")
+                # video already exists
+                response = DownloadResponse(
+                    remote_url=None,
+                    local_file_path=None,
+                    duration=None,
+                    width=None,
+                    height=None,
+                    filesize=None
+                )
         except:
             self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")
             return
@@ -166,6 +177,7 @@ class AutoEmbedder:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
             interaction_data = {
+                'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
                 'user_name': respond_to.author.username,
