@@ -124,7 +124,7 @@ class AutoEmbedder:
             # should silently fail
             return
         # retrieve clip video url
-        video_doesnt_exist = is_404(clip.clyppy_url)
+        video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
