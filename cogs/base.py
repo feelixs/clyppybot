@@ -30,7 +30,7 @@ class Base(Extension):
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         about = (
-            "Clyppy automatically converts video links into native Discord uploads! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
+            "Clyppy automatically converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
             "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your links, please check that it has the correct permissions in your Discord channel."
             " Required permissions are: `Attach Files`, `Send Messages`\n\n"
             "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
