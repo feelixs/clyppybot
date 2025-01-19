@@ -22,6 +22,7 @@ def get_video_details(file_path, url):
             'height': clip.h,
             'url': url,
             'filesize': os.path.getsize(file_path),
+            'duration': clip.duration
         }
     finally:
         # Make sure we close the clip to free resources
