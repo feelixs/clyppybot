@@ -82,7 +82,7 @@ class YtClip(BaseClip):
                 )
 
             if os.path.exists(filename):
-                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io: {filename}")
+                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
                 try:
                     response = await upload_video(filename)
                 except Exception as e:
