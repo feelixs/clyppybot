@@ -8,22 +8,25 @@ from dataclasses import dataclass
 import base64
 import aiohttp
 import hashlib
-from pymediainfo import MediaInfo
+from moviepy.editor import VideoFileClip
 
 
 TARGET_SIZE_MB = 8
 
 
 def get_video_details(file_path, url):
-    media_info = MediaInfo.parse(file_path)
-    for track in media_info.tracks:
-        if track.track_type == "Video":
-            return {
-                'width': track.width,
-                'height': track.height,
-                'url': url,
-                'filesize': 0,
-            }
+    try:
+        clip = VideoFileClip(file_path)
+        return {
+            'width': clip.w,
+            'height': clip.h,
+            'url': url,
+            'filesize': 0,
+        }
+    finally:
+        # Make sure we close the clip to free resources
+        if 'clip' in locals():
+            clip.close()
 
 
 @dataclass
