@@ -139,7 +139,7 @@ class BaseClip(ABC):
                 # Direct URL available in info
                 format_info = extract_format_info(info)
                 if format_info['width'] is None:
-                    self.logger.info()
+                    self.logger.info("width was 0 lets check manually")
                     # we need to download the file now, and determine the width
                     o = ydl_opts.copy()
                     o.update({'filename': f'temp{self.id}.mp4'})
