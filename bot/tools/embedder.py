@@ -173,6 +173,8 @@ class AutoEmbedder:
                 'user_id': str(respond_to.author.id),
                 'embedded_url': clip_link,
                 'remote_file_url': response.remote_url,
+                'remote_video_height': response.height,
+                'remote_video_width': response.width,
                 'url_platform': self.platform_tools.platform_name,
                 'response_time_seconds': my_response_time,
                 'total_servers_now': len(self.bot.guilds),

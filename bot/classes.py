@@ -17,6 +17,9 @@ class DownloadResponse:
     remote_url: Optional[str]
     local_file_path: Optional[str]
     duration: float
+    width: int
+    height: int
+    filesize: float
 
 
 async def upload_video(video_file_path):
@@ -89,24 +92,38 @@ class BaseClip(ABC):
 
     def _extract_info(self, ydl_opts: dict) -> DownloadResponse:
         """
-        Helper method to extract URL and duration information using yt-dlp.
+        Helper method to extract URL, duration, file size and dimension information using yt-dlp.
         Runs in thread pool to avoid blocking the event loop.
         """
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(self.url, download=False)
             if not info:
                 raise ValueError("Could not extract video information")
+
             # Get duration
             duration = info.get('duration', 0)
-            # Get direct URL
+
+            def extract_format_info(fmt):
+                """Helper to extract format details"""
+                return {
+                    'url': fmt.get('url'),
+                    'filesize': fmt.get('filesize') or fmt.get('filesize_approx', 0),
+                    'width': fmt.get('width'),
+                    'height': fmt.get('height'),
+                }
+
+            # Get direct URL and format info
             if 'url' in info:
-                # the file is hosted by the service's cdn
-                rmurl = info['url']
-                self.logger.info(f"Found [best] direct URL: {rmurl}")
+                # Direct URL available in info
+                format_info = extract_format_info(info)
+                self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
-                    remote_url=rmurl,
+                    remote_url=format_info['url'],
                     local_file_path=None,
-                    duration=duration
+                    duration=duration,
+                    filesize=format_info['filesize'],
+                    width=format_info['width'],
+                    height=format_info['height']
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -118,14 +135,17 @@ class BaseClip(ABC):
                         key=lambda x: x.get('filesize', 0) or x.get('tbr', 0),
                         reverse=True
                     )[0]
-                    rmurl = best_format['url']
-                    self.logger.info(f"Found direct URL: {rmurl}")
+                    format_info = extract_format_info(best_format)
+                    self.logger.info(f"Found direct URL: {format_info['url']}")
                     return DownloadResponse(
-                        remote_url=rmurl,
+                        remote_url=format_info['url'],
                         local_file_path=None,
-                        duration=duration
+                        duration=duration,
+                        filesize=format_info['filesize'],
+                        width=format_info['width'],
+                        height=format_info['height']
                     )
-            # the file cannot be retrieved directly and needs to be downloaded by another means, then uploaded to clyppy.io
+
             raise ValueError("No suitable URL found in video info")
 
     @staticmethod
