@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import base64
 import aiohttp
 import hashlib
-import json
 
 TARGET_SIZE_MB = 8
 
@@ -34,37 +33,16 @@ async def upload_video(video_file_path):
         try:
             headers = {
                 'X-API-Key': os.getenv('clyppy_post_key'),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'  # Explicitly request JSON response
+                'Content-Type': 'application/json'
             }
-
             async with session.post(
                     'https://clyppy.io/api/addclip/',
                     json=data,
                     headers=headers
             ) as response:
-                # First, check the content type
-                content_type = response.headers.get('Content-Type', '').lower()
-
-                # Get the response content regardless of type
-                response_text = await response.text()
-
-                # If we got HTML instead of JSON, log it and handle appropriately
-                if 'text/html' in content_type:
-                    # Log the first 500 chars of response for debugging
-                    print(f"Received HTML response: {response_text[:500]}")
-                    raise RuntimeError(f"Server returned HTML instead of JSON. Status: {response.status}")
-
-                # Try to parse as JSON even if content-type isn't exact
-                try:
-                    return json.loads(response_text)
-                except json.JSONDecodeError:
-                    print(f"Failed to decode response as JSON: {response_text[:500]}")
-                    raise RuntimeError(f"Invalid JSON response from server. Status: {response.status}")
-
+                return await response.json()
         except Exception as e:
-            print(f"Upload failed, error type: {type(e)}, message: {str(e)}")
-            raise
+            raise e
 
 
 class BaseClip(ABC):
