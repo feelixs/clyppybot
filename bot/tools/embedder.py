@@ -130,10 +130,10 @@ class AutoEmbedder:
                 clip=clip,
                 guild_ctx=guild
             )
-            self.logger.info(response.__dict__)
             if response is None:
                 self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
                 return
+            self.logger.info(response.__dict__)
         except:
             self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")
             return
