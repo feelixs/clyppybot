@@ -8,25 +8,22 @@ from dataclasses import dataclass
 import base64
 import aiohttp
 import hashlib
-import ffmpeg
+from pymediainfo import MediaInfo
 
 
 TARGET_SIZE_MB = 8
 
 
 def get_video_details(file_path, url):
-    probe = ffmpeg.probe(file_path)
-    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-    if not video_stream:
-        raise ValueError("No video stream found")
-    width = int(video_stream['width'])
-    height = int(video_stream['height'])
-    return {
-        'url': url,
-        'filesize': 0,
-        'width': width,
-        'height': height,
-    }
+    media_info = MediaInfo.parse(file_path)
+    for track in media_info.tracks:
+        if track.track_type == "Video":
+            return {
+                'width': track.width,
+                'height': track.height,
+                'url': url,
+                'filesize': 0,
+            }
 
 
 @dataclass
