@@ -44,12 +44,20 @@ class YtMisc(BaseMisc):
 
 class YtClip(BaseClip):
     def __init__(self, slug, short):
-        super().__init__(slug)
-        self.service = "youtube"
+        self._service = "youtube"
         if short:
-            self.url = f"https://youtube.com/shorts/{slug}"
+            self._url = f"https://youtube.com/shorts/{slug}"
         else:
-            self.url = f"https://youtube.com/watch/?v={slug}"
+            self._url = f"https://youtube.com/watch/?v={slug}"
+        super().__init__(slug)
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
 
     async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         ydl_opts = {
