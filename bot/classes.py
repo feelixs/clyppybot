@@ -139,11 +139,13 @@ class BaseClip(ABC):
                     self.logger.info("width was 0 lets check manually")
                     # we need to download the file now, and determine the width
                     o = ydl_opts.copy()
-                    o['filename'] = f'temp{self.id}.mp4'
-                    with YoutubeDL(ydl_opts) as tmpdl:
+                    fn = f'temp{self.id}.mp4'
+                    o['filename'] = fn
+                    with YoutubeDL(o) as tmpdl:
                         tmpdl.download([self.url])
-                    format_info = get_video_details(f'temp{self.id}.mp4', info['url'])
-                    os.remove(f'temp{self.id}.mp4')
+                    self.logger.info(os.path.isfile(fn))
+                    format_info = get_video_details(fn, info['url'])
+                    os.remove(fn)
 
                 self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
