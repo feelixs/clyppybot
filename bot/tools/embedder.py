@@ -120,7 +120,6 @@ class AutoEmbedder:
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link)
-        self.logger.info(clip.id)
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
