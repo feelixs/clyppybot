@@ -74,7 +74,6 @@ class BaseClip(ABC):
             'format': dlp_format,
             'quiet': True,
             'no_warnings': True,
-            'extract_flat': True,  # Don't download playlists
         }
 
         try:
