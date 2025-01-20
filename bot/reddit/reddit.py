@@ -13,7 +13,6 @@ class RedditMisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "Reddit"
-        self.silence_invalid_url = True
         self.VALID_EXT_VIDEO_DOMAINS = [
             'twitch.tv',
             'www.twitch.tv',

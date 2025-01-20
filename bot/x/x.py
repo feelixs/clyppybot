@@ -6,7 +6,6 @@ class Xmisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "Twitter"
-        self.silence_invalid_url = True
 
     def parse_clip_url(self, url: str) -> str:
         """
