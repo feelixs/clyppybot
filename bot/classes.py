@@ -271,8 +271,8 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             return None
 
-    async def is_shortform(self, url: str) -> bool:
+    async def is_shortform(self, url: str, max_len=120) -> bool:
         d = await self.get_len(url)
         if d is None:
             return False
-        return d <= 60
+        return d <= max_len
