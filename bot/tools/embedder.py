@@ -15,7 +15,7 @@ import asyncio
 from bot.classes import DownloadResponse, is_404
 
 
-VALID_DL_PLATFORMS = ['twitch', 'medal']
+INVALID_DL_PLATFORMS = []
 
 
 async def publish_interaction(interaction_data, apikey):
@@ -160,7 +160,7 @@ class AutoEmbedder:
                     label=f"View On {self.platform_tools.platform_name}",
                     url=clip.url
                 ))
-            if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() in VALID_DL_PLATFORMS:
+            if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
                 comp.append(Button(
                     style=ButtonStyle.LINK,
                     label="Download",
