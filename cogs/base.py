@@ -7,6 +7,8 @@ import aiohttp
 import os
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
+from bot.tools.misc import SUPPORT_SERVER_URL
+
 
 VERSION = "1.4.4b"
 
@@ -230,10 +232,10 @@ class Base(Extension):
             '**embed_buttons** Choose which buttons Clyppy shows under embedded videos:\n'
             ' - `none`: No buttons, just the video.\n'
             ' - `view`: A button to the original clip.\n'
-            ' - `dl`: A button to download the original, untrimmed, video file (on compatible clips).\n'
+            ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n'
             f'**Current Settings:**\n{cs}\n**embed_buttons**: {es}\n\n'
-            'Something missing? Please **Suggest a Feature** using the link below.'
+            f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
         if prepend_admin:
