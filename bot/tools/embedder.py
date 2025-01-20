@@ -199,7 +199,7 @@ class AutoEmbedder:
             try:
                 result = await publish_interaction(interaction_data, apikey=self.api_key)
                 await respond_to.reply(clip.clyppy_url, components=comp)
-                self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} in {my_response_time} seconds")
+                self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Failed to post interaction to API: {e}")
