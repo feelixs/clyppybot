@@ -79,7 +79,7 @@ class BaseClip(ABC):
     @abstractmethod
     def __init__(self, slug: str):
         self.id = slug
-        self.clyppy_id = self._generate_clyppy_id(slug)
+        self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
 
     @property
@@ -96,7 +96,7 @@ class BaseClip(ABC):
     @property
     def clyppy_url(self) -> str:
         """Generate the clyppy URL using the service and ID"""
-        return f"https://clyppy.io/{self.service}/{self.clyppy_id}"
+        return f"https://clyppy.io/{self.clyppy_id}"
 
     async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         """
