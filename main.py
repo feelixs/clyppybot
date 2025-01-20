@@ -75,7 +75,7 @@ async def main():
     Bot.load_extension('cogs.kickautoembed')
     Bot.load_extension('cogs.medalautoembed')
     Bot.load_extension('cogs.redditautoembed')
-    Bot.load_extension('cogs.rednoteautoembed')
+    #Bot.load_extension('cogs.rednoteautoembed')
     Bot.load_extension('cogs.ytautoembed')
     Bot.load_extension('cogs.xautoembed')
     Bot.load_extension('cogs.watch')
