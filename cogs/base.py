@@ -5,7 +5,6 @@ from bot.tools import create_nexus_str, GuildType
 import logging
 import aiohttp
 import os
-from bot.classes import TARGET_SIZE_MB
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 
@@ -161,10 +160,7 @@ class Base(Extension):
             return await ctx.send("An error occurred while setting the error channel. Please try again.")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
-                   options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
-                                               description="Choose what Clyppy should do with large files",
-                                               required=False),
-                            SlashCommandOption(name="on_error", type=OptionType.STRING,
+                   options=[SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
                                                required=False),
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
@@ -183,30 +179,22 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if too_large is None and on_error is None and embed_buttons is None:
+        if on_error is None and embed_buttons is None:
             await self._send_settings_help(ctx, False)
             return
 
         # Get current settings
         current_setting = self.bot.guild_settings.get_setting(ctx.guild.id)
-        current_too_large = POSSIBLE_TOO_LARGE[int(current_setting[0])]
         current_on_error = POSSIBLE_ON_ERRORS[int(current_setting[1])]
 
         # Use current values if not specified
-        too_large = too_large or current_too_large
         on_error = on_error or current_on_error
-
-        if too_large not in POSSIBLE_TOO_LARGE:
-            await ctx.send(f"Option '{too_large}' not a valid **too_large** setting!\n"
-                           f"Must be one of `{POSSIBLE_TOO_LARGE}`")
-            return
 
         if on_error not in POSSIBLE_ON_ERRORS:
             await ctx.send(f"Option '{on_error}' not a valid **on_error** setting!\n"
                            f"Must be one of `{POSSIBLE_ON_ERRORS}`")
             return
 
-        too_idx = POSSIBLE_TOO_LARGE.index(too_large)
         err_idx = POSSIBLE_ON_ERRORS.index(on_error)
 
         # Handle embed settings
@@ -221,11 +209,9 @@ class Base(Extension):
 
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
 
-        self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
         await ctx.send(
             "Successfully changed settings:\n\n"
-            f"**too_large**: {too_large}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}"
         )
@@ -238,10 +224,6 @@ class Base(Extension):
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
-            f'**too_large** Choose what Clyppy does with files larger than Discord\'s limit ({TARGET_SIZE_MB}MB):\n'
-            ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
-            ' - `info`: Don\'t upload large files at all.\n'
-            ' - `dm`: Don\'t upload, and DM the message author.\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'

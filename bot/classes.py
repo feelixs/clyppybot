@@ -11,9 +11,6 @@ import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 
-TARGET_SIZE_MB = 8
-
-
 async def is_404(url: str) -> bool:
     try:
         async with aiohttp.ClientSession() as session:

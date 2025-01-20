@@ -139,7 +139,7 @@ class GuildDatabase:
             settings = POSSIBLE_TOO_LARGE[0], POSSIBLE_ON_ERRORS[0]
         else:
             settings = POSSIBLE_TOO_LARGE[int(sett[0])], POSSIBLE_ON_ERRORS[int(sett[1])]
-        return (f"**too_large**: {settings[0]}\n"
+        return (#f"**too_large**: {settings[0]}\n"
                 f"**on_error**: {settings[1]}")
 
     def get_too_large(self, guild_id) -> DbResponseFormat:
