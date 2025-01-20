@@ -7,7 +7,7 @@ import asyncio
 from bot.classes import BaseClip
 from typing import Optional, Union
 from dataclasses import dataclass
-from bot.classes import TARGET_SIZE_MB, DownloadResponse
+from bot.classes import DownloadResponse
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
