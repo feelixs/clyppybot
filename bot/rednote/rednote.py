@@ -2,6 +2,7 @@ from typing import Optional
 from bot.classes import BaseMisc, BaseClip
 import re
 
+# Currently disabled -> xiaohongshu/rednote uses captcha that yt-dlp cant pass
 
 class RedMisc(BaseMisc):
     def __init__(self):
