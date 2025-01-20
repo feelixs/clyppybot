@@ -1,6 +1,4 @@
 from typing import Optional
-import logging
-from bot.medal import MedalClip
 from bot.classes import BaseMisc, BaseClip
 import re
 
