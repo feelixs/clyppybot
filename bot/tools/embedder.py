@@ -215,6 +215,7 @@ class AutoEmbedder:
                 'remote_file_url': response.remote_url,
                 'remote_video_height': response.height,
                 'remote_video_width': response.width,
+                'remote_video_size': response.filesize,
                 'url_platform': self.platform_tools.platform_name,
                 'response_time_seconds': my_response_time,
                 'total_servers_now': len(self.bot.guilds),
