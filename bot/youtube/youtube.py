@@ -91,8 +91,6 @@ class YtClip(BaseClip):
             if os.path.exists(filename):
                 self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
                 i = get_video_details(filename)
-                i.height = 1080
-                i.width = 1920
                 return await self.upload_to_clyppyio(i)
 
             self.logger.info(f"Could not find file")
