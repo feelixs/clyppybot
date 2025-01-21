@@ -66,7 +66,7 @@ class DownloadManager:
             if not await is_404(f'https://clyppy.io/media/{r.local_file_path}'):
                 self._parent.logger.info("Video file already exists on the server!")
                 return r
-            
+
             new = await clip.upload_to_clyppyio(r)
             self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
             await clip.overwrite_mp4(new.remote_url)
