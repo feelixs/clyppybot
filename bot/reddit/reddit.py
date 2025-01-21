@@ -188,10 +188,10 @@ class RedditClip(BaseClip):
         kclip = await k.get_clip(self.external_link)
         return await kclip.download(filename, dlp_format)
 
-    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[Tuple[str, float]]:
         if self.external_link is None:
             pass
         elif 'kick' in self.external_link:  # external_platform is a domain
             self.logger.info(f"Running download for external link {self.external_link}")
             return await self._download_kick(filename, dlp_format)
-        return await super().download(dlp_format='best/bv*+ba')
+        return await super().download(dlp_format=dlp_format)
