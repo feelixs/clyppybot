@@ -19,13 +19,13 @@ class YtMisc(BaseMisc):
         """
         # Common YouTube URL patterns
         patterns = [
-            r'(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
             # Standard and embedded URLs
-            r'(?:youtube\.com/shorts/)([^"&?/ ]{11})'  # Shorts URLs
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})'  # Shorts URLs
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, url)
             if match:
                 return match.group(1)
         return None
