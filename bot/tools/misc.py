@@ -65,7 +65,6 @@ class DownloadManager:
             new = await clip.upload_to_clyppyio(r)
             self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
             await clip.overwrite_mp4(new.remote_url)
-            r.filesize = new.filesize
             r.remote_url = new.remote_url
 
         return r
