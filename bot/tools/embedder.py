@@ -145,6 +145,8 @@ class AutoEmbedder:
                         self.logger.info(f"Failed to fetch clip for server upload.. {clip_link} Cancelling")
                         await respond_to.reply(f"Failed to fetch clip for server upload.. {clip_link}")
                         return
+                    await respond_to.reply(f"Success for {clip_link}")
+                    return
                 else:
                     self.logger.info("Video file already exists on the server! Cancelling")
                     await respond_to.reply("Video file already exists on the server!")
