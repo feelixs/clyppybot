@@ -209,19 +209,29 @@ class BaseClip(ABC):
             # Get duration
             duration = info.get('duration', 0)
 
-            def extract_format_info(fmt):
+            def extract_format_info(fmt, h=None, w=None):
                 """Helper to extract format details"""
-                return {
+                a = {
                     'url': fmt.get('url'),
                     'filesize': fmt.get('filesize') or fmt.get('filesize_approx', 0),
                     'width': fmt.get('width', 0),
                     'height': fmt.get('height', 0),
                 }
+                if h is not None:
+                    a['height'] = h
+                if w is not None:
+                    a['width'] = w
+                return a
 
             # Get direct URL and format info
             if 'url' in info:
                 # Direct URL available in info
-                format_info = extract_format_info(info)
+                if "production.assets.clips.twitchcdn.net" in info['url']:
+                    # if its a twitch or kick clip, we can use a default height/width (kick class already handles this)
+                    self.logger.info("Using default dimensions of 1280x720 for twitch clip")
+                    format_info = extract_format_info(fmt=info, h=1280, w=720)
+                else:
+                    format_info = extract_format_info(info)
                 if not format_info['width']:
                     self.logger.info("Width was 0, checking manually")
                     # Download file to determine width
