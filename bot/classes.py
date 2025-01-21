@@ -214,17 +214,17 @@ class BaseClip(ABC):
                 return {
                     'url': fmt.get('url'),
                     'filesize': fmt.get('filesize') or fmt.get('filesize_approx', 0),
-                    'width': fmt.get('width'),
-                    'height': fmt.get('height'),
+                    'width': fmt.get('width', 0),
+                    'height': fmt.get('height', 0),
                 }
 
             # Get direct URL and format info
             if 'url' in info:
                 # Direct URL available in info
                 format_info = extract_format_info(info)
-                if format_info['width'] is None:
-                    self.logger.info("width was 0 lets check manually")
-                    # we need to download the file now, and determine the width
+                if not format_info['width']:
+                    self.logger.info("Width was 0, checking manually")
+                    # Download file to determine width
                     o = ydl_opts.copy()
                     fn = f'temp{self.id}.mp4'
                     o['outtmpl'] = fn
@@ -247,10 +247,16 @@ class BaseClip(ABC):
                 # Get best MP4 format
                 mp4_formats = [f for f in info['formats'] if f.get('ext') == 'mp4']
                 if mp4_formats:
-                    # Sort by quality (typically bitrate or filesize)
+                    # Sort by quality with safe default values
+                    def get_sort_key(fmt):
+                        # Use 0 as default for both filesize and tbr
+                        filesize = fmt.get('filesize', 0) or 0
+                        tbr = fmt.get('tbr', 0) or 0
+                        return filesize or tbr  # Return filesize if present, otherwise tbr
+
                     best_format = sorted(
                         mp4_formats,
-                        key=lambda x: x.get('filesize', 0) or x.get('tbr', 0),
+                        key=get_sort_key,
                         reverse=True
                     )[0]
                     format_info = extract_format_info(best_format)
