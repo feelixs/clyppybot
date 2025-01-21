@@ -127,7 +127,6 @@ class AutoEmbedder:
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
-            response = None
             if str(guild.id) == str(DL_SERVER_ID):
                 # if we're in video dl server -> StoredVideo obj for this clip probably already exists
                 if await is_404(f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'):
@@ -142,12 +141,12 @@ class AutoEmbedder:
                         overwrite_on_server=True
                     )
                     if response is None:
-                        self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
+                        self.logger.info(f"Failed to fetch clip for server upload.. {clip_link} Cancelling")
                         return
                 else:
-                    self.logger.info("Video file already exists on the server!")
-
-            if response is None:
+                    self.logger.info("Video file already exists on the server! Cancelling")
+                    return
+            else:
                 # proceed normally
                 if video_doesnt_exist:
                     response: DownloadResponse = await self.bot.tools.dl.download_clip(
