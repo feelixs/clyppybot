@@ -44,7 +44,8 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: BaseClip, guild_ctx: GuildType) -> Optional[DownloadResponse]:
+    async def download_clip(self, clip: BaseClip, guild_ctx: GuildType,
+                            always_download=False, overwrite_on_server=False) -> Optional[DownloadResponse]:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
         desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
         async with self._semaphore:
@@ -52,10 +53,17 @@ class DownloadManager:
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None
             self._parent.logger.info("Run clip.download()")
-        if guild_ctx.id == DL_SERVER_ID:
-            return await clip.dl_download(filename=desired_filename)
+        if guild_ctx.id == DL_SERVER_ID or always_download:
+            r = await clip.dl_download(filename=desired_filename)
         else:
-            return await clip.download(filename=desired_filename)
+            r = await clip.download(filename=desired_filename)
+        if r is None:
+            return None
+
+        if overwrite_on_server:
+            await clip.upload_to_clyppyio(r)
+
+        return r
 
 
 class Tools:

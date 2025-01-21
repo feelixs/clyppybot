@@ -21,7 +21,7 @@ async def is_404(url: str) -> bool:
         return True  # Consider failed connections as effectively 404
 
 
-def get_video_details(file_path, url):
+def get_video_details(file_path, url: Optional[str]):
     try:
         clip = VideoFileClip(file_path)
         return {
@@ -98,10 +98,18 @@ class BaseClip(ABC):
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"
 
-    async def dl_download(self, filename=None, dlp_format='best[ext=mp4]'):
+    async def dl_download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
-            return filename
+            i = get_video_details(filename, url=None)
+            return DownloadResponse(
+                remote_url=None,
+                local_file_path=filename,
+                duration=i['duration'],
+                filesize=i['filesize'],
+                width=i['width'],
+                height=i['height']
+            )
         ydl_opts = {
             'format': dlp_format,
             'quiet': True,
@@ -118,30 +126,36 @@ class BaseClip(ABC):
                 )
 
             if os.path.exists(filename):
-                return filename
+                i = get_video_details(filename, url=None)
+                return DownloadResponse(
+                    remote_url=None,
+                    local_file_path=filename,
+                    duration=i['duration'],
+                    filesize=i['filesize'],
+                    width=i['width'],
+                    height=i['height']
+                )
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
             return None
 
-    async def upload_to_clyppyio(self, local_filename) -> Optional[DownloadResponse]:
-        filename = local_filename
+    async def upload_to_clyppyio(self, local_file_info: DownloadResponse) -> Optional[DownloadResponse]:
         try:
-            response = await upload_video(filename)
+            response = await upload_video(local_file_info.local_file_path)
         except Exception as e:
             self.logger.error(f"Failed to upload video: {str(e)}")
             return None
         if response['success']:
             self.logger.info(f"Uploaded video: {response['file_path']}")
-            i = get_video_details(filename, response['file_path'])
             return DownloadResponse(
                 remote_url=response['file_path'],
-                local_file_path=filename,
-                duration=i['duration'],
-                filesize=i['filesize'],
-                height=i['height'],
-                width=i['width']
+                local_file_path=local_file_info.local_file_path,
+                duration=local_file_info.duration,
+                filesize=local_file_info.filesize,
+                height=local_file_info.height,
+                width=local_file_info.width
             )
 
     async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:

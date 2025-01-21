@@ -16,6 +16,7 @@ from bot.classes import DownloadResponse, is_404
 
 
 INVALID_DL_PLATFORMS = []
+DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 
 async def publish_interaction(interaction_data, apikey):
@@ -126,25 +127,39 @@ class AutoEmbedder:
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
-            if video_doesnt_exist:
+            if guild.id == DL_SERVER_ID:
+                # if we're in video dl server -> StoredVideo obj for this clip probably already exists
+                # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,
-                    guild_ctx=guild
+                    guild_ctx=guild,
+                    always_download=True,
+                    overwrite_on_server=True
                 )
                 if response is None:
                     self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
                     return
             else:
-                self.logger.info("Video already exists!")
-                # video already exists
-                response = DownloadResponse(
-                    remote_url=None,
-                    local_file_path=None,
-                    duration=None,
-                    width=None,
-                    height=None,
-                    filesize=None
-                )
+                # proceed normally
+                if video_doesnt_exist:
+                    response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                        clip=clip,
+                        guild_ctx=guild
+                    )
+                    if response is None:
+                        self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
+                        return
+                else:
+                    self.logger.info("Video already exists!")
+                    # video already exists
+                    response = DownloadResponse(
+                        remote_url=None,
+                        local_file_path=None,
+                        duration=None,
+                        width=None,
+                        height=None,
+                        filesize=None
+                    )
         except:
             self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")
             return
