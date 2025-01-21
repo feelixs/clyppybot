@@ -61,7 +61,9 @@ class DownloadManager:
             return None
 
         if overwrite_on_server:
-            await clip.upload_to_clyppyio(r)
+            new = await clip.upload_to_clyppyio(r)
+            await clip.overwrite_mp4(new.remote_url)
+            r.remote_url = new.remote_url
 
         return r
 

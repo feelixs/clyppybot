@@ -141,6 +141,21 @@ class BaseClip(ABC):
             self.logger.error(f"yt-dlp download error: {str(e)}")
             return None
 
+    async def overwrite_mp4(self, new_url):
+        url = 'https://clyppy.io/api/overwrite/'
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        j = {'id': self.clyppy_id, 'url': new_url}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=j, headers=headers) as response:
+                if response.status == 201:
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
+
     async def upload_to_clyppyio(self, local_file_info: DownloadResponse) -> Optional[DownloadResponse]:
         try:
             response = await upload_video(local_file_info.local_file_path)
