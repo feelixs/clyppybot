@@ -112,6 +112,7 @@ class BaseClip(ABC):
             )
         ydl_opts = {
             'format': dlp_format,
+            'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
         }
