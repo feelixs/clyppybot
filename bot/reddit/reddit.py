@@ -183,7 +183,7 @@ class RedditClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def _download_kick(self, filename, dlp_format='best[ext=mp4]') -> Optional[Tuple[str, float]]:
+    async def _download_kick(self, filename, dlp_format='best/bv*+ba') -> Optional[Tuple[str, float]]:
         k = KickMisc()
         kclip = await k.get_clip(self.external_link)
         return await kclip.download(filename, dlp_format)

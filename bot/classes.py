@@ -98,7 +98,7 @@ class BaseClip(ABC):
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"
 
-    async def dl_download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             i = get_video_details(filename, url=None)
@@ -174,7 +174,7 @@ class BaseClip(ABC):
                 width=local_file_info.width
             )
 
-    async def download(self, filename=None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.

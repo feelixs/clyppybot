@@ -72,7 +72,7 @@ class KickClip(BaseClip):
         finally:
             driver.quit()
 
-    async def download(self, filename: str = None, dlp_format='best[ext=mp4]') -> Optional[DownloadResponse]:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         try:
             m3u8_url = await self.get_m3u8_url()
         except:
