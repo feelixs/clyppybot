@@ -60,7 +60,7 @@ class YtClip(BaseClip):
 
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         ydl_opts = {
-            'format': 'best',
+            'format': dlp_format,
             'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
