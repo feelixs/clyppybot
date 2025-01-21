@@ -133,6 +133,7 @@ class AutoEmbedder:
                     # we're assuming the StoredVideo object exists for this clip, and now we know that
                     # its file_url is pointing to another cdn (we don't have its file in our server to be downloaded)
                     # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
+                    self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
                     response: DownloadResponse = await self.bot.tools.dl.download_clip(
                         clip=clip,
                         guild_ctx=guild,
