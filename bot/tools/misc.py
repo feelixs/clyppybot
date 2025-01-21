@@ -53,7 +53,7 @@ class DownloadManager:
                 self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
                 return None
             self._parent.logger.info("Run clip.download()")
-        if guild_ctx.id == DL_SERVER_ID or always_download:
+        if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
             r = await clip.dl_download(filename=desired_filename)
         else:
             r = await clip.download(filename=desired_filename)
