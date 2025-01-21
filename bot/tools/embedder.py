@@ -127,6 +127,7 @@ class AutoEmbedder:
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
+            response = None
             if str(guild.id) == str(DL_SERVER_ID):
                 # if we're in video dl server -> StoredVideo obj for this clip probably already exists
                 if await is_404(f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'):
@@ -146,26 +147,27 @@ class AutoEmbedder:
                 else:
                     self.logger.info("Video file already exists on the server!")
 
-            # proceed normally
-            if video_doesnt_exist:
-                response: DownloadResponse = await self.bot.tools.dl.download_clip(
-                    clip=clip,
-                    guild_ctx=guild
-                )
-                if response is None:
-                    self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
-                    return
-            else:
-                self.logger.info("Video already exists!")
-                # video already exists
-                response = DownloadResponse(
-                    remote_url=None,
-                    local_file_path=None,
-                    duration=None,
-                    width=None,
-                    height=None,
-                    filesize=None
-                )
+            if response is None:
+                # proceed normally
+                if video_doesnt_exist:
+                    response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                        clip=clip,
+                        guild_ctx=guild
+                    )
+                    if response is None:
+                        self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
+                        return
+                else:
+                    self.logger.info("Video already exists!")
+                    # video already exists
+                    response = DownloadResponse(
+                        remote_url=None,
+                        local_file_path=None,
+                        duration=None,
+                        width=None,
+                        height=None,
+                        filesize=None
+                    )
         except:
             self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")
             return
