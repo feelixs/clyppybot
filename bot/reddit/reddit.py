@@ -35,16 +35,16 @@ class RedditMisc(BaseMisc):
         """
         # Try to extract post ID from various URL formats
         patterns = [
-            r'reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
-            r'redd\.it/([a-zA-Z0-9]+)',                      # Short links
-            r'reddit\.com/gallery/([a-zA-Z0-9]+)',          # Gallery links
-            r'reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
-            r'reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',   # Crossposts
-            r'reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'          # Share links
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+            r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
+            r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
+            r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, url)
             if match:
                 return match.group(1)
         return None
