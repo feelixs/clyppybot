@@ -127,7 +127,7 @@ class AutoEmbedder:
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
-            if guild.id == DL_SERVER_ID:
+            if guild.id == int(DL_SERVER_ID):
                 # if we're in video dl server -> StoredVideo obj for this clip probably already exists
                 if await is_404(f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'):
                     # we're assuming the StoredVideo object exists for this clip, and now we know that
