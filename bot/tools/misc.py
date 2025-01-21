@@ -7,7 +7,7 @@ import asyncio
 from bot.classes import BaseClip
 from typing import Optional, Union
 from dataclasses import dataclass
-from bot.classes import DownloadResponse
+from bot.classes import DownloadResponse, is_404
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
@@ -61,7 +61,14 @@ class DownloadManager:
             return None
 
         if overwrite_on_server:
+            self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")
+
+            if not await is_404(f'https://clyppy.io/media/{r.local_file_path}'):
+                self._parent.logger.info("Video file already exists on the server!")
+                return r
+            
             new = await clip.upload_to_clyppyio(r)
+            self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
             await clip.overwrite_mp4(new.remote_url)
             r.remote_url = new.remote_url
 
