@@ -1,7 +1,6 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-import logging
-from typing import Optional, Tuple
+from typing import Optional
 import asyncio
 import json
 import time
@@ -110,14 +109,14 @@ class KickClip(BaseClip):
                 return None
             if response['success']:
                 self.logger.info(f"Uploaded video: {response['file_path']}")
-                i = get_video_details(filename, response['file_path'])
+                i = get_video_details(filename)
                 return DownloadResponse(
                     remote_url=response['file_path'],
                     local_file_path=filename,
-                    duration=i['duration'],
-                    filesize=i['filesize'],
-                    height=i['height'],
-                    width=i['width']
+                    duration=i.duration,
+                    filesize=i.filesize,
+                    height=i.height,
+                    width=i.width
                 )
             else:
                 self.logger.error(f"Failed to upload video: {response}")

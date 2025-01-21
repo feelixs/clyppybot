@@ -3,7 +3,7 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details
+from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
 from typing import Optional
 
 
@@ -90,25 +90,9 @@ class YtClip(BaseClip):
 
             if os.path.exists(filename):
                 self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
-                try:
-                    response = await upload_video(filename)
-                except Exception as e:
-                    self.logger.error(f"Failed to upload video: {str(e)}")
-                    return None
-                if response['success']:
-                    self.logger.info(f"Uploaded video: {response['file_path']}")
-                    i = get_video_details(filename, response['file_path'])
-                    return DownloadResponse(
-                        remote_url=response['file_path'],
-                        local_file_path=filename,
-                        duration=i['duration'],
-                        filesize=i['filesize'],
-                        height=i['height'],
-                        width=i['width']
-                    )
-                else:
-                    self.logger.error(f"Failed to upload video: {response}")
-                    return None
+                i = get_video_details(filename)
+                return await self.upload_to_clyppyio(i)
+
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:

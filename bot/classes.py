@@ -3,7 +3,7 @@ import logging
 import asyncio
 import os
 from yt_dlp import YoutubeDL
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 from dataclasses import dataclass
 import base64
 import aiohttp
@@ -21,16 +21,23 @@ async def is_404(url: str) -> bool:
         return True  # Consider failed connections as effectively 404
 
 
-def get_video_details(file_path, url: Optional[str]):
+def get_video_details(file_path) -> 'LocalFileInfo':
     try:
         clip = VideoFileClip(file_path)
-        return {
-            'width': clip.w,
-            'height': clip.h,
-            'url': url,
-            'filesize': os.path.getsize(file_path),
-            'duration': clip.duration
-        }
+        return LocalFileInfo(
+            width=clip.w,
+            height=clip.h,
+            filesize=os.path.getsize(file_path),
+            duration=clip.duration,
+            local_file_path=file_path
+        )
+        #return {
+        #    'width': clip.w,
+        #    'height': clip.h,
+        #    'url': url,
+        #    'filesize': os.path.getsize(file_path),
+        #    'duration': clip.duration
+        #}
     finally:
         # Make sure we close the clip to free resources
         if 'clip' in locals():
@@ -47,7 +54,16 @@ class DownloadResponse:
     filesize: float
 
 
-async def upload_video(video_file_path):
+@dataclass
+class LocalFileInfo:
+    local_file_path: Optional[str]
+    duration: float
+    width: int
+    height: int
+    filesize: float
+
+
+async def upload_video(video_file_path) -> Dict:
     # Read and encode the file
     with open(video_file_path, 'rb') as f:
         file_data = base64.b64encode(f.read()).decode()
@@ -98,18 +114,11 @@ class BaseClip(ABC):
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[LocalFileInfo]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
-            i = get_video_details(filename, url=None)
-            return DownloadResponse(
-                remote_url=None,
-                local_file_path=filename,
-                duration=i['duration'],
-                filesize=i['filesize'],
-                width=i['width'],
-                height=i['height']
-            )
+            return get_video_details(filename)
+
         ydl_opts = {
             'format': dlp_format,
             'outtmpl': filename,
@@ -127,22 +136,15 @@ class BaseClip(ABC):
                 )
 
             if os.path.exists(filename):
-                i = get_video_details(filename, url=None)
-                return DownloadResponse(
-                    remote_url=None,
-                    local_file_path=filename,
-                    duration=i['duration'],
-                    filesize=i['filesize'],
-                    width=i['width'],
-                    height=i['height']
-                )
+                return get_video_details(filename)
+
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
             return None
 
-    async def overwrite_mp4(self, new_url):
+    async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'
         headers = {
             'X-API-Key': os.getenv('clyppy_post_key'),
@@ -157,7 +159,7 @@ class BaseClip(ABC):
                     error_data = await response.json()
                     raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
 
-    async def upload_to_clyppyio(self, local_file_info: DownloadResponse) -> Optional[DownloadResponse]:
+    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> Optional[DownloadResponse]:
         try:
             response = await upload_video(local_file_info.local_file_path)
         except Exception as e:
@@ -173,6 +175,9 @@ class BaseClip(ABC):
                 height=local_file_info.height,
                 width=local_file_info.width
             )
+        else:
+            self.logger.error(f"Failed to upload video: {response}")
+            return None
 
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         """
@@ -213,7 +218,6 @@ class BaseClip(ABC):
                 """Helper to extract format details"""
                 a = {
                     'url': fmt.get('url'),
-                    'filesize': fmt.get('filesize') or fmt.get('filesize_approx', 0),
                     'width': fmt.get('width', 0),
                     'height': fmt.get('height', 0),
                 }
@@ -229,7 +233,7 @@ class BaseClip(ABC):
                 if "production.assets.clips.twitchcdn.net" in info['url']:
                     # if its a twitch or kick clip, we can use a default height/width (kick class already handles this)
                     self.logger.info("Using default dimensions of 1280x720 for twitch clip")
-                    format_info = extract_format_info(fmt=info, h=1280, w=720)
+                    format_info = extract_format_info(fmt=info, h=720, w=1280)
                 else:
                     format_info = extract_format_info(info)
                 if not format_info['width']:
@@ -241,7 +245,13 @@ class BaseClip(ABC):
                     with YoutubeDL(o) as tmpdl:
                         tmpdl.download([self.url])
                     self.logger.info(os.path.isfile(fn))
-                    format_info = get_video_details(fn, info['url'])
+                    format_info = get_video_details(fn)
+                    format_info = {
+                        'url': info['url'],
+                        'duration': format_info.duration,
+                        'width': format_info.width,
+                        'height': format_info.height
+                    }
                     os.remove(fn)
 
                 self.logger.info(f"Found [best] direct URL: {format_info['url']}")
@@ -249,7 +259,7 @@ class BaseClip(ABC):
                     remote_url=format_info['url'],
                     local_file_path=None,
                     duration=duration,
-                    filesize=format_info['filesize'],
+                    filesize=0,  # since yt-dlp was rigged to return an url, video is hosted on another cdn
                     width=format_info['width'],
                     height=format_info['height']
                 )
@@ -271,11 +281,15 @@ class BaseClip(ABC):
                     )[0]
                     format_info = extract_format_info(best_format)
                     self.logger.info(f"Found direct URL: {format_info['url']}")
+                    if not format_info['width']:
+                        self.logger.info("in 'get best mp4 format' the width was 0, so we're gonna use the default 1280x720")
+                        format_info['height'] = 720
+                        format_info['width'] = 1280
                     return DownloadResponse(
                         remote_url=format_info['url'],
                         local_file_path=None,
                         duration=duration,
-                        filesize=format_info['filesize'],
+                        filesize=0,
                         width=format_info['width'],
                         height=format_info['height']
                     )
