@@ -232,8 +232,8 @@ class BaseClip(ABC):
                 # Direct URL available in info
                 if "production.assets.clips.twitchcdn.net" in info['url']:
                     # if its a twitch or kick clip, we can use a default height/width (kick class already handles this)
-                    self.logger.info("Using default dimensions of 1980x1080 for twitch clip")
-                    format_info = extract_format_info(fmt=info, h=1080, w=1980)
+                    self.logger.info("Using default dimensions of 1920x1080 for twitch clip")
+                    format_info = extract_format_info(fmt=info, h=1080, w=1920)
                 else:
                     format_info = extract_format_info(info)
                 if not format_info['width']:
