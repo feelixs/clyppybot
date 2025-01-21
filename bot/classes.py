@@ -99,6 +99,9 @@ class BaseClip(ABC):
         return f"https://clyppy.io/{self.clyppy_id}"
 
     async def dl_download(self, filename=None, dlp_format='best[ext=mp4]'):
+        if os.path.isfile(filename):
+            self.logger.info("file already exists! returning...")
+            return filename
         ydl_opts = {
             'format': dlp_format,
             'quiet': True,
