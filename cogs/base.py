@@ -77,13 +77,15 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     return None, None
 
 
-async def send_webhook(title: str, load: str):
+async def send_webhook(title: str, load: str, color=None):
     # Create a rich embed
+    if color is None:
+        color = 5814783  # Blue color
     payload = {
         "embeds": [{
             "title": title,
             "description": load,
-            "color": 5814783,  # Blue color
+            "color": color,
         }]
     }
 
@@ -395,7 +397,8 @@ class Base(Extension):
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w}\n"
+                     f"widget - {w}\n",
+                color=16711680  # red
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -411,7 +414,8 @@ class Base(Extension):
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w}\n"
+                     f"widget - {w}\n",
+                color=65280  # green
             )
             await self.post_servers(len(self.bot.guilds))
 
