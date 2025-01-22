@@ -87,7 +87,7 @@ class Base(Extension):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
         if not ctx.responded:
-            await ctx.send(f"This video was unavailable: {url}")
+            await ctx.send(f"An error occurred with your input `{url}`")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
