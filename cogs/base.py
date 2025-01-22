@@ -249,13 +249,16 @@ class Base(Extension):
             return await ctx.send("An error occurred while setting the error channel. Please try again.")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
-                   options=[SlashCommandOption(name="on_error", type=OptionType.STRING,
+                   options=[SlashCommandOption(name="quickembeds", type=OptionType.BOOLEAN,
+                                               description="Should Clyppy respond to links? True=enabled, False=disabled, default=True",
+                                               required=False),
+                            SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
                                                required=False),
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)])
-    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_buttons: str = None):
+    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -268,9 +271,14 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if on_error is None and embed_buttons is None:
+        if on_error is None and embed_buttons is None and quickembeds is None:
             await self._send_settings_help(ctx, False)
             return
+
+        current_embed_setting = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        chosen_embed = quickembeds or current_embed_setting  # Use current values if not specified
+        if quickembeds is not None:
+            self.bot.guild_settings.set_embed_buttons(ctx.guild.id, quickembeds)
 
         # Get current settings
         current_setting = self.bot.guild_settings.get_setting(ctx.guild.id)
@@ -301,6 +309,7 @@ class Base(Extension):
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
         await ctx.send(
             "Successfully changed settings:\n\n"
+            f"**quickembeds**: {chosen_embed}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}"
         )
