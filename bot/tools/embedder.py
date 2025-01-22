@@ -19,14 +19,23 @@ INVALID_DL_PLATFORMS = []
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 
-async def publish_interaction(interaction_data, apikey):
+async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None):
     url = 'https://clyppy.io/api/publish/'
     headers = {
         'X-API-Key': apikey,
         'Content-Type': 'application/json'
     }
+    if edit_type is None:
+        # publish new interaction
+        j = interaction_data
+    elif edit_type == "response_time":
+        if edit_id is None:
+            raise Exception("both edit_id and edit_type must be defined, or both None")
+        j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
+    else:
+        raise Exception("Invalid call to publish_interaction()")
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=interaction_data, headers=headers) as response:
+        async with session.post(url, json=j, headers=headers) as response:
             if response.status == 201:  # Successfully created
                 return await response.json()
             else:
@@ -194,9 +203,6 @@ class AutoEmbedder:
                     url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
                 ))
 
-            now_utc = datetime.now(tz=timezone.utc).timestamp()
-            respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
-            my_response_time = round((now_utc - respond_to_utc), 2)
             if guild.is_dm:
                 chn = "dm"
                 chnid = 0
@@ -204,7 +210,7 @@ class AutoEmbedder:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
             interaction_data = {
-                'new': True,
+                'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
@@ -217,7 +223,7 @@ class AutoEmbedder:
                 'remote_video_height': response.height,
                 'remote_video_width': response.width,
                 'url_platform': self.platform_tools.platform_name,
-                'response_time_seconds': my_response_time,
+                'response_time_seconds': 0,
                 'total_servers_now': len(self.bot.guilds),
                 'generated_id': clip.clyppy_id,
                 'video_file_size': response.filesize,
@@ -227,7 +233,15 @@ class AutoEmbedder:
             try:
                 result = await publish_interaction(interaction_data, apikey=self.api_key)
                 await respond_to.reply(clip.clyppy_url, components=comp)
+
+                now_utc = datetime.now(tz=timezone.utc).timestamp()
+                respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
+                my_response_time = round((now_utc - respond_to_utc), 2)
                 self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
+                if result['success']:
+                    await publish_interaction(my_response_time, apikey=self.api_key, edit_id=result['id'], edit_type='response_time')
+                else:
+                    self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Failed to post interaction to API: {e}")
