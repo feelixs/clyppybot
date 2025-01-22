@@ -102,7 +102,7 @@ class Base(Extension):
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
             if not ctx.responded:
                 ctx.ephemeral = True
                 await ctx.send(f"Video Unavailable or Invalid Link: {url}")
