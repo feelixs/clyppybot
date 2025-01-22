@@ -21,8 +21,8 @@ class YtMisc(BaseMisc):
         # Common YouTube URL patterns
         patterns = [
             r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
-            # Standard and embedded URLs
-            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})'  # Shorts URLs
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?youtube\.com/clip/([^"&?/ ]{11})'  # New pattern for clip URLs
         ]
 
         for pattern in patterns:
