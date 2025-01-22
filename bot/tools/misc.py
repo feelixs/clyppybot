@@ -1,6 +1,7 @@
 import logging
 import traceback
 import os
+from interactions import SlashContext
 import subprocess
 import concurrent.futures
 import asyncio
@@ -77,6 +78,8 @@ class Tools:
         self.dl = DownloadManager(self)
 
     async def send_error_message(self, msg_embed, dm_content, guild, ctx, bot, delete_after_on_reply=None):
+        if isinstance(ctx, SlashContext):
+            return
         err = ""
         if guild.id == ctx.author.id:
             pass  # don't use 'dm' setting if we're already in a dm, just reply
