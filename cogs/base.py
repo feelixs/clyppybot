@@ -83,9 +83,9 @@ class Base(Extension):
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
     @staticmethod
-    async def _handle_timeout(ctx: SlashContext, url: str):
+    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
         """Handle timeout for embed processing"""
-        await asyncio.sleep(60)
+        await asyncio.sleep(amt)
         if not ctx.responded:
             await ctx.author.send(f"Video Unavailable or Invalid Link: {url}")
 
@@ -106,7 +106,7 @@ class Base(Extension):
     async def embed(self, ctx: SlashContext, url: str):
         await ctx.defer(ephemeral=False)
         platform, slug = compute_platform(url, self.bot)
-        timeout_task = asyncio.create_task(self._handle_timeout(ctx, url))
+        timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
