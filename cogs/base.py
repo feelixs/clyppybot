@@ -97,7 +97,7 @@ class Base(Extension):
                             ]
                    )
     async def embed(self, ctx: SlashContext, url: str):
-        await ctx.defer()
+        await ctx.defer(ephemeral=True)
         platform, slug = compute_platform(url, self.bot)
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
