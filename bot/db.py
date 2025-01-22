@@ -64,7 +64,39 @@ class GuildDatabase:
                                 setting INTEGER
                             )
                         ''')
+            conn.execute('''
+                            CREATE TABLE IF NOT EXISTS embed_enabled (
+                                guild_id INTEGER PRIMARY KEY,
+                                setting BOOLEAN
+                            )
+                        ''')
             conn.commit()
+
+    def get_embed_enabled(self, guild_id) -> bool:
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT setting FROM embed_enabled WHERE guild_id = ?',
+                    (guild_id,)
+                )
+                result = cursor.fetchone()
+                return result[0] if result else True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting embed_enabled for guild {guild_id}: {e}")
+            return True  # default = true
+
+    def set_embed_enabled(self, guild_id: int, new: bool):
+        try:
+            with self.get_db() as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO embed_enabled (guild_id, setting)
+                    VALUES (?, ?)
+                ''', (guild_id, new))
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting embed_enabled for guild {guild_id}: {e}")
+            return False
 
     def get_embed_buttons(self, guild_id: int) -> int:
         try:
