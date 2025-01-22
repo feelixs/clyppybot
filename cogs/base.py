@@ -15,6 +15,8 @@ from bot.classes import BaseMisc
 import re
 
 
+LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
+
 VERSION = "1.4.5b"
 
 
@@ -73,6 +75,29 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
             return bot.reddit, match.group(1)
 
     return None, None
+
+
+async def send_webhook(title: str, load: str):
+    # Create a rich embed
+    payload = {
+        "embeds": [{
+            "title": title,
+            "description": load,
+            "color": 5814783,  # Blue color
+        }]
+    }
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(LOGGER_WEBHOOK, json=payload) as response:
+                if response.status == 204:
+                    print(f"Successfully sent logger webhook: {load}")
+                else:
+                    print(f"Failed to send logger webhook. Status: {response.status}")
+                return response.status
+        except Exception as e:
+            print(f"Error sending log webhook: {str(e)}")
+            return None
 
 
 class Base(Extension):
@@ -362,6 +387,16 @@ class Base(Extension):
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
             self.logger.info(f'Joined new guild: {event.guild.name}')
+            w = None
+            if event.guild.widget_enabled:
+                w = await event.guild.fetch_widget()
+            await send_webhook(
+                title=f'Joined new guild: {event.guild.name}',
+                load=f"id - {event.guild.id}\n"
+                     f"large - {event.guild.large}\n"
+                     f"members - {event.guild.member_count}\n"
+                     f"widget - {w}\n"
+            )
 
     @listen()
     async def on_guild_left(self, event: GuildLeft):
