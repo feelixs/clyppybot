@@ -111,7 +111,7 @@ class Base(Extension):
         try:
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
         except:
-            await ctx.send(f"This video was unavailable: {url}")
+            await ctx.send(f"An error occurred with your input `{url}`")
         timeout_task.cancel()
 
     @slash_command(name="help", description="Get help using Clyppy")
