@@ -398,7 +398,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=16711680  # red
+                color=65280  # green
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -415,7 +415,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=65280  # green
+                color=16711680  # red
             )
             await self.post_servers(len(self.bot.guilds))
 
