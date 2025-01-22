@@ -112,7 +112,6 @@ class Base(Extension):
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
             timeout_task.cancel()
         except:
-            ctx.ephemeral = True
             await ctx.author.send(f"Unable to embed link: {url}")
 
     @slash_command(name="help", description="Get help using Clyppy")
