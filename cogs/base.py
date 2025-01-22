@@ -13,7 +13,7 @@ from typing import Tuple, Optional
 import re
 
 
-VERSION = "1.4.4b"
+VERSION = "1.4.5b"
 
 
 def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
