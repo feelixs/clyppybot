@@ -397,11 +397,22 @@ class Base(Extension):
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n"
             )
+            await self.post_servers(len(self.bot.guilds))
 
     @listen()
     async def on_guild_left(self, event: GuildLeft):
         if self.ready:
             self.logger.info(f'Left guild: {event.guild.name}')
+            w = None
+            if event.guild.widget_enabled:
+                w = await event.guild.fetch_widget()
+            await send_webhook(
+                title=f'Left guild: {event.guild.name}',
+                load=f"id - {event.guild.id}\n"
+                     f"large - {event.guild.large}\n"
+                     f"members - {event.guild.member_count}\n"
+                     f"widget - {w}\n"
+            )
             await self.post_servers(len(self.bot.guilds))
 
     @listen()
