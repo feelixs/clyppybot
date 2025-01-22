@@ -5,12 +5,71 @@ from bot.tools import create_nexus_str, GuildType
 import logging
 import aiohttp
 import os
+from bot.tools import AutoEmbedder
 from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
+from typing import Tuple, Optional
+import re
 
 
 VERSION = "1.4.4b"
+
+
+def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
+    """Determine the platform and clip ID from the URL"""
+    # Medal.tv patterns
+    medal_patterns = [
+        r'^https?://(?:www\.)?medal\.tv/games/[\w-]+/clips/([\w-]+)',
+        r'^https?://(?:www\.)?medal\.tv/clips/([\w-]+)'
+    ]
+    for pattern in medal_patterns:
+        if match := re.match(pattern, url):
+            return "medal", match.group(1)
+
+    # Kick.com pattern
+    kick_pattern = r'^https?://(?:www\.)?kick\.com/[\w-]+(?:/clips/|/\?clip=)(?:clip_)?([\w-]+)'
+    if match := re.match(kick_pattern, url):
+        return "kick", match.group(1)
+
+    # Twitch patterns
+    twitch_patterns = [
+        r'https?://(?:www\.|m\.)?clips\.twitch\.tv/([\w-]+)',
+        r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)'
+    ]
+    for pattern in twitch_patterns:
+        if match := re.match(pattern, url):
+            return "twitch", match.group(1)
+
+    xpatterns = [
+        r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
+    ]
+    for pattern in xpatterns:
+        if match := re.match(pattern, url):
+            return "twitter", match.group(1)
+
+    ytpatterns = [
+        r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
+        r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})'
+    ]
+    for pattern in ytpatterns:
+        if match := re.match(pattern, url):
+            return "youtube", match.group(1)
+
+    reddit_patterns = [
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+        r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
+        r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
+        r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
+    ]
+    for pattern in reddit_patterns:
+        if match := re.match(pattern, url):
+            return "reddit", match.group(1)
+
+    return None, None
 
 
 class Base(Extension):
@@ -26,6 +85,19 @@ class Base(Extension):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
+
+    @slash_command(name="embed", description="Embed a video link in this chat",
+                   options=[SlashCommandOption(name="url",
+                                               description="The YouTube, Twitch, etc. link to embed",
+                                               required=True,
+                                               type=OptionType.STRING)
+                            ]
+                   )
+    async def embed(self, ctx: SlashContext, url: str):
+        await ctx.defer()
+        platform, slug = compute_platform(url)
+        e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
+        await e._process_clip_one_at_a_time(url, ctx.message, GuildType(ctx.guild.id, ctx.guild.name, False))
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
