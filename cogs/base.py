@@ -307,6 +307,8 @@ class Base(Extension):
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
 
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
+
+        chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**quickembeds**: {chosen_embed}\n"
