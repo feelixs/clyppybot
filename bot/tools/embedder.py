@@ -204,6 +204,7 @@ class AutoEmbedder:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
             interaction_data = {
+                'new': True,
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
