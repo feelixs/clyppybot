@@ -260,7 +260,7 @@ class Base(Extension):
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
             return
-        if ctx.guild.id == ctx.author.id:  # in case they patch the "dm guild is None" situation
+        if ctx.guild.id == ctx.author.id:
             await ctx.send("This command is only available in servers.")
             return
 
