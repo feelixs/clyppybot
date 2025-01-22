@@ -276,8 +276,9 @@ class Base(Extension):
             return
 
         current_embed_setting = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
-        chosen_embed = quickembeds or current_embed_setting  # Use current values if not specified
+        chosen_embed = current_embed_setting
         if quickembeds is not None:
+            chosen_embed = quickembeds
             self.bot.guild_settings.set_embed_buttons(ctx.guild.id, quickembeds)
 
         # Get current settings
