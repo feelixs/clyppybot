@@ -87,7 +87,7 @@ class Base(Extension):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
         if not ctx.responded:
-            await ctx.author.send(f"Video Unavailable or Invalid Link: {url}")
+            await ctx.send(f"This video was unavailable: {url}")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
@@ -110,9 +110,9 @@ class Base(Extension):
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
-            timeout_task.cancel()
         except:
-            await ctx.author.send(f"Unable to embed link: {url}")
+            await ctx.send(f"This video was unavailable: {url}")
+        timeout_task.cancel()
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
