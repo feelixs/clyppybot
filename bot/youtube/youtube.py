@@ -5,6 +5,7 @@ import os
 import re
 from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
 from typing import Optional
+from bot.classes import MAX_VIDEO_LEN_SEC
 
 
 class YtMisc(BaseMisc):
@@ -74,9 +75,9 @@ class YtClip(BaseClip):
                     lambda: ydl.extract_info(self.url, download=False)
                 )
 
-                # Check if duration exists and is longer than 120 seconds
-                if 'duration' in info and info['duration'] > 120:
-                    self.logger.info(f"Video duration {info['duration']}s exceeds 120s limit")
+                # Check if duration exists and is longer than max seconds
+                if 'duration' in info and info['duration'] > MAX_VIDEO_LEN_SEC:
+                    self.logger.info(f"Video duration {info['duration']}s exceeds {MAX_VIDEO_LEN_SEC}s limit")
                     return None
                 elif 'duration' not in info:
                     self.logger.info(f"Video duration not found")

@@ -11,6 +11,9 @@ import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 
+MAX_VIDEO_LEN_SEC = 180
+
+
 async def is_404(url: str) -> bool:
     try:
         async with aiohttp.ClientSession() as session:
@@ -374,7 +377,7 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             return None
 
-    async def is_shortform(self, url: str, max_len=120) -> bool:
+    async def is_shortform(self, url: str, max_len=MAX_VIDEO_LEN_SEC) -> bool:
         d = await self.get_len(url)
         if d is None:
             return False
