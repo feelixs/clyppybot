@@ -87,7 +87,7 @@ class AutoEmbedder:
                 return 1  # don't respond to the bot's own messages
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
                 return 1
-            
+
             words = self._getwords(event.message.content)
             num_links = self._get_num_clip_links(words)
             if num_links == 1:
