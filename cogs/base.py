@@ -10,13 +10,14 @@ from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
+from bot.classes import BaseMisc
 import re
 
 
 VERSION = "1.4.5b"
 
 
-def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
+def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     """Determine the platform and clip ID from the URL"""
     # Medal.tv patterns
     medal_patterns = [
@@ -25,12 +26,12 @@ def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
     ]
     for pattern in medal_patterns:
         if match := re.match(pattern, url):
-            return "medal", match.group(1)
+            return bot.medal, match.group(1)
 
     # Kick.com pattern
     kick_pattern = r'^https?://(?:www\.)?kick\.com/[\w-]+(?:/clips/|/\?clip=)(?:clip_)?([\w-]+)'
     if match := re.match(kick_pattern, url):
-        return "kick", match.group(1)
+        return bot.kick, match.group(1)
 
     # Twitch patterns
     twitch_patterns = [
@@ -39,7 +40,7 @@ def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
     ]
     for pattern in twitch_patterns:
         if match := re.match(pattern, url):
-            return "twitch", match.group(1)
+            return bot.twitch, match.group(1)
 
     xpatterns = [
         r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
@@ -47,7 +48,7 @@ def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
     ]
     for pattern in xpatterns:
         if match := re.match(pattern, url):
-            return "twitter", match.group(1)
+            return bot.x, match.group(1)
 
     ytpatterns = [
         r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
@@ -55,7 +56,7 @@ def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
     ]
     for pattern in ytpatterns:
         if match := re.match(pattern, url):
-            return "youtube", match.group(1)
+            return bot.yt, match.group(1)
 
     reddit_patterns = [
         r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
@@ -67,7 +68,7 @@ def compute_platform(url: str) -> Tuple[Optional[str], Optional[str]]:
     ]
     for pattern in reddit_patterns:
         if match := re.match(pattern, url):
-            return "reddit", match.group(1)
+            return bot.reddit, match.group(1)
 
     return None, None
 
@@ -95,7 +96,7 @@ class Base(Extension):
                    )
     async def embed(self, ctx: SlashContext, url: str):
         await ctx.defer()
-        platform, slug = compute_platform(url)
+        platform, slug = compute_platform(url, self.bot)
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         await e._process_clip_one_at_a_time(url, ctx.message, GuildType(ctx.guild.id, ctx.guild.name, False))
 
