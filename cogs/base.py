@@ -441,6 +441,12 @@ class Base(Extension):
             async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                     headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                 await resp.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
+                                    json={'server_count': num,
+                                          'shard_count': 1},
+                                    headers={'Authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
+                await resp.json()
 
     @staticmethod
     def _format_log(string):
