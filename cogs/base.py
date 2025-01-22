@@ -104,9 +104,11 @@ class Base(Extension):
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
             await asyncio.sleep(30)
             if not ctx.responded:
-                await ctx.send(f"Video Unavailable or Invalid Link: {url}", ephemeral=True)
+                ctx.ephemeral = True
+                await ctx.send(f"Video Unavailable or Invalid Link: {url}")
         except:
-            await ctx.send(f"Unable to embed link: {url}", ephemeral=True)
+            ctx.ephemeral = True
+            await ctx.send(f"Unable to embed link: {url}")
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
