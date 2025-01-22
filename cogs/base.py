@@ -99,7 +99,7 @@ class Base(Extension):
         await ctx.defer()
         platform, slug = compute_platform(url, self.bot)
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
-        await e._process_this_clip_link(slug, url, ctx.message, GuildType(ctx.guild.id, ctx.guild.name, False))
+        await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
