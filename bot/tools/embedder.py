@@ -240,6 +240,7 @@ class AutoEmbedder:
                     await respond_to.reply(clip.clyppy_url, components=comp)
 
                 if isinstance(respond_to, Message):
+                    # don't publish embeds, we could but we need a way to pull timestamp from SlashContext
                     now_utc = datetime.now(tz=timezone.utc).timestamp()
                     respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
                     my_response_time = round((now_utc - respond_to_utc), 2)
