@@ -324,7 +324,7 @@ class Base(Extension):
             'followed by its available options.\n\n'
             '**quickembeds** Should Clyppy automatically respond to links sent in this server? If disabled, '
             'users can still embed videos using the `/embed` command.\n'
-            ' - `True`: enabled'
+            ' - `True`: enabled\n'
             ' - `False`: disabled\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
