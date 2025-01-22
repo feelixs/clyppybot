@@ -1,3 +1,4 @@
+import asyncio
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
     Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
@@ -99,7 +100,13 @@ class Base(Extension):
         await ctx.defer()
         platform, slug = compute_platform(url, self.bot)
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
-        await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
+        try:
+            await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
+            await asyncio.sleep(60)
+            if not ctx.responded:
+                await ctx.send(f"Video Unavailable or Invalid Link: {url}", ephemeral=True)
+        except:
+            await ctx.send(f"Unable to embed link: {url}", ephemeral=True)
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
