@@ -1,11 +1,11 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext
 from interactions import errors
 from interactions.api.events import MessageCreate
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from bot.errors import FailedTrim, FailureHandled
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Union
 import traceback
 import aiohttp
 import time
@@ -127,7 +127,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Message, guild: GuildType, include_link=False) -> None:
+    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, include_link=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link)
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
@@ -136,7 +136,7 @@ class AutoEmbedder:
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         try:
-            if str(guild.id) == str(DL_SERVER_ID):
+            if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
                 # if we're in video dl server -> StoredVideo obj for this clip probably already exists
                 if await is_404(f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4'):
                     # we're assuming the StoredVideo object exists for this clip, and now we know that
@@ -232,7 +232,10 @@ class AutoEmbedder:
 
             try:
                 result = await publish_interaction(interaction_data, apikey=self.api_key)
-                await respond_to.reply(clip.clyppy_url, components=comp)
+                if isinstance(respond_to, SlashContext):
+                    await respond_to.send(clip.clyppy_url, components=comp)
+                else:
+                    await respond_to.reply(clip.clyppy_url, components=comp)
 
                 now_utc = datetime.now(tz=timezone.utc).timestamp()
                 respond_to_utc = respond_to.timestamp.astimezone(tz=timezone.utc).timestamp()
