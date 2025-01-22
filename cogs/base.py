@@ -317,6 +317,8 @@ class Base(Extension):
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
+        qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        qe = "enabled" if qe else "disabled"
         es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
             '**Configurable Settings:**\n'
@@ -333,8 +335,8 @@ class Base(Extension):
             ' - `none`: No buttons, just the video.\n'
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
-            ' - `all`: Shows all available buttons.\n'
-            f'**Current Settings:**\n{cs}\n**embed_buttons**: {es}\n\n'
+            ' - `all`: Shows all available buttons.\n\n'
+            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
