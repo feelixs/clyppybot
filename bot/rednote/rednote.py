@@ -157,4 +157,3 @@ class RedClip(BaseClip):
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
             return None
-        
