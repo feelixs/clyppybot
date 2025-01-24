@@ -5,7 +5,7 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip
+from bot.classes import BaseClip, DownloadResponse
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
@@ -33,6 +33,9 @@ class TwitchClip(BaseClip):
     def url(self) -> str:
         return self._url
 
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        return await super().dl_download(filename, dlp_format)
+    
     async def fetch_data(self) -> 'TwitchClipProcessor':
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + self.id)
         self.logger.info(info)
