@@ -7,8 +7,11 @@ from typing import Tuple, Optional, Dict
 from dataclasses import dataclass
 import base64
 import aiohttp
+from urllib.parse import urlparse, parse_qs
 import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
+import json
+from datetime import datetime, timezone
 
 
 MAX_VIDEO_LEN_SEC = 180
@@ -64,6 +67,19 @@ class LocalFileInfo:
     width: int
     height: int
     filesize: float
+
+
+def get_url_expiry_from_url(url):
+    parsed = urlparse(url)
+    # Extract the token parameter
+    token_param = parse_qs(parsed.query)['token'][0]
+    # Parse the JSON token
+    token_data = json.loads(token_param)
+    # Get expires timestamp
+    expires_timestamp = token_data['expires']
+    # Convert to datetime
+    expires_date = datetime.fromtimestamp(expires_timestamp, tz=timezone.utc)
+    return expires_date
 
 
 async def upload_video(video_file_path) -> Dict:
@@ -263,9 +279,6 @@ class BaseClip(ABC):
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
             return None
-
-    def get_url_expiry(self):
-        return None  # most urls from yt-dlp won't expire. But some do
 
     async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'

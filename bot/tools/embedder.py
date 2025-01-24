@@ -12,7 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404
+from bot.classes import DownloadResponse, is_404, get_url_expiry_from_url
 
 
 INVALID_DL_PLATFORMS = []
@@ -211,6 +211,11 @@ class AutoEmbedder:
             else:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
+
+            if clip.service == 'twitch':
+                expires_at = get_url_expiry_from_url(response.remote_url)
+            else:
+                expires_at = None
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
@@ -230,7 +235,7 @@ class AutoEmbedder:
                 'generated_id': clip.clyppy_id,
                 'video_file_size': response.filesize,
                 'video_file_dur': response.duration,
-                'expires_at': clip.get_url_expiry(),
+                'expires_at': expires_at,
             }
 
             try:
