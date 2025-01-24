@@ -4,7 +4,7 @@ from interactions.api.events import MessageCreate
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from bot.errors import FailedTrim, FailureHandled
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Union
 import traceback
 import aiohttp
@@ -213,7 +213,9 @@ class AutoEmbedder:
                 chnid = respond_to.channel.id
 
             if clip.service == 'twitch':
-                expires_at = get_url_expiry_from_url(response.remote_url)
+                expires_at = get_url_expiry_from_url(response.remote_url)  # its actually 20 hours
+            elif clip.service == 'medal':
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=20) # try 20 for medal also
             else:
                 expires_at = None
             interaction_data = {
