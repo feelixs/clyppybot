@@ -212,10 +212,10 @@ class AutoEmbedder:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
 
-            if clip.service == 'twitch':
+            #if clip.service == 'twitch':
                 expires_at = get_url_expiry_from_url(response.remote_url)
-            else:
-                expires_at = None
+            #else:
+            expires_at = None
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
