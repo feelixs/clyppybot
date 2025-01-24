@@ -4,7 +4,7 @@ from bot.tools import AutoEmbedder
 import logging
 
 
-class RedditAutoEmbed(Extension):
+class RumbleAutoEmbed(Extension):
     def __init__(self, bot):
         self.embedder = AutoEmbedder(bot, bot.rumble, logging.getLogger(__name__))
 
