@@ -117,93 +117,6 @@ class BaseClip(ABC):
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[LocalFileInfo]:
-        if os.path.isfile(filename):
-            self.logger.info("file already exists! returning...")
-            return get_video_details(filename)
-
-        ydl_opts = {
-            'format': dlp_format,
-            'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
-        }
-
-        # Download using yt-dlp
-        try:
-            with YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                return get_video_details(filename)
-
-            self.logger.info(f"Could not find file")
-            return None
-        except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
-            return None
-
-    async def overwrite_mp4(self, new_url: str):
-        url = 'https://clyppy.io/api/overwrite/'
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        j = {'id': self.clyppy_id, 'url': new_url}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=j, headers=headers) as response:
-                if response.status == 201:
-                    return await response.json()
-                else:
-                    error_data = await response.json()
-                    raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
-
-    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> Optional[DownloadResponse]:
-        try:
-            response = await upload_video(local_file_info.local_file_path)
-        except Exception as e:
-            self.logger.error(f"Failed to upload video: {str(e)}")
-            return None
-        if response['success']:
-            self.logger.info(f"Uploaded video: {response['file_path']}")
-            return DownloadResponse(
-                remote_url=response['file_path'],
-                local_file_path=local_file_info.local_file_path,
-                duration=local_file_info.duration,
-                filesize=local_file_info.filesize,
-                height=local_file_info.height,
-                width=local_file_info.width
-            )
-        else:
-            self.logger.error(f"Failed to upload video: {response}")
-            return None
-
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
-        """
-        Gets direct media URL and duration from the clip URL without downloading.
-        Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
-        """
-        ydl_opts = {
-            'format': dlp_format,
-            'quiet': True,
-            'no_warnings': True,
-        }
-
-        try:
-            # Run extraction in a thread pool to avoid blocking
-            return await asyncio.get_event_loop().run_in_executor(
-                None,
-                self._extract_info,
-                ydl_opts
-            )
-        except Exception as e:
-            self.logger.error(f"Failed to get direct URL: {str(e)}")
-            return None
-
     def _extract_info(self, ydl_opts: dict) -> DownloadResponse:
         """
         Helper method to extract URL, duration, file size and dimension information using yt-dlp.
@@ -298,6 +211,93 @@ class BaseClip(ABC):
                     )
 
             raise ValueError("No suitable URL found in video info")
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        """
+        Gets direct media URL and duration from the clip URL without downloading.
+        Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
+        """
+        ydl_opts = {
+            'format': dlp_format,
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        try:
+            # Run extraction in a thread pool to avoid blocking
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._extract_info,
+                ydl_opts
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to get direct URL: {str(e)}")
+            return None
+
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[LocalFileInfo]:
+        if os.path.isfile(filename):
+            self.logger.info("file already exists! returning...")
+            return get_video_details(filename)
+
+        ydl_opts = {
+            'format': dlp_format,
+            'outtmpl': filename,
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        # Download using yt-dlp
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                # Run download in a thread pool to avoid blocking
+                await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: ydl.download([self.url])
+                )
+
+            if os.path.exists(filename):
+                return get_video_details(filename)
+
+            self.logger.info(f"Could not find file")
+            return None
+        except Exception as e:
+            self.logger.error(f"yt-dlp download error: {str(e)}")
+            return None
+
+    async def overwrite_mp4(self, new_url: str):
+        url = 'https://clyppy.io/api/overwrite/'
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        j = {'id': self.clyppy_id, 'url': new_url}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=j, headers=headers) as response:
+                if response.status == 201:
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
+
+    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> Optional[DownloadResponse]:
+        try:
+            response = await upload_video(local_file_info.local_file_path)
+        except Exception as e:
+            self.logger.error(f"Failed to upload video: {str(e)}")
+            return None
+        if response['success']:
+            self.logger.info(f"Uploaded video: {response['file_path']}")
+            return DownloadResponse(
+                remote_url=response['file_path'],
+                local_file_path=local_file_info.local_file_path,
+                duration=local_file_info.duration,
+                filesize=local_file_info.filesize,
+                height=local_file_info.height,
+                width=local_file_info.width
+            )
+        else:
+            self.logger.error(f"Failed to upload video: {response}")
+            return None
 
     @staticmethod
     def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
