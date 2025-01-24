@@ -235,7 +235,7 @@ class AutoEmbedder:
                 'generated_id': clip.clyppy_id,
                 'video_file_size': response.filesize,
                 'video_file_dur': response.duration,
-                'expires_at': expires_at,
+                'expires_at_timestamp': expires_at,
             }
 
             try:
