@@ -69,17 +69,14 @@ class LocalFileInfo:
     filesize: float
 
 
-def get_url_expiry_from_url(url):
+def get_url_expiry_from_url(url) -> int:
     parsed = urlparse(url)
     # Extract the token parameter
     token_param = parse_qs(parsed.query)['token'][0]
     # Parse the JSON token
     token_data = json.loads(token_param)
     # Get expires timestamp
-    expires_timestamp = token_data['expires']
-    # Convert to datetime
-    expires_date = datetime.fromtimestamp(expires_timestamp, tz=timezone.utc)
-    return expires_date
+    return token_data['expires']
 
 
 async def upload_video(video_file_path) -> Dict:
