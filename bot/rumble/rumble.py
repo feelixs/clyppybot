@@ -1,7 +1,7 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from typing import Optional
-from bot.classes import BaseMisc, BaseClip
+from bot.classes import BaseMisc, BaseClip, DownloadResponse, MAX_VIDEO_LEN_SEC
 import re
 
 
@@ -61,3 +61,11 @@ class RumbleClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        d = await super().download(filename, dlp_format)
+        if d.duration > MAX_VIDEO_LEN_SEC:
+            self.logger.info(f"{self.url} is_shortform=False")
+            return None
+        self.logger.info(f"{self.url} is_shortform=True")
+        return d
