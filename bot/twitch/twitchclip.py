@@ -1,16 +1,16 @@
 import asyncio
-import yt_dlp
-import logging
 import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
+from urllib.parse import urlparse, parse_qs
 from bot.classes import BaseClip, DownloadResponse, get_video_details
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pathlib import Path
+import json
 
 
 class TwitchClip(BaseClip):
@@ -33,11 +33,6 @@ class TwitchClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
-        f = await super().dl_download(filename, dlp_format)
-        i = get_video_details(f.local_file_path)
-        return await self.upload_to_clyppyio(i)
-
     async def fetch_data(self) -> 'TwitchClipProcessor':
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + self.id)
         self.logger.info(info)
@@ -46,6 +41,18 @@ class TwitchClip(BaseClip):
             api=self.api,
             logger=self.logger
         )
+
+    def get_url_expiry(self):
+        parsed = urlparse(self.url)
+        # Extract the token parameter
+        token_param = parse_qs(parsed.query)['token'][0]
+        # Parse the JSON token
+        token_data = json.loads(token_param)
+        # Get expires timestamp
+        expires_timestamp = token_data['expires']
+        # Convert to datetime
+        expires_date = datetime.fromtimestamp(expires_timestamp, tz=timezone.utc)
+        return expires_date
 
 
 class TwitchClipProcessor:

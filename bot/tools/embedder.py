@@ -229,7 +229,8 @@ class AutoEmbedder:
                 'total_servers_now': len(self.bot.guilds),
                 'generated_id': clip.clyppy_id,
                 'video_file_size': response.filesize,
-                'video_file_dur': response.duration
+                'video_file_dur': response.duration,
+                'expires_at': clip.get_url_expiry(),
             }
 
             try:

@@ -264,6 +264,9 @@ class BaseClip(ABC):
             self.logger.error(f"yt-dlp download error: {str(e)}")
             return None
 
+    def get_url_expiry(self):
+        return None  # most urls from yt-dlp won't expire. But some do
+
     async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'
         headers = {

@@ -17,7 +17,7 @@ import re
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 
-VERSION = "1.4.6b"
+VERSION = "1.4.6b"  # todo initially give a link to production assets twitch, then download it and uplaod to servers, then overwrite the url
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
