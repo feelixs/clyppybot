@@ -44,7 +44,6 @@ class RedClip(BaseClip):
     def __init__(self, slug):
         self._service = "rednote"
         self._url = f"https://xiaohongshu.com/explore/{slug}"
-        self._title = None
         super().__init__(slug)
 
     @property
@@ -54,10 +53,6 @@ class RedClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
-
-    @property
-    def title(self) -> str:
-        return self._title
 
     async def get_m3u8_url(self):
         """Get m3u8 URL using undetected-chromedriver"""

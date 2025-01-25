@@ -47,7 +47,6 @@ class RumbleMisc(BaseMisc):
 
 class RumbleClip(BaseClip):
     def __init__(self, slug, is_embed):
-        self._title = None
         self._service = "rumble"
         if is_embed:
             self._url = f"https://rumble.com/embed/{slug}"
@@ -62,10 +61,6 @@ class RumbleClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
-
-    @property
-    def title(self) -> str:
-        return self._title
 
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         d = await super().download(filename, dlp_format)
