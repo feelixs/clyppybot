@@ -189,6 +189,11 @@ class BaseClip(ABC):
                     }
                     os.remove(fn)
 
+                if info.get('title') is not None:
+                    title = info['title']
+                else:
+                    title = None
+
                 self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
                     remote_url=format_info['url'],
@@ -197,7 +202,7 @@ class BaseClip(ABC):
                     filesize=0,  # since yt-dlp was rigged to return an url, video is hosted on another cdn
                     width=format_info['width'],
                     height=format_info['height'],
-                    video_name=None
+                    video_name=title
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -217,6 +222,10 @@ class BaseClip(ABC):
                     )[0]
                     format_info = extract_format_info(best_format)
                     self.logger.info(f"Found direct URL: {format_info['url']}")
+                    if info.get('title') is not None:
+                        title = info['title']
+                    else:
+                        title = None
                     if not format_info['width']:
                         self.logger.info("in 'get best mp4 format' the width was 0, so we're gonna use the default 1280x720")
                         format_info['height'] = 720
@@ -228,7 +237,7 @@ class BaseClip(ABC):
                         filesize=0,
                         width=format_info['width'],
                         height=format_info['height'],
-                        video_name=None
+                        video_name=title
                     )
 
             raise ValueError("No suitable URL found in video info")
