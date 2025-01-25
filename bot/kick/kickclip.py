@@ -13,6 +13,7 @@ class KickClip(BaseClip):
         self._service = "kick"
         self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
+        self._title = None
         super().__init__(slug)
 
     @property
@@ -22,6 +23,10 @@ class KickClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    @property
+    def title(self) -> str:
+        return self._title
 
     async def get_m3u8_url(self):
         """Get m3u8 URL using undetected-chromedriver"""

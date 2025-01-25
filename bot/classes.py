@@ -126,6 +126,11 @@ class BaseClip(ABC):
         pass
 
     @property
+    @abstractmethod
+    def title(self) -> str:
+        pass
+
+    @property
     def clyppy_url(self) -> str:
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"

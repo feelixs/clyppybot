@@ -13,6 +13,7 @@ from pathlib import Path
 
 class TwitchClip(BaseClip):
     def __init__(self, slug):
+        self._title = None
         self._service = "twitch"
         self._url = f"https://clips.twitch.tv/{slug}"
         super().__init__(slug)
@@ -30,6 +31,10 @@ class TwitchClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    @property
+    def title(self) -> str:
+        return self._title
 
     async def fetch_data(self) -> 'TwitchClipProcessor':
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + self.id)

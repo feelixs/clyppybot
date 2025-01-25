@@ -42,6 +42,7 @@ class Xclip(BaseClip):
     def __init__(self, slug, user):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
+        self._title = None
         super().__init__(slug)
 
     @property
@@ -51,3 +52,7 @@ class Xclip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    @property
+    def title(self) -> str:
+        return self._title

@@ -49,6 +49,7 @@ class YtClip(BaseClip):
             self._url = f"https://youtube.com/shorts/{slug}"
         else:
             self._url = f"https://youtube.com/watch/?v={slug}"
+        self._title = None
         super().__init__(slug)
 
     @property
@@ -58,6 +59,10 @@ class YtClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    @property
+    def title(self) -> str:
+        return self._title
 
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         ydl_opts = {

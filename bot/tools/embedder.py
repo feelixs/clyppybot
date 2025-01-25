@@ -224,6 +224,7 @@ class AutoEmbedder:
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
+                'title': clip.title,
                 'user_name': respond_to.author.username,
                 'server_id': str(guild.id),
                 'channel_id': str(chnid),
