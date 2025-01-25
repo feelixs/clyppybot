@@ -181,7 +181,8 @@ class AutoEmbedder:
                         duration=None,
                         width=None,
                         height=None,
-                        filesize=None
+                        filesize=None,
+                        video_name=None
                     )
         except:
             self.logger.info(f"Unhandled exception in download - failing silently: {traceback.format_exc()}")

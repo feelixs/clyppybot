@@ -35,7 +35,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             height=clip.h,
             filesize=os.path.getsize(file_path),
             duration=clip.duration,
-            local_file_path=file_path
+            local_file_path=file_path,
         )
         #return {
         #    'width': clip.w,
@@ -58,6 +58,7 @@ class DownloadResponse:
     width: int
     height: int
     filesize: float
+    video_name: Optional[str]
 
 
 @dataclass
@@ -195,7 +196,8 @@ class BaseClip(ABC):
                     duration=duration,
                     filesize=0,  # since yt-dlp was rigged to return an url, video is hosted on another cdn
                     width=format_info['width'],
-                    height=format_info['height']
+                    height=format_info['height'],
+                    video_name=None
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -225,7 +227,8 @@ class BaseClip(ABC):
                         duration=duration,
                         filesize=0,
                         width=format_info['width'],
-                        height=format_info['height']
+                        height=format_info['height'],
+                        video_name=None
                     )
 
             raise ValueError("No suitable URL found in video info")
@@ -311,7 +314,8 @@ class BaseClip(ABC):
                 duration=local_file_info.duration,
                 filesize=local_file_info.filesize,
                 height=local_file_info.height,
-                width=local_file_info.width
+                width=local_file_info.width,
+                video_name=None
             )
         else:
             self.logger.error(f"Failed to upload video: {response}")

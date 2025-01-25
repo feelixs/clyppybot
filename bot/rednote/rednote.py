@@ -153,7 +153,8 @@ class RedClip(BaseClip):
                     duration=i.duration,
                     filesize=i.filesize,
                     height=i.height,
-                    width=i.width
+                    width=i.width,
+                    video_name=None
                 )
             else:
                 self.logger.error(f"Failed to upload video: {response}")
