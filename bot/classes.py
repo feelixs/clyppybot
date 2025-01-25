@@ -114,6 +114,7 @@ class BaseClip(ABC):
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
+        self.title = None
 
     @property
     @abstractmethod
@@ -124,11 +125,6 @@ class BaseClip(ABC):
     @property
     @abstractmethod
     def url(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def title(self) -> str:
         pass
 
     @property
@@ -191,6 +187,7 @@ class BaseClip(ABC):
 
                 if info.get('title') is not None:
                     title = info['title']
+                    self.title = title
                 else:
                     title = None
 
@@ -224,6 +221,7 @@ class BaseClip(ABC):
                     self.logger.info(f"Found direct URL: {format_info['url']}")
                     if info.get('title') is not None:
                         title = info['title']
+                        self.title = title
                     else:
                         title = None
                     if not format_info['width']:
