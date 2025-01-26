@@ -260,7 +260,7 @@ class AutoEmbedder:
                         if my_response_time > 0:
                             await publish_interaction(my_response_time, apikey=self.api_key, edit_id=result['id'], edit_type='response_time')
                         else:
-                            self.logger.info(f"Skipping edit response time for {clip.id}...")
+                            self.logger.info(f"Skipping edit response time for {clip.id} ({guild.name} - #{chn})...")
                     else:
                         self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
