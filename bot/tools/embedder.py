@@ -51,6 +51,7 @@ class AutoEmbedder:
         self.logger = logger
         self.platform_tools = platform_tools
         self.currently_downloading = []
+        self._clip_id_msg_timestamps = {}
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
@@ -108,6 +109,7 @@ class AutoEmbedder:
 
     async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
+        self._clip_id_msg_timestamps[parsed_id] = datetime.now().timestamp()
         if parsed_id in self.currently_downloading:
             await self._wait_for_download(parsed_id)
         else:
@@ -120,6 +122,10 @@ class AutoEmbedder:
             try:
                 self.currently_downloading.remove(parsed_id)
             except ValueError:
+                pass
+            try:
+                del self._clip_id_msg_timestamps[parsed_id]
+            except:
                 pass
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):
@@ -252,9 +258,8 @@ class AutoEmbedder:
 
                 if isinstance(respond_to, Message):
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
-                    now_utc = datetime.now(tz=timezone.utc).timestamp()
-                    respond_to_utc = respond_to.created_at.astimezone(tz=timezone.utc).timestamp()
-                    my_response_time = round((now_utc - respond_to_utc), 2)
+                    respond_to_utc = self._clip_id_msg_timestamps[parsed_id]
+                    my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                     if result['success']:
                         if my_response_time > 0:
