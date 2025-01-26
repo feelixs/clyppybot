@@ -254,9 +254,9 @@ class AutoEmbedder:
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
                     now_utc = datetime.now(tz=timezone.utc).timestamp()
                     respond_to_utc = ((respond_to.id >> 22) + 1420070400000) / 1000
-                    my_response_time = max(0, round((now_utc - respond_to_utc), 2))
+                    my_response_time = round((now_utc - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
-                    if result['success']:
+                    if result['success'] and my_response_time > 0:
                         await publish_interaction(my_response_time, apikey=self.api_key, edit_id=result['id'], edit_type='response_time')
                     else:
                         self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
