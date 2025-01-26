@@ -258,7 +258,7 @@ class AutoEmbedder:
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                     if result['success'] and my_response_time > 0:
                         await publish_interaction(my_response_time, apikey=self.api_key, edit_id=result['id'], edit_type='response_time')
-                    else:
+                    elif not result['success']:
                         self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
