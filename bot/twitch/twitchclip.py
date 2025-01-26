@@ -170,7 +170,7 @@ class TwitchClipProcessor:
                     "--mode", "chatrender",
                     "-i", infile,
                     "-o", outfile,
-                    "-h", "720"
+                    "-h", "1080"
                 ]
 
                 process = await asyncio.create_subprocess_exec(
