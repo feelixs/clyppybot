@@ -216,7 +216,7 @@ class AutoEmbedder:
             if clip.service == 'twitch':
                 expires_at = get_url_expiry_from_url(response.remote_url)  # its actually 20 hours
             elif clip.service == 'medal':
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=20) # try 20 for medal also
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=12)  # try 12 for medal also
                 expires_at = expires_at.timestamp()
             else:
                 expires_at = None
