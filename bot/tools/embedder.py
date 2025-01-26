@@ -12,7 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404, get_url_expiry_from_url
+from bot.classes import DownloadResponse, is_404
 
 
 INVALID_DL_PLATFORMS = []
@@ -220,9 +220,9 @@ class AutoEmbedder:
                 chnid = respond_to.channel.id
 
             if clip.service == 'twitch':
-                expires_at = get_url_expiry_from_url(response.remote_url)  # its actually 20 hours
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=20)
             elif clip.service == 'medal':
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=12)  # try 12 for medal also
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=12)  # try 12 for medal
                 expires_at = expires_at.timestamp()
             else:
                 expires_at = None
