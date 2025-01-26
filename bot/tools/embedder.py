@@ -260,7 +260,6 @@ class AutoEmbedder:
                 if isinstance(respond_to, Message):
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
                     respond_to_utc = self._clip_id_msg_timestamps[respond_to.id]
-                    self.logger.info(self._clip_id_msg_timestamps)
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                     if result['success']:
