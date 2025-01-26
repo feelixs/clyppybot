@@ -221,6 +221,7 @@ class AutoEmbedder:
 
             if clip.service == 'twitch':
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=20)
+                expires_at = expires_at.timestamp()
             elif clip.service == 'medal':
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=12)  # try 12 for medal
                 expires_at = expires_at.timestamp()
