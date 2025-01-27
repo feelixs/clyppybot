@@ -27,7 +27,7 @@ class TwitchMisc(BaseMisc):
         if "?" in slug:
             slug = slug.split('?')[0]
         return slug
-
+    
     def is_clip_link(self, url: str) -> bool:
         patterns = [
             r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
