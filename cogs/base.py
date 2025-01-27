@@ -140,7 +140,7 @@ class Base(Extension):
         except VideoTooLong:
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
         except:
-            await ctx.send(f"An error occurred with your input `{url}`")
+            await ctx.send(f"An unexpected error occurred with your input `{url}`")
         finally:
             timeout_task.cancel()
 
