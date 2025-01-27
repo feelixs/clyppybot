@@ -5,8 +5,7 @@ import os
 import re
 from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
 from typing import Optional
-from bot.classes import MAX_VIDEO_LEN_SEC
-
+from bot.classes import MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 
 class YtMisc(BaseMisc):
     def __init__(self):
@@ -78,10 +77,10 @@ class YtClip(BaseClip):
                 # Check if duration exists and is longer than max seconds
                 if 'duration' in info and info['duration'] > MAX_VIDEO_LEN_SEC:
                     self.logger.info(f"Video duration {info['duration']}s exceeds {MAX_VIDEO_LEN_SEC}s limit")
-                    return None
+                    raise VideoTooLong
                 elif 'duration' not in info:
                     self.logger.info(f"Video duration not found")
-                    return None
+                    raise NoDuration
                 self.logger.info(f"Video duration {info['duration']}s is acceptable")
                 # Proceed with download if duration is acceptable
                 await asyncio.get_event_loop().run_in_executor(

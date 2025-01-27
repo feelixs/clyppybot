@@ -17,6 +17,14 @@ from datetime import datetime, timezone
 MAX_VIDEO_LEN_SEC = 180
 
 
+class VideoTooLong(Exception):
+    pass
+
+
+class NoDuration(Exception):
+    pass
+
+
 async def is_404(url: str) -> bool:
     try:
         async with aiohttp.ClientSession() as session:
