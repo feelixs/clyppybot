@@ -1,5 +1,5 @@
 import re
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, VideoTooLong
 
 
 class Xmisc(BaseMisc):
@@ -28,7 +28,7 @@ class Xmisc(BaseMisc):
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            return None
+            raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
         # Extract user from URL
