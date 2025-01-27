@@ -117,7 +117,7 @@ class AutoEmbedder:
         try:
             await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
         except Exception as e:
-            print(f"Error in processing this clip link one at a time: {clip_link} - {e}")
+            self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
             try:
                 self.currently_downloading.remove(parsed_id)
@@ -247,7 +247,11 @@ class AutoEmbedder:
             }
 
             try:
-                result = await publish_interaction(interaction_data, apikey=self.api_key)
+                try:
+                    result = await publish_interaction(interaction_data, apikey=self.api_key)
+                except Exception as e:
+                    self.logger.info(f"Failed to post interaction to API: {e}\ninteraction_data: {interaction_data}")
+                    raise
                 if isinstance(respond_to, SlashContext):
                     await respond_to.send(clip.clyppy_url, components=comp)
                 else:
@@ -267,7 +271,7 @@ class AutoEmbedder:
                         self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
-                self.logger.info(f"Failed to post interaction to API: {e}")
+                self.logger.info(f"Could not send interaction: {e}")
 
         except errors.HTTPException as e:
             self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
