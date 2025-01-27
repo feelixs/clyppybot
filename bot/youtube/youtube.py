@@ -35,7 +35,7 @@ class YtMisc(BaseMisc):
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            return None
+            raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
         return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)))
