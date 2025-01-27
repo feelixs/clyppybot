@@ -135,7 +135,8 @@ class Base(Extension):
         platform, slug = compute_platform(url, self.bot)
         if platform is None:
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
-
+            return
+        
         timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
