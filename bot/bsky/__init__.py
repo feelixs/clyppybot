@@ -1,1 +1,1 @@
-from bot.bsky import BlueSkyMisc, BlueSkyClip
+from bot.bsky.bsky import BlueSkyMisc, BlueSkyClip
