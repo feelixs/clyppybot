@@ -141,7 +141,8 @@ class Base(Extension):
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
         except:
             await ctx.send(f"An error occurred with your input `{url}`")
-        timeout_task.cancel()
+        finally:
+            timeout_task.cancel()
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
