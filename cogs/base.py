@@ -17,7 +17,7 @@ import re
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 
-VERSION = "1.4.6b"  # todo initially give a link to production assets twitch, then download it and uplaod to servers, then overwrite the url
+VERSION = "1.4.7b"
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
@@ -136,7 +136,7 @@ class Base(Extension):
         if platform is None:
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
             return
-        
+
         timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
