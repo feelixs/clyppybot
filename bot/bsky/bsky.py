@@ -1,7 +1,6 @@
 import re
 from bot.classes import BaseClip, BaseMisc, VideoTooLong
 
-
 class BlueSkyMisc(BaseMisc):
     def __init__(self):
         super().__init__()
@@ -46,3 +45,4 @@ class BlueSkyClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+    
