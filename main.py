@@ -9,6 +9,7 @@ from bot.youtube import YtMisc
 from bot.rednote import RedMisc
 from bot.rumble import RumbleMisc
 from bot.x import Xmisc
+from bot.bsky import BlueSkyMisc
 import logging
 import asyncio
 import os
@@ -65,6 +66,7 @@ Bot.medal = MedalMisc()
 Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
 Bot.x = Xmisc()
+Bot.bsky = BlueSkyMisc()
 #Bot.rumble = RumbleMisc()
 #Bot.rednote = RedMisc()
 Bot.tools = Tools()
@@ -81,6 +83,7 @@ async def main():
     #Bot.load_extension('cogs.rednoteautoembed')
     Bot.load_extension('cogs.ytautoembed')
     Bot.load_extension('cogs.xautoembed')
+    Bot.load_extension('cogs.bskyautoembed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
