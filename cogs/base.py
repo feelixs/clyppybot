@@ -133,6 +133,9 @@ class Base(Extension):
     async def embed(self, ctx: SlashContext, url: str):
         await ctx.defer(ephemeral=False)
         platform, slug = compute_platform(url, self.bot)
+        if platform is None:
+            await ctx.send("Couldn't embed that url (invalid/incompatible)")
+
         timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
