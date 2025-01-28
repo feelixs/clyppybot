@@ -144,7 +144,9 @@ class Base(Extension):
         timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
-            await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
+            a = await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
+            if a is None:
+                await ctx.send("Couldn't embed that url (not a video post)")
         except VideoTooLong:
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
         except:
