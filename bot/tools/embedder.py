@@ -226,12 +226,16 @@ class AutoEmbedder:
                 expires_at = expires_at.timestamp()
             else:
                 expires_at = None
+            if clip.title is not None:
+                t = clip.title[:100]
+            else:
+                t = None
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
-                'title': clip.title[:100],
+                'title': t,
                 'user_name': respond_to.author.username,
                 'server_id': str(guild.id),
                 'channel_id': str(chnid),
