@@ -402,7 +402,7 @@ class BaseMisc(ABC):
 
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
-            return None
+            raise NoDuration
 
     async def is_shortform(self, url: str, max_len=MAX_VIDEO_LEN_SEC) -> bool:
         d = await self.get_len(url)

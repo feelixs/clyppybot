@@ -11,7 +11,7 @@ from bot.twitch.twitchclip import TwitchClipProcessor
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 import re
 
 
@@ -145,8 +145,8 @@ class Base(Extension):
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
             await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
-            if not ctx.responded:
-                await ctx.send("Couldn't embed that url (not a video post)")
+        except NoDuration:
+            await ctx.send("Couldn't embed that url (not a video post)")
         except VideoTooLong:
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
         except:
