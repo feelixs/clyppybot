@@ -143,7 +143,7 @@ class AutoEmbedder:
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
-            return
+            return None
         # retrieve clip video url
         video_doesnt_exist = await is_404(clip.clyppy_url)
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
