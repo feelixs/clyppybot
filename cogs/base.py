@@ -17,7 +17,7 @@ import re
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 
-VERSION = "1.4.7b"
+VERSION = "1.4.8b"
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
