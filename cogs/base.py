@@ -145,7 +145,7 @@ class Base(Extension):
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
             a = await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
-            if a is None:
+            if not ctx.responded:
                 await ctx.send("Couldn't embed that url (not a video post)")
         except VideoTooLong:
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
