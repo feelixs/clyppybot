@@ -116,8 +116,10 @@ class AutoEmbedder:
             self.currently_downloading.append(parsed_id)
         try:
             await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
-        except (VideoTooLong, NoDuration):
-            pass
+        except VideoTooLong:
+            self.logger.info(f"VideoTooLong was reported for {clip_link}")
+        except NoDuration:
+            self.logger.info(f"NoDuration was reported for {clip_link}")
         except Exception as e:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
