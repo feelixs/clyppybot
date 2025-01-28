@@ -12,7 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404, VideoTooLong
+from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration
 
 
 INVALID_DL_PLATFORMS = []
@@ -116,6 +116,8 @@ class AutoEmbedder:
             self.currently_downloading.append(parsed_id)
         try:
             await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
+        except (VideoTooLong, NoDuration):
+            pass
         except Exception as e:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
@@ -136,10 +138,7 @@ class AutoEmbedder:
             await asyncio.sleep(0.1)
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, include_link=False) -> None:
-        try:
-            clip = await self.platform_tools.get_clip(clip_link)
-        except VideoTooLong:
-            clip = None
+        clip = await self.platform_tools.get_clip(clip_link)
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
