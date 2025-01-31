@@ -44,6 +44,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             filesize=os.path.getsize(file_path),
             duration=clip.duration,
             local_file_path=file_path,
+            video_name=None
         )
         #return {
         #    'width': clip.w,
@@ -76,6 +77,7 @@ class LocalFileInfo:
     width: int
     height: int
     filesize: float
+    video_name: Optional[str]
 
 
 async def upload_video(video_file_path) -> Dict:
@@ -250,7 +252,6 @@ class BaseClip(ABC):
         }
 
         try:
-            # Run extraction in a thread pool to avoid blocking
             return await asyncio.get_event_loop().run_in_executor(
                 None,
                 self._extract_info,
@@ -282,7 +283,15 @@ class BaseClip(ABC):
                 )
 
             if os.path.exists(filename):
-                return get_video_details(filename)
+                extracted = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self._extract_info,
+                    ydl_opts
+                )
+
+                d = get_video_details(filename)
+                d.video_name = extracted.video_name
+                return d
 
             self.logger.info(f"Could not find file")
             return None
