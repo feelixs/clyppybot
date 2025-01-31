@@ -112,6 +112,7 @@ class KickClip(BaseClip):
             if response['success']:
                 self.logger.info(f"Uploaded video: {response['file_path']}")
                 i = get_video_details(filename)
+                i.video_name = name
                 return DownloadResponse(
                     remote_url=response['file_path'],
                     local_file_path=filename,
