@@ -3,12 +3,15 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip, DownloadResponse
+from bot.classes import BaseClip, DownloadResponse, InvalidClipType
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pathlib import Path
+import re
+from urllib.parse import urlparse, parse_qs
+from yt_dlp import YoutubeDL
 
 
 class TwitchClip(BaseClip):
@@ -41,8 +44,52 @@ class TwitchClip(BaseClip):
         )
 
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        try:
+            media_assets_url = self._get_direct_clip_url()
+            ydl_opts = {
+                'format': dlp_format,
+                'quiet': True,
+                'no_warnings': True,
+            }
+            extracted = await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._extract_info,
+                ydl_opts
+            )
+            extracted.remote_url = media_assets_url
+            return extracted
+        except InvalidClipType:
+            self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io instead")
+            return await self.dl_download()  # download and host on clyppy.io
+
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         local_file = await super().dl_download(filename, dlp_format)
         return await self.upload_to_clyppyio(local_file)
+
+    def _get_direct_clip_url(self):
+        # only works for some twitch clip links
+        # for some reason only some twitch links are type media-assets2
+        # and others use https://static-cdn.jtvnw.net/twitch-clips-thumbnails-prod/, which idk yet how to directly link the perm mp4 link
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+        }
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                if not info.get('thumbnail'):
+                    raise Exception("No thumbnail URL found in clip info")
+                thumbnail_url = info['thumbnail']
+                if '/clips-media-assets2.twitch.tv/' not in thumbnail_url:
+                    raise InvalidClipType
+
+                self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
+                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', thumbnail_url)
+                return mp4_url
+        except InvalidClipType:
+            raise
+        except Exception as e:
+            raise Exception(f"Failed to extract clip URL: {str(e)}")
 
 
 class TwitchClipProcessor:

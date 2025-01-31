@@ -17,6 +17,10 @@ from datetime import datetime, timezone
 MAX_VIDEO_LEN_SEC = 180
 
 
+class InvalidClipType(Exception):
+    pass
+
+
 class VideoTooLong(Exception):
     pass
 
