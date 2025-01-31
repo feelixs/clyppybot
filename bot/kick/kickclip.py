@@ -61,7 +61,7 @@ class KickClip(BaseClip):
             m3u8_url = await scan_logs_for_m3u8(driver)
             clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span')
             if m3u8_url:
-                self.logger.info(f"Found m3u8 URL: {m3u8_url}")
+                self.logger.info(f"Found m3u8 URL: {m3u8_url}. Clip name: {clip_name}")
                 return m3u8_url, clip_name
 
             self.logger.error("No m3u8 URL found in logs")
@@ -77,7 +77,7 @@ class KickClip(BaseClip):
         try:
             m3u8_url, name = await self.get_m3u8_url()
         except:
-            m3u8_url = None
+            m3u8_url, name = None, None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
             return None
