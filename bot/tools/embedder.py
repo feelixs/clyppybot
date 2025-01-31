@@ -1,5 +1,5 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext
-from interactions import errors
+from interactions import errors, TYPE_THREAD_CHANNEL
 from interactions.api.events import MessageCreate
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
@@ -86,6 +86,10 @@ class AutoEmbedder:
                     return 1
                 if Permissions.READ_MESSAGE_HISTORY not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
+                if Permissions.SEND_MESSAGES_IN_THREADS not in event.message.channel.permissions_for(event.message.guild.me):
+                    if event.message.channel.type == TYPE_THREAD_CHANNEL:
+                        self.logger.info("missing thread perms")
+                        return 1
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
