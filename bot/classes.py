@@ -329,7 +329,7 @@ class BaseClip(ABC):
                 filesize=local_file_info.filesize,
                 height=local_file_info.height,
                 width=local_file_info.width,
-                video_name=None
+                video_name=local_file_info.video_name
             )
         else:
             self.logger.error(f"Failed to upload video: {response}")
