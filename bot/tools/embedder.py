@@ -87,7 +87,7 @@ class AutoEmbedder:
                 if Permissions.READ_MESSAGE_HISTORY not in event.message.channel.permissions_for(event.message.guild.me):
                     return 1
                 if Permissions.SEND_MESSAGES_IN_THREADS not in event.message.channel.permissions_for(event.message.guild.me):
-                    if event.message.channel.type == TYPE_THREAD_CHANNEL:
+                    if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         self.logger.info("missing thread perms")
                         return 1
             if event.message.author.id == self.bot.user.id:
