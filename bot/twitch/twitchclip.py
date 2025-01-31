@@ -43,7 +43,7 @@ class TwitchClip(BaseClip):
     async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         local_file = await super().dl_download(filename, dlp_format)
         return await self.upload_to_clyppyio(local_file)
-        
+
 
 class TwitchClipProcessor:
     def __init__(self, data: Optional[Dict[str, Any]], api: Any, logger: Any):
