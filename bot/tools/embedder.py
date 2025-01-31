@@ -219,11 +219,12 @@ class AutoEmbedder:
                 chn = respond_to.channel.name
                 chnid = respond_to.channel.id
 
+            # let's refresh on every request to see how discord caching works
             if clip.service == 'twitch':
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=20)
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=1)
                 expires_at = expires_at.timestamp()
             elif clip.service == 'medal':
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=12)  # try 12 for medal
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(seconds=1)
                 expires_at = expires_at.timestamp()
             else:
                 expires_at = None
