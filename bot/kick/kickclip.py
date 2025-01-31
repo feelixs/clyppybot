@@ -1,6 +1,7 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from typing import Optional
+from selenium.webdriver.common.by import By
+from typing import Optional, Tuple
 import asyncio
 import json
 import time
@@ -23,7 +24,7 @@ class KickClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def get_m3u8_url(self):
+    async def get_m3u8_url(self) -> Tuple[str, str]:
         """Get m3u8 URL using undetected-chromedriver"""
         caps = DesiredCapabilities.CHROME
         caps['goog:loggingPrefs'] = {'performance': 'ALL'}
@@ -58,22 +59,23 @@ class KickClip(BaseClip):
             driver.get(clip_url)
 
             m3u8_url = await scan_logs_for_m3u8(driver)
+            clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span')
             if m3u8_url:
                 self.logger.info(f"Found m3u8 URL: {m3u8_url}")
-                return m3u8_url
+                return m3u8_url, clip_name
 
             self.logger.error("No m3u8 URL found in logs")
-            return None
+            return None, None
 
         except Exception as e:
             self.logger.error(traceback.format_exc())
-            return None
+            return None, None
         finally:
             driver.quit()
 
     async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         try:
-            m3u8_url = await self.get_m3u8_url()
+            m3u8_url, name = await self.get_m3u8_url()
         except:
             m3u8_url = None
         if not m3u8_url:
@@ -117,7 +119,7 @@ class KickClip(BaseClip):
                     filesize=i.filesize,
                     height=i.height,
                     width=i.width,
-                    video_name=None
+                    video_name=name
                 )
             else:
                 self.logger.error(f"Failed to upload video: {response}")
