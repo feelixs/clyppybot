@@ -90,8 +90,15 @@ class YtClip(BaseClip):
 
             if os.path.exists(filename):
                 self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
-                i = get_video_details(filename)
-                return await self.upload_to_clyppyio(i)
+                extracted = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self._extract_info,
+                    ydl_opts
+                )
+
+                d = get_video_details(filename)
+                d.video_name = extracted.video_name
+                return await self.upload_to_clyppyio(d)
 
             self.logger.info(f"Could not find file")
             return None
