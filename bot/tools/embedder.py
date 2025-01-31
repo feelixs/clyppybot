@@ -227,6 +227,8 @@ class AutoEmbedder:
                 expires_at = None
             if clip.title is not None:
                 t = clip.title[:100]
+            elif response.video_name is not None:
+                t = response.video_name[:100]
             else:
                 t = None
             interaction_data = {
