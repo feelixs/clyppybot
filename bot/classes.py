@@ -191,7 +191,7 @@ class BaseClip(ABC):
                 else:
                     title = None
 
-                self.logger.info(f"Found [best] direct URL: {format_info['url']}")
+                #self.logger.info(f"Found [best] direct URL: {format_info['url']}")
                 return DownloadResponse(
                     remote_url=format_info['url'],
                     local_file_path=None,
