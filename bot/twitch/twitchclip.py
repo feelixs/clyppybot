@@ -3,7 +3,7 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip
+from bot.classes import BaseClip, DownloadResponse
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
@@ -40,6 +40,10 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        local_file = await super().dl_download(filename, dlp_format)
+        return await self.upload_to_clyppyio(local_file)
+        
 
 class TwitchClipProcessor:
     def __init__(self, data: Optional[Dict[str, Any]], api: Any, logger: Any):
