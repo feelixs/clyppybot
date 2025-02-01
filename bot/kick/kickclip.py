@@ -8,7 +8,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD
+from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD, KickClipFailure
 
 
 class KickClip(BaseClip):
@@ -141,8 +141,8 @@ class KickClip(BaseClip):
                     )
                 else:
                     self.logger.error(f"Failed to upload video: {response}")
-                    return None
+                    raise KickClipFailure
 
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
-            return None
+            raise KickClipFailure

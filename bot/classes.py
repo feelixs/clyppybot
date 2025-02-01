@@ -32,6 +32,11 @@ class NoDuration(Exception):
     pass
 
 
+class KickClipFailure(Exception):
+    pass
+
+
+
 async def is_404(url: str, logger=None) -> bool:
     try:
         async with aiohttp.ClientSession() as session:

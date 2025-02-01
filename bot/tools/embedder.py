@@ -12,7 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration
+from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, KickClipFailure
 
 
 INVALID_DL_PLATFORMS = []
@@ -125,6 +125,8 @@ class AutoEmbedder:
             self.logger.info(f"VideoTooLong was reported for {clip_link}")
         except NoDuration:
             self.logger.info(f"NoDuration was reported for {clip_link}")
+        except KickClipFailure:
+            self.logger.info(f"KickClipFailure was reported for {clip_link}")
         except Exception as e:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
