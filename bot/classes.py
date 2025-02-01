@@ -33,7 +33,7 @@ async def is_404(url: str) -> bool:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
-                return response.status == 404
+                return response.status != 200
     except aiohttp.ClientError:
         # Handle connection errors, invalid URLs etc
         return True  # Consider failed connections as effectively 404
