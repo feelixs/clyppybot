@@ -204,7 +204,7 @@ class BaseClip(ABC):
                     remote_url=format_info['url'],
                     local_file_path=None,
                     duration=duration,
-                    filesize=info.get('filesize', 0),
+                    filesize=0,  # since yt-dlp was rigged to return an url, video is hosted on another cdn
                     width=format_info['width'],
                     height=format_info['height'],
                     video_name=title
@@ -240,7 +240,7 @@ class BaseClip(ABC):
                         remote_url=format_info['url'],
                         local_file_path=None,
                         duration=duration,
-                        filesize=best_format.get('filesize', 0),
+                        filesize=0,
                         width=format_info['width'],
                         height=format_info['height'],
                         video_name=title
