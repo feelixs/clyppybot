@@ -62,8 +62,8 @@ class RumbleClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
-        d = await super().download(filename, dlp_format)
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+        d = await super().download(filename, dlp_format, can_send_files)
         if d.duration is None:
             raise NoDuration
         if d.duration > MAX_VIDEO_LEN_SEC:

@@ -43,7 +43,7 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         try:
             media_assets_url = self._get_direct_clip_url()
             ydl_opts = {
@@ -60,12 +60,13 @@ class TwitchClip(BaseClip):
             extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
             return extracted
         except InvalidClipType:
-            return await super().download(filename=filename, dlp_format=dlp_format)  # download temporary v2 link (default)
+            # download temporary v2 link (default)
+            return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io")
-        local_file = await super().dl_download(filename, dlp_format)
+        local_file = await super().dl_download(filename, dlp_format, can_send_files)
         return await self.upload_to_clyppyio(local_file)
 
     def _get_direct_clip_url(self):
