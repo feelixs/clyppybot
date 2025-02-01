@@ -135,6 +135,8 @@ class Base(Extension):
                    )
     async def embed(self, ctx: SlashContext, url: str):
         await ctx.defer(ephemeral=False)
+        if not url.startswith("https://"):
+            url = "https://" + url
         platform, slug = compute_platform(url, self.bot)
         if platform is None:
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
