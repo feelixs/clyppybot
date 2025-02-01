@@ -7,8 +7,7 @@ import logging
 import aiohttp
 import os
 from bot.tools import AutoEmbedder
-from bot.twitch.twitchclip import TwitchClipProcessor
-from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
+from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
 from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
