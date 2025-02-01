@@ -6,7 +6,7 @@ import aiohttp
 import os
 from typing import Optional, Tuple
 from bot.kick import KickMisc
-from bot.classes import BaseClip, BaseMisc, VideoTooLong
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration
 
 
 class RedditMisc(BaseMisc):
@@ -149,7 +149,7 @@ class RedditMisc(BaseMisc):
         is_vid, ext_info = await self.is_video(url)
         if not is_vid:
             self.logger.info(f"{url} is_video=False")
-            return None
+            raise NoDuration
         self.logger.info(f"{url} is_video=True")
 
         if re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url):  # retrieve the actual slug from a share link
@@ -157,7 +157,7 @@ class RedditMisc(BaseMisc):
                 slug = await self._get_actual_slug(url)
                 self.logger.info(f"Retrieving actual slug from shared url {url}")
             except:
-                return None
+                raise NoDuration
 
         valid = await self.is_shortform(url)
         if not valid:
