@@ -47,6 +47,8 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
 
     xpatterns = [
         r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?fxtwitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?fixupx\.com/\w+/status/(\d+)',
         r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
     ]
     for pattern in xpatterns:
