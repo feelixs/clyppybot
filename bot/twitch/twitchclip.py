@@ -59,10 +59,11 @@ class TwitchClip(BaseClip):
             extracted.remote_url = media_assets_url
             return extracted
         except InvalidClipType:
-            self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io instead")
-            return await self.dl_download(filename=filename, dlp_format=dlp_format)  # download and host on clyppy.io
+            return await self.download(filename=filename, dlp_format=dlp_format)  # download temporary v2 link (default)
 
     async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        # download & upload to clyppy.io
+        self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io")
         local_file = await super().dl_download(filename, dlp_format)
         return await self.upload_to_clyppyio(local_file)
 
