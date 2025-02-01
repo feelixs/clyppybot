@@ -152,7 +152,10 @@ class Base(Extension):
             return
 
         if slug in self.currently_downloading_for_embed:
-            await wait_for_download(slug)
+            try:
+                await wait_for_download(slug)
+            except TimeoutError:
+                pass  # continue with the dl anyway
         else:
             self.currently_downloading_for_embed.append(slug)
 
