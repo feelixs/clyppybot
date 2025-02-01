@@ -273,9 +273,12 @@ class AutoEmbedder:
                     # sometimes the server will generate a new and improved clyppy id
                     # to bypass invalid discord caches of old clyppy urls
                     if result['video_page_id']:
-                        new_url = f'https://clyppy.io/{result["video_page_id"]}'
-                        self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with {new_url}")
-                        clip.clyppy_url = new_url
+                        new_id = result["video_page_id"]
+                        self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
+                        clip.clyppy_id = new_id
+                else:
+                    self.logger.info(f"")
+                    return
 
                 if isinstance(respond_to, SlashContext):
                     await respond_to.send(clip.clyppy_url, components=comp)
