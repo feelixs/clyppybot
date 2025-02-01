@@ -275,7 +275,7 @@ class AutoEmbedder:
                     if result['video_page_id']:
                         new_id = result["video_page_id"]
                         self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
-                        clip.clyppy_id = new_id
+                        clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
                 else:
                     self.logger.info(f"")
                     return
