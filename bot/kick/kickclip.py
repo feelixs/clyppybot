@@ -82,7 +82,7 @@ class KickClip(BaseClip):
             m3u8_url, name = None, None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
-            return None
+            return KickClipFailure
 
         # Download using ffmpeg
         try:
