@@ -119,7 +119,7 @@ class KickClip(BaseClip):
                     can_be_uploaded=True
                 )
             else:
-                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
+                self.logger.info(f"Uploading the downloaded kick video to https://clyppy.io/api/addclip/: {filename}")
                 try:
                     response = await upload_video(filename)
                 except Exception as e:
