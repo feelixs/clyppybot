@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 
 MAX_VIDEO_LEN_SEC = 180
+MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 
 
 class InvalidClipType(Exception):
@@ -76,6 +77,7 @@ class DownloadResponse:
     height: int
     filesize: float
     video_name: Optional[str]
+    can_be_uploaded: Optional[bool]
 
 
 @dataclass
@@ -86,6 +88,7 @@ class LocalFileInfo:
     height: int
     filesize: float
     video_name: Optional[str]
+    can_be_uploaded: Optional[bool]
 
 
 async def upload_video(video_file_path) -> Dict:
@@ -207,7 +210,8 @@ class BaseClip(ABC):
                     filesize=info.get('filesize', 0),
                     width=format_info['width'],
                     height=format_info['height'],
-                    video_name=title
+                    video_name=title,
+                    can_be_uploaded=None
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -243,12 +247,24 @@ class BaseClip(ABC):
                         filesize=best_format.get('filesize', 0),
                         width=format_info['width'],
                         height=format_info['height'],
-                        video_name=title
+                        video_name=title,
+                        can_be_uploaded=None
                     )
 
             raise ValueError("No suitable URL found in video info")
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+        resp = await self._fetch_external_url(dlp_format)
+        if MAX_FILE_SIZE_FOR_DISCORD > resp.filesize > 0 and can_send_files:
+            self.logger.info(f"{self.id} can be uploaded to discord...")
+            resp.can_be_uploaded = True
+            resp.filesize = 0  # if it's uploaded to discord, we don't need to worry about monitoring its space on clyppy.io
+            return resp
+        else:
+            resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
+            return resp
+
+    async def _fetch_external_url(self, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
@@ -260,18 +276,16 @@ class BaseClip(ABC):
         }
 
         try:
-            extracted = await asyncio.get_event_loop().run_in_executor(
+            return await asyncio.get_event_loop().run_in_executor(
                 None,
                 self._extract_info,
                 ydl_opts
             )
-            extracted.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
-            return extracted
         except Exception as e:
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             return None
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[LocalFileInfo]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[LocalFileInfo]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             return get_video_details(filename)
@@ -301,6 +315,11 @@ class BaseClip(ABC):
 
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
+                if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
+                    self.logger.info(f"{self.id} can be uploaded to discord...")
+                    d.can_be_uploaded = True
+                    d.filesize = 0
+
                 return d
 
             self.logger.info(f"Could not find file")

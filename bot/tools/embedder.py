@@ -146,6 +146,7 @@ class AutoEmbedder:
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, include_link=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link)
+        has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
@@ -164,7 +165,8 @@ class AutoEmbedder:
                     clip=clip,
                     guild_ctx=guild,
                     always_download=True,
-                    overwrite_on_server=True
+                    overwrite_on_server=True,
+                    can_send_files=has_file_perms
                 )
                 if response is None:
                     self.logger.info(f"Failed to fetch clip for server upload.. {clip_link} Cancelling")
@@ -181,7 +183,8 @@ class AutoEmbedder:
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,
-                    guild_ctx=guild
+                    guild_ctx=guild,
+                    can_send_files=has_file_perms
                 )
                 if response is None:
                     self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")

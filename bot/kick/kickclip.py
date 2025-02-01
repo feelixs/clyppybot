@@ -1,3 +1,5 @@
+import os.path
+
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
@@ -6,7 +8,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details
+from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD
 
 
 class KickClip(BaseClip):
@@ -73,7 +75,7 @@ class KickClip(BaseClip):
         finally:
             driver.quit()
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         try:
             m3u8_url, name = await self.get_m3u8_url()
         except:
@@ -103,28 +105,43 @@ class KickClip(BaseClip):
                 self.logger.error("FFmpeg download failed")
                 return None
 
-            self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
-            try:
-                response = await upload_video(filename)
-            except Exception as e:
-                self.logger.error(f"Failed to upload video: {str(e)}")
-                return None
-            if response['success']:
-                self.logger.info(f"Uploaded video: {response['file_path']}")
+            if MAX_FILE_SIZE_FOR_DISCORD > os.path.getsize(filename) > 0 and can_send_files:
                 i = get_video_details(filename)
                 i.video_name = name
                 return DownloadResponse(
-                    remote_url=response['file_path'],
+                    remote_url=None,
                     local_file_path=filename,
                     duration=i.duration,
                     filesize=i.filesize,
                     height=i.height,
                     width=i.width,
-                    video_name=name
+                    video_name=name,
+                    can_be_uploaded=True
                 )
             else:
-                self.logger.error(f"Failed to upload video: {response}")
-                return None
+                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
+                try:
+                    response = await upload_video(filename)
+                except Exception as e:
+                    self.logger.error(f"Failed to upload video: {str(e)}")
+                    return None
+                if response['success']:
+                    self.logger.info(f"Uploaded video: {response['file_path']}")
+                    i = get_video_details(filename)
+                    i.video_name = name
+                    return DownloadResponse(
+                        remote_url=response['file_path'],
+                        local_file_path=filename,
+                        duration=i.duration,
+                        filesize=i.filesize,
+                        height=i.height,
+                        width=i.width,
+                        video_name=name,
+                        can_be_uploaded=False
+                    )
+                else:
+                    self.logger.error(f"Failed to upload video: {response}")
+                    return None
 
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")

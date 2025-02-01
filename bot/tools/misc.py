@@ -46,7 +46,8 @@ class DownloadManager:
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
     async def download_clip(self, clip: BaseClip, guild_ctx: GuildType,
-                            always_download=False, overwrite_on_server=False) -> Optional[DownloadResponse]:
+                            always_download=False, overwrite_on_server=False,
+                            can_send_files=False) -> Optional[DownloadResponse]:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
         desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
         async with self._semaphore:
@@ -55,9 +56,9 @@ class DownloadManager:
                 return None
             self._parent.logger.info("Run clip.download()")
         if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
-            r = await clip.dl_download(filename=desired_filename)
+            r = await clip.dl_download(filename=desired_filename, can_send_files=can_send_files)
         else:
-            r = await clip.download(filename=desired_filename)
+            r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
         if r is None:
             return None
 
