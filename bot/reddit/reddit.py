@@ -119,6 +119,8 @@ class RedditMisc(BaseMisc):
             r'https?://(?:www\.|old\.)?reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?(?:\?[^/]+)?',
             # Short links
             r'https?://(?:www\.)?redd\.it/[a-zA-Z0-9]+',
+            # Video links (v.redd.it)
+            r'https?://v\.redd\.it/[a-zA-Z0-9]+',
             # Gallery links
             r'https?://(?:www\.)?reddit\.com/gallery/[a-zA-Z0-9]+',
             # User profile posts
