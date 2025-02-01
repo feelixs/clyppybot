@@ -193,7 +193,6 @@ class AutoEmbedder:
                     return
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
-
                 response = DownloadResponse(
                     remote_url=None,
                     local_file_path=None,
