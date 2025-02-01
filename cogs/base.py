@@ -176,7 +176,7 @@ class Base(Extension):
             timeout_task.cancel()
             try:
                 self.currently_downloading_for_embed.remove(slug)
-            except:
+            except ValueError:
                 pass
 
     @slash_command(name="help", description="Get help using Clyppy")
