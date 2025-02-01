@@ -187,7 +187,7 @@ class AutoEmbedder:
                     self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
                     return
             else:
-                self.logger.info("Video already exists!")
+                self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 # video already exists
                 response = DownloadResponse(
                     remote_url=None,
