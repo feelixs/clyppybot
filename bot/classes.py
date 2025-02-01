@@ -29,10 +29,12 @@ class NoDuration(Exception):
     pass
 
 
-async def is_404(url: str) -> bool:
+async def is_404(url: str, logger=None) -> bool:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
+                if logger is not None:
+                    logger.info(f"Got response status {response.status} for {url}")
                 return response.status != 200
     except aiohttp.ClientError:
         # Handle connection errors, invalid URLs etc
