@@ -103,7 +103,7 @@ class KickClip(BaseClip):
 
             if process.returncode != 0:
                 self.logger.error("FFmpeg download failed")
-                return None
+                raise KickClipFailure
 
             if MAX_FILE_SIZE_FOR_DISCORD > os.path.getsize(filename) > 0 and can_send_files:
                 i = get_video_details(filename)
