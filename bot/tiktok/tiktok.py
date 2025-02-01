@@ -1,5 +1,5 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration
 
 
 class TikTokMisc(BaseMisc):
@@ -24,7 +24,7 @@ class TikTokMisc(BaseMisc):
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")
-            return None
+            raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
         valid = await self.is_shortform(url)
