@@ -169,7 +169,8 @@ class Base(Extension):
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
         except KickClipFailure:
             await ctx.send(f"Unexpected error while trying to download this kick clip")
-        except:
+        except Exception as e:
+            self.logger.info(f'Unexpected error in /embed: {str(e)}')
             await ctx.send(f"An unexpected error occurred with your input `{url}`")
         finally:
             timeout_task.cancel()
