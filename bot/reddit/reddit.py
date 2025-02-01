@@ -115,22 +115,13 @@ class RedditMisc(BaseMisc):
                     bool: True if URL matches any known Reddit format
                 """
         patterns = [
-            # Standard post URLs (www, old, and bare domain)
-            r'https?://(?:www\.|old\.)?reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?(?:\?[^/]+)?',
-            # Short links
-            r'https?://(?:www\.)?redd\.it/[a-zA-Z0-9]+',
-            # Video links (v.redd.it)
-            r'https?://v\.redd\.it/[a-zA-Z0-9]+',
-            # Gallery links
-            r'https?://(?:www\.)?reddit\.com/gallery/[a-zA-Z0-9]+',
-            # User profile posts
-            r'https?://(?:www\.|old\.)?reddit\.com/user/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?(?:\?[^/]*)?',
-            # Crosspost/duplicate links
-            r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/duplicates/[a-zA-Z0-9]+(?:/[^/]+/?)?',
-            # Mobile versions (i.reddit and m.reddit)
-            r'https?://[im]\.reddit\.com/r/[a-zA-Z0-9_-]+/comments/[a-zA-Z0-9]+(?:/[^/]+/?)?',
-            # Share links
-            r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+'
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+            r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
+            r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
+            r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
+            r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
         ]
         # Combine all patterns with OR operator
         combined_pattern = '|'.join(f'({pattern})' for pattern in patterns)
