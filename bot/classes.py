@@ -58,7 +58,8 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             filesize=os.path.getsize(file_path),
             duration=clip.duration,
             local_file_path=file_path,
-            video_name=None
+            video_name=None,
+            can_be_uploaded=None
         )
         #return {
         #    'width': clip.w,
