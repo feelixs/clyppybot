@@ -174,7 +174,10 @@ class Base(Extension):
             await ctx.send(f"An unexpected error occurred with your input `{url}`")
         finally:
             timeout_task.cancel()
-            self.currently_downloading_for_embed.remove(slug)
+            try:
+                self.currently_downloading_for_embed.remove(slug)
+            except:
+                pass
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
