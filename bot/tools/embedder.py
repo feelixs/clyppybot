@@ -256,6 +256,7 @@ class AutoEmbedder:
                 'response_time_seconds': 0,
                 'total_servers_now': len(self.bot.guilds),
                 'generated_id': clip.clyppy_id,
+                'original_id': clip.id,
                 'video_file_size': response.filesize,
                 'video_file_dur': response.duration,
                 'expires_at_timestamp': expires_at,
@@ -267,6 +268,15 @@ class AutoEmbedder:
                 except Exception as e:
                     self.logger.info(f"Failed to post interaction to API: {e}\ninteraction_data: {interaction_data}")
                     raise
+
+                if result['success']:
+                    # sometimes the server will generate a new and improved clyppy id
+                    # to bypass invalid discord caches of old clyppy urls
+                    if result['video_page_id']:
+                        new_url = f'https://clyppy.io/{result["video_page_id"]}'
+                        self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with {new_url}")
+                        clip.clyppy_url = new_url
+
                 if isinstance(respond_to, SlashContext):
                     await respond_to.send(clip.clyppy_url, components=comp)
                 else:
