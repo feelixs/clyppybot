@@ -1,19 +1,49 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.common.by import By
-from typing import Optional, Tuple
-import asyncio
-import json
+from typing import Optional
+from bot.classes import BaseMisc, BaseClip
+import re
 import time
+import json
+import asyncio
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details
+from bot.classes import DownloadResponse, upload_video, get_video_details
 
 
-class KickClip(BaseClip):
-    def __init__(self, slug, user):
-        self._service = "kick"
-        self._url = f"https://kick.com/{user}/clips/clip_{slug}"
-        self.user = user
+class RedMisc(BaseMisc):
+    def __init__(self):
+        super().__init__()
+        self.platform_name = "RedNote"
+
+    def parse_clip_url(self, url: str) -> Optional[str]:
+        if url.endswith("/"):
+            url = url[:-1]  # remove trailing slash
+        slug = str(url).split('/')[-1]
+        if "?" in slug:
+            slug = slug.split('?')[0]
+        return slug
+
+    def is_clip_link(self, url: str) -> bool:
+        """
+        Validates if a given URL is a valid Xiaohongshu post link.
+        """
+        patterns = [
+            # Regular post pattern
+            r'^https?://(?:www\.)?xiaohongshu\.com/discovery/item/[\w-]+',
+            # Share link pattern
+            r'^https?://(?:www\.)?xiaohongshu\.com/explore/[\w-]+'
+        ]
+        return any(bool(re.match(pattern, url)) for pattern in patterns)
+
+    async def get_clip(self, url: str) -> Optional['RedClip']:
+        slug = self.parse_clip_url(url)
+        return RedClip(slug)
+
+
+class RedClip(BaseClip):
+    def __init__(self, slug):
+        self._service = "rednote"
+        self._url = f"https://xiaohongshu.com/explore/{slug}"
         super().__init__(slug)
 
     @property
@@ -24,7 +54,7 @@ class KickClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def get_m3u8_url(self) -> Tuple[str, str]:
+    async def get_m3u8_url(self):
         """Get m3u8 URL using undetected-chromedriver"""
         caps = DesiredCapabilities.CHROME
         caps['goog:loggingPrefs'] = {'performance': 'ALL'}
@@ -37,6 +67,7 @@ class KickClip(BaseClip):
         self.logger.info(f"Started browser and monitoring network on url: {self.url}...")
 
         async def scan_logs_for_m3u8(driver, timeout=10):
+            url_pattern = re.compile(r'https://sns-video-ak\.xhscdn\.com/stream/\d+/\d+/\d+/[a-f0-9]+_\d+\.mp4')
             start_time = time.time()
             while time.time() - start_time < timeout:
                 browser_log = driver.get_log('performance')
@@ -47,7 +78,7 @@ class KickClip(BaseClip):
                                 and 'request' in event['params']
                                 and 'url' in event['params']['request']):
                             url = event['params']['request']['url']
-                            if 'playlist.m3u8' in url:
+                            if url_pattern.match(url):
                                 return url
                     except Exception:
                         continue
@@ -55,29 +86,28 @@ class KickClip(BaseClip):
             return None
 
         try:
-            clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
+            clip_url = f"https://www.xiaohongshu.com/explore/{self.id}"
             driver.get(clip_url)
 
             m3u8_url = await scan_logs_for_m3u8(driver)
-            clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
             if m3u8_url:
-                self.logger.info(f"Found m3u8 URL: {m3u8_url}. Clip name: {clip_name}")
-                return m3u8_url, clip_name
+                self.logger.info(f"Found mp4 URL: {m3u8_url}")
+                return m3u8_url
 
-            self.logger.error("No m3u8 URL found in logs")
-            return None, None
+            self.logger.error("No mp4 URL found in logs")
+            return None
 
         except Exception as e:
             self.logger.error(traceback.format_exc())
-            return None, None
+            return None
         finally:
             driver.quit()
 
     async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         try:
-            m3u8_url, name = await self.get_m3u8_url()
+            m3u8_url = await self.get_m3u8_url()
         except:
-            m3u8_url, name = None, None
+            m3u8_url = None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
             return None
@@ -112,7 +142,6 @@ class KickClip(BaseClip):
             if response['success']:
                 self.logger.info(f"Uploaded video: {response['file_path']}")
                 i = get_video_details(filename)
-                i.video_name = name
                 return DownloadResponse(
                     remote_url=response['file_path'],
                     local_file_path=filename,
@@ -120,7 +149,7 @@ class KickClip(BaseClip):
                     filesize=i.filesize,
                     height=i.height,
                     width=i.width,
-                    video_name=name
+                    video_name=None
                 )
             else:
                 self.logger.error(f"Failed to upload video: {response}")

@@ -4,16 +4,15 @@ import re
 import asyncio
 import aiohttp
 import os
-from typing import Optional
+from typing import Optional, Tuple
 from bot.kick import KickMisc
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, VideoTooLong
 
 
 class RedditMisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "Reddit"
-        self.silence_invalid_url = True
         self.VALID_EXT_VIDEO_DOMAINS = [
             'twitch.tv',
             'www.twitch.tv',
@@ -36,16 +35,16 @@ class RedditMisc(BaseMisc):
         """
         # Try to extract post ID from various URL formats
         patterns = [
-            r'reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
-            r'redd\.it/([a-zA-Z0-9]+)',                      # Short links
-            r'reddit\.com/gallery/([a-zA-Z0-9]+)',          # Gallery links
-            r'reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
-            r'reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',   # Crossposts
-            r'reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'          # Share links
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+            r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
+            r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
+            r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, url)
             if match:
                 return match.group(1)
         return None
@@ -163,7 +162,7 @@ class RedditMisc(BaseMisc):
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            return None
+            raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
         return RedditClip(slug, ext_info)
@@ -171,43 +170,28 @@ class RedditMisc(BaseMisc):
 
 class RedditClip(BaseClip):
     def __init__(self, slug, ext):
-        super().__init__(slug)
-        self.service = "reddit"
-        self.url = f"https://redd.it/{slug}"
+        self._service = "reddit"
+        self._url = f"https://redd.it/{slug}"
         self.external_link = ext
+        super().__init__(slug)
 
-    async def _download_kick(self, filename):
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+    async def _download_kick(self, filename, dlp_format='best/bv*+ba') -> Optional[Tuple[str, float]]:
         k = KickMisc()
         kclip = await k.get_clip(self.external_link)
-        return await kclip.download(filename)
+        return await kclip.download(filename, dlp_format)
 
-    async def download(self, filename: str):
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[Tuple[str, float]]:
         if self.external_link is None:
             pass
         elif 'kick' in self.external_link:  # external_platform is a domain
             self.logger.info(f"Running download for external link {self.external_link}")
-            return await self._download_kick(filename)
-        self.logger.info(f"Downloading with yt-dlp: {filename}")
-        ydl_opts = {
-            'format': 'best/bv*+ba',
-            'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
-        }
-
-        # Download using yt-dlp
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                return filename
-            self.logger.info(f"Could not find file")
-            return None
-        except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
-            return None
+            return await self._download_kick(filename, dlp_format)
+        return await super().download(dlp_format=dlp_format)

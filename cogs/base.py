@@ -1,3 +1,4 @@
+import asyncio
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
     Permissions, ActivityType, Activity, Task, IntervalTrigger
 from interactions.api.events.discord import GuildJoin, GuildLeft
@@ -5,10 +6,103 @@ from bot.tools import create_nexus_str, GuildType
 import logging
 import aiohttp
 import os
-from bot.twitch.twitchclip import TwitchClipProcessor
-from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_TOO_LARGE, POSSIBLE_EMBED_BUTTONS
+from bot.tools import AutoEmbedder
+from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
+from bot.tools.misc import SUPPORT_SERVER_URL
+from typing import Tuple, Optional
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
+import re
 
-VERSION = "1.4.3b"
+
+LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
+
+VERSION = "1.5b"
+
+
+def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
+    """Determine the platform and clip ID from the URL"""
+    # Medal.tv patterns
+    medal_patterns = [
+        r'^https?://(?:www\.)?medal\.tv/games/[\w-]+/clips/([\w-]+)',
+        r'^https?://(?:www\.)?medal\.tv/clips/([\w-]+)'
+    ]
+    for pattern in medal_patterns:
+        if match := re.match(pattern, url):
+            return bot.medal, match.group(1)
+
+    # Kick.com pattern
+    kick_pattern = r'^https?://(?:www\.)?kick\.com/[\w-]+(?:/clips/|/\?clip=)(?:clip_)?([\w-]+)'
+    if match := re.match(kick_pattern, url):
+        return bot.kick, match.group(1)
+
+    # Twitch patterns
+    twitch_patterns = [
+        r'https?://(?:www\.|m\.)?clips\.twitch\.tv/([\w-]+)',
+        r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)'
+    ]
+    for pattern in twitch_patterns:
+        if match := re.match(pattern, url):
+            return bot.twitch, match.group(1)
+
+    xpatterns = [
+        r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
+    ]
+    for pattern in xpatterns:
+        if match := re.match(pattern, url):
+            return bot.x, match.group(1)
+
+    ytpatterns = [
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?youtube\.com/clip/([^"&?/ ]{11})'  # New pattern for clip URLs
+        ]
+    for pattern in ytpatterns:
+        if match := re.match(pattern, url):
+            return bot.yt, match.group(1)
+
+    reddit_patterns = [
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
+        r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
+        r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
+        r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
+    ]
+    for pattern in reddit_patterns:
+        if match := re.match(pattern, url):
+            return bot.reddit, match.group(1)
+
+    bsky_patterbs = r'(?:https?://)?(?:www\.)?bsky\.app/profile/([^/]+)/post/([^/]+)'
+    if match := re.match(bsky_patterbs, url):
+        return bot.bsky, match.group(2)
+
+    return None, None
+
+
+async def send_webhook(title: str, load: str, color=None):
+    # Create a rich embed
+    if color is None:
+        color = 5814783  # Blue color
+    payload = {
+        "embeds": [{
+            "title": title,
+            "description": load,
+            "color": color,
+        }]
+    }
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(LOGGER_WEBHOOK, json=payload) as response:
+                if response.status == 204:
+                    print(f"Successfully sent logger webhook: {load}")
+                else:
+                    print(f"Failed to send logger webhook. Status: {response.status}")
+                return response.status
+        except Exception as e:
+            print(f"Error sending log webhook: {str(e)}")
+            return None
 
 
 class Base(Extension):
@@ -18,6 +112,13 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
+    @staticmethod
+    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
+        """Handle timeout for embed processing"""
+        await asyncio.sleep(amt)
+        if not ctx.responded:
+            await ctx.send(f"An error occurred with your input `{url}`")
+
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         await ctx.defer()
@@ -25,13 +126,40 @@ class Base(Extension):
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
 
+    @slash_command(name="embed", description="Embed a video link in this chat",
+                   options=[SlashCommandOption(name="url",
+                                               description="The YouTube, Twitch, etc. link to embed",
+                                               required=True,
+                                               type=OptionType.STRING)
+                            ]
+                   )
+    async def embed(self, ctx: SlashContext, url: str):
+        await ctx.defer(ephemeral=False)
+        platform, slug = compute_platform(url, self.bot)
+        if platform is None:
+            await ctx.send("Couldn't embed that url (invalid/incompatible)")
+            return
+
+        timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
+        e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
+        try:
+            await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
+        except NoDuration:
+            await ctx.send("Couldn't embed that url (not a video post)")
+        except VideoTooLong:
+            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
+        except:
+            await ctx.send(f"An unexpected error occurred with your input `{url}`")
+        finally:
+            timeout_task.cancel()
+
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         about = (
-            "Clyppy automatically converts video links into native Discord uploads! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
+            "Clyppy automatically converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
             "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your links, please check that it has the correct permissions in your Discord channel."
-            " Required permissions are: `Attach Files`, `Send Messages`\n\n"
+            " Required permissions are: `Send Links`, `Send Messages`\n\n"
             "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.description += create_nexus_str()
@@ -104,7 +232,7 @@ class Base(Extension):
     #        return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
     #    clipfile, _ = await self.bot.tools.dl.download_clip(
     #        clip=clip,
-    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name),
+    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name, True),
     #        root_msg=ctx.message,
     #        too_large_setting='trim'
     #    )
@@ -160,8 +288,8 @@ class Base(Extension):
             return await ctx.send("An error occurred while setting the error channel. Please try again.")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
-                   options=[SlashCommandOption(name="too_large", type=OptionType.STRING,
-                                               description="Choose what Clyppy should do with large files",
+                   options=[SlashCommandOption(name="quickembeds", type=OptionType.BOOLEAN,
+                                               description="Should Clyppy respond to links? True=enabled, False=disabled, default=True",
                                                required=False),
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
@@ -169,12 +297,12 @@ class Base(Extension):
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)])
-    async def settings(self, ctx: SlashContext, too_large: str = None, on_error: str = None, embed_buttons: str = None):
+    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
             return
-        if ctx.guild.id == ctx.author.id:  # in case they patch the "dm guild is None" situation
+        if ctx.guild.id == ctx.author.id:
             await ctx.send("This command is only available in servers.")
             return
 
@@ -182,30 +310,28 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if too_large is None and on_error is None and embed_buttons is None:
+        if on_error is None and embed_buttons is None and quickembeds is None:
             await self._send_settings_help(ctx, False)
             return
 
+        current_embed_setting = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        chosen_embed = current_embed_setting
+        if quickembeds is not None:
+            chosen_embed = quickembeds
+            self.bot.guild_settings.set_embed_enabled(ctx.guild.id, quickembeds)
+
         # Get current settings
         current_setting = self.bot.guild_settings.get_setting(ctx.guild.id)
-        current_too_large = POSSIBLE_TOO_LARGE[int(current_setting[0])]
         current_on_error = POSSIBLE_ON_ERRORS[int(current_setting[1])]
 
         # Use current values if not specified
-        too_large = too_large or current_too_large
         on_error = on_error or current_on_error
-
-        if too_large not in POSSIBLE_TOO_LARGE:
-            await ctx.send(f"Option '{too_large}' not a valid **too_large** setting!\n"
-                           f"Must be one of `{POSSIBLE_TOO_LARGE}`")
-            return
 
         if on_error not in POSSIBLE_ON_ERRORS:
             await ctx.send(f"Option '{on_error}' not a valid **on_error** setting!\n"
                            f"Must be one of `{POSSIBLE_ON_ERRORS}`")
             return
 
-        too_idx = POSSIBLE_TOO_LARGE.index(too_large)
         err_idx = POSSIBLE_ON_ERRORS.index(on_error)
 
         # Handle embed settings
@@ -220,11 +346,12 @@ class Base(Extension):
 
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
 
-        self.bot.guild_settings.set_setting(ctx.guild.id, f"{too_idx}{err_idx}")
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
+
+        chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
             "Successfully changed settings:\n\n"
-            f"**too_large**: {too_large}\n"
+            f"**quickembeds**: {chosen_embed}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}"
         )
@@ -232,25 +359,27 @@ class Base(Extension):
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
+        qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        qe = "enabled" if qe else "disabled"
         es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
-            '**too_large** Choose what Clyppy does with files larger than Discord\'s limit (8MB):\n'
-            ' - `trim`: Trim & upload the video so it\'s within Discord\'s size limit.\n'
-            ' - `info`: Don\'t upload large files at all.\n'
-            ' - `dm`: Don\'t upload, and DM the message author.\n\n'
+            '**quickembeds** Should Clyppy automatically respond to links sent in this server? If disabled, '
+            'users can still embed videos using the `/embed` command.\n'
+            ' - `True`: enabled\n'
+            ' - `False`: disabled\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'
             '**embed_buttons** Choose which buttons Clyppy shows under embedded videos:\n'
             ' - `none`: No buttons, just the video.\n'
             ' - `view`: A button to the original clip.\n'
-            ' - `dl`: A button to download the original, untrimmed, video file (on compatible clips).\n'
-            ' - `all`: Shows all available buttons.\n'
-            f'**Current Settings:**\n{cs}\n**embed_buttons**: {es}\n\n'
-            'Something missing? Please **Suggest a Feature** using the link below.'
+            ' - `dl`: A button to download the original video file (on compatible clips).\n'
+            ' - `all`: Shows all available buttons.\n\n'
+            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
+            f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
         if prepend_admin:
@@ -272,11 +401,34 @@ class Base(Extension):
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
             self.logger.info(f'Joined new guild: {event.guild.name}')
+            w = None
+            if event.guild.widget_enabled:
+                w = await event.guild.fetch_widget()
+            await send_webhook(
+                title=f'Joined new guild: {event.guild.name}',
+                load=f"id - {event.guild.id}\n"
+                     f"large - {event.guild.large}\n"
+                     f"members - {event.guild.member_count}\n"
+                     f"widget - {w}\n",
+                color=65280  # green
+            )
+            await self.post_servers(len(self.bot.guilds))
 
     @listen()
     async def on_guild_left(self, event: GuildLeft):
         if self.ready:
             self.logger.info(f'Left guild: {event.guild.name}')
+            w = None
+            if event.guild.widget_enabled:
+                w = await event.guild.fetch_widget()
+            await send_webhook(
+                title=f'Left guild: {event.guild.name}',
+                load=f"id - {event.guild.id}\n"
+                     f"large - {event.guild.large}\n"
+                     f"members - {event.guild.member_count}\n"
+                     f"widget - {w}\n",
+                color=16711680  # red
+            )
             await self.post_servers(len(self.bot.guilds))
 
     @listen()
@@ -300,6 +452,12 @@ class Base(Extension):
         async with aiohttp.ClientSession() as session:
             async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                     headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
+                await resp.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
+                                    json={'server_count': num,
+                                          'shard_count': 1},
+                                    headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
                 await resp.json()
 
     @staticmethod

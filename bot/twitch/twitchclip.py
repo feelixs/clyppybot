@@ -1,20 +1,23 @@
 import asyncio
-import yt_dlp
-import logging
 import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip
+from bot.classes import BaseClip, DownloadResponse, InvalidClipType
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pathlib import Path
+import re
+from urllib.parse import urlparse, parse_qs
+from yt_dlp import YoutubeDL
 
 
 class TwitchClip(BaseClip):
     def __init__(self, slug):
+        self._service = "twitch"
+        self._url = f"https://clips.twitch.tv/{slug}"
         super().__init__(slug)
         self.api = TwitchAPI(
             key=os.getenv("CLYPP_TWITCH_ID"),
@@ -22,34 +25,14 @@ class TwitchClip(BaseClip):
             logger=self.logger,
             log_path=os.path.join('logs', 'twitch-api-usage.log')
         )
-        self.service = "twitch"
-        self.url = f"https://clips.twitch.tv/{slug}"
 
-    async def download(self, filename: str):
-        self.logger.info(f"Downloading with yt-dlp: {filename}")
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
-        }
+    @property
+    def service(self) -> str:
+        return self._service
 
-        # Download using yt-dlp
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                return filename
-
-            return None
-        except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
-            return None
+    @property
+    def url(self) -> str:
+        return self._url
 
     async def fetch_data(self) -> 'TwitchClipProcessor':
         info = await self.api.get("https://api.twitch.tv/helix/clips?id=" + self.id)
@@ -59,6 +42,55 @@ class TwitchClip(BaseClip):
             api=self.api,
             logger=self.logger
         )
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        try:
+            media_assets_url = self._get_direct_clip_url()
+            ydl_opts = {
+                'format': dlp_format,
+                'quiet': True,
+                'no_warnings': True,
+            }
+            extracted = await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._extract_info,
+                ydl_opts
+            )
+            extracted.remote_url = media_assets_url
+            return extracted
+        except InvalidClipType:
+            return await super().download(filename=filename, dlp_format=dlp_format)  # download temporary v2 link (default)
+
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+        # download & upload to clyppy.io
+        self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io")
+        local_file = await super().dl_download(filename, dlp_format)
+        return await self.upload_to_clyppyio(local_file)
+
+    def _get_direct_clip_url(self):
+        # only works for some twitch clip links
+        # for some reason only some twitch links are type media-assets2
+        # and others use https://static-cdn.jtvnw.net/twitch-clips-thumbnails-prod/, which idk yet how to directly link the perm mp4 link
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+        }
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                if not info.get('thumbnail'):
+                    raise Exception("No thumbnail URL found in clip info")
+                thumbnail_url = info['thumbnail']
+                if '/clips-media-assets2.twitch.tv/' not in thumbnail_url:
+                    raise InvalidClipType
+
+                self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
+                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', thumbnail_url)
+                return mp4_url
+        except InvalidClipType:
+            raise
+        except Exception as e:
+            raise Exception(f"Failed to extract clip URL: {str(e)}")
 
 
 class TwitchClipProcessor:

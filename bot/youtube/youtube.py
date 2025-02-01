@@ -3,39 +3,40 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
+from typing import Optional
+from bot.classes import MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 
 
 class YtMisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "YouTube"
-        self.silence_invalid_url = True
 
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str) -> Optional[str]:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
         """
         # Common YouTube URL patterns
         patterns = [
-            r'(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
-            # Standard and embedded URLs
-            r'(?:youtube\.com/shorts/)([^"&?/ ]{11})'  # Shorts URLs
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
+            r'^(?:https?://)?(?:www\.)?youtube\.com/clip/([^"&?/ ]{11})'  # New pattern for clip URLs
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, url)
             if match:
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str) -> 'YtClip':
+    async def get_clip(self, url: str) -> Optional['YtClip']:
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            return None
+            raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
         return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)))
@@ -43,16 +44,24 @@ class YtMisc(BaseMisc):
 
 class YtClip(BaseClip):
     def __init__(self, slug, short):
-        super().__init__(slug)
-        self.service = "youtube"
+        self._service = "youtube"
         if short:
-            self.url = f"https://youtube.com/shorts/{slug}"
+            self._url = f"https://youtube.com/shorts/{slug}"
         else:
-            self.url = f"https://youtube.com/watch/?v={slug}"
+            self._url = f"https://youtube.com/watch/?v={slug}"
+        super().__init__(slug)
 
-    async def download(self, filename: str):
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         ydl_opts = {
-            'format': 'best',
+            'format': dlp_format,
             'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
@@ -66,11 +75,14 @@ class YtClip(BaseClip):
                     lambda: ydl.extract_info(self.url, download=False)
                 )
 
-                # Check if duration exists and is longer than 60 seconds
-                if 'duration' in info and info['duration'] > 60:
-                    self.logger.info(f"Video duration {info['duration']}s exceeds 60s limit")
-                    return None
-
+                # Check if duration exists and is longer than max seconds
+                if 'duration' in info and info['duration'] > MAX_VIDEO_LEN_SEC:
+                    self.logger.info(f"Video duration {info['duration']}s exceeds {MAX_VIDEO_LEN_SEC}s limit")
+                    raise VideoTooLong
+                elif 'duration' not in info:
+                    self.logger.info(f"Video duration not found")
+                    raise NoDuration
+                self.logger.info(f"Video duration {info['duration']}s is acceptable")
                 # Proceed with download if duration is acceptable
                 await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -78,9 +90,19 @@ class YtClip(BaseClip):
                 )
 
             if os.path.exists(filename):
-                return filename
+                self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
+                extracted = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self._extract_info,
+                    ydl_opts
+                )
+
+                d = get_video_details(filename)
+                d.video_name = extracted.video_name
+                return await self.upload_to_clyppyio(d)
+
             self.logger.info(f"Could not find file")
             return None
         except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
+            self.logger.error(f"error: {str(e)}")
             return None

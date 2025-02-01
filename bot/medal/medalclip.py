@@ -1,38 +1,16 @@
-import logging
-import asyncio
-import yt_dlp
-import os
 from bot.classes import BaseClip
 
 
 class MedalClip(BaseClip):
     def __init__(self, slug):
+        self._service = "medal"
+        self._url = f"https://medal.tv/clips/{slug}"
         super().__init__(slug)
-        self.service = "medal"
-        self.url = f"https://medal.tv/clips/{slug}"
 
-    async def download(self, filename: str):
-        self.logger.info(f"Downloading with yt-dlp: {filename}")
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
-        }
+    @property
+    def service(self) -> str:
+        return self._service
 
-        # Download using yt-dlp
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Run download in a thread pool to avoid blocking
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                return filename
-            self.logger.info(f"Could not find file")
-            return None
-        except Exception as e:
-            self.logger.error(f"yt-dlp download error: {str(e)}")
-            return None
+    @property
+    def url(self) -> str:
+        return self._url

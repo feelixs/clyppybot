@@ -1,12 +1,11 @@
 import re
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, VideoTooLong
 
 
 class Xmisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "Twitter"
-        self.silence_invalid_url = True
 
     def parse_clip_url(self, url: str) -> str:
         """
@@ -29,7 +28,7 @@ class Xmisc(BaseMisc):
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            return None
+            raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
         # Extract user from URL
@@ -41,6 +40,14 @@ class Xmisc(BaseMisc):
 
 class Xclip(BaseClip):
     def __init__(self, slug, user):
+        self._service = "twitter"
+        self._url = f"https://x.com/{user}/status/{slug}"
         super().__init__(slug)
-        self.service = "twitter"
-        self.url = f"https://x.com/{user}/status/{slug}"
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
