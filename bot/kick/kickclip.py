@@ -124,7 +124,7 @@ class KickClip(BaseClip):
                     response = await upload_video(filename)
                 except Exception as e:
                     self.logger.error(f"Failed to upload video: {str(e)}")
-                    return None
+                    raise KickClipFailure
                 if response['success']:
                     self.logger.info(f"Uploaded video: {response['file_path']}")
                     i = get_video_details(filename)
