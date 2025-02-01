@@ -7,6 +7,7 @@ from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_
 from typing import Optional
 from bot.classes import MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 
+
 class YtMisc(BaseMisc):
     def __init__(self):
         super().__init__()
