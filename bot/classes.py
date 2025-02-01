@@ -260,11 +260,13 @@ class BaseClip(ABC):
         }
 
         try:
-            return await asyncio.get_event_loop().run_in_executor(
+            extracted = await asyncio.get_event_loop().run_in_executor(
                 None,
                 self._extract_info,
                 ydl_opts
             )
+            extracted.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
+            return extracted
         except Exception as e:
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             return None

@@ -57,6 +57,7 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
+            extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
             return extracted
         except InvalidClipType:
             return await super().download(filename=filename, dlp_format=dlp_format)  # download temporary v2 link (default)
