@@ -1,5 +1,5 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, DownloadResponse
 from typing import Optional
 
 class Xmisc(BaseMisc):
