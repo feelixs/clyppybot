@@ -1,6 +1,6 @@
 import re
 from bot.classes import BaseClip, BaseMisc, VideoTooLong
-
+from typing import Optional
 
 class Xmisc(BaseMisc):
     def __init__(self):
