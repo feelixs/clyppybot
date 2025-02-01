@@ -61,7 +61,11 @@ class KickClip(BaseClip):
             driver.get(clip_url)
 
             m3u8_url = await scan_logs_for_m3u8(driver)
-            clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
+            try:
+                clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
+            except Exception as e:
+                self.logger.info(f"Could not find title of kick clip: {str(e)}")
+                clip_name = "Clyppy Video"
             if m3u8_url:
                 self.logger.info(f"Found m3u8 URL: {m3u8_url}. Clip name: {clip_name}")
                 return m3u8_url, clip_name
