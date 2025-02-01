@@ -12,6 +12,7 @@ from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
 from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, KickClipFailure
 import re
+import time
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
@@ -111,6 +112,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
+        self.currently_downloading_for_embed = []
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
@@ -134,6 +136,13 @@ class Base(Extension):
                             ]
                    )
     async def embed(self, ctx: SlashContext, url: str):
+        async def wait_for_download(clip_id: str, timeout: float = 30):
+            start_time = time.time()
+            while clip_id in self.currently_downloading_for_embed:
+                if time.time() - start_time > timeout:
+                    raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
+                await asyncio.sleep(0.1)
+
         await ctx.defer(ephemeral=False)
         if not url.startswith("https://"):
             url = "https://" + url
@@ -141,6 +150,11 @@ class Base(Extension):
         if platform is None:
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
             return
+
+        if slug in self.currently_downloading_for_embed:
+            await wait_for_download(slug)
+        else:
+            self.currently_downloading_for_embed.append(slug)
 
         timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
         e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
@@ -156,6 +170,7 @@ class Base(Extension):
             await ctx.send(f"An unexpected error occurred with your input `{url}`")
         finally:
             timeout_task.cancel()
+            self.currently_downloading_for_embed.remove(slug)
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
