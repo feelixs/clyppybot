@@ -64,7 +64,7 @@ class KickClip(BaseClip):
             try:
                 clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
             except Exception as e:
-                self.logger.info(f"Could not find title of kick clip: {str(e)}, using default")
+                self.logger.info(f"Could not find title of kick clip: {str(e)}, using default value")
                 clip_name = "Clyppy Video"
             if m3u8_url:
                 self.logger.info(f"Found m3u8 URL: {m3u8_url}. Clip name: {clip_name}")
