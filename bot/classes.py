@@ -37,7 +37,7 @@ async def is_404(url: str, logger=None) -> bool:
             async with session.get(url) as response:
                 if logger is not None:
                     logger.info(f"Got response status {response.status} for {url}")
-                return str(response.status).startswith('2')
+                return not str(response.status).startswith('2')
     except aiohttp.ClientError:
         # Handle connection errors, invalid URLs etc
         return True  # Consider failed connections as effectively 404
