@@ -7,7 +7,7 @@ class Xmisc(BaseMisc):
         super().__init__()
         self.platform_name = "Twitter"
 
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         """
         Extracts the tweet ID/slug from various Twitter URL formats.
         Returns None if the URL is not a valid Twitter URL.
@@ -16,6 +16,9 @@ class Xmisc(BaseMisc):
             r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
             r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
         ]
+        if extended_url_formats:
+            patterns.extend([r'(?:https?://)?(?:www\.)?fxtwitter\.com/\w+/status/(\d+)',
+                             r'(?:https?://)?(?:www\.)?fixupx\.com/\w+/status/(\d+)'])
 
         for pattern in patterns:
             match = re.match(pattern, url)
@@ -23,8 +26,8 @@ class Xmisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str) -> 'Xclip':
-        slug = self.parse_clip_url(url)
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'Xclip':
+        slug = self.parse_clip_url(url, extended_url_formats)
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
@@ -32,7 +35,7 @@ class Xmisc(BaseMisc):
         self.logger.info(f"{url} is_shortform=True")
 
         # Extract user from URL
-        user_match = re.search(r'(?:twitter\.com|x\.com)/(\w+)/status/', url)
+        user_match = re.search(r'(?:(?:fx)?twitter\.com|(?:fixup)?x\.com)/(\w+)/status/', url)
         user = user_match.group(1) if user_match else None
 
         return Xclip(slug, user)

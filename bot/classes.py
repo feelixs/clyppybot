@@ -409,11 +409,11 @@ class BaseMisc(ABC):
         self.platform_name = None
 
     @abstractmethod
-    async def get_clip(self, url: str) -> 'BaseClip':
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'BaseClip':
         ...
 
     @abstractmethod
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         ...
 
     def is_clip_link(self, url: str) -> bool:

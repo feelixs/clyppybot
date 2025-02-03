@@ -7,7 +7,7 @@ class TikTokMisc(BaseMisc):
         super().__init__()
         self.platform_name = "TikTok"
 
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         """
         Extracts the TikTok video ID from various URL formats.
         Returns None if the URL is not a valid TikTok video URL.
@@ -20,7 +20,7 @@ class TikTokMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str) -> 'TikTokClip':
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")

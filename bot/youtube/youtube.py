@@ -13,7 +13,7 @@ class YtMisc(BaseMisc):
         super().__init__()
         self.platform_name = "YouTube"
 
-    def parse_clip_url(self, url: str) -> Optional[str]:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -31,7 +31,7 @@ class YtMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str) -> Optional['YtClip']:
+    async def get_clip(self, url: str, extended_url_formats=False) -> Optional['YtClip']:
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:

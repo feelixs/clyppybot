@@ -22,7 +22,7 @@ class RedditMisc(BaseMisc):
             'www.medal.tv',
         ]
 
-    def parse_clip_url(self, url: str) -> (str, str):
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> (str, str):
         """
         Extracts the post ID from a Reddit URL if present.
         Works with all supported URL formats.
@@ -137,7 +137,7 @@ class RedditMisc(BaseMisc):
                 link = txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
                 return self.parse_clip_url(link)
 
-    async def get_clip(self, url: str) -> 'RedditClip':
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'RedditClip':
         slug = self.parse_clip_url(url)
         is_vid, ext_info = await self.is_video(url)
         if not is_vid:
