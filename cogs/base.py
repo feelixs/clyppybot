@@ -40,8 +40,8 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     twitch_patterns = [
         r'https?://(?:www\.|m\.)?clips\.twitch\.tv/([\w-]+)',
         r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)',
-        r'https?://(?:www\.)?clyppy\.com/?clips/[a-zA-Z0-9_-]+',
-        r'https?://(?:www\.)?clyppy\.io/?clips/[a-zA-Z0-9_-]+'
+        r'https?://(?:www\.)?clyppy\.com/?clips/([a-zA-Z0-9_-]+)',
+        r'https?://(?:www\.)?clyppy\.io/?clips/([a-zA-Z0-9_-]+)'
     ]
     for pattern in twitch_patterns:
         if match := re.match(pattern, url):
