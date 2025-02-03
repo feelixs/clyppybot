@@ -147,11 +147,12 @@ class Base(Extension):
                 await asyncio.sleep(0.1)
 
         await ctx.defer(ephemeral=False)
-        self.logger.info(f"/embed in {ctx.guild.name}")
         if not url.startswith("https://"):
             url = "https://" + url
         platform, slug = compute_platform(url, self.bot)
+        self.logger.info(f"/embed in {ctx.guild.name} {url} -> {platform}, {slug}")
         if platform is None:
+            self.logger.info(f"return incompatible for /embed {url}")
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
             return
 
