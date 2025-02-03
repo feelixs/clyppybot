@@ -36,17 +36,16 @@ class KickClipFailure(Exception):
     pass
 
 
-
-async def is_404(url: str, logger=None) -> bool:
+async def is_404(url: str, logger=None) -> Tuple[bool, int]:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if logger is not None:
                     logger.info(f"Got response status {response.status} for {url}")
-                return not str(response.status).startswith('2')
+                return not str(response.status).startswith('2'), response.status
     except aiohttp.ClientError:
         # Handle connection errors, invalid URLs etc
-        return True  # Consider failed connections as effectively 404
+        return True, 500  # Consider failed connections as effectively 404
 
 
 def get_video_details(file_path) -> 'LocalFileInfo':
