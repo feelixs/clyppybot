@@ -149,47 +149,52 @@ class Base(Extension):
                 await asyncio.sleep(0.1)
 
         await ctx.defer(ephemeral=False)
-        if not url.startswith("https://"):
-            url = "https://" + url
-        platform, slug = compute_platform(url, self.bot)
-        self.logger.info(f"/embed in {ctx.guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
-        if platform is None:
-            self.logger.info(f"return incompatible for /embed {url}")
-            await ctx.send("Couldn't embed that url (invalid/incompatible)")
-            return
-
-        if slug in self.currently_downloading_for_embed:
-            try:
-                await wait_for_download(slug)
-            except TimeoutError:
-                pass  # continue with the dl anyway
-        else:
-            self.currently_downloading_for_embed.append(slug)
-
-        timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
-        e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         try:
-            await e._process_this_clip_link(
-                parsed_id=slug,
-                clip_link=url,
-                respond_to=ctx,
-                guild=GuildType(ctx.guild.id, ctx.guild.name, False),
-                extended_url_formats=True)
-        except NoDuration:
-            await ctx.send("Couldn't embed that url (not a video post)")
-        except VideoTooLong:
-            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
-        except KickClipFailure:
-            await ctx.send(f"Unexpected error while trying to download this kick clip")
-        except Exception as e:
-            self.logger.info(f'Unexpected error in /embed: {str(e)}')
-            await ctx.send(f"An unexpected error occurred with your input `{url}`")
-        finally:
-            timeout_task.cancel()
+            if not url.startswith("https://"):
+                url = "https://" + url
+            platform, slug = compute_platform(url, self.bot)
+            self.logger.info(f"/embed in {ctx.guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
+            if platform is None:
+                self.logger.info(f"return incompatible for /embed {url}")
+                await ctx.send("Couldn't embed that url (invalid/incompatible)")
+                return
+
+            if slug in self.currently_downloading_for_embed:
+                try:
+                    await wait_for_download(slug)
+                except TimeoutError:
+                    pass  # continue with the dl anyway
+            else:
+                self.currently_downloading_for_embed.append(slug)
+
+            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
+            e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
             try:
-                self.currently_downloading_for_embed.remove(slug)
-            except ValueError:
-                pass
+                await e._process_this_clip_link(
+                    parsed_id=slug,
+                    clip_link=url,
+                    respond_to=ctx,
+                    guild=GuildType(ctx.guild.id, ctx.guild.name, False),
+                    extended_url_formats=True)
+            except NoDuration:
+                await ctx.send("Couldn't embed that url (not a video post)")
+            except VideoTooLong:
+                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
+            except KickClipFailure:
+                await ctx.send(f"Unexpected error while trying to download this kick clip")
+            except Exception as e:
+                self.logger.info(f'Unexpected error in /embed: {str(e)}')
+                await ctx.send(f"An unexpected error occurred with your input `{url}`")
+            finally:
+                timeout_task.cancel()
+                try:
+                    self.currently_downloading_for_embed.remove(slug)
+                except ValueError:
+                    pass
+        except Exception as e:
+            self.logger.info(f"Exception in /embed: {str(e)}")
+            await ctx.send()
+            await ctx.send(f"Unexpected error while trying to embed this url")
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
