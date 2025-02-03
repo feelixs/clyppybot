@@ -150,7 +150,7 @@ class Base(Extension):
         if not url.startswith("https://"):
             url = "https://" + url
         platform, slug = compute_platform(url, self.bot)
-        self.logger.info(f"/embed in {ctx.guild.name} {url} -> {platform}, {slug}")
+        self.logger.info(f"/embed in {ctx.guild.name} {url} -> {platform.platform_name}, {slug}")
         if platform is None:
             self.logger.info(f"return incompatible for /embed {url}")
             await ctx.send("Couldn't embed that url (invalid/incompatible)")
