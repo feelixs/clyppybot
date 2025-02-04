@@ -19,7 +19,7 @@ INVALID_DL_PLATFORMS = []
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 
-async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None):
+async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
     try:
         url = 'https://clyppy.io/api/publish/'
         headers = {
@@ -41,9 +41,10 @@ async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=
                     return await response.json()
                 else:
                     error_data = await response.json()
+                    logger.info(error_data)
                     raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
     except:
-        print(traceback.format_exc())
+        logger.info(traceback.format_exc())
 
 
 class AutoEmbedder:
@@ -274,7 +275,7 @@ class AutoEmbedder:
 
             try:
                 try:
-                    result = await publish_interaction(interaction_data, apikey=self.api_key)
+                    result = await publish_interaction(interaction_data, apikey=self.api_key, logger=self.logger)
                 except Exception as e:
                     self.logger.info(f"Failed to post interaction to API: {e}\ninteraction_data: {interaction_data}")
                     raise
