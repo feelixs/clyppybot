@@ -285,7 +285,7 @@ class AutoEmbedder:
                             self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
                             clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
                 else:
-                    self.logger.info(f"")
+                    self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
 
                 if isinstance(respond_to, SlashContext):
