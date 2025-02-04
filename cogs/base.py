@@ -153,7 +153,11 @@ class Base(Extension):
             if not url.startswith("https://"):
                 url = "https://" + url
             platform, slug = compute_platform(url, self.bot)
-            self.logger.info(f"/embed in {ctx.guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
+            if ctx.guild:
+                guild = GuildType(ctx.guild.id, ctx.guild.name, False)
+            else:
+                guild = GuildType(ctx.author.id, ctx.author.username, True)
+            self.logger.info(f"/embed in {guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send("Couldn't embed that url (invalid/incompatible)")
@@ -174,7 +178,7 @@ class Base(Extension):
                     parsed_id=slug,
                     clip_link=url,
                     respond_to=ctx,
-                    guild=GuildType(ctx.guild.id, ctx.guild.name, False),
+                    guild=guild,
                     extended_url_formats=True)
             except NoDuration:
                 await ctx.send("Couldn't embed that url (not a video post)")
