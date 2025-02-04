@@ -276,6 +276,7 @@ class AutoEmbedder:
                     self.logger.info(f"Failed to post interaction to API: {e}\ninteraction_data: {interaction_data}")
                     raise
 
+                self.logger.info(f"got back from server {result}")
                 if result['success']:
                     # sometimes the server will generate a new and improved clyppy id
                     # to bypass invalid discord caches of old clyppy urls
