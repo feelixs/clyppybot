@@ -20,30 +20,27 @@ DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None):
-    try:
-        url = 'https://clyppy.io/api/publish/'
-        headers = {
-            'X-API-Key': apikey,
-            'Content-Type': 'application/json'
-        }
-        if edit_type is None:
-            # publish new interaction
-            j = interaction_data
-        elif edit_type == "response_time":
-            if edit_id is None:
-                raise Exception("both edit_id and edit_type must be defined, or both None")
-            j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
-        else:
-            raise Exception("Invalid call to publish_interaction()")
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=j, headers=headers) as response:
-                if response.status == 201:  # Successfully created
-                    return await response.json()
-                else:
-                    error_data = await response.json()
-                    raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
-    except:
-        print(traceback.format_exc())
+    url = 'https://clyppy.io/api/publish/'
+    headers = {
+        'X-API-Key': apikey,
+        'Content-Type': 'application/json'
+    }
+    if edit_type is None:
+        # publish new interaction
+        j = interaction_data
+    elif edit_type == "response_time":
+        if edit_id is None:
+            raise Exception("both edit_id and edit_type must be defined, or both None")
+        j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
+    else:
+        raise Exception("Invalid call to publish_interaction()")
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=j, headers=headers) as response:
+            if response.status == 201:  # Successfully created
+                return await response.json()
+            else:
+                error_data = await response.json()
+                raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
 
 
 class AutoEmbedder:
