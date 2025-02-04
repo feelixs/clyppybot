@@ -248,6 +248,8 @@ class AutoEmbedder:
                 t = response.video_name[:100]
             else:
                 t = None
+
+            # note: it seems that discord doesn't cache the clyppy.io urls, but the <og:video content="[...]"> value, so duplicating the StoredVideo objects is pointless
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
