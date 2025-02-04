@@ -152,7 +152,8 @@ class AutoEmbedder:
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True)
-        has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
+        if not guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
+            has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
