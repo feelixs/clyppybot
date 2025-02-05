@@ -42,7 +42,7 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='bv[height<=720]+ba/bv*+ba', can_send_files=False) -> DownloadResponse:
         dl = await super().dl_check_size(filename, dlp_format, can_send_files)
         if dl is not None:
             return dl
