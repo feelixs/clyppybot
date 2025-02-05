@@ -1,4 +1,5 @@
-from bot.classes import BaseClip
+from bot.classes import BaseClip, DownloadResponse, MAX_FILE_SIZE_FOR_DISCORD
+from bot.tools import tryremove
 
 
 class MedalClip(BaseClip):
@@ -14,3 +15,9 @@ class MedalClip(BaseClip):
     @property
     def url(self) -> str:
         return self._url
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+        if dl is not None:
+            return dl
+        return await super().download(filename, dlp_format, can_send_files)

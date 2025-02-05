@@ -44,30 +44,10 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
-        local_file = await super().dl_download(filename, dlp_format, can_send_files)
-        if local_file is None:
-            raise UnknownError
-        return local_file
-
     async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/bv*+ba', can_send_files=False) -> DownloadResponse:
-        if can_send_files:
-            local = await self.fetch_file(filename, dlp_format, can_send_files)
-            self.logger.info(f"Got filesize {local.filesize} for {self.id}")
-            if MAX_FILE_SIZE_FOR_DISCORD > local.filesize > 0:
-                return DownloadResponse(
-                    remote_url=None,
-                    local_file_path=local.local_file_path,
-                    duration=local.duration,
-                    width=local.width,
-                    height=local.height,
-                    filesize=local.filesize,
-                    video_name=local.video_name,
-                    can_be_uploaded=True
-                )
-            else:
-                self.logger.info(f"{local.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
-            tryremove(local.local_file_path)
+        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+        if dl is not None:
+            return dl
 
         try:
             media_assets_url = self._get_direct_clip_url()
