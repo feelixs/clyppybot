@@ -3,7 +3,7 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip, DownloadResponse, InvalidClipType
+from bot.classes import BaseClip, DownloadResponse, InvalidClipType, MAX_FILE_SIZE_FOR_DISCORD
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
@@ -57,8 +57,11 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
-            extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
-            return extracted
+            if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
+                return await super().dl_download(filename, dlp_format, can_send_files)
+            else:
+                extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
+                return extracted
         except InvalidClipType:
             # download temporary v2 link (default)
             return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)

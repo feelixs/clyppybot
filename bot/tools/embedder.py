@@ -274,6 +274,7 @@ class AutoEmbedder:
                 'generated_id': clip.clyppy_id,
                 'original_id': clip.id,
                 'video_file_size': response.filesize,
+                'uploaded_to_discord': response.can_be_uploaded and has_file_perms,
                 'video_file_dur': response.duration,
                 'expires_at_timestamp': expires_at,
                 'error': error_code
@@ -299,10 +300,17 @@ class AutoEmbedder:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
 
+                # send message
                 if isinstance(respond_to, SlashContext):
-                    await respond_to.send(clip.clyppy_url, components=comp)
+                    if response.can_be_uploaded and has_file_perms:
+                        await respond_to.send(file=response.local_file_path, components=comp)
+                    else:
+                        await respond_to.send(clip.clyppy_url, components=comp)
                 else:
-                    await respond_to.reply(clip.clyppy_url, components=comp)
+                    if response.can_be_uploaded and has_file_perms:
+                        await respond_to.reply(file=response.local_file_path, components=comp)
+                    else:
+                        await respond_to.reply(clip.clyppy_url, components=comp)
 
                 if isinstance(respond_to, Message):
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext

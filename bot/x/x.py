@@ -59,4 +59,16 @@ class Xclip(BaseClip):
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io")
         local_file = await super().dl_download(filename, dlp_format, can_send_files)
-        return await self.upload_to_clyppyio(local_file)
+        if local_file.can_be_uploaded:
+            return DownloadResponse(
+                remote_url=None,
+                local_file_path=local_file.local_file_path,
+                duration=local_file.duration,
+                width=local_file.width,
+                height=local_file.height,
+                filesize=local_file.filesize,
+                video_name=local_file.video_name,
+                can_be_uploaded=True
+            )
+        else:
+            return await self.upload_to_clyppyio(local_file)

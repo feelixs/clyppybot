@@ -3,9 +3,9 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
+from bot.classes import (BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo,
+                         MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
 from typing import Optional
-from bot.classes import MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 
 
 class YtMisc(BaseMisc):
@@ -99,7 +99,20 @@ class YtClip(BaseClip):
 
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
-                return await self.upload_to_clyppyio(d)
+
+                if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
+                    return DownloadResponse(
+                        remote_url=None,
+                        local_file_path=filename,
+                        duration=d.duration,
+                        width=d.width,
+                        height=d.height,
+                        filesize=d.filesize,
+                        video_name=d.video_name,
+                        can_be_uploaded=True
+                    )
+                else:
+                    return await self.upload_to_clyppyio(d)
 
             self.logger.info(f"Could not find file")
             return None

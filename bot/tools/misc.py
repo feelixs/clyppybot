@@ -62,13 +62,15 @@ class DownloadManager:
         if r is None:
             return None
 
-        if overwrite_on_server:
+        if overwrite_on_server and not (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")
             new = await clip.upload_to_clyppyio(r)
             self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
             await clip.overwrite_mp4(new.remote_url)
             r.filesize = new.filesize
             r.remote_url = new.remote_url
+        elif overwrite_on_server and (r.can_be_uploaded and can_send_files):
+            self._parent.logger.info(f"Was instructed to replace on server for {clip.id}, but skipping bc we can upload to Discord")
 
         return r
 

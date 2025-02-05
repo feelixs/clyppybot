@@ -261,10 +261,8 @@ class BaseClip(ABC):
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         resp = await self._fetch_external_url(dlp_format)
         if MAX_FILE_SIZE_FOR_DISCORD > resp.filesize > 0 and can_send_files:
-            self.logger.info(f"{self.id} can be uploaded to discord...")
-            resp.can_be_uploaded = True
-            resp.filesize = 0  # if it's uploaded to discord, we don't need to worry about monitoring its space on clyppy.io
-            return resp
+            self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
+            return await self.dl_download(filename, dlp_format, can_send_files)
         else:
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
             return resp
@@ -323,7 +321,6 @@ class BaseClip(ABC):
                 if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
                     self.logger.info(f"{self.id} can be uploaded to discord...")
                     d.can_be_uploaded = True
-                    d.filesize = 0
 
                 return d
 
