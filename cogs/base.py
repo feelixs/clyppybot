@@ -58,10 +58,10 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
             return bot.x, match.group(1)
 
     ytpatterns = [
-            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
-            r'^(?:https?://)?(?:www\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
-            r'^(?:https?://)?(?:www\.)?youtube\.com/clip/([^"&?/ ]{11})'  # New pattern for clip URLs
-        ]
+        r'^(?:https?://)?(?:(?:www|m)\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
+        r'^(?:https?://)?(?:(?:www|m)\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
+        r'^(?:https?://)?(?:(?:www|m)\.)?youtube\.com/clip/([^"&?/ ]{11})'
+    ]
     for pattern in ytpatterns:
         if match := re.match(pattern, url):
             return bot.yt, match.group(1)
