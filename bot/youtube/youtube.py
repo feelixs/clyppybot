@@ -100,6 +100,7 @@ class YtClip(BaseClip):
                 d.video_name = extracted.video_name
 
                 if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
+                    self.logger.info("The downloaded yt video can fit into a discord upload")
                     return DownloadResponse(
                         remote_url=None,
                         local_file_path=filename,
