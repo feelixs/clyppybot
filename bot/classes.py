@@ -126,8 +126,6 @@ async def upload_video(video_file_path) -> Dict:
                 if r['success']:
                     return r
                 else:
-                    print(traceback.format_exc())
-                    print(r)
                     raise UploadFailed
         except Exception as e:
             raise e
