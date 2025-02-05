@@ -4,7 +4,7 @@ import asyncio
 import os
 import re
 from bot.classes import (BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo,
-                         MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
+                         MAX_VIDEO_LEN_SEC, VideoTooLong, ClipFailure, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
 from typing import Optional
 
 
@@ -115,7 +115,7 @@ class YtClip(BaseClip):
                     return await self.upload_to_clyppyio(d)
 
             self.logger.info(f"Could not find file")
-            return None
+            raise ClipFailure
         except Exception as e:
             self.logger.error(f"error: {str(e)}")
-            return None
+            raise ClipFailure

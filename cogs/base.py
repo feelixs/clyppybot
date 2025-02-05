@@ -10,7 +10,7 @@ from bot.tools import AutoEmbedder
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, KickClipFailure
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure
 import re
 import time
 
@@ -184,8 +184,8 @@ class Base(Extension):
                 await ctx.send("Couldn't embed that url (not a video post)")
             except VideoTooLong:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
-            except KickClipFailure:
-                await ctx.send(f"Unexpected error while trying to download this kick clip")
+            except ClipFailure:
+                await ctx.send(f"Unexpected error while trying to download this clip")
             except Exception as e:
                 self.logger.info(f'Unexpected error in /embed: {str(e)}')
                 await ctx.send(f"An unexpected error occurred with your input `{url}`")

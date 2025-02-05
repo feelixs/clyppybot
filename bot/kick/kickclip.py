@@ -8,7 +8,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD, KickClipFailure
+from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD, ClipFailure
 
 
 class KickClip(BaseClip):
@@ -86,7 +86,7 @@ class KickClip(BaseClip):
             m3u8_url, name = None, None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
-            raise KickClipFailure
+            raise ClipFailure
 
         # Download using ffmpeg
         try:
@@ -107,7 +107,7 @@ class KickClip(BaseClip):
 
             if process.returncode != 0:
                 self.logger.error("FFmpeg download failed")
-                raise KickClipFailure
+                raise ClipFailure
 
             if MAX_FILE_SIZE_FOR_DISCORD > os.path.getsize(filename) > 0 and can_send_files:
                 i = get_video_details(filename)
@@ -128,7 +128,7 @@ class KickClip(BaseClip):
                     response = await upload_video(filename)
                 except Exception as e:
                     self.logger.error(f"Failed to upload video: {str(e)}")
-                    raise KickClipFailure
+                    raise ClipFailure
                 if response['success']:
                     self.logger.info(f"Uploaded video: {response['file_path']}")
                     i = get_video_details(filename)
@@ -145,8 +145,8 @@ class KickClip(BaseClip):
                     )
                 else:
                     self.logger.error(f"Failed to upload video: {response}")
-                    raise KickClipFailure
+                    raise ClipFailure
 
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
-            raise KickClipFailure
+            raise ClipFailure

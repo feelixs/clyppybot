@@ -32,7 +32,7 @@ class NoDuration(Exception):
     pass
 
 
-class KickClipFailure(Exception):
+class ClipFailure(Exception):
     pass
 
 
