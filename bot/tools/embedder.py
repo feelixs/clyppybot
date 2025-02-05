@@ -327,6 +327,7 @@ class AutoEmbedder:
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
+                raise
 
         except errors.HTTPException as e:
             self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
@@ -343,7 +344,7 @@ class AutoEmbedder:
                 bot=self.bot,
                 delete_after_on_reply=60
             )
-            return
+            raise
         except Exception:
             self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
@@ -359,4 +360,4 @@ class AutoEmbedder:
                 bot=self.bot,
                 delete_after_on_reply=60
             )
-            return
+            raise 
