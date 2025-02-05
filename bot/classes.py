@@ -286,7 +286,7 @@ class BaseClip(ABC):
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         resp = await self._fetch_external_url(dlp_format)
-        self.logger.info(f"Got filesize {resp.filesize} for {self.id}")
+        self.logger.info(f"[download] Got filesize {resp.filesize} for {self.id}")
         if is_discord_compatible(resp.filesize) and can_send_files:
             self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
             local = await self.dl_download(filename, dlp_format, can_send_files)
@@ -338,7 +338,7 @@ class BaseClip(ABC):
         """
         if can_send_files:
             local = await self._fetch_file(filename, dlp_format, can_send_files)
-            self.logger.info(f"Got filesize {local.filesize} for {self.id}")
+            self.logger.info(f"[dl_check_size] Got filesize {local.filesize} for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
                     remote_url=None,
