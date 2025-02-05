@@ -58,6 +58,9 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
+            self.logger.info(f"Got filesize {extracted.filesize} for {self.id}")
+            if extracted.filesize > 0:
+                self.logger.info(f"{extracted.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
                 return await super().dl_download(filename, dlp_format, can_send_files)
             else:
