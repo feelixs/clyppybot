@@ -3,9 +3,9 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import (BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo,
-                         MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
+from bot.classes import BaseClip, BaseMisc, DownloadResponse, upload_video, get_video_details, LocalFileInfo
 from typing import Optional
+from bot.classes import MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
 
 
 class YtMisc(BaseMisc):
@@ -13,7 +13,7 @@ class YtMisc(BaseMisc):
         super().__init__()
         self.platform_name = "YouTube"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+    def parse_clip_url(self, url: str) -> Optional[str]:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -31,7 +31,7 @@ class YtMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> Optional['YtClip']:
+    async def get_clip(self, url: str) -> Optional['YtClip']:
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:
@@ -59,7 +59,7 @@ class YtClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         ydl_opts = {
             'format': dlp_format,
             'outtmpl': filename,
@@ -99,20 +99,7 @@ class YtClip(BaseClip):
 
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
-
-                if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
-                    return DownloadResponse(
-                        remote_url=None,
-                        local_file_path=filename,
-                        duration=d.duration,
-                        width=d.width,
-                        height=d.height,
-                        filesize=d.filesize,
-                        video_name=d.video_name,
-                        can_be_uploaded=True
-                    )
-                else:
-                    return await self.upload_to_clyppyio(d)
+                return await self.upload_to_clyppyio(d)
 
             self.logger.info(f"Could not find file")
             return None

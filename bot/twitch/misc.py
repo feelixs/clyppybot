@@ -16,7 +16,7 @@ class TwitchMisc(BaseMisc):
             exit("No Twitch API secret found")
         self.platform_name = "Twitch"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str) -> str:
         if url.endswith("/"):
             url = url[:-1]  # remove trailing slash
 
@@ -37,6 +37,6 @@ class TwitchMisc(BaseMisc):
         ]
         return any(re.match(pattern, url) for pattern in patterns)
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> Optional[TwitchClip]:
+    async def get_clip(self, url: str) -> Optional[TwitchClip]:
         slug = self.parse_clip_url(url)
         return TwitchClip(slug)

@@ -4,9 +4,9 @@ from bot.tools import AutoEmbedder
 import logging
 
 
-class XAutoEmbed(Extension):
+class RumbleAutoEmbed(Extension):
     def __init__(self, bot):
-        self.embedder = AutoEmbedder(bot, bot.x, logging.getLogger(__name__))
+        self.embedder = AutoEmbedder(bot, bot.rumble, logging.getLogger(__name__))
 
     @listen(MessageCreate)
     async def on_message_create(self, event):

@@ -10,7 +10,7 @@ class MedalMisc(BaseMisc):
         super().__init__()
         self.platform_name = "Medal"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+    def parse_clip_url(self, url: str) -> Optional[str]:
         """
         Parses a Medal.tv clip URL to extract just the clip ID.
 
@@ -37,6 +37,6 @@ class MedalMisc(BaseMisc):
 
         return any(bool(re.match(pattern, url)) for pattern in patterns)
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> MedalClip:
+    async def get_clip(self, url: str) -> MedalClip:
         slug = self.parse_clip_url(url)
         return MedalClip(slug)
