@@ -194,4 +194,5 @@ class RedditClip(BaseClip):
         elif 'medal.tv' in self.external_link:
             self.logger.info(f"Running download for external link {self.external_link}")
             return await self._download_medal(filename, dlp_format, can_send_files)
+
         return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
