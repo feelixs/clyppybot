@@ -179,7 +179,9 @@ class Base(Extension):
                     clip_link=url,
                     respond_to=ctx,
                     guild=guild,
-                    extended_url_formats=True)
+                    extended_url_formats=True,
+                    try_send_files=True
+                )
             except NoDuration:
                 await ctx.send("Couldn't embed that url (not a video post)")
             except VideoTooLong:

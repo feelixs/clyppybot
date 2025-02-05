@@ -149,12 +149,14 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False) -> None:
+    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False, try_send_files=False) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True)
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
         else:
             has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
+
+        will_send_files = has_file_perms and try_send_files
 
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
@@ -176,7 +178,7 @@ class AutoEmbedder:
                     guild_ctx=guild,
                     always_download=True,
                     overwrite_on_server=True,
-                    can_send_files=has_file_perms
+                    can_send_files=False
                 )
                 await respond_to.reply(f"Success for {clip_link}")
                 return
@@ -190,7 +192,7 @@ class AutoEmbedder:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     guild_ctx=guild,
-                    can_send_files=has_file_perms
+                    can_send_files=will_send_files  # todo see if we wanna do this in autoembeds
                 )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
