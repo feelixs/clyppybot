@@ -18,6 +18,12 @@ def tryremove(f):
         pass
 
 
+def is_discord_compatible(filesize: float):
+    if filesize is None:
+        return False
+    return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
+
+
 MAX_VIDEO_LEN_SEC = 180
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
@@ -74,7 +80,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             duration=clip.duration,
             local_file_path=file_path,
             video_name=None,
-            can_be_uploaded=None
+            can_be_uploaded=is_discord_compatible(size)
         )
         #return {
         #    'width': clip.w,
@@ -281,9 +287,7 @@ class BaseClip(ABC):
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         resp = await self._fetch_external_url(dlp_format)
         self.logger.info(f"Got filesize {resp.filesize} for {self.id}")
-        if resp.filesize > 0 and resp.filesize > MAX_FILE_SIZE_FOR_DISCORD:
-            self.logger.info(f"{resp.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
-        if MAX_FILE_SIZE_FOR_DISCORD > resp.filesize > 0 and can_send_files:
+        if is_discord_compatible(resp.filesize) and can_send_files:
             self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
             return await self.dl_download(filename, dlp_format, can_send_files)
         else:
@@ -325,7 +329,7 @@ class BaseClip(ABC):
         if can_send_files:
             local = await self._fetch_file(filename, dlp_format, can_send_files)
             self.logger.info(f"Got filesize {local.filesize} for {self.id}")
-            if MAX_FILE_SIZE_FOR_DISCORD > local.filesize > 0:
+            if is_discord_compatible(local.filesize):
                 return DownloadResponse(
                     remote_url=None,
                     local_file_path=local.local_file_path,
@@ -336,8 +340,6 @@ class BaseClip(ABC):
                     video_name=local.video_name,
                     can_be_uploaded=True
                 )
-            else:
-                self.logger.info(f"{local.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             tryremove(local.local_file_path)
         return None
 
@@ -371,7 +373,7 @@ class BaseClip(ABC):
 
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
-                if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
+                if is_discord_compatible(d.filesize) and can_send_files:
                     self.logger.info(f"{self.id} can be uploaded to discord...")
                     d.can_be_uploaded = True
 

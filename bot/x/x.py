@@ -57,7 +57,7 @@ class Xclip(BaseClip):
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         # download & upload to clyppy.io
-        self.logger.info(f"({self.id}) Downloading and hosting on clyppy.io")
+        self.logger.info(f"({self.id}) Downloading...")
         local_file = await super().dl_download(filename, dlp_format, can_send_files)
         if local_file.can_be_uploaded:
             return DownloadResponse(
@@ -71,4 +71,5 @@ class Xclip(BaseClip):
                 can_be_uploaded=True
             )
         else:
+            self.logger.info(f"({self.id}) hosting on clyppy.io...")
             return await self.upload_to_clyppyio(local_file)

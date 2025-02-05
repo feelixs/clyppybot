@@ -8,7 +8,8 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD, ClipFailure
+from bot.classes import (BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD,
+                         ClipFailure, is_discord_compatible)
 
 
 class KickClip(BaseClip):
@@ -109,7 +110,7 @@ class KickClip(BaseClip):
                 self.logger.error("FFmpeg download failed")
                 raise ClipFailure
 
-            if MAX_FILE_SIZE_FOR_DISCORD > os.path.getsize(filename) > 0 and can_send_files:
+            if is_discord_compatible(os.path.getsize(filename)) and can_send_files:
                 i = get_video_details(filename)
                 i.video_name = name
                 return DownloadResponse(
