@@ -10,9 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pathlib import Path
 import re
-from urllib.parse import urlparse, parse_qs
 from yt_dlp import YoutubeDL
-from bot.tools import tryremove
 
 
 class TwitchClip(BaseClip):

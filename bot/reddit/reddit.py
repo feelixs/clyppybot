@@ -1,9 +1,6 @@
 import logging
-import yt_dlp
 import re
-import asyncio
 import aiohttp
-import os
 from typing import Optional, Tuple
 from bot.kick import KickMisc
 from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration

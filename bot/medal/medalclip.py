@@ -1,5 +1,4 @@
-from bot.classes import BaseClip, DownloadResponse, MAX_FILE_SIZE_FOR_DISCORD
-from bot.tools import tryremove
+from bot.classes import BaseClip, DownloadResponse
 
 
 class MedalClip(BaseClip):
