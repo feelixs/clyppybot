@@ -250,7 +250,6 @@ class AutoEmbedder:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
 
-            # note: it seems that discord doesn't cache the clyppy.io urls, but the <og:video content="[...]"> value, so duplicating the StoredVideo objects is pointless
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
