@@ -1,5 +1,5 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, InvalidClipType
 
 
 class BlueSkyMisc(BaseMisc):
@@ -16,7 +16,7 @@ class BlueSkyMisc(BaseMisc):
         match = re.match(pattern, url)
         if match:
             return match.group(2)
-        return None
+        raise InvalidClipType
 
     async def get_clip(self, url: str, extended_url_formats=False) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
@@ -29,6 +29,8 @@ class BlueSkyMisc(BaseMisc):
         # Extract user handle from URL
         user_match = re.search(r'bsky\.app/profile/([^/]+)/post/', url)
         user = user_match.group(1) if user_match else None
+        if user is None:
+            raise InvalidClipType
 
         return BlueSkyClip(slug, user)
 
