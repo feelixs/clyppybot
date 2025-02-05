@@ -19,6 +19,10 @@ MAX_VIDEO_LEN_SEC = 180
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 
 
+class UnknownError(Exception):
+    pass
+
+
 class UploadFailed(Exception):
     pass
 

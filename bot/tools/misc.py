@@ -8,7 +8,7 @@ import asyncio
 from bot.classes import BaseClip
 from typing import Optional, Union
 from dataclasses import dataclass
-from bot.classes import DownloadResponse
+from bot.classes import DownloadResponse, UnknownError
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
@@ -47,20 +47,19 @@ class DownloadManager:
 
     async def download_clip(self, clip: BaseClip, guild_ctx: GuildType,
                             always_download=False, overwrite_on_server=False,
-                            can_send_files=False) -> Optional[DownloadResponse]:
+                            can_send_files=False) -> DownloadResponse:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
         desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
-                self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
-                return None
+                raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")
             self._parent.logger.info("Run clip.download()")
         if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
             r = await clip.dl_download(filename=desired_filename, can_send_files=can_send_files)
         else:
             r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
         if r is None:
-            return None
+            raise UnknownError
 
         if overwrite_on_server and not (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")

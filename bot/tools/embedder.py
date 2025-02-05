@@ -172,17 +172,13 @@ class AutoEmbedder:
                 # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
                 self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uplaoded to the server")
-                response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                _ = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     guild_ctx=guild,
                     always_download=True,
                     overwrite_on_server=True,
                     can_send_files=has_file_perms
                 )
-                if response is None:
-                    self.logger.info(f"Failed to fetch clip for server upload.. {clip_link} Cancelling")
-                    await respond_to.reply(f"Failed to fetch clip for server upload.. {clip_link}")
-                    return
                 await respond_to.reply(f"Success for {clip_link}")
                 return
             else:
@@ -197,9 +193,6 @@ class AutoEmbedder:
                     guild_ctx=guild,
                     can_send_files=has_file_perms
                 )
-                if response is None:
-                    self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
-                    return
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 response = DownloadResponse(
