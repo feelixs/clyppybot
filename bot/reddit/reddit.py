@@ -3,7 +3,8 @@ import re
 import aiohttp
 from typing import Optional, Tuple
 from bot.kick import KickMisc
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration
+from bot.medal import MedalMisc
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, DownloadResponse
 
 
 class RedditMisc(BaseMisc):
@@ -174,15 +175,23 @@ class RedditClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def _download_kick(self, filename, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[Tuple[str, float]]:
+    async def _download_kick(self, filename, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         k = KickMisc()
         kclip = await k.get_clip(self.external_link)
         return await kclip.download(filename, dlp_format, can_send_files)
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[Tuple[str, float]]:
+    async def _download_medal(self, filename, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+        m = MedalMisc()
+        mclip = await m.get_clip(self.external_link)
+        return await mclip.download(filename, dlp_format, can_send_files)
+
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         if self.external_link is None:
             pass
-        elif 'kick' in self.external_link:
+        elif 'kick.com' in self.external_link:
             self.logger.info(f"Running download for external link {self.external_link}")
             return await self._download_kick(filename, dlp_format, can_send_files)
+        elif 'medal.tv' in self.external_link:
+            self.logger.info(f"Running download for external link {self.external_link}")
+            return await self._download_medal(filename, dlp_format, can_send_files)
         return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)

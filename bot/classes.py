@@ -9,7 +9,13 @@ import base64
 import aiohttp
 import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from bot.tools import tryremove
+
+
+def tryremove(f):
+    try:
+        os.remove(f)
+    except:
+        pass
 
 
 MAX_VIDEO_LEN_SEC = 180
