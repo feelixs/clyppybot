@@ -360,4 +360,4 @@ class AutoEmbedder:
                 bot=self.bot,
                 delete_after_on_reply=60
             )
-            raise 
+            raise
