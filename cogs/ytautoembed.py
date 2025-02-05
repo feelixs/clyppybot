@@ -11,5 +11,5 @@ class YtAutoEmbed(Extension):
     # don't auto embed yt links, should only work via /embed command
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        if self.bot.yt.is_dl_server(event.guild):
+        if self.bot.yt.is_dl_server(event.message.guild):
             await self.embedder.on_message_create(event)

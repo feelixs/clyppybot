@@ -10,5 +10,5 @@ class XAutoEmbed(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        if self.bot.x.is_dl_server(event.guild):
+        if self.bot.x.is_dl_server(event.message.guild):
             await self.embedder.on_message_create(event)
