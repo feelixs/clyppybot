@@ -77,6 +77,7 @@ class TwitchClip(BaseClip):
             resp = await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
             resp.can_be_uploaded = local.can_be_uploaded
             resp.filesize = local.filesize
+            resp.local_file_path = local.local_file_path
             return resp
 
     def _get_direct_clip_url(self):
