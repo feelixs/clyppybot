@@ -12,7 +12,7 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure
+from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure, UnknownError
 
 
 INVALID_DL_PLATFORMS = []
@@ -246,6 +246,11 @@ class AutoEmbedder:
             else:
                 t = None
 
+            uploading_to_discord = response.can_be_uploaded and has_file_perms
+            if response.remote_url is None and not uploading_to_discord:
+                self.logger.info("The remote url was None but we're not uploading to Discord!")
+                raise UnknownError
+
             # note: it seems that discord doesn't cache the clyppy.io urls, but the <og:video content="[...]"> value, so duplicating the StoredVideo objects is pointless
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
@@ -267,7 +272,7 @@ class AutoEmbedder:
                 'generated_id': clip.clyppy_id,
                 'original_id': clip.id,
                 'video_file_size': response.filesize,
-                'uploaded_to_discord': response.can_be_uploaded and has_file_perms,
+                'uploaded_to_discord': uploading_to_discord,
                 'video_file_dur': response.duration,
                 'expires_at_timestamp': expires_at,
                 'error': error_code
@@ -295,12 +300,12 @@ class AutoEmbedder:
 
                 # send message
                 if isinstance(respond_to, SlashContext):
-                    if response.can_be_uploaded and has_file_perms:
+                    if uploading_to_discord:
                         await respond_to.send(file=response.local_file_path, components=comp)
                     else:
                         await respond_to.send(clip.clyppy_url, components=comp)
                 else:
-                    if response.can_be_uploaded and has_file_perms:
+                    if uploading_to_discord:
                         await respond_to.reply(file=response.local_file_path, components=comp)
                     else:
                         await respond_to.reply(clip.clyppy_url, components=comp)
