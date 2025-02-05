@@ -3,7 +3,7 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip, DownloadResponse, InvalidClipType, MAX_FILE_SIZE_FOR_DISCORD
+from bot.classes import BaseClip, DownloadResponse, InvalidClipType, MAX_FILE_SIZE_FOR_DISCORD, LocalFileInfo, UnknownError
 from bot.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
@@ -43,8 +43,14 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/best[height<=720]',
-                       can_send_files=False) -> Optional[DownloadResponse]:
+    async def fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
+        local_file = await super().dl_download(filename, dlp_format, can_send_files)
+        if local_file is None:
+            raise UnknownError
+        return local_file
+
+    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/best[height<=720]', can_send_files=False) -> Optional[DownloadResponse]:
+        local = await self.fetch_file(filename, dlp_format, can_send_files)
         try:
             media_assets_url = self._get_direct_clip_url()
             ydl_opts = {
@@ -58,8 +64,8 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
-            self.logger.info(f"Got filesize {extracted.filesize} for {self.id}")
-            if extracted.filesize > 0:
+            self.logger.info(f"Got filesize {local.filesize} for {self.id}")
+            if local.filesize > 0:
                 self.logger.info(f"{extracted.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
                 return await super().dl_download(filename, dlp_format, can_send_files)
@@ -68,7 +74,10 @@ class TwitchClip(BaseClip):
                 return extracted
         except InvalidClipType:
             # download temporary v2 link (default)
-            return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+            resp = await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+            resp.can_be_uploaded = local.can_be_uploaded
+            resp.filesize = local.filesize
+            return resp
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links
