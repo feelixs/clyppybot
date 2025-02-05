@@ -49,7 +49,7 @@ class TwitchClip(BaseClip):
             raise UnknownError
         return local_file
 
-    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/bv*+ba', can_send_files=False) -> DownloadResponse:
         local = await self.fetch_file(filename, dlp_format, can_send_files)
         try:
             media_assets_url = self._get_direct_clip_url()
@@ -69,7 +69,16 @@ class TwitchClip(BaseClip):
             if extracted.filesize > 0 and extracted.filesize > MAX_FILE_SIZE_FOR_DISCORD:
                 self.logger.info(f"{extracted.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
-                return await super().dl_download(filename, dlp_format, can_send_files)
+                return DownloadResponse(
+                    remote_url=None,
+                    local_file_path=local.local_file_path,
+                    duration=local.duration,
+                    width=local.width,
+                    height=local.height,
+                    filesize=local.filesize,
+                    video_name=local.video_name,
+                    can_be_uploaded=True
+                )
             else:
                 return extracted
         except InvalidClipType:
