@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 
 MAX_VIDEO_LEN_SEC = 180
+MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 
 
 class InvalidClipType(Exception):
@@ -31,16 +32,20 @@ class NoDuration(Exception):
     pass
 
 
-async def is_404(url: str, logger=None) -> bool:
+class KickClipFailure(Exception):
+    pass
+
+
+async def is_404(url: str, logger=None) -> Tuple[bool, int]:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if logger is not None:
                     logger.info(f"Got response status {response.status} for {url}")
-                return not str(response.status).startswith('2')
+                return not str(response.status).startswith('2'), response.status
     except aiohttp.ClientError:
         # Handle connection errors, invalid URLs etc
-        return True  # Consider failed connections as effectively 404
+        return True, 500  # Consider failed connections as effectively 404
 
 
 def get_video_details(file_path) -> 'LocalFileInfo':
@@ -52,7 +57,8 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             filesize=os.path.getsize(file_path),
             duration=clip.duration,
             local_file_path=file_path,
-            video_name=None
+            video_name=None,
+            can_be_uploaded=None
         )
         #return {
         #    'width': clip.w,
@@ -76,6 +82,7 @@ class DownloadResponse:
     height: int
     filesize: float
     video_name: Optional[str]
+    can_be_uploaded: Optional[bool]
 
 
 @dataclass
@@ -86,6 +93,7 @@ class LocalFileInfo:
     height: int
     filesize: float
     video_name: Optional[str]
+    can_be_uploaded: Optional[bool]
 
 
 async def upload_video(video_file_path) -> Dict:
@@ -204,10 +212,11 @@ class BaseClip(ABC):
                     remote_url=format_info['url'],
                     local_file_path=None,
                     duration=duration,
-                    filesize=0,  # since yt-dlp was rigged to return an url, video is hosted on another cdn
+                    filesize=info.get('filesize', 0),
                     width=format_info['width'],
                     height=format_info['height'],
-                    video_name=title
+                    video_name=title,
+                    can_be_uploaded=None
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -240,15 +249,25 @@ class BaseClip(ABC):
                         remote_url=format_info['url'],
                         local_file_path=None,
                         duration=duration,
-                        filesize=0,
+                        filesize=best_format.get('filesize', 0),
                         width=format_info['width'],
                         height=format_info['height'],
-                        video_name=title
+                        video_name=title,
+                        can_be_uploaded=None
                     )
 
             raise ValueError("No suitable URL found in video info")
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+        resp = await self._fetch_external_url(dlp_format)
+        if MAX_FILE_SIZE_FOR_DISCORD > resp.filesize > 0 and can_send_files:
+            self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
+            return await self.dl_download(filename, dlp_format, can_send_files)
+        else:
+            resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
+            return resp
+
+    async def _fetch_external_url(self, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
@@ -269,7 +288,7 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             return None
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba') -> Optional[LocalFileInfo]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[LocalFileInfo]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             return get_video_details(filename)
@@ -299,6 +318,10 @@ class BaseClip(ABC):
 
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
+                if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
+                    self.logger.info(f"{self.id} can be uploaded to discord...")
+                    d.can_be_uploaded = True
+
                 return d
 
             self.logger.info(f"Could not find file")
@@ -337,7 +360,8 @@ class BaseClip(ABC):
                 filesize=local_file_info.filesize,
                 height=local_file_info.height,
                 width=local_file_info.width,
-                video_name=local_file_info.video_name
+                video_name=local_file_info.video_name,
+                can_be_uploaded=None
             )
         else:
             self.logger.error(f"Failed to upload video: {response}")
@@ -382,11 +406,11 @@ class BaseMisc(ABC):
         self.platform_name = None
 
     @abstractmethod
-    async def get_clip(self, url: str) -> 'BaseClip':
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'BaseClip':
         ...
 
     @abstractmethod
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         ...
 
     def is_clip_link(self, url: str) -> bool:

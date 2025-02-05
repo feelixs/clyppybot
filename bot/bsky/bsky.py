@@ -7,7 +7,7 @@ class BlueSkyMisc(BaseMisc):
         super().__init__()
         self.platform_name = "BlueSky"
 
-    def parse_clip_url(self, url: str) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         """
         Extracts the post ID from various BlueSky URL formats.
         Returns None if the URL is not a valid BlueSky URL.
@@ -18,7 +18,7 @@ class BlueSkyMisc(BaseMisc):
             return match.group(2)
         return None
 
-    async def get_clip(self, url: str) -> 'BlueSkyClip':
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:

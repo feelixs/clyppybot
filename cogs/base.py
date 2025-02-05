@@ -10,8 +10,9 @@ from bot.tools import AutoEmbedder
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL
 from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, KickClipFailure
 import re
+import time
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
@@ -38,7 +39,9 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     # Twitch patterns
     twitch_patterns = [
         r'https?://(?:www\.|m\.)?clips\.twitch\.tv/([\w-]+)',
-        r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)'
+        r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)',
+        r'https?://(?:www\.)?clyppy\.com/?clips/([a-zA-Z0-9_-]+)',
+        r'https?://(?:www\.)?clyppy\.io/?clips/([a-zA-Z0-9_-]+)'
     ]
     for pattern in twitch_patterns:
         if match := re.match(pattern, url):
@@ -46,6 +49,8 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
 
     xpatterns = [
         r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?fxtwitter\.com/\w+/status/(\d+)',
+        r'(?:https?://)?(?:www\.)?fixupx\.com/\w+/status/(\d+)',
         r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
     ]
     for pattern in xpatterns:
@@ -67,7 +72,8 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
         r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
         r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
         r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
-        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
+        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
+        r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
     ]
     for pattern in reddit_patterns:
         if match := re.match(pattern, url):
@@ -111,6 +117,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
+        self.currently_downloading_for_embed = []
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
@@ -134,24 +141,64 @@ class Base(Extension):
                             ]
                    )
     async def embed(self, ctx: SlashContext, url: str):
-        await ctx.defer(ephemeral=False)
-        platform, slug = compute_platform(url, self.bot)
-        if platform is None:
-            await ctx.send("Couldn't embed that url (invalid/incompatible)")
-            return
+        async def wait_for_download(clip_id: str, timeout: float = 30):
+            start_time = time.time()
+            while clip_id in self.currently_downloading_for_embed:
+                if time.time() - start_time > timeout:
+                    raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
+                await asyncio.sleep(0.1)
 
-        timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
-        e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
+        await ctx.defer(ephemeral=False)
         try:
-            await e._process_this_clip_link(slug, url, ctx, GuildType(ctx.guild.id, ctx.guild.name, False))
-        except NoDuration:
-            await ctx.send("Couldn't embed that url (not a video post)")
-        except VideoTooLong:
-            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
-        except:
-            await ctx.send(f"An unexpected error occurred with your input `{url}`")
-        finally:
-            timeout_task.cancel()
+            if not url.startswith("https://"):
+                url = "https://" + url
+            platform, slug = compute_platform(url, self.bot)
+            if ctx.guild:
+                guild = GuildType(ctx.guild.id, ctx.guild.name, False)
+            else:
+                guild = GuildType(ctx.author.id, ctx.author.username, True)
+            self.logger.info(f"/embed in {guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
+            if platform is None:
+                self.logger.info(f"return incompatible for /embed {url}")
+                await ctx.send("Couldn't embed that url (invalid/incompatible)")
+                return
+
+            if slug in self.currently_downloading_for_embed:
+                try:
+                    await wait_for_download(slug)
+                except TimeoutError:
+                    pass  # continue with the dl anyway
+            else:
+                self.currently_downloading_for_embed.append(slug)
+
+            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
+            e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
+            try:
+                await e._process_this_clip_link(
+                    parsed_id=slug,
+                    clip_link=url,
+                    respond_to=ctx,
+                    guild=guild,
+                    extended_url_formats=True)
+            except NoDuration:
+                await ctx.send("Couldn't embed that url (not a video post)")
+            except VideoTooLong:
+                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
+            except KickClipFailure:
+                await ctx.send(f"Unexpected error while trying to download this kick clip")
+            except Exception as e:
+                self.logger.info(f'Unexpected error in /embed: {str(e)}')
+                await ctx.send(f"An unexpected error occurred with your input `{url}`")
+            finally:
+                timeout_task.cancel()
+                try:
+                    self.currently_downloading_for_embed.remove(slug)
+                except ValueError:
+                    pass
+        except Exception as e:
+            self.logger.info(f"Exception in /embed: {str(e)}")
+            await ctx.send()
+            await ctx.send(f"Unexpected error while trying to embed this url")
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):

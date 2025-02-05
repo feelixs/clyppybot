@@ -1,1 +1,0 @@
-from bot.rednote.rednote import RedClip, RedMisc

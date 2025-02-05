@@ -1,3 +1,5 @@
+import os.path
+
 import undetected_chromedriver as uc
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
@@ -6,7 +8,7 @@ import asyncio
 import json
 import time
 import traceback
-from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details
+from bot.classes import BaseClip, upload_video, DownloadResponse, get_video_details, MAX_FILE_SIZE_FOR_DISCORD, KickClipFailure
 
 
 class KickClip(BaseClip):
@@ -59,7 +61,11 @@ class KickClip(BaseClip):
             driver.get(clip_url)
 
             m3u8_url = await scan_logs_for_m3u8(driver)
-            clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
+            try:
+                clip_name = driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[4]/div[1]/main/div[2]/div[1]/div/div[1]/div[2]/div[1]/span').text
+            except Exception as e:
+                self.logger.info(f"Could not find title of kick clip: {str(e)}, using default value")
+                clip_name = "Clyppy Video"
             if m3u8_url:
                 self.logger.info(f"Found m3u8 URL: {m3u8_url}. Clip name: {clip_name}")
                 return m3u8_url, clip_name
@@ -73,14 +79,14 @@ class KickClip(BaseClip):
         finally:
             driver.quit()
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         try:
             m3u8_url, name = await self.get_m3u8_url()
         except:
             m3u8_url, name = None, None
         if not m3u8_url:
             self.logger.error("Failed to get m3u8 URL")
-            return None
+            raise KickClipFailure
 
         # Download using ffmpeg
         try:
@@ -101,31 +107,46 @@ class KickClip(BaseClip):
 
             if process.returncode != 0:
                 self.logger.error("FFmpeg download failed")
-                return None
+                raise KickClipFailure
 
-            self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
-            try:
-                response = await upload_video(filename)
-            except Exception as e:
-                self.logger.error(f"Failed to upload video: {str(e)}")
-                return None
-            if response['success']:
-                self.logger.info(f"Uploaded video: {response['file_path']}")
+            if MAX_FILE_SIZE_FOR_DISCORD > os.path.getsize(filename) > 0 and can_send_files:
                 i = get_video_details(filename)
                 i.video_name = name
                 return DownloadResponse(
-                    remote_url=response['file_path'],
+                    remote_url=None,
                     local_file_path=filename,
                     duration=i.duration,
                     filesize=i.filesize,
                     height=i.height,
                     width=i.width,
-                    video_name=name
+                    video_name=name,
+                    can_be_uploaded=True
                 )
             else:
-                self.logger.error(f"Failed to upload video: {response}")
-                return None
+                self.logger.info(f"Uploading the downloaded kick video to https://clyppy.io/api/addclip/: {filename}")
+                try:
+                    response = await upload_video(filename)
+                except Exception as e:
+                    self.logger.error(f"Failed to upload video: {str(e)}")
+                    raise KickClipFailure
+                if response['success']:
+                    self.logger.info(f"Uploaded video: {response['file_path']}")
+                    i = get_video_details(filename)
+                    i.video_name = name
+                    return DownloadResponse(
+                        remote_url=response['file_path'],
+                        local_file_path=filename,
+                        duration=i.duration,
+                        filesize=i.filesize,
+                        height=i.height,
+                        width=i.width,
+                        video_name=name,
+                        can_be_uploaded=False
+                    )
+                else:
+                    self.logger.error(f"Failed to upload video: {response}")
+                    raise KickClipFailure
 
         except Exception as e:
             self.logger.error(f"Error downloading clip: {e}")
-            return None
+            raise KickClipFailure
