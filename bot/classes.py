@@ -1,4 +1,3 @@
-import traceback
 from abc import ABC, abstractmethod
 import logging
 import asyncio
@@ -8,15 +7,13 @@ from typing import Tuple, Optional, Dict
 from dataclasses import dataclass
 import base64
 import aiohttp
-from urllib.parse import urlparse, parse_qs
 import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
-import json
-from datetime import datetime, timezone
 
 
 MAX_VIDEO_LEN_SEC = 180
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
+DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 
 class UnknownError(Exception):
@@ -466,3 +463,11 @@ class BaseMisc(ABC):
         if d is None:
             return False
         return d <= max_len
+
+    @staticmethod
+    def is_dl_server(guild):
+        if guild is None:
+            return False
+        elif str(guild.id) == str(DL_SERVER_ID):
+            return True
+        return False
