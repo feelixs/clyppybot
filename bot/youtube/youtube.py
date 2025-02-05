@@ -100,7 +100,7 @@ class YtClip(BaseClip):
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
 
-                if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
+                if MAX_FILE_SIZE_FOR_DISCORD > d.filesize > 0 and can_send_files:
                     return DownloadResponse(
                         remote_url=None,
                         local_file_path=filename,
