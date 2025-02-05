@@ -43,7 +43,8 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/best[height<=720]',
+                       can_send_files=False) -> Optional[DownloadResponse]:
         try:
             media_assets_url = self._get_direct_clip_url()
             ydl_opts = {
