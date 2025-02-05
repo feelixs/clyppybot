@@ -474,7 +474,7 @@ class BaseMisc(ABC):
         ...
 
     @abstractmethod
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         ...
 
     def is_clip_link(self, url: str) -> bool:
