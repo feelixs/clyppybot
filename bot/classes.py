@@ -353,7 +353,7 @@ class BaseClip(ABC):
             tryremove(local.local_file_path)
         return None
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[LocalFileInfo]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             return get_video_details(filename)
@@ -390,10 +390,10 @@ class BaseClip(ABC):
                 return d
 
             self.logger.info(f"Could not find file")
-            return None
+            raise UnknownError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
-            return None
+            raise
 
     async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'
@@ -484,7 +484,7 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
-    async def get_len(self, url: str) -> Optional[float]:
+    async def get_len(self, url: str) -> float:
         """
             Uses yt-dlp to check video length of the provided url
         """

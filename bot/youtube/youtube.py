@@ -3,9 +3,8 @@ import yt_dlp
 import asyncio
 import os
 import re
-from bot.classes import (BaseClip, BaseMisc, DownloadResponse, get_video_details, is_discord_compatible,
+from bot.classes import (BaseClip, BaseMisc, DownloadResponse, get_video_details, is_discord_compatible, InvalidClipType,
                          MAX_VIDEO_LEN_SEC, VideoTooLong, ClipFailure, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
-from typing import Optional
 
 
 class YtMisc(BaseMisc):
@@ -13,7 +12,7 @@ class YtMisc(BaseMisc):
         super().__init__()
         self.platform_name = "YouTube"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -29,9 +28,9 @@ class YtMisc(BaseMisc):
             match = re.match(pattern, url)
             if match:
                 return match.group(1)
-        return None
+        raise InvalidClipType
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> Optional['YtClip']:
+    async def get_clip(self, url: str, extended_url_formats=False) -> 'YtClip':
         slug = self.parse_clip_url(url)
         valid = await self.is_shortform(url)
         if not valid:

@@ -37,6 +37,6 @@ class TwitchMisc(BaseMisc):
         ]
         return any(re.match(pattern, url) for pattern in patterns)
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> Optional[TwitchClip]:
+    async def get_clip(self, url: str, extended_url_formats=False) -> TwitchClip:
         slug = self.parse_clip_url(url)
         return TwitchClip(slug)

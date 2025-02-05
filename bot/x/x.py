@@ -55,7 +55,7 @@ class Xclip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) run dl_download()...")
         local_file = await super().dl_download(filename, dlp_format, can_send_files)

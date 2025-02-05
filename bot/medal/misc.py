@@ -1,7 +1,7 @@
 from typing import Optional
 import logging
 from bot.medal import MedalClip
-from bot.classes import BaseMisc
+from bot.classes import BaseMisc, InvalidClipType
 import re
 
 
@@ -10,7 +10,7 @@ class MedalMisc(BaseMisc):
         super().__init__()
         self.platform_name = "Medal"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
         """
         Parses a Medal.tv clip URL to extract just the clip ID.
 
@@ -22,7 +22,7 @@ class MedalMisc(BaseMisc):
         match = re.search(r'clips/([\w-]+)', url)
         if match:
             return match.group(1)
-        return None
+        raise InvalidClipType
 
     def is_clip_link(self, url: str) -> bool:
         """
