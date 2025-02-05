@@ -1,5 +1,6 @@
 import re
 from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration
+from typing import Optional
 
 
 class TikTokMisc(BaseMisc):
@@ -7,7 +8,7 @@ class TikTokMisc(BaseMisc):
         super().__init__()
         self.platform_name = "TikTok"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
         Extracts the TikTok video ID from various URL formats.
         Returns None if the URL is not a valid TikTok video URL.
