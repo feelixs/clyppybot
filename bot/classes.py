@@ -304,7 +304,7 @@ class BaseClip(ABC):
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
             return resp
 
-    async def _fetch_external_url(self, dlp_format='best/bv*+ba') -> Optional[DownloadResponse]:
+    async def _fetch_external_url(self, dlp_format='best/bv*+ba') -> DownloadResponse:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
@@ -323,7 +323,7 @@ class BaseClip(ABC):
             )
         except Exception as e:
             self.logger.error(f"Failed to get direct URL: {str(e)}")
-            return None
+            raise NoDuration
 
     async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
         local_file = await self.dl_download(filename, dlp_format, can_send_files)
