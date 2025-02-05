@@ -64,13 +64,13 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
+            extracted.filesize = local.filesize
             self.logger.info(f"Got filesize {local.filesize} for {self.id}")
-            if local.filesize > 0 and local.filesize > MAX_FILE_SIZE_FOR_DISCORD:
+            if extracted.filesize > 0 and extracted.filesize > MAX_FILE_SIZE_FOR_DISCORD:
                 self.logger.info(f"{extracted.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
                 return await super().dl_download(filename, dlp_format, can_send_files)
             else:
-                extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
                 return extracted
         except InvalidClipType:
             # download temporary v2 link (default)
