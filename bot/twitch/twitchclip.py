@@ -84,7 +84,7 @@ class TwitchClip(BaseClip):
             extracted.remote_url = media_assets_url
             return extracted
         except InvalidClipType:
-            # download temporary v2 link (default)
+            # fetch temporary v2 link (default)
             return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
 
     def _get_direct_clip_url(self):
