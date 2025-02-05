@@ -284,12 +284,22 @@ class BaseClip(ABC):
 
             raise ValueError("No suitable URL found in video info")
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         resp = await self._fetch_external_url(dlp_format)
         self.logger.info(f"Got filesize {resp.filesize} for {self.id}")
         if is_discord_compatible(resp.filesize) and can_send_files:
             self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
-            return await self.dl_download(filename, dlp_format, can_send_files)
+            local = await self.dl_download(filename, dlp_format, can_send_files)
+            return DownloadResponse(
+                    remote_url=None,
+                    local_file_path=local.local_file_path,
+                    duration=local.duration,
+                    width=local.width,
+                    height=local.height,
+                    filesize=local.filesize,
+                    video_name=local.video_name,
+                    can_be_uploaded=True
+                )
         else:
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
             return resp
