@@ -357,12 +357,12 @@ class BaseClip(ABC):
                     error_data = await response.json()
                     raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
 
-    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> Optional[DownloadResponse]:
+    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> DownloadResponse:
         try:
             response = await upload_video(local_file_info.local_file_path)
         except Exception as e:
             self.logger.error(f"Failed to upload video: {str(e)}")
-            return None
+            raise UploadFailed
         if response['success']:
             self.logger.info(f"Uploaded video: {response['file_path']}")
             return DownloadResponse(
@@ -377,7 +377,7 @@ class BaseClip(ABC):
             )
         else:
             self.logger.error(f"Failed to upload video: {response}")
-            return None
+            raise UploadFailed
 
     @staticmethod
     def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
