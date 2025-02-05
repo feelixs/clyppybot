@@ -1,13 +1,14 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, DownloadResponse
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, DownloadResponse, InvalidClipType
 from typing import Optional
+
 
 class Xmisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "Twitter"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
         Extracts the tweet ID/slug from various Twitter URL formats.
         Returns None if the URL is not a valid Twitter URL.
@@ -28,6 +29,8 @@ class Xmisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False) -> 'Xclip':
         slug = self.parse_clip_url(url, extended_url_formats)
+        if slug is None:
+            raise InvalidClipType
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
