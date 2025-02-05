@@ -1,4 +1,4 @@
-import logging
+from typing import Optional
 import yt_dlp
 import asyncio
 import os
@@ -12,7 +12,7 @@ class YtMisc(BaseMisc):
         super().__init__()
         self.platform_name = "YouTube"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
             Extracts the video ID from a YouTube URL if present.
             Works with all supported URL formats.
@@ -23,15 +23,16 @@ class YtMisc(BaseMisc):
             r'^(?:https?://)?(?:(?:www|m)\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
             r'^(?:https?://)?(?:(?:www|m)\.)?youtube\.com/clip/([^"&?/ ]{11})'
         ]
-
         for pattern in patterns:
             match = re.match(pattern, url)
             if match:
                 return match.group(1)
-        raise InvalidClipType
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False) -> 'YtClip':
         slug = self.parse_clip_url(url)
+        if slug is None:
+            raise InvalidClipType
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
