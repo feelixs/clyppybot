@@ -49,7 +49,7 @@ class TwitchClip(BaseClip):
             raise UnknownError
         return local_file
 
-    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/best[height<=720]', can_send_files=False) -> Optional[DownloadResponse]:
+    async def download(self, filename=None, dlp_format='bestvideo[height<=720]+bestaudio/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         local = await self.fetch_file(filename, dlp_format, can_send_files)
         try:
             media_assets_url = self._get_direct_clip_url()
