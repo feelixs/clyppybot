@@ -350,7 +350,6 @@ class BaseClip(ABC):
                     video_name=local.video_name,
                     can_be_uploaded=True
                 )
-            tryremove(local.local_file_path)
         return None
 
     async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
