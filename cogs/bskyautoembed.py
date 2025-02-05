@@ -10,5 +10,4 @@ class BlueSkyAutoEmbed(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        if self.bot.bsky.is_dl_server(event.message.guild):
-            await self.embedder.on_message_create(event)
+        await self.embedder.on_message_create(event)
