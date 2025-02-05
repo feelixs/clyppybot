@@ -21,6 +21,8 @@ class BlueSkyMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
+        if slug is None:
+            raise InvalidClipType
         valid = await self.is_shortform(url)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
