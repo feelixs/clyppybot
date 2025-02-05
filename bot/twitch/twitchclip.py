@@ -68,7 +68,7 @@ class TwitchClip(BaseClip):
             else:
                 self.logger.info(f"{local.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             tryremove(local.local_file_path)
-        
+
         try:
             media_assets_url = self._get_direct_clip_url()
             ydl_opts = {
@@ -82,30 +82,14 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
-            extracted.filesize = local.filesize
-            self.logger.info(f"Got filesize {local.filesize} for {self.id}")
-            if extracted.filesize > 0 and extracted.filesize > MAX_FILE_SIZE_FOR_DISCORD:
-                self.logger.info(f"{extracted.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
             if MAX_FILE_SIZE_FOR_DISCORD > extracted.filesize > 0 and can_send_files:
-                return DownloadResponse(
-                    remote_url=None,
-                    local_file_path=local.local_file_path,
-                    duration=local.duration,
-                    width=local.width,
-                    height=local.height,
-                    filesize=local.filesize,
-                    video_name=local.video_name,
-                    can_be_uploaded=True
-                )
+                return await super().dl_download(filename, dlp_format, can_send_files)
             else:
+                extracted.filesize = 0  # bc its hosted on twitch, not clyppy.io
                 return extracted
         except InvalidClipType:
             # download temporary v2 link (default)
-            resp = await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
-            resp.can_be_uploaded = local.can_be_uploaded
-            resp.filesize = local.filesize
-            resp.local_file_path = local.local_file_path
-            return resp
+            return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links
