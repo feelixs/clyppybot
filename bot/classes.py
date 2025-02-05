@@ -274,7 +274,7 @@ class BaseClip(ABC):
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
         resp = await self._fetch_external_url(dlp_format)
         self.logger.info(f"Got filesize {resp.filesize} for {self.id}")
-        if resp.filesize > 0:
+        if resp.filesize > 0 and resp.filesize > MAX_FILE_SIZE_FOR_DISCORD:
             self.logger.info(f"{resp.filesize - MAX_FILE_SIZE_FOR_DISCORD} more than limit")
         if MAX_FILE_SIZE_FOR_DISCORD > resp.filesize > 0 and can_send_files:
             self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
