@@ -246,8 +246,8 @@ class AutoEmbedder:
                 t = None
 
             uploading_to_discord = response.can_be_uploaded and has_file_perms
-            if response.remote_url is None and not uploading_to_discord:
-                self.logger.info("The remote url was None but we're not uploading to Discord!")
+            if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
+                self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
 
             # note: it seems that discord doesn't cache the clyppy.io urls, but the <og:video content="[...]"> value, so duplicating the StoredVideo objects is pointless
