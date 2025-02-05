@@ -1,5 +1,6 @@
 import re
 from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, InvalidClipType
+from typing import Optional
 
 
 class BlueSkyMisc(BaseMisc):
@@ -7,7 +8,7 @@ class BlueSkyMisc(BaseMisc):
         super().__init__()
         self.platform_name = "BlueSky"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
         Extracts the post ID from various BlueSky URL formats.
         Returns None if the URL is not a valid BlueSky URL.
@@ -16,7 +17,7 @@ class BlueSkyMisc(BaseMisc):
         match = re.match(pattern, url)
         if match:
             return match.group(2)
-        raise InvalidClipType
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
