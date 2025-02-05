@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 import logging
 import asyncio
@@ -16,6 +17,10 @@ from datetime import datetime, timezone
 
 MAX_VIDEO_LEN_SEC = 180
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
+
+
+class UploadFailed(Exception):
+    pass
 
 
 class InvalidClipType(Exception):
@@ -117,7 +122,12 @@ async def upload_video(video_file_path) -> Dict:
                     json=data,
                     headers=headers
             ) as response:
-                return await response.json()
+                r = await response.json()
+                if r['success']:
+                    return r
+                else:
+                    print(traceback.format_exc())
+                    raise UploadFailed
         except Exception as e:
             raise e
 
