@@ -8,7 +8,7 @@ import aiohttp
 import os
 from bot.tools import AutoEmbedder
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
-from bot.tools.misc import SUPPORT_SERVER_URL
+from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from typing import Tuple, Optional
 from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure
 import re
@@ -132,6 +132,21 @@ class Base(Extension):
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
         await ctx.send("You can now safely exit.")
+
+    @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
+    async def vote(self, ctx: SlashContext):
+        await ctx.send(f"""
+                Give Clyppy your support by voting in popular bot sites! By voting, you'll receive the following 
+                benefits:\n\n
+                 - Exclusive role in [our Discord]({SUPPORT_SERVER_URL})
+                 
+                Please vote on as many sites as possible. Your support is appreciated.
+                
+                **[Top.gg]({TOPGG_VOTE_LINK})**\n
+                **[InfinityBots]({INFINITY_VOTE_LINK})**\n
+                **[Dlist]({DLIST_VOTE_LINK})**\n
+                **[BotList.me]({BOTLISTME_VOTE_LINK})**
+        """)
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
