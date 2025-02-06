@@ -202,7 +202,7 @@ class Base(Extension):
                 try_send_files=True
             )
         except NoDuration:
-            await ctx.send("Couldn't embed that url (not a video post) {create_nexus_str()}")
+            await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
         except VideoTooLong:
             await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes) {create_nexus_str()}")
         except ClipFailure:
@@ -216,7 +216,7 @@ class Base(Extension):
                 self.currently_downloading_for_embed.remove(slug)
             except ValueError:
                 pass
-    
+
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
