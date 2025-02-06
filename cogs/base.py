@@ -163,6 +163,7 @@ class Base(Extension):
                     raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
                 await asyncio.sleep(0.1)
 
+        timeout_task = None
         await ctx.defer(ephemeral=False)
         try:
             if not url.startswith("https://"):
@@ -189,6 +190,8 @@ class Base(Extension):
             timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
             e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         except Exception as e:
+            if timeout_task is not None:
+                timeout_task.cancel()
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             return
