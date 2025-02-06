@@ -175,7 +175,7 @@ class Base(Extension):
             self.logger.info(f"/embed in {guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
-                await ctx.send("Couldn't embed that url (invalid/incompatible)")
+                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 return
 
             if slug in self.currently_downloading_for_embed:
@@ -188,34 +188,35 @@ class Base(Extension):
 
             timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
             e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
-            try:
-                await e._process_this_clip_link(
-                    parsed_id=slug,
-                    clip_link=url,
-                    respond_to=ctx,
-                    guild=guild,
-                    extended_url_formats=True,
-                    try_send_files=True
-                )
-            except NoDuration:
-                await ctx.send("Couldn't embed that url (not a video post)")
-            except VideoTooLong:
-                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)")
-            except ClipFailure:
-                await ctx.send(f"Unexpected error while trying to download this clip")
-            except Exception as e:
-                self.logger.info(f'Unexpected error in /embed: {str(e)}')
-                await ctx.send(f"An unexpected error occurred with your input `{url}`")
-            finally:
-                timeout_task.cancel()
-                try:
-                    self.currently_downloading_for_embed.remove(slug)
-                except ValueError:
-                    pass
         except Exception as e:
             self.logger.info(f"Exception in /embed: {str(e)}")
-            await ctx.send()
-            await ctx.send(f"Unexpected error while trying to embed this url")
+            await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
+            return
+        try:
+            await e._process_this_clip_link(
+                parsed_id=slug,
+                clip_link=url,
+                respond_to=ctx,
+                guild=guild,
+                extended_url_formats=True,
+                try_send_files=True
+            )
+        except NoDuration:
+            await ctx.send("Couldn't embed that url (not a video post) {create_nexus_str()}")
+        except VideoTooLong:
+            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes) {create_nexus_str()}")
+        except ClipFailure:
+            await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
+        except Exception as e:
+            self.logger.info(f'Unexpected error in /embed: {str(e)}')
+            await ctx.send(f"An unexpected error occurred with your input `{url}` {create_nexus_str()}")
+        finally:
+            timeout_task.cancel()
+            try:
+                self.currently_downloading_for_embed.remove(slug)
+            except ValueError:
+                pass
+    
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
