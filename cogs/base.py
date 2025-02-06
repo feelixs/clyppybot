@@ -217,7 +217,6 @@ class Base(Extension):
             except ValueError:
                 pass
 
-
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
