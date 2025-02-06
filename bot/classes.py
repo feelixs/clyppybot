@@ -338,7 +338,7 @@ class BaseClip(ABC):
         """
         if can_send_files:
             local = await self._fetch_file(filename, dlp_format, can_send_files)
-            self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)} for {self.id}")
+            self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
                     remote_url=None,
