@@ -24,7 +24,7 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
-MAX_VIDEO_LEN_SEC = 180
+MAX_VIDEO_LEN_SEC = 60 * 5
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
