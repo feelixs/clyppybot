@@ -147,8 +147,8 @@ class Base(Extension):
                 ** - [Top.gg]({TOPGG_VOTE_LINK})**\n
                 ** - [InfinityBots]({INFINITY_VOTE_LINK})**\n
                 ** - [Dlist]({DLIST_VOTE_LINK})**\n
-                ** - [BotList.me]({BOTLISTME_VOTE_LINK})**
-        {create_nexus_str()}""")
+                ** - [BotList.me]({BOTLISTME_VOTE_LINK})**{create_nexus_str()}""")
+        )
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
