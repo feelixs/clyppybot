@@ -10,4 +10,5 @@ class RedditAutoEmbed(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        await self.embedder.on_message_create(event)
+        if self.bot.reddit.is_dl_server(event.message.guild):
+            await self.embedder.on_message_create(event)
