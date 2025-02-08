@@ -5,6 +5,7 @@ from bot.medal import MedalMisc
 from bot.tools import Tools
 from bot.kick import KickMisc
 from bot.reddit import RedditMisc
+from bot.tiktok import TikTokMisc
 from bot.youtube import YtMisc
 from bot.x import Xmisc
 from bot.bsky import BlueSkyMisc
@@ -65,6 +66,7 @@ Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
 Bot.x = Xmisc()
 Bot.bsky = BlueSkyMisc()
+Bot.tiktok = TikTokMisc()
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
@@ -73,6 +75,7 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.twitchautoembed')
     Bot.load_extension('cogs.kickautoembed')
+    Bot.load_extension('cogs.tiktokautoembed')
     Bot.load_extension('cogs.medalautoembed')
     Bot.load_extension('cogs.redditautoembed')
     Bot.load_extension('cogs.ytautoembed')
