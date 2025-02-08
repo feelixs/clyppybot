@@ -79,6 +79,10 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
         if match := re.match(pattern, url):
             return bot.reddit, match.group(1)
 
+    tiktok_pattern = r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)'
+    if match := re.match(tiktok_pattern, url):
+        return bot.tiktok, match.group(1)
+
     bsky_patterbs = r'(?:https?://)?(?:www\.)?bsky\.app/profile/([^/]+)/post/([^/]+)'
     if match := re.match(bsky_patterbs, url):
         return bot.bsky, match.group(2)
