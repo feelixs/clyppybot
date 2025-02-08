@@ -143,7 +143,7 @@ class Base(Extension):
             title="Vote for Clyppy!",
             description=f"Give Clyppy your support by voting in popular bot sites! By voting, receive the "
                         f"following benefits:\n\n- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n\n"
-                        f"View all the vote links below. Your support is appreciated.\n"
+                        f"View all the vote links below. Your support is appreciated.\n\n"
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
                         f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
