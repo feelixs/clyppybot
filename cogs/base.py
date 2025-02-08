@@ -140,16 +140,13 @@ class Base(Extension):
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
         await ctx.send(f"""
-                Give Clyppy your support by voting in popular bot sites! By voting, you'll receive the following 
-                benefits:\n\n
-                 - Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n\n
-                 
+                Give Clyppy your support by voting in popular bot sites! By voting, you'll receive the following benefits:\n\n
+                - Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n\n
                 View all the vote links below. Please vote on as many sites as possible. Your support is appreciated.\n
-                
-                **[Top.gg]({TOPGG_VOTE_LINK})**\n
-                **[InfinityBots]({INFINITY_VOTE_LINK})**\n
-                **[Dlist]({DLIST_VOTE_LINK})**\n
-                **[BotList.me]({BOTLISTME_VOTE_LINK})**
+                ** - [Top.gg]({TOPGG_VOTE_LINK})**\n
+                ** - [InfinityBots]({INFINITY_VOTE_LINK})**\n
+                ** - [Dlist]({DLIST_VOTE_LINK})**\n
+                ** - [BotList.me]({BOTLISTME_VOTE_LINK})**
         {create_nexus_str()}""")
 
     @slash_command(name="embed", description="Embed a video link in this chat",
