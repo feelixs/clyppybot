@@ -174,7 +174,7 @@ class AutoEmbedder:
                 # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
                 self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uplaoded to the server")
-                _ = await self.bot.tools.dl.download_clip(
+                response = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     guild_ctx=guild,
                     always_download=True,
