@@ -403,7 +403,7 @@ class BaseClip(ABC):
         j = {'id': self.clyppy_id, 'url': new_url}
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=j, headers=headers) as response:
-                if response.status == 201:
+                if response.status in [201, 202]:
                     return await response.json()
                 else:
                     error_data = await response.json()
