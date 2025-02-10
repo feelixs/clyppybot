@@ -166,7 +166,8 @@ class AutoEmbedder:
         video_doesnt_exist, error_code = await is_404(clip.clyppy_url, self.logger)
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
-            file_exists, _ = await is_404(f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4')
+            the_file = f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4'
+            file_exists, _ = await is_404(the_file)
             if file_exists:
                 # we're assuming the StoredVideo object exists for this clip, and now we know that
                 # its file_url is pointing to another cdn (we don't have its file in our server to be downloaded)
@@ -183,7 +184,7 @@ class AutoEmbedder:
                 await respond_to.reply(f"Success for {clip_link}")
                 return
             else:
-                self.logger.info("Video file already exists on the server! Cancelling")
+                self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
                 await respond_to.reply("Video file already exists on the server!")
                 return
         else:
