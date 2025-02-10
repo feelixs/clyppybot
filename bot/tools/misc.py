@@ -49,7 +49,7 @@ class DownloadManager:
             self._parent.logger.info("Run clip.download()")
         if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
             r = await clip.dl_download(filename=desired_filename, can_send_files=can_send_files)
-            r.can_be_uploaded = False
+            r.can_be_uploaded = False  # make sure to download and create a clyppy.io link  
         else:
             r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
         if r is None:
