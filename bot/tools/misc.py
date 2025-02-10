@@ -58,7 +58,10 @@ class DownloadManager:
             self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")
             new = await clip.upload_to_clyppyio(r)
             self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
-            await clip.overwrite_mp4(new.remote_url)
+            res = await clip.overwrite_mp4(new.remote_url)
+            if res['code'] == 202:
+                self._parent.logger.info(f"https://clyppy.io/{clip.clyppy_id} does not exist, so no overwrite was performed")
+                
             r.filesize = new.filesize
             r.remote_url = new.remote_url
         elif overwrite_on_server and (r.can_be_uploaded and can_send_files):
