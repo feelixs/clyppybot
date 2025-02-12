@@ -235,7 +235,8 @@ class Base(Extension):
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
         except VideoTooLong:
-            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes) {create_nexus_str()}")
+            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                           f"Collect VIP tokens with `/vote` to embed longer videos!{create_nexus_str()}")
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
         except Exception as e:
