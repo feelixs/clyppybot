@@ -141,6 +141,7 @@ async def upload_video(video_file_path) -> Dict:
                     json=data,
                     headers=headers
             ) as response:
+                print(await response.text())
                 r = await response.json()
                 if r['success']:
                     return r
