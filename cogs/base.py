@@ -125,7 +125,7 @@ class Base(Extension):
 
     @staticmethod
     async def _fetch_tokens(user):
-        url = 'https://clyppy.io/api/get/tokens/'
+        url = 'https://clyppy.io/api/tokens/get/'
         headers = {
             'X-API-Key': os.getenv('clyppy_post_key'),
             'Content-Type': 'application/json'
