@@ -527,7 +527,7 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             raise NoDuration
 
-    async def is_shortform(self, url: str, basemsg, max_len_sec=None) -> bool:
+    async def is_shortform(self, url: str, basemsg) -> bool:
         d = await self.get_len(url)
         if d is None:
             return False
@@ -538,7 +538,7 @@ class BaseMisc(ABC):
             if sub['success']:
                 if sub['user_success']:  # the user had enough tokens to subtract successfully
                     return True
-                
+
         return False
 
     @staticmethod
