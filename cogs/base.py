@@ -161,7 +161,7 @@ class Base(Extension):
                         f"following benefits:\n\n"
                         f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
                         f"- (2) VIP tokens per vote!\n"
-                        f"- VIP tokens allow you to embed videos up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes in length!"
+                        f"- VIP tokens allow you to embed videos up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes in length!\n"
                         f"View all the vote links below. Your support is appreciated.\n\n"
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
