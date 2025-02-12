@@ -483,6 +483,22 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
+    @staticmethod
+    async def subtract_tokens(user, amt):
+        url = 'https://clyppy.io/api/tokens/subtract/'
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        j = {'userid': user.id, 'username': user.username, 'amount': amt}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=j, headers=headers) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
+
     async def get_len(self, url: str) -> float:
         """
             Uses yt-dlp to check video length of the provided url
