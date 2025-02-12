@@ -134,7 +134,8 @@ class Base(Extension):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, json=j, headers=headers) as response:
                 if response.status == 200:
-                    return await response.json()
+                    j = await response.json()
+                    return j['tokens']
                 else:
                     error_data = await response.json()
                     raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
