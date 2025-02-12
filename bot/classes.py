@@ -528,17 +528,18 @@ class BaseMisc(ABC):
             raise NoDuration
 
     async def is_shortform(self, url: str, basemsg, max_len_sec=None) -> bool:
-        sub = await self.subtract_tokens(basemsg.user, EMBED_TOKEN_COST)
-        if sub['success']:
-            if sub['user_success']:  # the user had enough tokens to subtract successfully
-                max_len_sec = EMBED_W_TOKEN_MAX_LEN
-
-        if max_len_sec is None:
-            max_len_sec = MAX_VIDEO_LEN_SEC
         d = await self.get_len(url)
         if d is None:
             return False
-        return d <= max_len_sec
+        elif d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
+            return True
+        elif d <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
+            sub = await self.subtract_tokens(basemsg.user, EMBED_TOKEN_COST)
+            if sub['success']:
+                if sub['user_success']:  # the user had enough tokens to subtract successfully
+                    return True
+                
+        return False
 
     @staticmethod
     def is_dl_server(guild):
