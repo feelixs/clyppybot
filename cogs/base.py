@@ -124,6 +124,22 @@ class Base(Extension):
         self.currently_downloading_for_embed = []
 
     @staticmethod
+    async def _fetch_tokens(user):
+        url = 'https://clyppy.io/api/get/tokens/'
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        j = {'userid': user.id, 'username': user.username}
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, json=j, headers=headers) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
+
+    @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
@@ -142,13 +158,23 @@ class Base(Extension):
         await ctx.send(embed=Embed(
             title="Vote for Clyppy!",
             description=f"Give Clyppy your support by voting in popular bot sites! By voting, receive the "
-                        f"following benefits:\n\n- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n\n"
+                        f"following benefits:\n\n"
+                        f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
+                        f"- (2) VIP tokens per vote!\n"
                         f"View all the vote links below. Your support is appreciated.\n\n"
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
                         f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
-                        f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**{create_nexus_str()}")
-        )
+                        f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**{create_nexus_str()}"
+        ))
+
+    @slash_command(name="tokens", description="View a your VIP tokens")
+    async def tokens(self, ctx: SlashContext):
+        await ctx.defer()
+        tokens = await self._fetch_tokens(ctx.user)
+        await ctx.send(f"You have ({tokens}) VIP tokens!\n"
+                       f"You can gain more by **voting** with `/vote`\n\n"
+                       f"Use your VIP tokens to embed longer videos with Clyppy (up to 30 minutes!)")
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
