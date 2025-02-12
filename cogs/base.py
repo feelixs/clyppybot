@@ -10,7 +10,7 @@ from bot.tools import AutoEmbedder
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
 import re
 import time
 
@@ -235,8 +235,11 @@ class Base(Extension):
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
         except VideoTooLong:
-            await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                           f"Collect VIP tokens with `/vote` to embed longer videos!{create_nexus_str()}")
+            if self._fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
+                await ctx.send(f"This video was too long to embed (longer than {EMBED_W_TOKEN_MAX_LEN / 60} minutes)")
+            else:
+                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                               f"Collect VIP tokens with `/vote` to embed longer videos!{create_nexus_str()}")
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
         except Exception as e:
