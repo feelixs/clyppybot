@@ -166,8 +166,9 @@ class Base(Extension):
                         f"View all the vote links below. Your support is appreciated.\n\n"
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
-                        f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
-                        f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**{create_nexus_str()}"
+                        #f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
+                        #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
+                        f"{create_nexus_str()}"
         ))
 
     @slash_command(name="tokens", description="View a your VIP tokens")
