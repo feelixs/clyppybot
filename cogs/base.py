@@ -17,7 +17,7 @@ import time
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 
-VERSION = "1.5.1b"
+VERSION = "1.5.2b"
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
