@@ -30,6 +30,6 @@ class KickMisc(BaseMisc):
         query_pattern = r'^https?://(?:www\.)?kick\.com/[a-zA-Z0-9_-]+\?clip=clip_[a-zA-Z0-9]+'
         return bool(re.match(clip_pattern, url) or re.match(query_pattern, url))
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> KickClip:
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> KickClip:
         slug, user = self.parse_clip_url(url)
         return KickClip(slug, user)

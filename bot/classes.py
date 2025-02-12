@@ -27,6 +27,8 @@ def is_discord_compatible(filesize: float):
 MAX_VIDEO_LEN_SEC = 60 * 5
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
+EMBED_TOKEN_COST = 2
+EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
 
 
 class UnknownError(Exception):
@@ -470,7 +472,7 @@ class BaseMisc(ABC):
         self.platform_name = None
 
     @abstractmethod
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'BaseClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BaseClip':
         ...
 
     @abstractmethod
@@ -525,11 +527,18 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             raise NoDuration
 
-    async def is_shortform(self, url: str, max_len=MAX_VIDEO_LEN_SEC) -> bool:
+    async def is_shortform(self, url: str, basemsg, max_len_sec=None) -> bool:
+        sub = await self.subtract_tokens(basemsg.user, EMBED_TOKEN_COST)
+        if sub['success']:
+            if sub['user_success']:  # the user had enough tokens to subtract successfully
+                max_len_sec = EMBED_W_TOKEN_MAX_LEN
+
+        if max_len_sec is None:
+            max_len_sec = MAX_VIDEO_LEN_SEC
         d = await self.get_len(url)
         if d is None:
             return False
-        return d <= max_len
+        return d <= max_len_sec
 
     @staticmethod
     def is_dl_server(guild):

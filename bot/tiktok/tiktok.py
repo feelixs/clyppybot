@@ -21,14 +21,14 @@ class TikTokMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'TikTokClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")
             raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid = await self.is_shortform(url)
+        valid = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

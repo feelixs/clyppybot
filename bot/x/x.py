@@ -27,11 +27,11 @@ class Xmisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'Xclip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'Xclip':
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url)
+        valid = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

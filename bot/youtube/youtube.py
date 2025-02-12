@@ -4,7 +4,7 @@ import asyncio
 import os
 import re
 from bot.classes import (BaseClip, BaseMisc, DownloadResponse, get_video_details, is_discord_compatible, InvalidClipType,
-                         MAX_VIDEO_LEN_SEC, VideoTooLong, ClipFailure, NoDuration, MAX_FILE_SIZE_FOR_DISCORD)
+                         MAX_VIDEO_LEN_SEC, VideoTooLong, ClipFailure, NoDuration, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN)
 
 
 class YtMisc(BaseMisc):
@@ -29,11 +29,11 @@ class YtMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'YtClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'YtClip':
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url)
+        valid = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

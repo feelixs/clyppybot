@@ -135,7 +135,7 @@ class RedditMisc(BaseMisc):
                 link = txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
                 return self.parse_clip_url(link)
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'RedditClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'RedditClip':
         slug = self.parse_clip_url(url)
         is_vid, ext_info = await self.is_video(url)
         if not is_vid:
@@ -151,7 +151,7 @@ class RedditMisc(BaseMisc):
             except:
                 raise NoDuration
 
-        valid = await self.is_shortform(url)
+        valid = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

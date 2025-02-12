@@ -150,7 +150,7 @@ class AutoEmbedder:
             await asyncio.sleep(0.1)
 
     async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False, try_send_files=True) -> None:
-        clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True)
+        clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
         else:

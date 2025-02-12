@@ -19,11 +19,11 @@ class BlueSkyMisc(BaseMisc):
             return match.group(2)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False) -> 'BlueSkyClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url)
+        valid = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
