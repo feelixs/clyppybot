@@ -75,11 +75,7 @@ class YtClip(BaseClip):
                     lambda: ydl.extract_info(self.url, download=False)
                 )
 
-                # Check if duration exists and is longer than max seconds
-                if 'duration' in info and info['duration'] > MAX_VIDEO_LEN_SEC:
-                    self.logger.info(f"Video duration {info['duration']}s exceeds {MAX_VIDEO_LEN_SEC}s limit")
-                    raise VideoTooLong
-                elif 'duration' not in info:
+                if 'duration' not in info:
                     self.logger.info(f"Video duration not found")
                     raise NoDuration
                 self.logger.info(f"Video duration {info['duration']}s is acceptable")
