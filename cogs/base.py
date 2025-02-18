@@ -87,6 +87,10 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     if match := re.match(bsky_patterbs, url):
         return bot.bsky, match.group(2)
 
+    insta_pattern = r'(?:https?://)?(?:www\.)?instagram\.com/reel/([a-zA-Z0-9_-]+)(?:/|$|\?)'
+    if match := re.match(insta_pattern, url):
+        return bot.insta, match.group(1)
+
     return None, None
 
 
