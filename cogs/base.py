@@ -264,15 +264,15 @@ class Base(Extension):
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         about = (
-            "Clyppy automatically converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
-            "**TROUBLESHOOTING**\nIf Clyppy isn't responding to your links, please check that it has the correct permissions in your Discord channel."
-            " Required permissions are: `Send Links`, `Send Messages`\n\n"
-            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!")
+            "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
+            "I will automatically respond to Twitch and Kick clips, and all other compatible platforms are only accessibly through `/embed`\n\n"
+            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!\n"
+            "**COMING SOON** We're working on adding server customization for Clyppy, so you can choose which platforms I will automatically reply to!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(
-            content="If you only see this message, that means you have Embeds disabled. Please enable them in your Discord Settings to continue.",
+            content="Clyppy is a social bot that makes sharing videos easier!",
             embed=help_embed)
 
     @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
