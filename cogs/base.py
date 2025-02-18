@@ -16,6 +16,7 @@ import time
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
+APPUSE_LOG_WEBHOOK = 'https://discord.com/api/webhooks/1341521799342588006/Yh0AAnoWVzOwIj9WjwHiytvNTr8SWUOcmhU0mv9-UtUzVouYT2tQJL9x-O4rzaHasy68'
 
 VERSION = "1.5.3b"
 
@@ -94,7 +95,10 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     return None, None
 
 
-async def send_webhook(title: str, load: str, color=None):
+async def send_webhook(title: str, load: str, color=None, url=None):
+    if url is None:
+        url = LOGGER_WEBHOOK
+
     # Create a rich embed
     if color is None:
         color = 5814783  # Blue color
@@ -108,7 +112,7 @@ async def send_webhook(title: str, load: str, color=None):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(LOGGER_WEBHOOK, json=payload) as response:
+            async with session.post(url, json=payload) as response:
                 if response.status == 204:
                     print(f"Successfully sent logger webhook: {load}")
                 else:
@@ -208,7 +212,16 @@ class Base(Extension):
                 guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             else:
                 guild = GuildType(ctx.author.id, ctx.author.username, True)
-            self.logger.info(f"/embed in {guild.name} {url} -> {[platform.platform_name if platform is not None else None]}, {slug}")
+
+            p = platform.platform_name if platform is not None else None
+            self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
+            await send_webhook(
+                title=f'{ctx.guild.name} - /embed called',
+                load=f"user - {ctx.user.username}\n"
+                     f"cmd - /embed url:{url} (platform: {p}, slug: {slug})",
+                color=65280,
+                url=APPUSE_LOG_WEBHOOK
+            )
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
