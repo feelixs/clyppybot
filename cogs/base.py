@@ -271,7 +271,7 @@ class Base(Extension):
             timeout_task.cancel()
 
             await send_webhook(
-                title=f'{ctx.guild.name} - /embed called - {success}',
+                title=f'{ctx.guild.name} - /embed called - {["Success" if success else "Failure"]}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
