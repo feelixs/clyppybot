@@ -239,7 +239,7 @@ class AutoEmbedder:
             elif clip.service == 'twitch':
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=10)
                 expires_at = expires_at.timestamp()
-            elif clip.service == 'instagram':
+            elif clip.service == 'instagram':   # idk if these actually expire
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=24)
                 expires_at = expires_at.timestamp()
             else:
