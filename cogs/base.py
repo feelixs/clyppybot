@@ -215,13 +215,7 @@ class Base(Extension):
 
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
-            await send_webhook(
-                title=f'{ctx.guild.name} - /embed called',
-                load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url} (platform: {p}, slug: {slug})",
-                color=65280,
-                url=APPUSE_LOG_WEBHOOK
-            )
+
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
@@ -243,6 +237,8 @@ class Base(Extension):
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             return
+
+        success, response = False, "Unknown error"
         try:
             await e._process_this_clip_link(
                 parsed_id=slug,
@@ -252,8 +248,10 @@ class Base(Extension):
                 extended_url_formats=True,
                 try_send_files=True
             )
+            success, response = True, "Success"
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
+            success, response = False, "No duration"
         except VideoTooLong:
             if await self._fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
@@ -261,13 +259,25 @@ class Base(Extension):
             else:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"Collect VIP tokens with `/vote` to embed longer videos!{create_nexus_str()}")
+            success, response = False, "Video too long"
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
+            success, response = False, "Clip failure"
         except Exception as e:
             self.logger.info(f'Unexpected error in /embed: {str(e)}')
             await ctx.send(f"An unexpected error occurred with your input `{url}` {create_nexus_str()}")
+            success, response = False, "Unexpected error"
         finally:
             timeout_task.cancel()
+
+            await send_webhook(
+                title=f'{ctx.guild.name} - /embed called - {success}',
+                load=f"user - {ctx.user.username}\n"
+                     f"cmd - /embed url:{url} (platform: {p}, slug: {slug})"
+                     f"response - {response}",
+                color=65280,
+                url=APPUSE_LOG_WEBHOOK
+            )
             try:
                 self.currently_downloading_for_embed.remove(slug)
             except ValueError:
