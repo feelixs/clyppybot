@@ -273,7 +273,9 @@ class Base(Extension):
             await send_webhook(
                 title=f'{ctx.guild.name} - /embed called - {success}',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url} (platform: {p}, slug: {slug})"
+                     f"cmd - /embed url:{url}\n"
+                     f"platform: {p}\n"
+                     f"slug: {slug}\n"
                      f"response - {response}",
                 color=65280,
                 url=APPUSE_LOG_WEBHOOK
