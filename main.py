@@ -5,6 +5,7 @@ from bot.medal import MedalMisc
 from bot.tools import Tools
 from bot.kick import KickMisc
 from bot.reddit import RedditMisc
+from bot.insta import InstagramMisc
 from bot.tiktok import TikTokMisc
 from bot.youtube import YtMisc
 from bot.x import Xmisc
@@ -61,6 +62,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 Bot.twitch = TwitchMisc()
 Bot.kick = KickMisc()
+Bot.insta = InstagramMisc()
 Bot.medal = MedalMisc()
 Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
@@ -77,6 +79,7 @@ async def main():
     Bot.load_extension('cogs.kickautoembed')
     Bot.load_extension('cogs.tiktokautoembed')
     Bot.load_extension('cogs.medalautoembed')
+    Bot.load_extension('cogs.instaautoembed')
     Bot.load_extension('cogs.redditautoembed')
     Bot.load_extension('cogs.ytautoembed')
     Bot.load_extension('cogs.xautoembed')
