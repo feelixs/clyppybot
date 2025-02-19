@@ -219,6 +219,16 @@ class Base(Extension):
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+                await send_webhook(
+                    title=f'{ctx.guild.name} - /embed called - Failure',
+                    load=f"user - {ctx.user.username}\n"
+                         f"cmd - /embed url:{url}\n"
+                         f"platform: {p}\n"
+                         f"slug: {slug}\n"
+                         f"response - Incompatible",
+                    color=65280,
+                    url=APPUSE_LOG_WEBHOOK
+                )
                 return
 
             if slug in self.currently_downloading_for_embed:
@@ -236,6 +246,16 @@ class Base(Extension):
                 timeout_task.cancel()
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
+            await send_webhook(
+                title=f'{ctx.guild.name} - /embed called - Failure',
+                load=f"user - {ctx.user.username}\n"
+                     f"cmd - /embed url:{url}\n"
+                     f"platform: {p}\n"
+                     f"slug: {slug}\n"
+                     f"response - Unexpected error",
+                color=65280,
+                url=APPUSE_LOG_WEBHOOK
+            )
             return
 
         success, response = False, "Unknown error"
