@@ -471,6 +471,7 @@ class BaseMisc(ABC):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
+        self.is_nsfw = False
 
     @abstractmethod
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BaseClip':
