@@ -457,7 +457,7 @@ class Base(Extension):
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
-            '**quickembeds** Should Clyppy automatically respond to links sent in this server? If disabled, '
+            '**quickembeds** [Available for Twitch & Kick clips] Should Clyppy automatically respond to links sent in this server? If disabled, '
             'users can still embed videos using the `/embed` command.\n'
             ' - `True`: enabled\n'
             ' - `False`: disabled\n\n'
