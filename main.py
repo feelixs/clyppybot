@@ -1,25 +1,24 @@
 from interactions import AutoShardedClient, Intents
-from bot.db import GuildDatabase
-from bot.twitch import TwitchMisc
-from bot.medal import MedalMisc
+from bot.platforms.twitch import TwitchMisc
+from bot.platforms.medal import MedalMisc
+from bot.platforms.kick import KickMisc
+from bot.platforms.reddit import RedditMisc
+from bot.platforms.insta import InstagramMisc
+from bot.platforms.tiktok import TikTokMisc
+from bot.platforms.youtube import YtMisc
+from bot.platforms.x import Xmisc
+from bot.platforms.bsky import BlueSkyMisc
 from bot.tools import Tools
-from bot.kick import KickMisc
-from bot.reddit import RedditMisc
-from bot.insta import InstagramMisc
-from bot.tiktok import TikTokMisc
-from bot.youtube import YtMisc
-from bot.x import Xmisc
-from bot.bsky import BlueSkyMisc
+from bot.db import GuildDatabase
+from aiohttp import FormData, ClientSession
 import logging
 import asyncio
 import os
-import aiohttp
-from aiohttp import FormData
 
 
 async def save_to_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
-    async with aiohttp.ClientSession() as session:
+    async with ClientSession() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             data = FormData()
@@ -38,7 +37,7 @@ async def save_to_server():
 
 async def load_from_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
-    async with aiohttp.ClientSession() as session:
+    async with ClientSession() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             params = {'env': env}
