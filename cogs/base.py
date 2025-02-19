@@ -11,7 +11,6 @@ from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from typing import Tuple, Optional
 from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
-import re
 import time
 
 
@@ -23,74 +22,9 @@ VERSION = "1.5.3b"
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     """Determine the platform and clip ID from the URL"""
-    # Medal.tv patterns
-    medal_patterns = [
-        r'^https?://(?:www\.)?medal\.tv/games/[\w-]+/clips/([\w-]+)',
-        r'^https?://(?:www\.)?medal\.tv/clips/([\w-]+)'
-    ]
-    for pattern in medal_patterns:
-        if match := re.match(pattern, url):
-            return bot.medal, match.group(1)
-
-    # Kick.com pattern
-    kick_pattern = r'^https?://(?:www\.)?kick\.com/[\w-]+(?:/clips/|/\?clip=)(?:clip_)?([\w-]+)'
-    if match := re.match(kick_pattern, url):
-        return bot.kick, match.group(1)
-
-    # Twitch patterns
-    twitch_patterns = [
-        r'https?://(?:www\.|m\.)?clips\.twitch\.tv/([\w-]+)',
-        r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([\w-]+)',
-        r'https?://(?:www\.)?clyppy\.com/?clips/([a-zA-Z0-9_-]+)',
-        r'https?://(?:www\.)?clyppy\.io/?clips/([a-zA-Z0-9_-]+)'
-    ]
-    for pattern in twitch_patterns:
-        if match := re.match(pattern, url):
-            return bot.twitch, match.group(1)
-
-    xpatterns = [
-        r'(?:https?://)?(?:www\.)?twitter\.com/\w+/status/(\d+)',
-        r'(?:https?://)?(?:www\.)?fxtwitter\.com/\w+/status/(\d+)',
-        r'(?:https?://)?(?:www\.)?fixupx\.com/\w+/status/(\d+)',
-        r'(?:https?://)?(?:www\.)?x\.com/\w+/status/(\d+)',
-    ]
-    for pattern in xpatterns:
-        if match := re.match(pattern, url):
-            return bot.x, match.group(1)
-
-    ytpatterns = [
-        r'^(?:https?://)?(?:(?:www|m)\.)?(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})',
-        r'^(?:https?://)?(?:(?:www|m)\.)?(?:youtube\.com/shorts/)([^"&?/ ]{11})',
-        r'^(?:https?://)?(?:(?:www|m)\.)?youtube\.com/clip/([^"&?/ ]{11})'
-    ]
-    for pattern in ytpatterns:
-        if match := re.match(pattern, url):
-            return bot.yt, match.group(1)
-
-    reddit_patterns = [
-        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
-        r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
-        r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
-        r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
-        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
-        r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
-        r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
-    ]
-    for pattern in reddit_patterns:
-        if match := re.match(pattern, url):
-            return bot.reddit, match.group(1)
-
-    tiktok_pattern = r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)'
-    if match := re.match(tiktok_pattern, url):
-        return bot.tiktok, match.group(1)
-
-    bsky_patterbs = r'(?:https?://)?(?:www\.)?bsky\.app/profile/([^/]+)/post/([^/]+)'
-    if match := re.match(bsky_patterbs, url):
-        return bot.bsky, match.group(2)
-
-    insta_pattern = r'(?:https?://)?(?:www\.)?instagram\.com/reel/([a-zA-Z0-9_-]+)(?:/|$|\?)'
-    if match := re.match(insta_pattern, url):
-        return bot.insta, match.group(1)
+    for this_platform in bot.platform_list:
+        if slug := this_platform.parse_clip_url(url):
+            return this_platform, slug
 
     return None, None
 

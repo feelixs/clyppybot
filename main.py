@@ -68,6 +68,8 @@ Bot.yt = YtMisc()
 Bot.x = Xmisc()
 Bot.bsky = BlueSkyMisc()
 Bot.tiktok = TikTokMisc()
+Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok]
+
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
