@@ -602,20 +602,25 @@ class Base(Extension):
             await self.bot.change_presence(
                 activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
-    @staticmethod
-    async def post_servers(num: int):
+    async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
-                                    headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
-                await resp.json()
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
-                                    json={'server_count': num,
-                                          'shard_count': 1},
-                                    headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
-                await resp.json()
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
+                                        headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
+                    await resp.json()
+        except:
+            self.logger.info(f"Failed to post servers to top.gg: {await resp.text()}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
+                                        json={'server_count': num,
+                                              'shard_count': 1},
+                                        headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
+                    await resp.json()
+        except:
+            self.logger.info(f"Failed to post servers to botlist.me: {await resp.text()}")
 
     @staticmethod
     def _format_log(string):
