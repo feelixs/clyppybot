@@ -170,7 +170,6 @@ class Base(Extension):
             elif platform.is_nsfw and not nsfw_enabed:
                 await ctx.send(f"This platform is not allowed in this server. "
                                f"To enable it, use `/settings nsfw='yes'`.")
-                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
                     title=f'{ctx.guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
