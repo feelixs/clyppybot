@@ -8,6 +8,7 @@ from bot.platforms.tiktok import TikTokMisc
 from bot.platforms.youtube import YtMisc
 from bot.platforms.x import Xmisc
 from bot.platforms.bsky import BlueSkyMisc
+from bot.platforms.phub import PhubMisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
 from aiohttp import FormData, ClientSession
@@ -67,8 +68,10 @@ Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
 Bot.x = Xmisc()
 Bot.bsky = BlueSkyMisc()
+Bot.phub = PhubMisc()
 Bot.tiktok = TikTokMisc()
-Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok]
+Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
+                     Bot.phub]
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
@@ -80,6 +83,7 @@ async def main():
     Bot.load_extension('cogs.kickautoembed')
     Bot.load_extension('cogs.tiktokautoembed')
     Bot.load_extension('cogs.medalautoembed')
+    Bot.load_extension('cogs.phubautoembed')
     Bot.load_extension('cogs.instaautoembed')
     Bot.load_extension('cogs.redditautoembed')
     Bot.load_extension('cogs.ytautoembed')
