@@ -422,7 +422,7 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if on_error is None and embed_buttons is None and quickembeds is None:
+        if on_error is None and embed_buttons is None and quickembeds is None and nsfw is None:
             await self._send_settings_help(ctx, False)
             return
 
