@@ -32,7 +32,7 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
 async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
     if not in_test and os.getenv("TEST"):
         return
-    
+
     if url is None:
         url = LOGGER_WEBHOOK
 
@@ -91,6 +91,7 @@ class Base(Extension):
         await asyncio.sleep(amt)
         if not ctx.responded:
             await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
+            raise TimeoutError(f"Waiting for clip {url} download timed out")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
