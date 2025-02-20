@@ -126,7 +126,7 @@ class KickClip(BaseClip):
             else:
                 self.logger.info(f"Uploading the downloaded kick video to https://clyppy.io/api/addclip/: {filename}")
                 try:
-                    response = await upload_video(filename)
+                    response = await upload_video(filename, self.logger)
                 except Exception as e:
                     self.logger.error(f"Failed to upload video: {str(e)}")
                     raise ClipFailure
