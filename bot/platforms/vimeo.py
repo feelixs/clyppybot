@@ -60,7 +60,7 @@ class VimeoClip(BaseClip):
         self._service = "vimeo"
         self._video_id = f'{video_id}/{video_hash}'
         self._url = f"https://vimeo.com/{self._video_id}"
-        super().__init__(video_id)
+        super().__init__(self._video_id)
 
     @property
     def service(self) -> str:
