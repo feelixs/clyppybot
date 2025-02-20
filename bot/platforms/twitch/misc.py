@@ -1,4 +1,3 @@
-from typing import Optional
 from bot.platforms.twitch.twitchclip import TwitchClip
 from os import getenv
 import re
