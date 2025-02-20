@@ -190,7 +190,7 @@ class Base(Extension):
 
             if slug in self.currently_downloading_for_embed:
                 try:
-                    await wait_for_download(slug)
+                    await wait_for_download(slug, timeout=platform.dl_timeout_secs)
                 except TimeoutError:
                     pass  # continue with the dl anyway
             else:
