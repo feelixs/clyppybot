@@ -2,8 +2,8 @@ import logging
 import re
 import aiohttp
 from typing import Optional, Tuple
-from bot.kick import KickMisc
-from bot.medal import MedalMisc
+from bot.platforms.kick import KickMisc
+from bot.platforms.medal import MedalMisc
 from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, DownloadResponse
 
 
