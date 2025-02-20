@@ -151,23 +151,8 @@ class Base(Extension):
 
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
-            nsfw_enabed = True if guild.is_dm else self.bot.guild_settings.get_nsfw_enabled(guild.id)
-            if platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"This platform is not allowed in this server. "
-                               f"To enable it, use `/settings nsfw='yes'`.")
-                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
-                await send_webhook(
-                    title=f'{ctx.guild.name} - /embed called - Failure',
-                    load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
-                         f"platform: {p}\n"
-                         f"slug: {slug}\n"
-                         f"response - NSFW disabled",
-                    color=65280,
-                    url=APPUSE_LOG_WEBHOOK
-                )
-                return
 
+            nsfw_enabed = True if guild.is_dm else self.bot.guild_settings.get_nsfw_enabled(guild.id)
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
@@ -178,6 +163,21 @@ class Base(Extension):
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Incompatible",
+                    color=65280,
+                    url=APPUSE_LOG_WEBHOOK
+                )
+                return
+            elif platform.is_nsfw and not nsfw_enabed:
+                await ctx.send(f"This platform is not allowed in this server. "
+                               f"To enable it, use `/settings nsfw='yes'`.")
+                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+                await send_webhook(
+                    title=f'{ctx.guild.name} - /embed called - Failure',
+                    load=f"user - {ctx.user.username}\n"
+                         f"cmd - /embed url:{url}\n"
+                         f"platform: {p}\n"
+                         f"slug: {slug}\n"
+                         f"response - NSFW disabled",
                     color=65280,
                     url=APPUSE_LOG_WEBHOOK
                 )
