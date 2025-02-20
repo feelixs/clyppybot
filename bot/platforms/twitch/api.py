@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import aiohttp
 import asyncio
@@ -68,7 +68,7 @@ class TwitchAPI:
 
     def log(self, yxyx: str, kind="a"):
         with open(self.logfile, kind) as f:
-            f.write(str(datetime.utcnow()) + " " + yxyx + "\n")
+            f.write(str(datetime.now(tz=timezone.utc)) + " " + yxyx + "\n")
 
     async def get(self, url: str, headers=None, wait_on_ratelimit: bool = True, depth: int = 0):
         if self.oauth is None:
