@@ -179,8 +179,10 @@ async def upload_video_in_chunks(file_path, logger, chunk_size=90_000_000):
     return None
 
 
-async def upload_video(video_file_path) -> Dict:
-    # Read and encode the file
+async def upload_video(video_file_path, logger) -> Dict:
+    if os.path.getsize(video_file_path) > 90_000_000:
+        return await upload_video_in_chunks(video_file_path, logger)
+
     with open(video_file_path, 'rb') as f:
         file_data = base64.b64encode(f.read()).decode()
 
@@ -473,7 +475,7 @@ class BaseClip(ABC):
 
     async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> DownloadResponse:
         try:
-            response = await upload_video(local_file_info.local_file_path)
+            response = await upload_video(local_file_info.local_file_path, self.logger)
         except Exception as e:
             self.logger.error(f"Failed to upload video: {str(e)}")
             raise UploadFailed
