@@ -211,7 +211,6 @@ class Base(Extension):
         success, response = False, "Unknown error"
         try:
             await e._process_this_clip_link(
-                parsed_id=slug,
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
