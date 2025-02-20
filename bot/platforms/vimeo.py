@@ -11,21 +11,36 @@ class VimeoMisc(BaseMisc):
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
-        Extracts the Vimeo video ID including the hash from various URL formats.
-        Returns None if the URL is not a valid Vimeo video URL.
+        Extracts the main video ID from a Vimeo URL.
+        Works with all supported URL formats.
         """
-        # Matches URLs like:
-        # - https://vimeo.com/123456789
-        # - https://vimeo.com/123456789/abcdef1234
-        # - https://vimeo.com/123456789/abcdef1234?share=copy
-        # - https://www.vimeo.com/123456789
-        # - https://vimeo.com/user1234/123456789
-        pattern = r'(?:https?://)?(?:www\.)?vimeo\.com/(?:[\w-]+/)?(\d+(?:/[a-zA-Z0-9]+)?)'
-        match = re.search(pattern, url)
-        return match.group(1) if match else None
+        patterns = [
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)',
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)'
+        ]
+        for pattern in patterns:
+            match = re.match(pattern, url)
+            if match:
+                return match.group(1)
+        return None
+
+    @staticmethod
+    def get_clip_hash(url: str) -> Optional[str]:
+        """
+        Extracts the secondary hash ID from a Vimeo URL if present.
+        """
+        patterns = [
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/\d+/([a-zA-Z0-9]+)(?:\?|$)',
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/\d+/([a-zA-Z0-9]+)(?:\?|$)'
+        ]
+        for pattern in patterns:
+            match = re.match(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'VimeoClip':
-        video_id = self.parse_clip_url(url)
+        video_id, video_hash = self.parse_clip_url(url), self.get_clip_hash(url)
         if not video_id:
             self.logger.info(f"Invalid Vimeo URL: {url}")
             raise NoDuration
@@ -37,13 +52,14 @@ class VimeoMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return VimeoClip(video_id)
+        return VimeoClip(video_id, video_hash)
 
 
 class VimeoClip(BaseClip):
-    def __init__(self, video_id):
+    def __init__(self, video_id, video_hash):
         self._service = "vimeo"
         self._video_id = video_id
+        self._url = f"https://vimeo.com/{video_hash}/{self._video_id}"
         super().__init__(video_id)
 
     @property
@@ -52,7 +68,7 @@ class VimeoClip(BaseClip):
 
     @property
     def url(self) -> str:
-        return f"https://vimeo.com/{self._video_id}"
+        return self._url
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
