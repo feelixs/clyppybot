@@ -50,8 +50,6 @@ class VideoTooLong(Exception):
     pass
 
 
-# todo: pass cookies into twitter to see nsfw content
-
 class NoDuration(Exception):
     pass
 
