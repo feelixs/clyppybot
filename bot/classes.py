@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import logging
 import asyncio
 from yt_dlp import YoutubeDL
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional, Dict, Union
 from dataclasses import dataclass
 import aiohttp
 import hashlib
@@ -11,6 +11,7 @@ import base64
 import uuid
 import os
 from math import ceil
+from interactions import Message, SlashContext
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
@@ -619,14 +620,18 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             raise NoDuration
 
-    async def is_shortform(self, url: str, basemsg) -> bool:
+    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext]) -> bool:
         d = await self.get_len(url)
         if d is None:
             return False
         elif d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
             return True
         elif d <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
-            sub = await self.subtract_tokens(basemsg.user, EMBED_TOKEN_COST)
+            if isinstance(basemsg, Message):
+                user = basemsg.author
+            else:
+                user = basemsg.user
+            sub = await self.subtract_tokens(user, EMBED_TOKEN_COST)
             if sub['success']:
                 if sub['user_success']:  # the user had enough tokens to subtract successfully
                     return True
