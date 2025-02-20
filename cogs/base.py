@@ -138,6 +138,8 @@ class Base(Extension):
 
         timeout_task = None
         await ctx.defer(ephemeral=False)
+
+        slug, p = None, None
         try:
             if not url.startswith("https://"):
                 url = "https://" + url
