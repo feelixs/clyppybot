@@ -457,7 +457,6 @@ class Base(Extension):
             return
 
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
-
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
         if nsfw is None:
