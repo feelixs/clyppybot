@@ -4,7 +4,7 @@ from bot.tools import AutoEmbedder
 import logging
 
 
-class BlueSkyAutoEmbed(Extension):
+class PhubAutoEmbed(Extension):
     def __init__(self, bot):
         self.embedder = AutoEmbedder(bot, bot.phub, logging.getLogger(__name__))
 
