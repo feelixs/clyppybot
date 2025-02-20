@@ -139,15 +139,16 @@ class Base(Extension):
         timeout_task = None
         await ctx.defer(ephemeral=False)
 
+        if ctx.guild:
+            guild = GuildType(ctx.guild.id, ctx.guild.name, False)
+        else:
+            guild = GuildType(ctx.author.id, ctx.author.username, True)
+
         slug, p = None, None
         try:
             if not url.startswith("https://"):
                 url = "https://" + url
             platform, slug = compute_platform(url, self.bot)
-            if ctx.guild:
-                guild = GuildType(ctx.guild.id, ctx.guild.name, False)
-            else:
-                guild = GuildType(ctx.author.id, ctx.author.username, True)
 
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
@@ -157,7 +158,7 @@ class Base(Extension):
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
-                    title=f'{ctx.guild.name} - /embed called - Failure',
+                    title=f'{guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -172,7 +173,7 @@ class Base(Extension):
                                f" - enable nsfw content in this server using `/settings nsfw='yes'`\n"
                                f" - `/embed` the nsfw content in a private message (click my profile, send me a message, and then use embed there)")
                 await send_webhook(
-                    title=f'{ctx.guild.name} - /embed called - Failure',
+                    title=f'{guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -199,7 +200,7 @@ class Base(Extension):
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             await send_webhook(
-                title=f'{ctx.guild.name} - /embed called - Failure',
+                title=f'{guild.name} - /embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
@@ -242,7 +243,7 @@ class Base(Extension):
             timeout_task.cancel()
 
             await send_webhook(
-                title=f'{ctx.guild.name} - /embed called - {["Success" if success else "Failure"]}',
+                title=f'{guild.name} - /embed called - {["Success" if success else "Failure"]}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
