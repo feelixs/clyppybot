@@ -479,6 +479,7 @@ class Base(Extension):
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
         qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
         nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
+        nsfw = "enabled" if nsfw else "disabled"
         qe = "enabled" if qe else "disabled"
         es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
