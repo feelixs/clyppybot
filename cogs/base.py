@@ -463,6 +463,8 @@ class Base(Extension):
         cur_nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
         if nsfw is not None:
             self.bot.guild_settings.set_nsfw_enabled(ctx.guild.id, nsfw)
+        cur_nsfw = nsfw or cur_nsfw
+        cur_nsfw = "enabled" if cur_nsfw else "disabled"
 
         chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
@@ -470,7 +472,7 @@ class Base(Extension):
             f"**quickembeds**: {chosen_embed}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}\n"
-            f"**nsfw**: {nsfw or cur_nsfw}\n\n"
+            f"**nsfw**: {cur_nsfw}\n\n"
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
