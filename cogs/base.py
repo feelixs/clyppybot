@@ -234,7 +234,7 @@ class Base(Extension):
                                f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
             else:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"Collect VIP tokens with `/vote` to embed longer videos!{create_nexus_str()}")
+                               f"Collect VIP tokens with `/vote` to embed longer videos! (up to {EMBED_W_TOKEN_MAX_LEN // 60}) {create_nexus_str()}")
             success, response = False, "Video too long"
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
