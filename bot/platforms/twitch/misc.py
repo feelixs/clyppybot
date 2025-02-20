@@ -5,7 +5,7 @@ from bot.classes import BaseMisc
 
 
 class TwitchMisc(BaseMisc):
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__()
         tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
