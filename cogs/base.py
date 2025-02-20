@@ -404,8 +404,12 @@ class Base(Extension):
                                                required=False),
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
-                                               required=False)])
-    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None):
+                                               required=False),
+                            SlashCommandOption(name="nsfw", type=OptionType.BOOLEAN,
+                                               description="Should users in this server be allowed to embed videos which are not safe for work?",
+                                               required=False
+                                               )])
+    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None, nsfw: bool = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -456,12 +460,17 @@ class Base(Extension):
 
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
+        cur_nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
+        if nsfw is not None:
+            self.bot.guild_settings.set_nsfw_enabled(ctx.guild.id, nsfw)
+
         chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**quickembeds**: {chosen_embed}\n"
             f"**on_error**: {on_error}\n"
-            f"**embed_buttons**: {embed_buttons}"
+            f"**embed_buttons**: {embed_buttons}\n"
+            f"**nsfw**: {nsfw or cur_nsfw}\n\n"
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
