@@ -72,8 +72,9 @@ async def is_404(url: str, logger=None) -> Tuple[bool, int]:
 def get_video_details(file_path) -> 'LocalFileInfo':
     try:
         clip = VideoFileClip(file_path)
-        size = os.path.getsize(file_path)
-        if size is None:
+        try:
+            size = os.path.getsize(file_path)
+        except OSError:
             size = 0
         return LocalFileInfo(
             width=clip.w,
