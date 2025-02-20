@@ -553,6 +553,7 @@ class BaseMisc(ABC):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
         self.is_nsfw = False
+        self.dl_timeout_secs = 30
 
     @abstractmethod
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BaseClip':
