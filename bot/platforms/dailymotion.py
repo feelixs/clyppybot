@@ -62,8 +62,5 @@ class DailymotionClip(BaseClip):
         return f"https://www.dailymotion.com/video/{self._video_id}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
-        self.logger.info(f"({self.id}) run dl_check_size()...")
-        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
-        if dl is not None:
-            return dl
-        return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
+        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
