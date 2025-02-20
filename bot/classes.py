@@ -13,6 +13,9 @@ import os
 from math import ceil
 
 
+MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
+
+
 def tryremove(f):
     try:
         os.remove(f)
@@ -123,7 +126,7 @@ class LocalFileInfo:
     can_be_uploaded: Optional[bool]
 
 
-async def upload_video_in_chunks(file_path, logger, chunk_size=80_000_000, total_size=None):
+async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None):
     file_id = str(uuid.uuid4())
     if total_size is None:
         # Read the file and get total size
@@ -187,8 +190,8 @@ async def upload_video(video_file_path, logger) -> Dict:
     total_size = len(file_data)
 
     logger.info(f"Uploading {os.path.basename(video_file_path)} ({total_size / 1024 / 1024:.1f}MB)")
-    if os.path.getsize(video_file_path) > 90_000_000:
-        return await upload_video_in_chunks(video_file_path, logger, total_size=total_size)
+    if os.path.getsize(video_file_path) > MAX_CLYPPYIO_UPLOAD_SIZE:
+        return await upload_video_in_chunks(video_file_path, logger, MAX_CLYPPYIO_UPLOAD_SIZE, total_size=total_size)
 
     with open(video_file_path, 'rb') as f:
         file_data = base64.b64encode(f.read()).decode()
