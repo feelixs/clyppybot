@@ -415,7 +415,7 @@ class BaseClip(ABC):
             raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
@@ -434,6 +434,10 @@ class BaseClip(ABC):
                     video_name=local.video_name,
                     can_be_uploaded=True
                 )
+            elif upload_if_large:
+                self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
+                return await self.upload_to_clyppyio(local)
+
         return None
 
     async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> LocalFileInfo:
