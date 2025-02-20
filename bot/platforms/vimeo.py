@@ -11,15 +11,16 @@ class VimeoMisc(BaseMisc):
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
-        Extracts the Vimeo video ID from various URL formats.
+        Extracts the Vimeo video ID including the hash from various URL formats.
         Returns None if the URL is not a valid Vimeo video URL.
         """
         # Matches URLs like:
         # - https://vimeo.com/123456789
-        # - https://vimeo.com/123456789?query=param
+        # - https://vimeo.com/123456789/abcdef1234
+        # - https://vimeo.com/123456789/abcdef1234?share=copy
         # - https://www.vimeo.com/123456789
         # - https://vimeo.com/user1234/123456789
-        pattern = r'(?:https?://)?(?:www\.)?vimeo\.com/(?:[\w-]+/)?(\d+)(?:$|\?|/)'
+        pattern = r'(?:https?://)?(?:www\.)?vimeo\.com/(?:[\w-]+/)?(\d+(?:/[a-zA-Z0-9]+)?)'
         match = re.search(pattern, url)
         return match.group(1) if match else None
 
