@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
 import asyncio
-import os
 from yt_dlp import YoutubeDL
 from typing import Tuple, Optional, Dict
 from dataclasses import dataclass
