@@ -3,7 +3,6 @@ from interactions import errors, TYPE_THREAD_CHANNEL
 from interactions.api.events import MessageCreate
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
-from bot.errors import FailedTrim, FailureHandled
 from datetime import datetime, timezone, timedelta
 from typing import List, Union
 import traceback
