@@ -91,6 +91,8 @@ def get_video_details(file_path) -> 'LocalFileInfo':
         #    'filesize': os.path.getsize(file_path),
         #    'duration': clip.duration
         #}
+    except Exception as e:
+        raise
     finally:
         # Make sure we close the clip to free resources
         if 'clip' in locals():
