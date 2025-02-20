@@ -196,7 +196,7 @@ class Base(Extension):
             else:
                 self.currently_downloading_for_embed.append(slug)
 
-            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, 30))
+            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
             e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         except Exception as e:
             if timeout_task is not None:
