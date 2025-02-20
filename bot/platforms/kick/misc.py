@@ -1,5 +1,5 @@
 from bot.classes import BaseMisc
-from bot.kick import KickClip
+from bot.platforms.kick import KickClip
 import re
 
 
