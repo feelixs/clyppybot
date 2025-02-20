@@ -460,11 +460,11 @@ class Base(Extension):
 
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
-        cur_nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
-        if nsfw is not None:
+        if nsfw is None:
+            nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
+        else:
             self.bot.guild_settings.set_nsfw_enabled(ctx.guild.id, nsfw)
-        cur_nsfw = nsfw or cur_nsfw
-        cur_nsfw = "enabled" if cur_nsfw else "disabled"
+        cur_nsfw = "enabled" if nsfw else "disabled"
 
         chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
