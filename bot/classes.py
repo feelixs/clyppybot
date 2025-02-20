@@ -171,13 +171,13 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
                     logger.info(await response.text())
                     return None
 
-                result = await response.json()
-                if not result.get('success'):
-                    logger.info(f"Server reported error on chunk {chunk_number + 1}: {result.get('error')}")
-                    return None
-
+                r = await response.json()
                 if chunk_number == total_chunks - 1:
-                    return result.get('file_path')
+                    if r['success']:
+                        return r
+                    else:
+                        logger.info(f"Server reported error on chunk {chunk_number + 1}: {r.get('error')}")
+                        raise UploadFailed
 
                 logger.info(f"Chunk {chunk_number + 1} uploaded successfully")
 
@@ -218,7 +218,7 @@ async def upload_video(video_file_path, logger) -> Dict:
                     json=data,
                     headers=headers
             ) as response:
-                print(await response.text())
+                logger.info(await response.text())
                 r = await response.json()
                 if r['success']:
                     return r
