@@ -31,7 +31,7 @@ MAX_VIDEO_LEN_SEC = 60 * 3
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 EMBED_TOKEN_COST = 1
-EMBED_W_TOKEN_MAX_LEN = 10 * 60  # 10 minutes
+EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
 
 
 class UnknownError(Exception):
