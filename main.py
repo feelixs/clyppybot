@@ -1,17 +1,17 @@
 from interactions import AutoShardedClient, Intents
-from bot.platforms.twitch import TwitchMisc
-from bot.platforms.medal import MedalMisc
-from bot.platforms.kick import KickMisc
-from bot.platforms.reddit import RedditMisc
+from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.insta import InstagramMisc
 from bot.platforms.tiktok import TikTokMisc
-from bot.platforms.youtube import YtMisc
-from bot.platforms.x import Xmisc
+from bot.platforms.twitch import TwitchMisc
+from bot.platforms.reddit import RedditMisc
 from bot.platforms.bsky import BlueSkyMisc
-from bot.platforms.dailymotion import DailymotionMisc
-from bot.platforms.bili import BiliMisc
 from bot.platforms.vimeo import VimeoMisc
+from bot.platforms.medal import MedalMisc
+from bot.platforms.youtube import YtMisc
+from bot.platforms.bili import BiliMisc
+from bot.platforms.kick import KickMisc
 from bot.platforms.phub import PhubMisc
+from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
 from aiohttp import FormData, ClientSession
