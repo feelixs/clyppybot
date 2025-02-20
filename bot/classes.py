@@ -420,6 +420,7 @@ class BaseClip(ABC):
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
         """
+        local = None
         if can_send_files:
             local = await self._fetch_file(filename, dlp_format, can_send_files)
             self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
@@ -434,9 +435,12 @@ class BaseClip(ABC):
                     video_name=local.video_name,
                     can_be_uploaded=True
                 )
-            elif upload_if_large:
-                self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
-                return await self.upload_to_clyppyio(local)
+
+        if upload_if_large:
+            if local is None:
+                local = await self._fetch_file(filename, dlp_format, can_send_files)
+            self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
+            return await self.upload_to_clyppyio(local)
 
         return None
 
