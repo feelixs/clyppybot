@@ -149,6 +149,22 @@ class Base(Extension):
 
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
+            nsfw_enabed = True if guild.is_dm else self.bot.guild_settings.get_nsfw_enabled(guild.id)
+            if platform.is_nsfw and not nsfw_enabed:
+                await ctx.send(f"This platform is not allowed in this server. "
+                               f"To enable it, use `/settings nsfw='yes'`.")
+                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+                await send_webhook(
+                    title=f'{ctx.guild.name} - /embed called - Failure',
+                    load=f"user - {ctx.user.username}\n"
+                         f"cmd - /embed url:{url}\n"
+                         f"platform: {p}\n"
+                         f"slug: {slug}\n"
+                         f"response - NSFW disabled",
+                    color=65280,
+                    url=APPUSE_LOG_WEBHOOK
+                )
+                return
 
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
@@ -451,6 +467,7 @@ class Base(Extension):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
         qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
         qe = "enabled" if qe else "disabled"
         es = POSSIBLE_EMBED_BUTTONS[es]
         about = (
@@ -459,8 +476,8 @@ class Base(Extension):
             'followed by its available options.\n\n'
             '**quickembeds** [Available for Twitch & Kick clips] Should Clyppy automatically respond to links sent in this server? If disabled, '
             'users can still embed videos using the `/embed` command.\n'
-            ' - `True`: enabled\n'
-            ' - `False`: disabled\n\n'
+            ' - `yes`: enabled (default)\n'
+            ' - `no`: disabled\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'
@@ -469,7 +486,10 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
-            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
+            '**nsfw_enabled** Should users in this server be allowed to embed videos which are not safe for work?:\n'
+            ' - `yes`: Allow NSFW videos to be embedded in this server\n'
+            ' - `no`: NSFW videos won\'t be embedded (default)\n\n'
+            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n**nsfw_enabled**: {nsfw}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
