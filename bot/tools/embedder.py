@@ -122,7 +122,7 @@ class AutoEmbedder:
         else:
             self.currently_downloading.append(parsed_id)
         try:
-            await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
+            await self._process_this_clip_link(clip_link, respond_to, guild, include_link)
         except VideoTooLong:
             self.logger.info(f"VideoTooLong was reported for {clip_link}")
         except NoDuration:
@@ -148,7 +148,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False, try_send_files=True) -> None:
+    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, extended_url_formats=False, try_send_files=True) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
