@@ -5,10 +5,13 @@ import os
 from yt_dlp import YoutubeDL
 from typing import Tuple, Optional, Dict
 from dataclasses import dataclass
-import base64
 import aiohttp
 import hashlib
 from moviepy.video.io.VideoFileClip import VideoFileClip
+import base64
+import uuid
+import os
+from math import ceil
 
 
 def tryremove(f):
@@ -118,6 +121,64 @@ class LocalFileInfo:
     filesize: float
     video_name: Optional[str]
     can_be_uploaded: Optional[bool]
+
+
+async def upload_video_in_chunks(file_path, logger, chunk_size=90_000_000):
+    file_id = str(uuid.uuid4())
+
+    # Read the file and get total size
+    with open(file_path, 'rb') as f:
+        file_data = f.read()
+    total_size = len(file_data)
+    total_chunks = ceil(total_size / chunk_size)
+
+    logger.info(f"Uploading {os.path.basename(file_path)} ({total_size / 1024 / 1024:.1f}MB)")
+    logger.info(f"Will upload in {total_chunks} chunks")
+
+    async with aiohttp.ClientSession() as session:
+        for chunk_number in range(total_chunks):
+            start = chunk_number * chunk_size
+            end = min(start + chunk_size, total_size)
+            chunk = file_data[start:end]
+
+            chunk_b64 = base64.b64encode(chunk).decode('utf-8')
+
+            headers = {
+                'X-API-Key': os.getenv('clyppy_post_key'),
+                'X-Chunk-Number': str(chunk_number),
+                'X-Total-Chunks': str(total_chunks),
+                'X-File-ID': file_id
+            }
+
+            data = {
+                'chunked': True,
+                'file': chunk_b64,
+                'filename': os.path.basename(file_path)
+            }
+
+            logger.info(f"Uploading chunk {chunk_number + 1}/{total_chunks} ({len(chunk) / 1024 / 1024:.1f}MB)")
+
+            async with session.post(
+                    'https://clyppy.io/api/addclip/',
+                    json=data,
+                    headers=headers
+            ) as response:
+                if response.status != 200:
+                    logger.info(f"Failed to upload chunk {chunk_number + 1}: {response.status}")
+                    logger.info(await response.text())
+                    return None
+
+                result = await response.json()
+                if not result.get('success'):
+                    logger.info(f"Server reported error on chunk {chunk_number + 1}: {result.get('error')}")
+                    return None
+
+                if chunk_number == total_chunks - 1:
+                    return result.get('file_path')
+
+                logger.info(f"Chunk {chunk_number + 1} uploaded successfully")
+
+    return None
 
 
 async def upload_video(video_file_path) -> Dict:
