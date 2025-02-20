@@ -45,5 +45,5 @@ class PhubClip(BaseClip):
         return f"https://pornhub.com/view_video.php?viewkey={self._shortcode}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
-        self.logger.info(f"({self.id}) run dl_download()...")
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
