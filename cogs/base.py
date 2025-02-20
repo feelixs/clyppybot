@@ -29,7 +29,10 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
     return None, None
 
 
-async def send_webhook(title: str, load: str, color=None, url=None):
+async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
+    if not in_test and os.getenv("TEST"):
+        return
+    
     if url is None:
         url = LOGGER_WEBHOOK
 
