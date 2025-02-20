@@ -20,7 +20,7 @@ class RedditMisc(BaseMisc):
             'www.medal.tv',
         ]
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> (str, str):
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
         Extracts the post ID from a Reddit URL if present.
         Works with all supported URL formats.
