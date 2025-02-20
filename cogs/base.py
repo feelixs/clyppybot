@@ -123,7 +123,7 @@ class Base(Extension):
         tokens = await self._fetch_tokens(ctx.user)
         await ctx.send(f"You have `{tokens}` VIP tokens!\n"
                        f"You can gain more by **voting** with `/vote`\n\n"
-                       f"Use your VIP tokens to embed longer videos with Clyppy (up to 30 minutes!)")
+                       f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
