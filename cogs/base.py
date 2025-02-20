@@ -268,6 +268,7 @@ class Base(Extension):
             "I will automatically respond to Twitch and Kick clips, and all other compatible platforms are only accessibly through `/embed`\n\n"
             "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!\n\n"
             "**COMING SOON** We're working on adding server customization for Clyppy, so you can choose which platforms I will automatically reply to!\n\n"
+            f"---------------------------------\n"
             f"Join our [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.description += create_nexus_str()
