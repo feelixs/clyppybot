@@ -123,7 +123,7 @@ class LocalFileInfo:
     can_be_uploaded: Optional[bool]
 
 
-async def upload_video_in_chunks(file_path, logger, chunk_size=90_000_000):
+async def upload_video_in_chunks(file_path, logger, chunk_size=60_000_000):
     file_id = str(uuid.uuid4())
 
     # Read the file and get total size
