@@ -2,6 +2,7 @@ from bot.platforms.twitch.twitchclip import TwitchClip
 from os import getenv
 import re
 from bot.classes import BaseMisc
+from typing import Optional
 
 
 class TwitchMisc(BaseMisc):
@@ -15,26 +16,22 @@ class TwitchMisc(BaseMisc):
             exit("No Twitch API secret found")
         self.platform_name = "Twitch"
 
-    def parse_clip_url(self, url: str, extended_url_formats=False) -> str:
-        if url.endswith("/"):
-            url = url[:-1]  # remove trailing slash
-
-        if "m.twitch.tv" in url:
-            # convert mobile link to pc link
-            url = url.replace("https://m.", "https://clips.").replace("/clip/", "/").split("?")[0]
-        slug = str(url).split('/')[-1]
-        if "?" in slug:
-            slug = slug.split('?')[0]
-        return slug
-    
-    def is_clip_link(self, url: str) -> bool:
+    def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+        """
+            Extracts the video ID from a YouTube URL if present.
+            Works with all supported URL formats.
+        """
         patterns = [
-            r'https?://(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
-            r'https?://(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+',
-            r'https?://(?:www\.)?clyppy\.com/?clips/[a-zA-Z0-9_-]+',
-            r'https?://(?:www\.)?clyppy\.io/?clips/[a-zA-Z0-9_-]+'
+            r'^(?:https?://)?(?:www\.|m\.)?clips\.twitch\.tv/[a-zA-Z0-9_-]+',
+            r'^(?:https?://)?(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/[a-zA-Z0-9_-]+',
+            r'^(?:https?://)?(?:www\.)?clyppy\.com/?clips/[a-zA-Z0-9_-]+',
+            r'^(?:https?://)?(?:www\.)?clyppy\.io/?clips/[a-zA-Z0-9_-]+'
         ]
-        return any(re.match(pattern, url) for pattern in patterns)
+        for pattern in patterns:
+            match = re.match(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> TwitchClip:
         slug = self.parse_clip_url(url)
