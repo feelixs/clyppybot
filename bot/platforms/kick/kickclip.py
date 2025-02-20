@@ -42,7 +42,6 @@ class KickClip(BaseClip):
         async def scan_logs_for_m3u8(driver, timeout=10):
             start_time = time.time()
             while time.time() - start_time < timeout:
-                #self.logger.info(driver.page_source)
                 browser_log = driver.get_log('performance')
                 for entry in browser_log:
                     event = json.loads(entry['message'])['message']
