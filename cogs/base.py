@@ -499,7 +499,7 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
-            '**nsfw_enabled** Should users in this server be allowed to embed videos which are not safe for work?:\n'
+            '**nsfw** Should users in this server be allowed to embed videos which are not safe for work?:\n'
             ' - `True`: Allow NSFW videos to be embedded in this server\n'
             ' - `False`: NSFW videos won\'t be embedded (default)\n\n'
             f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n**nsfw_enabled**: {nsfw}\n\n'
