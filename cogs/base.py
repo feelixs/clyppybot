@@ -168,7 +168,7 @@ class Base(Extension):
                 )
                 return
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"This platform is not allowed in this server. You can either:\n"
+                await ctx.send(f"This platform is not allowed in this server. You can either:"
                                f" - enable nsfw content in this server using `/settings nsfw='yes'`\n"
                                f" - `/embed` the nsfw content in a private message (click my profile, send me a message, and then use embed there)")
                 await send_webhook(
