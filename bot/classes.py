@@ -178,6 +178,9 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
                     else:
                         logger.info(f"Server reported error on chunk {chunk_number + 1}: {r.get('error')}")
                         raise UploadFailed
+                elif not r['success']:
+                    logger.info(f"Server reported error on chunk {chunk_number + 1}: {r.get('error')}")
+                    raise UploadFailed
 
                 logger.info(f"Chunk {chunk_number + 1} uploaded successfully")
 
