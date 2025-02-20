@@ -133,7 +133,7 @@ class Base(Extension):
                             ]
                    )
     async def embed(self, ctx: SlashContext, url: str):
-        async def wait_for_download(clip_id: str, timeout: float = 60):
+        async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time.time()
             while clip_id in self.currently_downloading_for_embed:
                 if time.time() - start_time > timeout:
