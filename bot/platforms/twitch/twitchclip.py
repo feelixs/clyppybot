@@ -4,7 +4,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
 from bot.classes import BaseClip, DownloadResponse, InvalidClipType, MAX_FILE_SIZE_FOR_DISCORD, LocalFileInfo, UnknownError
-from bot.twitch.api import TwitchAPI
+from bot.platforms.twitch.api import TwitchAPI
 import concurrent.futures
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
