@@ -102,7 +102,7 @@ async def main():
     Bot.load_extension('cogs.biliautoembed')
     Bot.load_extension('cogs.bskyautoembed')
     Bot.load_extension('cogs.youpoautoembed')
-    Bot.load_extension('cogs.xvidoautoembed')
+    Bot.load_extension('cogs.xvidautoembed')
     Bot.load_extension('cogs.dailymotionautoembed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
