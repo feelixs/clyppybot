@@ -18,4 +18,4 @@ class KickClip(BaseClip):
 
     async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
+        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True, cookies=True)

@@ -56,4 +56,4 @@ class InstagramClip(BaseClip):
         dl = await super().dl_check_size(filename, dlp_format, can_send_files)
         if dl is not None:
             return dl
-        return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+        return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files, cookies=True)
