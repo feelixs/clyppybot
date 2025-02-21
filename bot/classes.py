@@ -429,9 +429,9 @@ class BaseClip(ABC):
             'no_warnings': True,
         }
         if cookies:
-            cookie_file_path = fetch_cookies(self.logger)
-            if cookie_file_path:
-                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            cookies_info = fetch_cookies(self.logger)
+            if cookies_info:
+                ydl_opts['cookiesfrombrowser'] = cookies_info  # The crucial line!
             else:
                 self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
@@ -494,9 +494,9 @@ class BaseClip(ABC):
         }
 
         if cookies:
-            cookie_file_path = fetch_cookies(self.logger)
-            if cookie_file_path:
-                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            cookies_info = fetch_cookies(self.logger)
+            if cookies_info:
+                ydl_opts['cookiesfrombrowser'] = cookies_info  # The crucial line!
             else:
                 self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
@@ -647,9 +647,9 @@ class BaseMisc(ABC):
             'extract_flat': True,  # Only extract metadata, don't download
         }
         if cookies:
-            cookie_file_path = fetch_cookies(self.logger)
-            if cookie_file_path:
-                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            cookies_info = fetch_cookies(self.logger)
+            if cookies_info:
+                ydl_opts['cookiesfrombrowser'] = cookies_info  # The crucial line!
             else:
                 self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
