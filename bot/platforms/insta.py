@@ -53,7 +53,7 @@ class InstagramClip(BaseClip):
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
-        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+        dl = await super().dl_check_size(filename, dlp_format, can_send_files, cookies=True)
         if dl is not None:
             return dl
         return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files, cookies=True)
