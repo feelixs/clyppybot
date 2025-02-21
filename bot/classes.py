@@ -116,8 +116,10 @@ def fetch_cookies(logger):
             profile_path = f"/firefox-profiles/{profile_dir}"
             logger.info(f"Using Firefox profile: {profile_path}")
 
-            # Return the path; yt-dlp will handle reading the file
-            return profile_path
+            # Construct the cookies-from-browser string:
+            cookies_string = f"firefox:{profile_dir}"
+
+            return cookies_string
 
         logger.info("No Firefox profile found.")
         return None
