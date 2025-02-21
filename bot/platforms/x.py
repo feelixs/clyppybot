@@ -31,7 +31,7 @@ class Xmisc(BaseMisc):
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(url, basemsg, cookies=True)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
