@@ -496,7 +496,7 @@ class BaseClip(ABC):
         if cookies:
             cookies_info = fetch_cookies(self.logger)
             if cookies_info:
-                ydl_opts['cookiesfrombrowser'] = cookies_info  # The crucial line!
+                ydl_opts['cookiesfrombrowser'] = cookies_info
             else:
                 self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
@@ -649,7 +649,7 @@ class BaseMisc(ABC):
         if cookies:
             cookies_info = fetch_cookies(self.logger)
             if cookies_info:
-                ydl_opts['cookiesfrombrowser'] = cookies_info  # The crucial line!
+                ydl_opts['cookiesfrombrowser'] = cookies_info
             else:
                 self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
