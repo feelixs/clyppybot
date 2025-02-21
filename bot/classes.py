@@ -105,17 +105,16 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 
 def fetch_cookies(logger):
-    # Find the profile directory (assuming it ends with .default-release)
+    base_dir = '/firefox-profile'
     profile_dir = None
-    base_dir = '/firefox-profiles'
     if os.path.exists(base_dir):
         for item in os.listdir(base_dir):
             if item.endswith('.default-release'):
                 profile_dir = item
                 break
-    # Set up the cookies argument
+
     if profile_dir:
-        cookies_arg = f"firefox:{base_dir}/{profile_dir}"
+        cookies_arg = ('firefox', f"{base_dir}/{profile_dir}")
         logger.info(f"Using Firefox profile: {cookies_arg}")
         return cookies_arg
     logger.info("No Firefox profile found, using no cookies")
