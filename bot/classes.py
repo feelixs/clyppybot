@@ -105,7 +105,6 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 
 def fetch_cookies(logger):
-    # Find the profile directory (assuming it ends with .default-release)
     try:
         profile_dir = None
         for item in os.listdir('/firefox-profiles'):
@@ -113,16 +112,16 @@ def fetch_cookies(logger):
                 profile_dir = item
                 break
 
-        # Set up the cookies argument
         if profile_dir:
-            # The correct format is just "firefox" and the path as separate parts
-            cookies_arg = "firefox"  # Just the browser name
-            profile_path = f"/firefox-profiles/{profile_dir}"  # Just the path
+            profile_path = f"/firefox-profiles/{profile_dir}"
             logger.info(f"Using Firefox profile: {profile_path}")
-            return cookies_arg, profile_path  # Return as separate arguments
 
-        logger.info("No Firefox profile found, using no cookies")
-        return None
+            # Return the path; yt-dlp will handle reading the file
+            return profile_path
+
+        logger.info("No Firefox profile found.")
+        return None 
+
     except Exception as e:
         logger.error(f"Error fetching cookies: {str(e)}")
         return None
