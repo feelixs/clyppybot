@@ -123,6 +123,7 @@ def fetch_cookies(opts, logger):
     except Exception as e:
         logger.error(f"Error fetching cookies: {str(e)}")
 
+
 @dataclass
 class DownloadResponse:
     remote_url: Optional[str]
