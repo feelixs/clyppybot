@@ -15,8 +15,8 @@ class KickMisc(BaseMisc):
         Works with all supported URL formats.
         """
         patterns = [
-            r'^(?:https?://)?(?:www\.)?kick\.com/[a-zA-Z0-9_-]+/clips/(clip_[a-zA-Z0-9]+)',
-            r'^(?:https?://)?(?:www\.)?kick\.com/[a-zA-Z0-9_-]+\?clip=(clip_[a-zA-Z0-9]+)'
+            r'^(?:https?://)?(?:www\.)?kick\.com/[a-zA-Z0-9_-]+/clips/clip_([a-zA-Z0-9]+)',
+            r'^(?:https?://)?(?:www\.)?kick\.com/[a-zA-Z0-9_-]+\?clip=clip_([a-zA-Z0-9]+)'
         ]
         for pattern in patterns:
             match = re.match(pattern, url)
