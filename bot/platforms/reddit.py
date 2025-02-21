@@ -135,7 +135,7 @@ class RedditMisc(BaseMisc):
                 link = txt.split("shreddit-canonical-url-updater value=\"")[-1].split("\"")[0]
                 return self.parse_clip_url(link)
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'RedditClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'RedditClip':
         slug = self.parse_clip_url(url)
         is_vid, ext_info = await self.is_video(url)
         if not is_vid:
@@ -185,7 +185,7 @@ class RedditClip(BaseClip):
         mclip = await m.get_clip(self.external_link)
         return await mclip.download(filename, dlp_format, can_send_files)
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         if self.external_link is None:
             pass
         elif 'kick.com' in self.external_link:

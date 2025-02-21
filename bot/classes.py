@@ -594,7 +594,7 @@ class BaseMisc(ABC):
         self.dl_timeout_secs = 30
 
     @abstractmethod
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BaseClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BaseClip':
         ...
 
     @abstractmethod

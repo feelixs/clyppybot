@@ -16,6 +16,12 @@ class KickClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True, cookies=True)
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )

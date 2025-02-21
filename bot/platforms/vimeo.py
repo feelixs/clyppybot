@@ -39,14 +39,18 @@ class VimeoMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'VimeoClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'VimeoClip':
         video_id, video_hash = self.parse_clip_url(url), self.get_clip_hash(url)
         if not video_id:
             self.logger.info(f"Invalid Vimeo URL: {url}")
             raise NoDuration
 
         # Verify video length
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -70,6 +74,12 @@ class VimeoClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )

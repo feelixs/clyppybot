@@ -30,13 +30,17 @@ class BiliMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BiliClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BiliClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid Bilibili URL: {url}")
             raise NoDuration
 
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -59,9 +63,20 @@ class BiliClip(BaseClip):
     def url(self) -> str:
         return f"https://www.bilibili.com/video/{self._video_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
-        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+        dl = await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )
         if dl is not None:
             return dl
-        return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+
+        return await super().download(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )

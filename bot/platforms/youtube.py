@@ -29,11 +29,15 @@ class YtMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'YtClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'YtClip':
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -59,7 +63,7 @@ class YtClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         ydl_opts = {
             'format': dlp_format,
             'outtmpl': filename,

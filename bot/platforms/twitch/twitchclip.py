@@ -42,8 +42,13 @@ class TwitchClip(BaseClip):
             logger=self.logger
         )
 
-    async def download(self, filename=None, dlp_format='best', can_send_files=False) -> DownloadResponse:
-        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+    async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False) -> DownloadResponse:
+        dl = await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )
         if dl is not None:
             return dl
 
@@ -63,7 +68,12 @@ class TwitchClip(BaseClip):
             return extracted
         except InvalidClipType:
             # fetch temporary v2 link (default)
-            return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+            return await super().download(
+                filename=filename,
+                dlp_format=dlp_format,
+                can_send_files=can_send_files,
+                cookies=cookies
+            )
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links

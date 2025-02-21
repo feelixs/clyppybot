@@ -15,8 +15,18 @@ class MedalClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
-        dl = await super().dl_check_size(filename, dlp_format, can_send_files)
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+        dl = await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )
         if dl is not None:
             return dl
-        return await super().download(filename, dlp_format, can_send_files)
+        return await super().download(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )

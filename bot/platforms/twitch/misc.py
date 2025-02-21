@@ -33,6 +33,6 @@ class TwitchMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> TwitchClip:
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> TwitchClip:
         slug = self.parse_clip_url(url)
         return TwitchClip(slug)

@@ -15,13 +15,17 @@ class PhubMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'PhubClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'PhubClip':
         shortcode = self.parse_clip_url(url)
         if not shortcode:
             self.logger.info(f"Invalid URL: {url}")
             raise NoDuration
 
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -44,6 +48,12 @@ class PhubClip(BaseClip):
     def url(self) -> str:
         return f"https://pornhub.com/view_video.php?viewkey={self._shortcode}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )

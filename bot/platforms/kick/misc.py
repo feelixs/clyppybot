@@ -36,6 +36,6 @@ class KickMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> KickClip:
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> KickClip:
         slug, user = self.parse_clip_url(url), self.get_clip_user(url)
         return KickClip(slug, user)

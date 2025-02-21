@@ -27,11 +27,15 @@ class Xmisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'Xclip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True) -> 'Xclip':
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url, basemsg, cookies=True)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -58,10 +62,15 @@ class Xclip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) run dl_download()...")
-        local_file = await super().dl_download(filename, dlp_format, can_send_files, cookies=True)
+        local_file = await super().dl_download(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )
         if local_file.can_be_uploaded:
             return DownloadResponse(
                 remote_url=None,

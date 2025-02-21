@@ -1,5 +1,5 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, InvalidClipType
+from bot.classes import BaseClip, BaseMisc, VideoTooLong, InvalidClipType
 from typing import Optional
 
 
@@ -19,11 +19,15 @@ class BlueSkyMisc(BaseMisc):
             return match.group(2)
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'BlueSkyClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BlueSkyClip':
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

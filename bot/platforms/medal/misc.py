@@ -36,7 +36,7 @@ class MedalMisc(BaseMisc):
 
         return any(bool(re.match(pattern, url)) for pattern in patterns)
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> MedalClip:
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> MedalClip:
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType

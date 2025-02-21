@@ -21,14 +21,18 @@ class InstagramMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'InstagramClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'InstagramClip':
         shortcode = self.parse_clip_url(url)
         if not shortcode:
             self.logger.info(f"Invalid Instagram URL: {url}")
             raise NoDuration
 
         # Verify video length (Reels are up to 90 seconds)
-        valid = await self.is_shortform(url, basemsg, True)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

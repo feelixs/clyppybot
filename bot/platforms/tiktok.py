@@ -21,14 +21,18 @@ class TikTokMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'TikTokClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")
             raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -58,10 +62,15 @@ class TikTokClip(BaseClip):
             return f"https://www.tiktok.com/@{self._user}/video/{self._video_id}"
         return f"https://www.tiktok.com/video/{self._video_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) run dl_download()...")
-        local_file = await super().dl_download(filename, dlp_format, can_send_files)
+        local_file = await super().dl_download(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
+        )
         if local_file.can_be_uploaded:
             return DownloadResponse(
                 remote_url=None,

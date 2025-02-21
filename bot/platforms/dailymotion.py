@@ -32,14 +32,18 @@ class DailymotionMisc(BaseMisc):
 
         return None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None) -> 'DailymotionClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'DailymotionClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid Dailymotion URL: {url}")
             raise NoDuration
 
         # Verify video length (you might want to adjust this for Dailymotion's limits)
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
@@ -62,6 +66,12 @@ class DailymotionClip(BaseClip):
     def url(self) -> str:
         return f"https://www.dailymotion.com/video/{self._video_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(filename, dlp_format, can_send_files, upload_if_large=True)
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )
