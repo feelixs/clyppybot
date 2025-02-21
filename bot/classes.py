@@ -389,6 +389,21 @@ class BaseClip(ABC):
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
             return resp
 
+    def _fetch_cookies(self):
+        # Find the profile directory (assuming it ends with .default-release)
+        profile_dir = None
+        for item in os.listdir('/firefox-profiles'):
+            if item.endswith('.default-release'):
+                profile_dir = item
+                break
+
+        # Set up the cookies argument
+        cookies_arg = None
+        if profile_dir:
+            cookies_arg = f"firefox:/firefox-profiles/{profile_dir}"
+            self.logger.info(f"Using Firefox profile: {profile_dir}")
+            return cookies_arg
+
     async def _fetch_external_url(self, dlp_format='best/bv*+ba') -> DownloadResponse:
         """
         Gets direct media URL and duration from the clip URL without downloading.
@@ -399,6 +414,9 @@ class BaseClip(ABC):
             'quiet': True,
             'no_warnings': True,
         }
+        cookies = self._fetch_cookies()
+        if cookies:
+            ydl_opts['cookiesfrombrower'] = cookies
 
         try:
             return await asyncio.get_event_loop().run_in_executor(
@@ -456,6 +474,9 @@ class BaseClip(ABC):
             'quiet': True,
             'no_warnings': True,
         }
+        cookies = self._fetch_cookies()
+        if cookies:
+            ydl_opts['cookiesfrombrower'] = cookies
 
         # Download using yt-dlp
         try:
