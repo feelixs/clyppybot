@@ -49,11 +49,19 @@ class YoupoClip(BaseClip):
         return f"https://www.youporn.com/watch/{self._id}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(
+        self.logger.info(f"({self.id}) run dl_check_size()...")
+        dl = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
-            cookies=cookies,
-            upload_if_large=True
+            cookies=cookies
+        )
+        if dl is not None:
+            return dl
+
+        return await super().download(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies
         )
