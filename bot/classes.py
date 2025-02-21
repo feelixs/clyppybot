@@ -107,18 +107,19 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 def fetch_cookies(logger):
     # Find the profile directory (assuming it ends with .default-release)
     profile_dir = None
-    for item in os.listdir('/firefox-profiles'):
-        if item.endswith('.default-release'):
-            profile_dir = item
-            break
-
+    base_dir = '/firefox-profile'  # Singular, matching the volume mount
+    if os.path.exists(base_dir):
+        for item in os.listdir(base_dir):
+            if item.endswith('.default-release'):
+                profile_dir = item
+                break
     # Set up the cookies argument
-    cookies_arg = None
     if profile_dir:
-        cookies_arg = f"firefox:/firefox-profiles/{profile_dir}/cookies.sqlite"
+        cookies_arg = f"firefox:{base_dir}/{profile_dir}"
         logger.info(f"Using Firefox profile: {cookies_arg}")
         return cookies_arg
     logger.info("No Firefox profile found, using no cookies")
+    return None
 
 @dataclass
 class DownloadResponse:
