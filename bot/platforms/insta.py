@@ -28,7 +28,7 @@ class InstagramMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length (Reels are up to 90 seconds)
-        valid = await self.is_shortform(url, basemsg)
+        valid = await self.is_shortform(url, basemsg, True)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
