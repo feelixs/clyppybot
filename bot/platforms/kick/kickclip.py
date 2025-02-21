@@ -27,18 +27,12 @@ class KickClip(BaseClip):
 
     async def get_m3u8_url(self) -> Tuple[str, str]:
         """Get m3u8 URL using undetected-chromedriver"""
-        self.logger.info("Setting up Chrome capabilities")
         caps = DesiredCapabilities.CHROME
         caps['goog:loggingPrefs'] = {'performance': 'ALL'}
-
-        self.logger.info("Setting up Chrome options")
         options = uc.ChromeOptions()
         options.arguments.extend(["--no-sandbox", "--headless", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-
-        self.logger.info("About to start Chrome browser")
         driver = uc.Chrome(options=options, desired_capabilities=caps, version_main=108)
-        self.logger.info("Chrome browser started successfully")
         self.logger.info(f"Started browser and monitoring network on url: {self.url}...")
 
         async def scan_logs_for_m3u8(driver, timeout=10):
