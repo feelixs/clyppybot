@@ -422,7 +422,7 @@ class BaseClip(ABC):
         }
         cookies_arg = fetch_cookies(self.logger)
         if cookies and cookies_arg:
-            ydl_opts['cookiesfrombrower'] = cookies_arg
+            ydl_opts['cookiesfrombrowser'] = cookies_arg
 
         try:
             return await asyncio.get_event_loop().run_in_executor(
@@ -483,7 +483,7 @@ class BaseClip(ABC):
         }
         cookies_arg = fetch_cookies(self.logger)
         if cookies and cookies_arg:
-            ydl_opts['cookiesfrombrower'] = cookies_arg
+            ydl_opts['cookiesfrombrowser'] = cookies_arg
 
         # Download using yt-dlp
         try:
@@ -634,7 +634,7 @@ class BaseMisc(ABC):
         }
         cookies_arg = fetch_cookies(self.logger)
         if cookies and cookies_arg:
-            ydl_opts['cookiesfrombrower'] = cookies_arg
+            ydl_opts['cookiesfrombrowser'] = cookies_arg
 
         try:
             # Run yt-dlp in an executor to avoid blocking
