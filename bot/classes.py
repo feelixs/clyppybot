@@ -105,7 +105,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 
 def fetch_cookies(logger):
-    base_dir = '/firefox-profile'
+    base_dir = '/firefox-profiles'
     profile_dir = None
     if os.path.exists(base_dir):
         for item in os.listdir(base_dir):
