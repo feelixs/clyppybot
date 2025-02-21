@@ -117,7 +117,7 @@ def fetch_cookies(logger):
             logger.info(f"Using Firefox profile: {profile_path}")
 
             # Construct the cookies-from-browser string:
-            cookies_string = ('firefox', None, profile_path, None)
+            cookies_string = ('firefox', profile_path, None, None)
 
             return cookies_string
 
