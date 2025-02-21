@@ -60,7 +60,7 @@ class KickClip(BaseClip):
             return None
 
         try:
-            clip_url = f"https://kick.com/{self.user}/clips/clip_{self.id}"
+            clip_url = f"https://kick.com/{self.user}/clips/clip_{self.slug}"
             driver.get(clip_url)
 
             m3u8_url = await scan_logs_for_m3u8(driver)
