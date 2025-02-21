@@ -107,7 +107,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 def fetch_cookies(logger):
     # Find the profile directory (assuming it ends with .default-release)
     profile_dir = None
-    base_dir = '/firefox-profile'  # Singular, matching the volume mount
+    base_dir = '/firefox-profiles'
     if os.path.exists(base_dir):
         for item in os.listdir(base_dir):
             if item.endswith('.default-release'):
