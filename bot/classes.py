@@ -443,8 +443,7 @@ class BaseClip(ABC):
             raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False,
-                            upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
