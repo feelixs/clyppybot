@@ -51,7 +51,7 @@ class InstagramClip(BaseClip):
     def url(self) -> str:
         return f"https://www.instagram.com/reel/{self._shortcode}/"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
         dl = await super().dl_check_size(
             filename=filename,
