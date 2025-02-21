@@ -115,7 +115,7 @@ def fetch_cookies(logger):
     # Set up the cookies argument
     cookies_arg = None
     if profile_dir:
-        cookies_arg = f"firefox:/firefox-profiles/{profile_dir}"
+        cookies_arg = f"firefox:/firefox-profiles/{profile_dir}/cookies.sqlite"
         logger.info(f"Using Firefox profile: {profile_dir}")
         return cookies_arg
 
