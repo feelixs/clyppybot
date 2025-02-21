@@ -64,59 +64,11 @@ class YtClip(BaseClip):
         return self._url
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
-        ydl_opts = {
-            'format': dlp_format,
-            'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
-        }
-
-        try:
-            # First extract info to check duration
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.extract_info(self.url, download=False)
-                )
-
-                if 'duration' not in info:
-                    self.logger.info(f"Video duration not found")
-                    raise NoDuration
-                self.logger.info(f"Video duration {info['duration']}s is acceptable")
-                # Proceed with download if duration is acceptable
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: ydl.download([self.url])
-                )
-
-            if os.path.exists(filename):
-                extracted = await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    self._extract_info,
-                    ydl_opts
-                )
-
-                d = get_video_details(filename)
-                d.video_name = extracted.video_name
-
-                if is_discord_compatible(d.filesize) and can_send_files:
-                    self.logger.info("The downloaded yt video can fit into a discord upload")
-                    return DownloadResponse(
-                        remote_url=None,
-                        local_file_path=filename,
-                        duration=d.duration,
-                        width=d.width,
-                        height=d.height,
-                        filesize=d.filesize,
-                        video_name=d.video_name,
-                        can_be_uploaded=True
-                    )
-                else:
-                    self.logger.info(f"Uploading the downloaded yt video to https://clyppy.io/api/addclip/: {filename}")
-                    return await self.upload_to_clyppyio(d)
-
-            self.logger.info(f"Could not find file")
-            raise ClipFailure
-        except Exception as e:
-            self.logger.error(f"error: {str(e)}")
-            raise ClipFailure
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )
