@@ -621,7 +621,7 @@ class BaseMisc(ABC):
                     error_data = await response.json()
                     raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
-    async def get_len(self, url: str) -> float:
+    async def get_len(self, url: str, cookies=False) -> float:
         """
             Uses yt-dlp to check video length of the provided url
         """
@@ -630,6 +630,9 @@ class BaseMisc(ABC):
             'no_warnings': True,
             'extract_flat': True,  # Only extract metadata, don't download
         }
+        cookies_arg = self._fetch_cookies()
+        if cookies and cookies_arg:
+            ydl_opts['cookiesfrombrower'] = cookies_arg
 
         try:
             # Run yt-dlp in an executor to avoid blocking
@@ -647,8 +650,8 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             raise NoDuration
 
-    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext]) -> bool:
-        d = await self.get_len(url)
+    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
+        d = await self.get_len(url, cookies)
         if d is None:
             return False
         elif d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
