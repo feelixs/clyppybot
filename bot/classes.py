@@ -105,20 +105,27 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 
 def fetch_cookies(logger):
-    base_dir = '/firefox-profiles'
-    profile_dir = None
-    if os.path.exists(base_dir):
-        for item in os.listdir(base_dir):
+    # Find the profile directory (assuming it ends with .default-release)
+    try:
+        profile_dir = None
+        for item in os.listdir('/firefox-profiles'):
             if item.endswith('.default-release'):
                 profile_dir = item
                 break
 
-    if profile_dir:
-        cookies_arg = ('firefox', f"{base_dir}/{profile_dir}")
-        logger.info(f"Using Firefox profile: {cookies_arg}")
-        return cookies_arg
-    logger.info("No Firefox profile found, using no cookies")
-    return None
+        # Set up the cookies argument
+        if profile_dir:
+            # The correct format is just "firefox" and the path as separate parts
+            cookies_arg = "firefox"  # Just the browser name
+            profile_path = f"/firefox-profiles/{profile_dir}"  # Just the path
+            logger.info(f"Using Firefox profile: {profile_path}")
+            return cookies_arg, profile_path  # Return as separate arguments
+
+        logger.info("No Firefox profile found, using no cookies")
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching cookies: {str(e)}")
+        return None
 
 @dataclass
 class DownloadResponse:
@@ -421,9 +428,12 @@ class BaseClip(ABC):
             'no_warnings': True,
         }
         if cookies:
-            cookies_arg = fetch_cookies(self.logger)
-            if cookies_arg:
-                ydl_opts['cookiesfrombrowser'] = cookies_arg
+            cookies_result = fetch_cookies(self.logger)
+            if cookies_result:
+                browser_name, profile_path = cookies_result
+                # Set as separate options for browser and profile
+                ydl_opts['cookiesfrombrowser'] = browser_name
+                ydl_opts['cookiefile'] = profile_path
 
         try:
             return await asyncio.get_event_loop().run_in_executor(
@@ -483,9 +493,12 @@ class BaseClip(ABC):
             'no_warnings': True,
         }
         if cookies:
-            cookies_arg = fetch_cookies(self.logger)
-            if cookies_arg:
-                ydl_opts['cookiesfrombrowser'] = cookies_arg
+            cookies_result = fetch_cookies(self.logger)
+            if cookies_result:
+                browser_name, profile_path = cookies_result
+                # Set as separate options for browser and profile
+                ydl_opts['cookiesfrombrowser'] = browser_name
+                ydl_opts['cookiefile'] = profile_path
 
         # Download using yt-dlp
         try:
@@ -635,9 +648,12 @@ class BaseMisc(ABC):
             'extract_flat': True,  # Only extract metadata, don't download
         }
         if cookies:
-            cookies_arg = fetch_cookies(self.logger)
-            if cookies_arg:
-                ydl_opts['cookiesfrombrowser'] = cookies_arg
+            cookies_result = fetch_cookies(self.logger)
+            if cookies_result:
+                browser_name, profile_path = cookies_result
+                # Set as separate options for browser and profile
+                ydl_opts['cookiesfrombrowser'] = browser_name
+                ydl_opts['cookiefile'] = profile_path
 
         try:
             # Run yt-dlp in an executor to avoid blocking
