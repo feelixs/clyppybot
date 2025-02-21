@@ -118,6 +118,7 @@ def fetch_cookies(logger):
         cookies_arg = f"firefox:/firefox-profiles/{profile_dir}/cookies.sqlite"
         logger.info(f"Using Firefox profile: {cookies_arg}")
         return cookies_arg
+    logger.info("No Firefox profile found, using no cookies")
 
 @dataclass
 class DownloadResponse:
