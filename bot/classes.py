@@ -120,7 +120,7 @@ def fetch_cookies(logger):
             return profile_path
 
         logger.info("No Firefox profile found.")
-        return None 
+        return None
 
     except Exception as e:
         logger.error(f"Error fetching cookies: {str(e)}")
@@ -427,12 +427,11 @@ class BaseClip(ABC):
             'no_warnings': True,
         }
         if cookies:
-            cookies_result = fetch_cookies(self.logger)
-            if cookies_result:
-                browser_name, profile_path = cookies_result
-                # Set as separate options for browser and profile
-                ydl_opts['cookiesfrombrowser'] = browser_name
-                ydl_opts['cookiefile'] = profile_path
+            cookie_file_path = fetch_cookies(self.logger)
+            if cookie_file_path:
+                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            else:
+                self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
         try:
             return await asyncio.get_event_loop().run_in_executor(
@@ -491,15 +490,14 @@ class BaseClip(ABC):
             'quiet': True,
             'no_warnings': True,
         }
-        if cookies:
-            cookies_result = fetch_cookies(self.logger)
-            if cookies_result:
-                browser_name, profile_path = cookies_result
-                # Set as separate options for browser and profile
-                ydl_opts['cookiesfrombrowser'] = browser_name
-                ydl_opts['cookiefile'] = profile_path
 
-        # Download using yt-dlp
+        if cookies:
+            cookie_file_path = fetch_cookies(self.logger)
+            if cookie_file_path:
+                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            else:
+                self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
+
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 # Run download in a thread pool to avoid blocking
@@ -647,12 +645,11 @@ class BaseMisc(ABC):
             'extract_flat': True,  # Only extract metadata, don't download
         }
         if cookies:
-            cookies_result = fetch_cookies(self.logger)
-            if cookies_result:
-                browser_name, profile_path = cookies_result
-                # Set as separate options for browser and profile
-                ydl_opts['cookiesfrombrowser'] = browser_name
-                ydl_opts['cookiefile'] = profile_path
+            cookie_file_path = fetch_cookies(self.logger)
+            if cookie_file_path:
+                ydl_opts['cookiefile'] = cookie_file_path  # Use 'cookiefile' with the path
+            else:
+                self.logger.warning("Cookies requested, but no Firefox profile found. Proceeding without cookies.")
 
         try:
             # Run yt-dlp in an executor to avoid blocking
