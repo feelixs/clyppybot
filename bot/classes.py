@@ -629,6 +629,7 @@ class BaseMisc(ABC):
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
+            'verbose': True,
             'extract_flat': True,  # Only extract metadata, don't download
         }
         cookies_arg = fetch_cookies(self.logger)
