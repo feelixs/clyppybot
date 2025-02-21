@@ -61,6 +61,7 @@ class InstagramClip(BaseClip):
         )
         if dl is not None:
             return dl
+
         return await super().download(
             filename=filename,
             dlp_format=dlp_format,
