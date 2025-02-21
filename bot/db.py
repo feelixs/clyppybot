@@ -78,6 +78,18 @@ class GuildDatabase:
                         ''')
             conn.commit()
 
+    def set_all_to_enabled(self):
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    '''UPDATE embed_enabled SET setting = TRUE'''
+                )
+                conn.commit()
+
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting {e}")
+            return False  # default = false
+
     def get_nsfw_enabled(self, guild_id) -> bool:
         try:
             with self.get_db() as conn:

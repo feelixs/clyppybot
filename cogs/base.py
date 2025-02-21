@@ -96,8 +96,10 @@ class Base(Extension):
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         await ctx.defer()
+        self.bot.guild_settings.set_all_to_enabled()
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
+
         await ctx.send("You can now safely exit.")
 
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
