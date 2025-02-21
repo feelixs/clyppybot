@@ -12,6 +12,7 @@ from bot.platforms.bili import BiliMisc
 from bot.platforms.kick import KickMisc
 from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
+from bot.platforms.xvid import XvidMisc
 from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
@@ -73,6 +74,7 @@ Bot.reddit = RedditMisc()
 Bot.yt = YtMisc()
 Bot.youp = YoupoMisc()
 Bot.x = Xmisc()
+Bot.xvid = XvidMisc()
 Bot.bsky = BlueSkyMisc()
 Bot.bili = BiliMisc()
 Bot.phub = PhubMisc()
@@ -100,6 +102,7 @@ async def main():
     Bot.load_extension('cogs.biliautoembed')
     Bot.load_extension('cogs.bskyautoembed')
     Bot.load_extension('cogs.youpoautoembed')
+    Bot.load_extension('cogs.xvidoautoembed')
     Bot.load_extension('cogs.dailymotionautoembed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
