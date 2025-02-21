@@ -81,7 +81,7 @@ Bot.phub = PhubMisc()
 Bot.tiktok = TikTokMisc()
 Bot.vimeo = VimeoMisc()
 Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
-                     Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion]
+                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion]
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
