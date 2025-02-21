@@ -11,13 +11,19 @@ class XvidMisc(BaseMisc):
         self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
-        pattern = r'(?:https?://)?(?:www\.)?xvideos\.com/video.([a-z0-9]+)/([a-zA-Z0-9_-]+)/[a-zA-Z0-9_-]+'
+        pattern = r'(?:https?://)?(?:www\.)?xvideos\.com/video\.([a-z0-9]+)/[0-9]+/[0-9]/[a-zA-Z0-9_-]+'
+        match = re.match(pattern, url)
+        return match.group(1) if match else None
+
+    @staticmethod
+    def get_vid_id(url: str) -> Optional[str]:
+        pattern = r'(?:https?://)?(?:www\.)?xvideos\.com/video\.[a-z0-9]+/([0-9]+)/[0-9]/[a-zA-Z0-9_-]+'
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'XvidClip':
-        shortcode = self.parse_clip_url(url)
-        if not shortcode:
+        first, second = self.parse_clip_url(url), self.get_vid_id(url)
+        if not first or not second:
             self.logger.info(f"Invalid URL: {url}")
             raise NoDuration
 
@@ -31,14 +37,14 @@ class XvidMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return XvidClip(shortcode)
+        return XvidClip(first, second)
 
 
 class XvidClip(BaseClip):
-    def __init__(self, shortcode):
+    def __init__(self, first, second):
         self._service = "xvideos"
-        self._id = shortcode
-        super().__init__(shortcode)
+        self._id = f"{first}/{second}"
+        super().__init__(self._id)
 
     @property
     def service(self) -> str:
@@ -46,7 +52,7 @@ class XvidClip(BaseClip):
 
     @property
     def url(self) -> str:
-        return f"https://xvideos.com/{self._id}"
+        return f"https://xvideos.com/video.{self._id}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
