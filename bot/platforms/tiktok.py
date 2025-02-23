@@ -40,8 +40,8 @@ class TikTokMisc(BaseMisc):
                 async with session.get(url) as response:
                     p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
                     txt = await response.text()
-                    url, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
-                    url = f"https://www.tiktok.com/@{user}/video/{url}"
+                    video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
+                    url = f"https://www.tiktok.com/@{user}/video/{video_id}"
 
         # Verify video length (assuming all TikTok videos are short-form)
         valid = await self.is_shortform(
