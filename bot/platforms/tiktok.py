@@ -46,6 +46,9 @@ class TikTokMisc(BaseMisc):
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
             user = user_match.group(1) if user_match else None
+            if user is None:
+                self.logger.info(f"Invalid TikTok URL: {url} (user was None)")
+                raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
         valid = await self.is_shortform(
