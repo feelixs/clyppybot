@@ -42,6 +42,10 @@ class TikTokMisc(BaseMisc):
                     txt = await response.text()
                     video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
                     url = f"https://www.tiktok.com/@{user}/video/{video_id}"
+        else:
+            # Extract username if available
+            user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
+            user = user_match.group(1) if user_match else None
 
         # Verify video length (assuming all TikTok videos are short-form)
         valid = await self.is_shortform(
@@ -53,10 +57,6 @@ class TikTokMisc(BaseMisc):
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
-
-        # Extract username if available
-        user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
-        user = user_match.group(1) if user_match else None
 
         return TikTokClip(video_id, user)
 
