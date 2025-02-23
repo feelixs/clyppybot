@@ -21,8 +21,8 @@ class TikTokMisc(BaseMisc):
             r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)',
             r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?'
         ]
-        for pattern in pattern:
-            match = re.match(pattern, url)
+        for p in pattern:
+            match = re.match(p, url)
             if match:
                 return match.group(1)
         return None
