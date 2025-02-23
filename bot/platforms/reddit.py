@@ -195,4 +195,10 @@ class RedditClip(BaseClip):
             self.logger.info(f"Running download for external link {self.external_link}")
             return await self._download_medal(filename, dlp_format, can_send_files)
 
-        return await super().download(filename=filename, dlp_format=dlp_format, can_send_files=can_send_files)
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True,
+        )
