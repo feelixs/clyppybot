@@ -48,7 +48,7 @@ class TikTokMisc(BaseMisc):
                     elif video_id is None:
                         self.logger.info(f"Invalid TikTok URL: {url} (video_id was None)")
                         raise NoDuration
-                    
+
                     url = f"https://www.tiktok.com/@{user}/video/{video_id}"
                     self.logger.info(f'Got actual url: {url}')
         else:
