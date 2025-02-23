@@ -36,12 +36,21 @@ class TikTokMisc(BaseMisc):
 
         if re.match(r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?', url):
             # retrieve actual url
+            self.logger.info(f'Retrieving actual url from shortened url {url}')
             async with ClientSession() as session:
                 async with session.get(url) as response:
                     p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
                     txt = await response.text()
                     video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
+                    if user is None:
+                        self.logger.info(f"Invalid TikTok URL: {url} (user was None)")
+                        raise NoDuration
+                    elif video_id is None:
+                        self.logger.info(f"Invalid TikTok URL: {url} (video_id was None)")
+                        raise NoDuration
+                    
                     url = f"https://www.tiktok.com/@{user}/video/{video_id}"
+                    self.logger.info(f'Got actual url: {url}')
         else:
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
