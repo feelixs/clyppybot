@@ -17,9 +17,15 @@ class TikTokMisc(BaseMisc):
         # - https://www.tiktok.com/@username/video/123456789
         # - https://m.tiktok.com/video/123456789
         # - https://vm.tiktok.com/video/123456789
-        pattern = r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)'
-        match = re.match(pattern, url)
-        return match.group(1) if match else None
+        pattern = [
+            r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)',
+            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?'
+        ]
+        for pattern in pattern:
+            match = re.match(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
