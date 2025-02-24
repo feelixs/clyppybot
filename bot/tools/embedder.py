@@ -2,9 +2,9 @@ from interactions import Permissions, Embed, Message, Button, ButtonStyle, Slash
 from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure, UnknownError, DL_SERVER_ID
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from typing import List, Union
+from bot.tools import GuildType
 import traceback
 import aiohttp
 import time
