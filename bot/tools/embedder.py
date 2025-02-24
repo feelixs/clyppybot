@@ -312,7 +312,7 @@ class AutoEmbedder:
                         label="ⓘ Info",
                         custom_id=cid
                     )
-                    comp.append(info_button)
+                    comp = [info_button] + comp
                     comp = ActionRow(*comp)
 
                 # send message
