@@ -126,6 +126,7 @@ class Base(Extension):
         #           - vidoes uploaded as discord attachments dont have info, because they dont have a clyppy id
         try:
             clip_info = await self.get_clip_info(clyppyid)
+            self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 embed = Embed(title=f"{clip_info['title']} - Info")
                 embed.add_field(name="Platform", value=clip_info['platform'])
