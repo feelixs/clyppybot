@@ -180,7 +180,6 @@ class AutoEmbedder:
                     can_send_files=False
                 )
                 await respond_to.reply(f"Success for {clip_link}")
-                #return
             else:
                 self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
                 await respond_to.reply("Video file already exists on the server!")
