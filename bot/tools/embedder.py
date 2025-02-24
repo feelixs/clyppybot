@@ -1,6 +1,7 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext
-from interactions import errors, TYPE_THREAD_CHANNEL
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from interactions.api.events import MessageCreate
+from sympy.integrals.heurisch import components
+
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from datetime import datetime, timezone, timedelta
@@ -300,6 +301,19 @@ class AutoEmbedder:
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
+
+                if not uploading_to_discord:  # discord uploads wont have an info button
+                    if clip.uploaded:  # hosted on clyppyio
+                        cid = f"ibtn_c-{clip.clyppy_id}"
+                    else:  # hosted on external cdn
+                        cid = f"ibtn_e-{clip.clyppy_id}"
+                    info_button = Button(
+                        style=ButtonStyle.SECONDARY,
+                        label="ℹ️ Info",
+                        custom_id=cid
+                    )
+                    comp.append(info_button)
+                    comp = ActionRow(comp)
 
                 # send message
                 if isinstance(respond_to, SlashContext):

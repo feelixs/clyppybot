@@ -1,6 +1,6 @@
 import asyncio
 from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
-    Permissions, ActivityType, Activity, Task, IntervalTrigger
+    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import create_nexus_str, GuildType
 import logging
@@ -92,6 +92,58 @@ class Base(Extension):
         if not ctx.responded:
             await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
             raise TimeoutError(f"Waiting for clip {url} download timed out")
+
+    @staticmethod
+    async def get_clip_info(clip_id: str):
+        """Get clip info from clyppyio"""
+        url = f"https://clyppy.io/api/clips/get/{clip_id}"
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    j = await response.json()
+                    return j
+                elif response.status == 404:
+                    return {'match': False}
+
+    @component_callback("ibtn_*")
+    async def info_button_response(self, ctx: ComponentContext):
+        """
+        This function gets called whenever a user clicks an info button.
+        """
+        await ctx.defer(ephemeral=True)
+        clip_type = ctx.custom_id.split("_")[1]
+        upload_loc, clyppyid = clip_type.split("-")
+        # `upload_loc` options:
+        #           e: hosted on external cdn (no expiry unless its deleted from there)
+        #           c: uploaded and hosted on clyppyio (expires in set amount of days)
+        #           - vidoes uploaded as discord attachments dont have info, because they dont have a clyppy id
+        try:
+            clip_info = await self.get_clip_info(clyppyid)
+            if clip_info['match']:
+                content = (f"**{clip_info['title']}**\n"
+                           f"platform: {clip_info['platform']}\n"
+                           f"duration: {clip_info['duration']}\n"
+                           f"original url: {clip_info['embedded_url']}\n"
+                           f"requested by: {clip_info['requested_by']}\n"
+                           f"expires at: {clip_info['expiry_ts_str']}\n")
+                embed = Embed(title=f"{clip_info['title']} - Info", description=content)
+                embed.add_field(name="Platform", value=clip_info['platform'])
+                embed.add_field(name="Original URL", value=clip_info['embedded_url'])
+                embed.add_field(name="Requested by", value=f"<@{clip_info['requested_by']}>")
+                embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {clip_info['duration'] % 60}s")
+                embed.add_field(name="Upload Location", value=f"{'Hosted on external cdn' if upload_loc == 'e' else 'Uploaded and hosted on clyppy.io'}")
+                if upload_loc == 'c':
+                    embed.add_field(name="Expires at", value=f"{clip_info['expiry_ts_str']}")
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(f"Uh oh... it seems the clip at https://clyppy.io/{clyppyid} doesn't exist!")
+        except Exception as e:
+            self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
+            await ctx.send(f"Uh oh... an error occurred fetching the clip at https://clyppy.io/{clyppyid}")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
