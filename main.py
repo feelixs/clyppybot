@@ -14,6 +14,7 @@ from bot.platforms.kick import KickMisc
 from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
+from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
@@ -80,10 +81,11 @@ Bot.bsky = BlueSkyMisc()
 Bot.bili = BiliMisc()
 Bot.phub = PhubMisc()
 Bot.tiktok = TikTokMisc()
+Bot.nuuls = NuulsMisc()
 Bot.vimeo = VimeoMisc()
 Bot.drive = GoogleDriveMisc()
 Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
-                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive]
+                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.nuuls]
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
@@ -103,6 +105,7 @@ async def main():
     Bot.load_extension('cogs.xautoembed')
     Bot.load_extension('cogs.biliautoembed')
     Bot.load_extension('cogs.bskyautoembed')
+    Bot.load_extension('cogs.nuulsautoembed')
     Bot.load_extension('cogs.youpoautoembed')
     Bot.load_extension('cogs.xvidautoembed')
     Bot.load_extension('cogs.dailymotionautoembed')
