@@ -52,6 +52,7 @@ class DownloadManager:
             r.can_be_uploaded = False  # make sure to download and create a clyppy.io link  
         else:
             r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
+            clip.remote_url = r.remote_url
         if r is None:
             raise UnknownError
 
