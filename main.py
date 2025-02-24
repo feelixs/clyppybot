@@ -85,7 +85,7 @@ Bot.vimeo = VimeoMisc()
 Bot.noodle = NoodleMisc()
 Bot.drive = GoogleDriveMisc()
 Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
-                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive]
+                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.noodle]
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
