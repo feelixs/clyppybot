@@ -43,7 +43,8 @@ class NuulsClip(BaseClip):
 
     @property
     def url(self) -> str:
-        return f"https://i.nuuls.com/{self.filanem}/"
+        # Remove the trailing slash
+        return f"https://i.nuuls.com/{self.filanem}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
