@@ -1,7 +1,5 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from interactions.api.events import MessageCreate
-from sympy.integrals.heurisch import components
-
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
 from datetime import datetime, timezone, timedelta
