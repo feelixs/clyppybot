@@ -118,7 +118,7 @@ class Base(Extension):
         This function gets called whenever a user clicks an info button.
         """
         await ctx.defer(ephemeral=True)
-        clyppyid = ctx.custom_id.split("_")[1]
+        clyppyid = ctx.custom_id.split("-")[1]
         try:
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
