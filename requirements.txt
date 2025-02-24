@@ -36,3 +36,4 @@ yarl==1.18.3
 moviepy==2.1.1
 webdriver-manager
 yt-dlp
+sympy
