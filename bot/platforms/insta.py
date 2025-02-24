@@ -21,7 +21,7 @@ class InstagramMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'InstagramClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True) -> 'InstagramClip':
         shortcode = self.parse_clip_url(url)
         if not shortcode:
             self.logger.info(f"Invalid Instagram URL: {url}")
