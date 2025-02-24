@@ -137,10 +137,10 @@ class Base(Extension):
                     embed.add_field(name="Expires at", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
             else:
-                await ctx.send(f"Uh oh... it seems the clip at https://clyppy.io/{clyppyid} doesn't exist!")
+                await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
-            await ctx.send(f"Uh oh... an error occurred fetching the clip at https://clyppy.io/{clyppyid}")
+            await ctx.send(f"Uh oh... an error occurred fetching the clip {clyppyid}")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
