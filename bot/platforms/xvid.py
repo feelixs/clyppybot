@@ -51,10 +51,13 @@ class XvidMisc(BaseMisc):
 
 
 class XvidClip(BaseClip):
-    def __init__(self, first, second=None):
+    def __init__(self, first, second=None, title=None):
         self._service = "xvideos"
         self._first = first
         self._second = second
+        self._title = title
+
+        # For internal ID tracking
         self._id = first if second is None or second == "0" else f"{first}/{second}"
         super().__init__(self._id)
 
@@ -64,13 +67,22 @@ class XvidClip(BaseClip):
 
     @property
     def url(self) -> str:
-        if self._second is None or self._second == "0":
-            return f"https://xvideos.com/video.{self._first}"
+        # For the URL we need to include the title if available
+        if self._title:
+            if self._second and self._second != "0":
+                return f"https://xvideos.com/video.{self._first}/{self._second}/0/{self._title}"
+            else:
+                return f"https://xvideos.com/video.{self._first}/{self._title}"
         else:
-            return f"https://xvideos.com/video.{self._first}/{self._second}"
+            # Fallback if no title
+            if self._second and self._second != "0":
+                return f"https://xvideos.com/video.{self._first}/{self._second}"
+            else:
+                return f"https://xvideos.com/video.{self._first}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        self.logger.info(f"({self.url}) run dl_check_size(upload_if_large=True)...")
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False,
+                       cookies=False) -> DownloadResponse:
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
