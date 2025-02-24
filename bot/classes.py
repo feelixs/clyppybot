@@ -261,7 +261,6 @@ class BaseClip(ABC):
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
-        self.uploaded = False  # uploaded to clyppyio servers?
         self.title = None
 
     @property
