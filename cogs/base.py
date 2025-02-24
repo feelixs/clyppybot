@@ -130,7 +130,7 @@ class Base(Extension):
                            f"platform: {clip_info['platform']}\n"
                            f"duration: {clip_info['duration']}\n"
                            f"original url: {clip_info['embedded_url']}\n"
-                           f"requested by: {clip_info['requested_by']}\n"
+                           f"requested by: <@{clip_info['requested_by']}>\n"
                            f"expires at: {clip_info['expiry_ts_str']}\n")
                 embed = Embed(title=f"{clip_info['title']} - Info", description=content)
                 embed.add_field(name="Platform", value=clip_info['platform'])
