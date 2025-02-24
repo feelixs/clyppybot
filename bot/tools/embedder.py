@@ -307,7 +307,6 @@ class AutoEmbedder:
                         cid = f"ibtn_e-{clip.clyppy_id}"
                     else:  # hosted on clyppyio
                         cid = f"ibtn_c-{clip.clyppy_id}"
-
                     info_button = Button(
                         style=ButtonStyle.SECONDARY,
                         label="ⓘ Info",
