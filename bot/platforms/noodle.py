@@ -15,7 +15,7 @@ class NoodleMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'NoodleClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True) -> 'NoodleClip':
         shortcode = self.parse_clip_url(url)
         if not shortcode:
             self.logger.info(f"Invalid URL: {url}")
@@ -48,7 +48,7 @@ class NoodleClip(BaseClip):
     def url(self) -> str:
         return f"https://noodlemagazine.com/watch/{self._shortcode}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
