@@ -303,7 +303,7 @@ class AutoEmbedder:
                     return
 
                 if not uploading_to_discord:  # discord uploads wont have an info button
-                    if clip.uploaded:  # hosted on clyppyio
+                    if "https://clyppy.io/" in clip.remote_url:  # hosted on clyppyio
                         cid = f"ibtn_c-{clip.clyppy_id}"
                     else:  # hosted on external cdn
                         cid = f"ibtn_e-{clip.clyppy_id}"
