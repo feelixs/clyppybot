@@ -124,11 +124,14 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 clyppy_cdn = 'https://clyppy.io' in clip_info['url']
+                original = int(clip_info['requested_by'])
 
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
-                embed.add_field(name="Added by", value=f"<@{clip_info['requested_by']}>")
+                embed.add_field(name="Requested by", value=f'<@{ctx.author.id}>')
+                if ctx.author.id != original:
+                    embed.add_field(name="First requester", value=f"<@{original}>")
                 embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
                 embed.add_field(name="Upload Location", value=f"{'Hosted on clyppy.io' if clyppy_cdn else 'Hosted on external cdn'}")
                 if clyppy_cdn:
