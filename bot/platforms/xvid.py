@@ -67,7 +67,6 @@ class XvidClip(BaseClip):
 
     @property
     def url(self) -> str:
-        # For the URL we need to include the title if available
         if self._title:
             if self._second and self._second != "0":
                 return f"https://xvideos.com/video.{self._first}/{self._second}/0/{self._title}"
