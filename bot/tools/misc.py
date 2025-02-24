@@ -65,10 +65,10 @@ class DownloadManager:
 
             r.filesize = new.filesize
             r.remote_url = new.remote_url
+            clip.remote_url = r.remote_url
         elif overwrite_on_server and (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Was instructed to replace on server for {clip.id}, but skipping bc we can upload to Discord")
 
-        clip.remote_url = r.remote_url
         return r
 
 
