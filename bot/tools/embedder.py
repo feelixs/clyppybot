@@ -1,4 +1,5 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
+from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure, UnknownError, DL_SERVER_ID
 from interactions.api.events import MessageCreate
 from bot.tools import GuildType
 from bot.tools import create_nexus_str
@@ -10,7 +11,6 @@ import time
 import re
 import os
 import asyncio
-from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure, UnknownError, DL_SERVER_ID
 
 
 INVALID_DL_PLATFORMS = ['drive', 'tiktok']
