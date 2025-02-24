@@ -128,7 +128,7 @@ class Base(Extension):
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
-                embed.add_field(name="Uploaded by", value=f"<@{clip_info['requested_by']}>")
+                embed.add_field(name="Added by", value=f"<@{clip_info['requested_by']}>")
                 embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
                 embed.add_field(name="Upload Location", value=f"{'Hosted on clyppy.io' if clyppy_cdn else 'Hosted on external cdn'}")
                 if clyppy_cdn:
