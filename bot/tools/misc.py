@@ -52,7 +52,6 @@ class DownloadManager:
             r.can_be_uploaded = False  # make sure to download and create a clyppy.io link  
         else:
             r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
-            clip.remote_url = r.remote_url
         if r is None:
             raise UnknownError
 
@@ -65,7 +64,6 @@ class DownloadManager:
                 self._parent.logger.info(f"https://clyppy.io/{clip.clyppy_id} does not exist, so no overwrite was performed")
             r.filesize = new.filesize
             r.remote_url = new.remote_url
-            clip.remote_url = r.remote_url
         elif overwrite_on_server and (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Was instructed to replace on server for {clip.id}, but skipping bc we can upload to Discord")
 
