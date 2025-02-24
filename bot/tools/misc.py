@@ -55,8 +55,6 @@ class DownloadManager:
         if r is None:
             raise UnknownError
 
-        clip.remote_url = r.remote_url
-
         if overwrite_on_server and not (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")
             new = await clip.upload_to_clyppyio(r)
@@ -70,6 +68,7 @@ class DownloadManager:
         elif overwrite_on_server and (r.can_be_uploaded and can_send_files):
             self._parent.logger.info(f"Was instructed to replace on server for {clip.id}, but skipping bc we can upload to Discord")
 
+        clip.remote_url = r.remote_url
         return r
 
 
