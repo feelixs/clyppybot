@@ -262,7 +262,6 @@ class BaseClip(ABC):
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
         self.title = None
-        self.remote_url = None
 
     @property
     @abstractmethod
