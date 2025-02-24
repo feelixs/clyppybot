@@ -309,7 +309,7 @@ class AutoEmbedder:
                         cid = f"ibtn_e-{clip.clyppy_id}"
                     info_button = Button(
                         style=ButtonStyle.SECONDARY,
-                        label="ℹ️ Info",
+                        label="ⓘ Info",
                         custom_id=cid
                     )
                     comp.append(info_button)
