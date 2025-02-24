@@ -112,7 +112,7 @@ class Base(Extension):
                 else:
                     raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
 
-    @component_callback(compile(r"ibtn_[ce]-.*"))
+    @component_callback(compile(r"ibtn-.*"))
     async def info_button_response(self, ctx: ComponentContext):
         """
         This function gets called whenever a user clicks an info button.
