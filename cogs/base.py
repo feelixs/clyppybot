@@ -109,10 +109,8 @@ class Base(Extension):
                     return j
                 elif response.status == 404:
                     return {'match': False}
-                elif response.status == 500:
-                    raise Exception(f"Failed to get clip info (Server error): {response.status} {response.text}")
                 else:
-                    raise Exception(f"Failed to get clip info: (Server returned code: {response.status}) {response.text}")
+                    raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
 
     @component_callback(compile(r"ibtn_[ce]-.*"))
     async def info_button_response(self, ctx: ComponentContext):
