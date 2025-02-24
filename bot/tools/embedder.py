@@ -313,7 +313,7 @@ class AutoEmbedder:
                         custom_id=cid
                     )
                     comp.append(info_button)
-                    comp = ActionRow(comp)
+                    comp = ActionRow(*comp)
 
                 # send message
                 if isinstance(respond_to, SlashContext):
