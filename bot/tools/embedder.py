@@ -15,7 +15,7 @@ import asyncio
 from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration, ClipFailure, UnknownError, DL_SERVER_ID
 
 
-INVALID_DL_PLATFORMS = ['drive']
+INVALID_DL_PLATFORMS = ['drive', 'tiktok']
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
