@@ -4,7 +4,7 @@ from bot.tools import AutoEmbedder
 import logging
 
 
-class MedalAutoEmbed(Extension):
+class NoodleAutoEmbed(Extension):
     def __init__(self, bot):
         self.embedder = AutoEmbedder(bot, bot.noodle, logging.getLogger(__name__))
 
