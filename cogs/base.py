@@ -130,7 +130,7 @@ class Base(Extension):
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
                 embed.add_field(name="Requested by", value=f"<@{clip_info['requested_by']}>")
                 embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
-                embed.add_field(name="Upload Location", value=f"{'Hosted on external cdn' if clyppy_cdn else 'Uploaded and hosted on clyppy.io'}")
+                embed.add_field(name="Upload Location", value=f"{'Uploaded and hosted on clyppy.io' if clyppy_cdn else 'Hosted on external cdn'}")
                 if clyppy_cdn:
                     embed.add_field(name="Expires at", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
