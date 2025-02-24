@@ -70,7 +70,7 @@ class XvidClip(BaseClip):
             return f"https://xvideos.com/video.{self._first}/{self._second}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
+        self.logger.info(f"({self.url}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
