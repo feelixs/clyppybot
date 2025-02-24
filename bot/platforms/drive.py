@@ -54,7 +54,7 @@ class GoogleDriveMisc(BaseMisc):
 
 class GoogleDriveClip(BaseClip):
     def __init__(self, file_id):
-        self._service = "google_drive"
+        self._service = "drive"
         self._file_id = file_id
         super().__init__(file_id)
 
