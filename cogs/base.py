@@ -126,13 +126,7 @@ class Base(Extension):
         try:
             clip_info = await self.get_clip_info(clyppyid)
             if clip_info['match']:
-                content = (f"**{clip_info['title']}**\n"
-                           f"platform: {clip_info['platform']}\n"
-                           f"duration: {clip_info['duration']}\n"
-                           f"original url: {clip_info['embedded_url']}\n"
-                           f"requested by: <@{clip_info['requested_by']}>\n"
-                           f"expires at: {clip_info['expiry_ts_str']}\n")
-                embed = Embed(title=f"{clip_info['title']} - Info", description=content)
+                embed = Embed(title=f"{clip_info['title']} - Info")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
                 embed.add_field(name="Requested by", value=f"<@{clip_info['requested_by']}>")
