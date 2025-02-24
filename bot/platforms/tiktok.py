@@ -20,7 +20,8 @@ class TikTokMisc(BaseMisc):
         # - https://vm.tiktok.com/video/123456789
         pattern = [
             r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)',
-            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?'
+            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?',
+            r'(?:https?://)?(?:vt\.)?tiktok\.com/([A-Za-z0-9]+)/?'
         ]
         for p in pattern:
             match = re.match(p, url)
@@ -34,7 +35,12 @@ class TikTokMisc(BaseMisc):
             self.logger.info(f"Invalid TikTok URL: {url}")
             raise NoDuration
 
-        if re.match(r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?', url):
+        short_url_patterns = [
+            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?',
+            r'(?:https?://)?(?:vt\.)?tiktok\.com/([A-Za-z0-9]+)/?'
+        ]
+
+        if any(re.match(pattern, url) for pattern in short_url_patterns):
             # retrieve actual url
             self.logger.info(f'Retrieving actual url from shortened url {url}')
             async with ClientSession() as session:
