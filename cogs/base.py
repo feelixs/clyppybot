@@ -118,19 +118,20 @@ class Base(Extension):
         This function gets called whenever a user clicks an info button.
         """
         await ctx.defer(ephemeral=True)
-        clip_type = ctx.custom_id.split("_")[1]
-        upload_loc, clyppyid = clip_type.split("-")
+        clyppyid = ctx.custom_id.split("_")[1]
         try:
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
+                clyppy_cdn = 'https://clyppy.io' in clip_info['url']
+
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
                 embed.add_field(name="Requested by", value=f"<@{clip_info['requested_by']}>")
                 embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
-                embed.add_field(name="Upload Location", value=f"{'Hosted on external cdn' if upload_loc == 'e' else 'Uploaded and hosted on clyppy.io'}")
-                if upload_loc == 'c':
+                embed.add_field(name="Upload Location", value=f"{'Hosted on external cdn' if clyppy_cdn else 'Uploaded and hosted on clyppy.io'}")
+                if clyppy_cdn:
                     embed.add_field(name="Expires at", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
             else:
