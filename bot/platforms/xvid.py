@@ -25,17 +25,21 @@ class XvidMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
+    @staticmethod
+    def get_title(url: str) -> Optional[str]:
+        # Extract the title part if present
+        pattern = r'(?:https?://)?(?:www\.)?xvideos\.com/video\.[a-z0-9]+(?:/[0-9]+(?:/[0-9]+)?)?/([^/?]+)'
+        match = re.match(pattern, url)
+        return match.group(1) if match else None
+
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'XvidClip':
         first = self.parse_clip_url(url)
         if not first:
             self.logger.info(f"Invalid URL: {url}")
             raise NoDuration
 
-        # The numeric ID might be optional in some URLs
         second = self.get_vid_id(url)
-        if not second:
-            second = "0"  # Default value if no numeric ID is found
-            self.logger.info(f"No numeric ID found in URL: {url}, using default")
+        title = self.get_title(url)
 
         valid = await self.is_shortform(
             url=url,
@@ -47,7 +51,7 @@ class XvidMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return XvidClip(first, second)
+        return XvidClip(first, second, title)
 
 
 class XvidClip(BaseClip):
