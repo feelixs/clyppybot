@@ -437,20 +437,20 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             raise NoDuration
 
-    async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
-        local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies)
+    async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, useragent=None) -> LocalFileInfo:
+        local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies, useragent)
         if local_file is None:
             raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, useragent=None) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
         """
         local = None
         if can_send_files:
-            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, useragent)
             self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
@@ -466,13 +466,13 @@ class BaseClip(ABC):
 
         if upload_if_large:
             if local is None:
-                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, useragent)
             self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
             return await self.upload_to_clyppyio(local)
 
         return None
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, useragent=None) -> LocalFileInfo:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             return get_video_details(filename)
@@ -483,6 +483,9 @@ class BaseClip(ABC):
             'quiet': True,
             'no_warnings': True,
         }
+        if useragent:
+            ydl_opts['user_agent'] = useragent
+
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
 
