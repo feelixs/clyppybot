@@ -120,10 +120,6 @@ class Base(Extension):
         await ctx.defer(ephemeral=True)
         clip_type = ctx.custom_id.split("_")[1]
         upload_loc, clyppyid = clip_type.split("-")
-        # `upload_loc` options:
-        #           e: hosted on external cdn (no expiry unless its deleted from there)
-        #           c: uploaded and hosted on clyppyio (expires in set amount of days)
-        #           - vidoes uploaded as discord attachments dont have info, because they dont have a clyppy id
         try:
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
