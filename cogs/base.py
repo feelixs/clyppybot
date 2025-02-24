@@ -128,7 +128,7 @@ class Base(Extension):
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
-                embed = Embed(title=f"{clip_info['title']} - Info")
+                embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
                 embed.add_field(name="Requested by", value=f"<@{clip_info['requested_by']}>")
