@@ -12,6 +12,7 @@ from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LI
 from typing import Tuple, Optional
 from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
 import time
+from re import compile
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
@@ -111,7 +112,7 @@ class Base(Extension):
                 elif response.status == 500:
                     raise Exception(f"Failed to get clip info (Server error): {response.status} {response.text}")
 
-    @component_callback("ibtn_*")
+    @component_callback(compile(r"ibtn_[ce]-.*"))
     async def info_button_response(self, ctx: ComponentContext):
         """
         This function gets called whenever a user clicks an info button.
