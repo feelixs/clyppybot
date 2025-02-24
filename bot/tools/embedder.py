@@ -13,7 +13,7 @@ import os
 import asyncio
 
 
-INVALID_DL_PLATFORMS = ['drive', 'tiktok']
+INVALID_DL_PLATFORMS = []
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
