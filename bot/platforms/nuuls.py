@@ -47,7 +47,7 @@ class NuulsClip(BaseClip):
         return f"https://i.nuuls.com/{self.filanem}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        self.logger.info(f"({self.id}) run dl_check_size()...")
+        self.logger.info(f"({self.url}) run dl_check_size()...")
         dl = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
