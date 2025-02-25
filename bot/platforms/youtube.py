@@ -11,7 +11,6 @@ class YtMisc(BaseMisc):
     def __init__(self):
         super().__init__()
         self.platform_name = "YouTube"
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
