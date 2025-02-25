@@ -16,7 +16,8 @@ class VimeoMisc(BaseMisc):
         """
         patterns = [
             r'^(?:https?://)?(?:www\.)?vimeo\.com/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)',
-            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)'
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)',
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/channels/[\w-]+/(\d+)(?:/[a-zA-Z0-9]+)?(?:\?|$)'
         ]
         for pattern in patterns:
             match = re.match(pattern, url)
@@ -31,7 +32,8 @@ class VimeoMisc(BaseMisc):
         """
         patterns = [
             r'^(?:https?://)?(?:www\.)?vimeo\.com/\d+/([a-zA-Z0-9]+)(?:\?|$)',
-            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/\d+/([a-zA-Z0-9]+)(?:\?|$)'
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/[\w-]+/\d+/([a-zA-Z0-9]+)(?:\?|$)',
+            r'^(?:https?://)?(?:www\.)?vimeo\.com/channels/[\w-]+/\d+/([a-zA-Z0-9]+)(?:\?|$)'
         ]
         for pattern in patterns:
             match = re.match(pattern, url)
@@ -40,7 +42,8 @@ class VimeoMisc(BaseMisc):
         return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'VimeoClip':
-        video_id, video_hash = self.parse_clip_url(url), self.get_clip_hash(url)
+        video_id = self.parse_clip_url(url)
+        video_hash = self.get_clip_hash(url)
         if not video_id:
             self.logger.info(f"Invalid Vimeo URL: {url}")
             raise NoDuration
@@ -60,10 +63,14 @@ class VimeoMisc(BaseMisc):
 
 
 class VimeoClip(BaseClip):
-    def __init__(self, video_id, video_hash):
+    def __init__(self, video_id, video_hash=None):
         self._service = "vimeo"
-        self._video_id = f'{video_id}/{video_hash}'
-        self._url = f"https://vimeo.com/{self._video_id}"
+        if video_hash:
+            self._video_id = f'{video_id}/{video_hash}'
+            self._url = f"https://vimeo.com/{self._video_id}"
+        else:
+            self._video_id = video_id
+            self._url = f"https://vimeo.com/{self._video_id}"
         super().__init__(self._video_id)
 
     @property
