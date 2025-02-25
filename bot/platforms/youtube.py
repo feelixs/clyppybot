@@ -1,10 +1,6 @@
 from typing import Optional
-import yt_dlp
-import asyncio
-import os
 import re
-from bot.classes import (BaseClip, BaseMisc, DownloadResponse, get_video_details, is_discord_compatible, InvalidClipType,
-                         MAX_VIDEO_LEN_SEC, VideoTooLong, ClipFailure, NoDuration, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN)
+from bot.classes import (BaseClip, BaseMisc, DownloadResponse, InvalidClipType, VideoTooLong
 
 
 class YtMisc(BaseMisc):
