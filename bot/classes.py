@@ -665,6 +665,11 @@ class BaseMisc(ABC):
                 user = basemsg.author
             else:
                 user = basemsg.user
+
+            # if we're in dl server, automatically return true
+            if basemsg.guild is not None and self.is_dl_server(basemsg.guild):
+                return True
+
             sub = await self.subtract_tokens(user, EMBED_TOKEN_COST)
             if sub['success']:
                 if sub['user_success']:  # the user had enough tokens to subtract successfully
