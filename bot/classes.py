@@ -636,7 +636,7 @@ class BaseMisc(ABC):
             'extract_flat': True,  # Only extract metadata, don't download
         }
         if cookies:
-             fetch_cookies(ydl_opts, self.logger)
+            fetch_cookies(ydl_opts, self.logger)
 
         try:
             # Run yt-dlp in an executor to avoid blocking
