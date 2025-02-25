@@ -655,7 +655,10 @@ class BaseMisc(ABC):
             raise NoDuration
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
-        d = await self.get_len(url, cookies)
+        try:
+            d = await self.get_len(url, cookies)
+        except NoDuration:
+            d = None
         if d is None or d == 0:
             return False
         elif d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
