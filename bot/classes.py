@@ -261,6 +261,7 @@ class BaseClip(ABC):
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
+        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self.service}, {slug}")
         self.title = None
 
     @property
