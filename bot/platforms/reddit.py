@@ -12,12 +12,23 @@ class RedditMisc(BaseMisc):
         super().__init__()
         self.platform_name = "Reddit"
         self.VALID_EXT_VIDEO_DOMAINS = [
-            'twitch.tv',
-            'www.twitch.tv',
-            'kick.com',
-            'www.kick.com',
-            'medal.tv',
-            'www.medal.tv',
+            'twitch.tv', 'www.twitch.tv',
+            'kick.com', 'www.kick.com',
+            'medal.tv', 'www.medal.tv',
+            'youtube.com', 'www.youtube.com',
+            'youtu.be', 'www.youtu.be',
+            'vimeo.com', 'www.vimeo.com',
+            'pornhub.com', 'www.pornhub.com',
+            'youporn.com', 'www.youporn.com',
+            'xvideos.com', 'www.xvideos.com',
+            'instagram.com', 'www.instagram.com',
+            'tiktok.com', 'www.tiktok.com',
+            'twitter.com', 'www.twitter.com',
+            'x.com', 'www.x.com',
+            'bilibili.com', 'www.bilibili.com',
+            'dailymotion.com', 'www.dailymotion.com',
+            'drive.google.com', 'www.drive.google.com',
+            'bsky.app', 'www.bsky.app',
         ]
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
