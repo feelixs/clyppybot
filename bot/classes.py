@@ -675,6 +675,7 @@ class BaseMisc(ABC):
             return duration
 
         except DownloadError as e:
+            self.logger.error(f"Error downloading video for {url}: {str(e)}")
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
