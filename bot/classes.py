@@ -678,7 +678,10 @@ class BaseMisc(ABC):
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
-            raise NoDuration
+            if 'MoviePy error: failed to read the first frame of video file' in str(e):
+                raise VideoTooLong
+            else:
+                raise NoDuration
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
         try:
