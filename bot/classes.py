@@ -626,7 +626,7 @@ class BaseMisc(ABC):
                     error_data = await response.json()
                     raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
-    async def get_len(self, url: str, cookies=False) -> float:
+    async def get_len(self, url: str, cookies=False, download=False) -> float:
         """
             Uses yt-dlp to check video length of the provided url
         """
@@ -634,7 +634,7 @@ class BaseMisc(ABC):
             'quiet': True,
             'no_warnings': True,
             'verbose': True,
-            'extract_flat': True,  # Only extract metadata, don't download
+            'extract_flat': not download,  # only extract metadata, (it won't download if this is true)
         }
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
@@ -643,8 +643,12 @@ class BaseMisc(ABC):
             # Run yt-dlp in an executor to avoid blocking
             def get_duration():
                 with YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    return info.get('duration', 0)
+                    info = ydl.extract_info(url, download=download)
+                    if download:
+                        # return file info
+                        return get_video_details(info['filepath'])
+                    else:
+                        return info.get('duration', 0)
 
             duration = await asyncio.get_event_loop().run_in_executor(
                 None, get_duration
@@ -662,8 +666,12 @@ class BaseMisc(ABC):
             d = None
 
         if d is None or d == 0:
-            return False
-        elif d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
+            # yt-dlp unable to fetch duration directly, need to download the file to verify manually
+            self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
+            file = await self.get_len(url, cookies, download=True)
+            d = file.duration
+
+        if d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
             return True
         elif d <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
             if isinstance(basemsg, Message):
@@ -671,7 +679,7 @@ class BaseMisc(ABC):
             else:
                 user = basemsg.user
 
-            # if we're in dl server, automatically return true
+            # if we're in dl server, automatically return true without needing any tokens
             if self.is_dl_server(basemsg.guild):
                 return True
 
