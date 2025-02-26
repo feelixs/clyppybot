@@ -103,7 +103,7 @@ class RedditMisc(BaseMisc):
 
     async def _get_actual_slug(self, share_url):
         async with aiohttp.ClientSession() as session:
-            async with session.get(share_url, timeout=10) as response:
+            async with session.get(share_url, timeout=30) as response:
                 if response.status != 200:
                     logging.warning(f"Got status {response.status} for URL: {share_url}")
                     raise IndexError
