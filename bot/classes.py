@@ -633,7 +633,7 @@ class BaseMisc(ABC):
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'verbose': True,
+            'verbose': False,
             'extract_flat': not download,  # only extract metadata, (it won't download if this is true)
         }
         if cookies:
