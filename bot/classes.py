@@ -54,6 +54,10 @@ class VideoTooLong(Exception):
     pass
 
 
+class NoPermsToView(Exception):
+    pass
+
+
 class NoDuration(Exception):
     pass
 
@@ -676,13 +680,14 @@ class BaseMisc(ABC):
 
         except DownloadError as e:
             self.logger.error(f"Error downloading video for {url}: {str(e)}")
+            if 'You don\'t have permission' in str(e):
+                raise NoPermsToView
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             if 'MoviePy error: failed to read the first frame of video file' in str(e):
                 raise VideoTooLong
-            else:
-                raise NoDuration
+            raise NoDuration
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
         try:
