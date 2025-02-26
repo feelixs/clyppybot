@@ -12,6 +12,7 @@ import uuid
 import os
 from math import ceil
 from interactions import Message, SlashContext
+from yt_dlp.utils import DownloadError
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
@@ -673,6 +674,8 @@ class BaseMisc(ABC):
             )
             return duration
 
+        except DownloadError as e:
+            raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             raise NoDuration
