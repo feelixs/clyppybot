@@ -645,8 +645,22 @@ class BaseMisc(ABC):
                 with YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=download)
                     if download:
-                        # return file info
-                        return get_video_details(info['filepath'])
+                        # Handle different metadata structures
+                        if 'filepath' in info:
+                            return get_video_details(info['filepath'])
+                        elif '_filename' in info:
+                            return get_video_details(info['_filename'])
+                        elif 'requested_downloads' in info and len(info['requested_downloads']) > 0:
+                            # Some platforms use this structure
+                            download_info = info['requested_downloads'][0]
+                            if 'filepath' in download_info:
+                                return get_video_details(download_info['filepath'])
+                            elif '_filename' in download_info:
+                                return get_video_details(download_info['_filename'])
+
+                        # If we can't find the file path, log the info structure
+                        self.logger.error(f"Could not find filepath in info: {info.keys()}")
+                        raise NoDuration
                     else:
                         return info.get('duration', 0)
 
