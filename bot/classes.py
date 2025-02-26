@@ -642,7 +642,7 @@ class BaseMisc(ABC):
 
         if download:
             # Add max filesize option when downloading
-            ydl_opts['max_filesize'] = '1.5G'  # 1.5GB should handle most 45 min videos
+            ydl_opts['max_filesize'] = 10  # 1.5GB should handle most 45 min videos
 
         try:
             # Run yt-dlp in an executor to avoid blocking
