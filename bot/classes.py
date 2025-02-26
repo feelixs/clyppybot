@@ -639,6 +639,10 @@ class BaseMisc(ABC):
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
 
+        if download:
+            # Add max filesize option when downloading
+            ydl_opts['max_filesize'] = '1.5G'  # 1.5GB should handle most 45 min videos
+
         try:
             # Run yt-dlp in an executor to avoid blocking
             def get_duration():
