@@ -10,7 +10,7 @@ from bot.tools import AutoEmbedder
 from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, NoPermsToView
 import time
 from re import compile
 
@@ -278,6 +278,9 @@ class Base(Extension):
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
             success, response = False, "No duration"
+        except NoPermsToView:
+            await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
+            success, response = False, "No permisions"
         except VideoTooLong:
             if await self._fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
