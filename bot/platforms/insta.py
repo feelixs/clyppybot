@@ -17,9 +17,15 @@ class InstagramMisc(BaseMisc):
         # - https://www.instagram.com/reel/Cq8YJ3sJzHk/
         # - https://instagram.com/reel/Cq8YJ3sJzHk
         # - https://www.instagram.com/reel/Cq8YJ3sJzHk/?hl=en
-        pattern = r'(?:https?://)?(?:www\.)?instagram\.com/reel/([a-zA-Z0-9_-]+)(?:/|$|\?)'
-        match = re.match(pattern, url)
-        return match.group(1) if match else None
+        patterns = [
+            r'(?:https?://)?(?:www\.)?instagram\.com/reel/([a-zA-Z0-9_-]+)(?:/|$|\?)',
+            r'(?:https?://)?(?:www\.)?instagram.com/share/r/([a-zA-Z0-9_-]+)(?:/|$|\?)'
+        ]
+        for p in patterns:
+            match = re.match(p, url)
+            if match:
+                return match.group(1)
+        return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True) -> 'InstagramClip':
         shortcode = self.parse_clip_url(url)
