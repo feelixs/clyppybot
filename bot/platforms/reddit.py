@@ -38,7 +38,7 @@ class RedditMisc(BaseMisc):
             r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
             r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
             r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
-            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)'  # Share links
+            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
             r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
         ]
 
