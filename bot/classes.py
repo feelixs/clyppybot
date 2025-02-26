@@ -683,6 +683,7 @@ class BaseMisc(ABC):
             # yt-dlp unable to fetch duration directly, need to download the file to verify manually
             self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
             file = await self.get_len(url, cookies, download=True)
+            self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
             d = file.duration
 
         if d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
