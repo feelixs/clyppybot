@@ -101,30 +101,6 @@ class RedditMisc(BaseMisc):
             logging.error(f"Unexpected error checking video for {url}: {str(e)}")
             return False, None
 
-    def is_clip_link(self, url: str) -> bool:
-        """
-                Checks if a URL is a valid Reddit link format.
-                Handles various Reddit URL patterns including short links, galleries,
-                user posts, crossposts, and mobile versions.
-
-                Args:
-                    url (str): URL to check
-                Returns:
-                    bool: True if URL matches any known Reddit format
-                """
-        patterns = [
-            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/comments/([a-zA-Z0-9]+)',  # Standard format
-            r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
-            r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
-            r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
-            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
-            r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
-            r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
-        ]
-        # Combine all patterns with OR operator
-        combined_pattern = '|'.join(f'({pattern})' for pattern in patterns)
-        return bool(re.match(combined_pattern, url))
-
     async def _get_actual_slug(self, share_url):
         async with aiohttp.ClientSession() as session:
             async with session.get(share_url, timeout=10) as response:
