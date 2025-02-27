@@ -13,9 +13,6 @@ import asyncio
 import os
 
 
-MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
-
-
 def tryremove(f):
     try:
         os.remove(f)
