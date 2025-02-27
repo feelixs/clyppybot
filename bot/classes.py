@@ -428,16 +428,16 @@ class BaseClip(ABC):
 
     async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> DownloadResponse:
         try:
-            response = await self.cdn_client.cdn_upload_video(
+            success, remote_url = await self.cdn_client.cdn_upload_video(
                 file_path=local_file_info.local_file_path
             )
         except Exception as e:
             self.logger.error(f"Failed to upload video: {str(e)}")
             raise UploadFailed
-        if response['success']:
-            self.logger.info(f"Uploaded video: {response['file_path']}")
+        if success:
+            self.logger.info(f"Uploaded video: {remote_url}")
             return DownloadResponse(
-                remote_url=response['file_path'],
+                remote_url=remote_url,
                 local_file_path=local_file_info.local_file_path,
                 duration=local_file_info.duration,
                 filesize=local_file_info.filesize,
@@ -447,7 +447,7 @@ class BaseClip(ABC):
                 can_be_uploaded=None
             )
         else:
-            self.logger.error(f"Failed to upload video: {response}")
+            self.logger.error(f"Failed to upload video: {remote_url}")
             raise UploadFailed
 
     @staticmethod
