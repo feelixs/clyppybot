@@ -68,6 +68,7 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 5))  # save db every 30 minutes
         self.currently_downloading_for_embed = []
+        self.currently_embedding_users = []
 
     @staticmethod
     async def _fetch_tokens(user):
@@ -238,6 +239,21 @@ class Base(Extension):
                 )
                 return
 
+            if ctx.user.id in self.currently_embedding_users:
+                await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
+                await send_webhook(
+                    title=f'{guild.name} - /embed called - Failure',
+                    load=f"user - {ctx.user.username}\n"
+                         f"cmd - /embed url:{url}\n"
+                         f"platform: {p}\n"
+                         f"slug: {slug}\n"
+                         f"response - Already embedding",
+                    color=65280,
+                )
+                return
+            else:
+                self.currently_embedding_users.append(ctx.user.id)
+
             if slug in self.currently_downloading_for_embed:
                 try:
                     # if its already downloading from another embed command running at the same time
@@ -312,6 +328,10 @@ class Base(Extension):
             )
             try:
                 self.currently_downloading_for_embed.remove(slug)
+            except ValueError:
+                pass
+            try:
+                self.currently_embedding_users.remove(ctx.user.id)
             except ValueError:
                 pass
 
