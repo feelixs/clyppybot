@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class BiliMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Bilibili"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -46,14 +46,14 @@ class BiliMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return BiliClip(video_id)
+        return BiliClip(video_id, self.cdn_client)
 
 
 class BiliClip(BaseClip):
-    def __init__(self, video_id):
+    def __init__(self, video_id, cdn_client):
         self._service = "bilibili"
         self._video_id = video_id
-        super().__init__(video_id)
+        super().__init__(video_id, cdn_client)
 
     @property
     def service(self) -> str:

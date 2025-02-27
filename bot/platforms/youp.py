@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class YoupoMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "YouPorn"
         self.is_nsfw = True
         self.dl_timeout_secs = 120
@@ -31,14 +31,14 @@ class YoupoMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return YoupoClip(shortcode)
+        return YoupoClip(shortcode, self.cdn_client)
 
 
 class YoupoClip(BaseClip):
-    def __init__(self, shortcode):
+    def __init__(self, shortcode, cdn_client):
         self._service = "youporn"
         self._id = shortcode
-        super().__init__(shortcode)
+        super().__init__(shortcode, cdn_client)
 
     @property
     def service(self) -> str:

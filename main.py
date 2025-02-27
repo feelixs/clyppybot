@@ -19,6 +19,7 @@ from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
 from aiohttp import FormData, ClientSession
+from bot.cdn import CdnSpacesClient
 import logging
 import asyncio
 import os
@@ -67,23 +68,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
-Bot.twitch = TwitchMisc()
-Bot.kick = KickMisc()
-Bot.insta = InstagramMisc()
-Bot.medal = MedalMisc()
-Bot.dailymotion = DailymotionMisc()
-Bot.reddit = RedditMisc()
-Bot.yt = YtMisc()
-Bot.youp = YoupoMisc()
-Bot.x = Xmisc()
-Bot.xvid = XvidMisc()
-Bot.bsky = BlueSkyMisc()
-Bot.bili = BiliMisc()
-Bot.phub = PhubMisc()
-Bot.tiktok = TikTokMisc()
-Bot.nuuls = NuulsMisc()
-Bot.vimeo = VimeoMisc()
-Bot.drive = GoogleDriveMisc()
+cdn_client = CdnSpacesClient()
+
+Bot.twitch = TwitchMisc(cdn_client)
+Bot.kick = KickMisc(cdn_client)
+Bot.insta = InstagramMisc(cdn_client)
+Bot.medal = MedalMisc(cdn_client)
+Bot.dailymotion = DailymotionMisc(cdn_client)
+Bot.reddit = RedditMisc(cdn_client)
+Bot.yt = YtMisc(cdn_client)
+Bot.youp = YoupoMisc(cdn_client)
+Bot.x = Xmisc(cdn_client)
+Bot.xvid = XvidMisc(cdn_client)
+Bot.bsky = BlueSkyMisc(cdn_client)
+Bot.bili = BiliMisc(cdn_client)
+Bot.phub = PhubMisc(cdn_client)
+Bot.tiktok = TikTokMisc(cdn_client)
+Bot.nuuls = NuulsMisc(cdn_client)
+Bot.vimeo = VimeoMisc(cdn_client)
+Bot.drive = GoogleDriveMisc(cdn_client)
+
 Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
                      Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.nuuls]
 

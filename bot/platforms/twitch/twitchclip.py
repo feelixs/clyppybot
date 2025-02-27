@@ -14,16 +14,17 @@ from yt_dlp import YoutubeDL
 
 
 class TwitchClip(BaseClip):
-    def __init__(self, slug):
+    def __init__(self, slug, cdn_client):
         self._service = "twitch"
         self._url = f"https://clips.twitch.tv/{slug}"
-        super().__init__(slug)
-        self.api = TwitchAPI(
-            key=os.getenv("CLYPP_TWITCH_ID"),
-            secret=os.getenv("CLYPP_TWITCH_SECRET"),
-            logger=self.logger,
-            log_path=os.path.join('logs', 'twitch-api-usage.log')
-        )
+        super().__init__(slug, cdn_client)
+        #self.api = TwitchAPI(
+        #    key=os.getenv("CLYPP_TWITCH_ID"),
+        #    secret=os.getenv("CLYPP_TWITCH_SECRET"),
+        #    logger=self.logger,
+        #    log_path=os.path.join('logs', 'twitch-api-usage.log')
+        #)
+        self.api = None
 
     @property
     def service(self) -> str:

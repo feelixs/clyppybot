@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class VimeoMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Vimeo"
         self.dl_timeout_secs = 120
 
@@ -59,11 +59,11 @@ class VimeoMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return VimeoClip(video_id, video_hash)
+        return VimeoClip(video_id, video_hash, self.cdn_client)
 
 
 class VimeoClip(BaseClip):
-    def __init__(self, video_id, video_hash=None):
+    def __init__(self, video_id, video_hash=None, cdn_client=None):
         self._service = "vimeo"
         if video_hash:
             self._video_id = f'{video_id}/{video_hash}'
@@ -71,7 +71,7 @@ class VimeoClip(BaseClip):
         else:
             self._video_id = video_id
             self._url = f"https://vimeo.com/{self._video_id}"
-        super().__init__(self._video_id)
+        super().__init__(self._video_id, cdn_client)
 
     @property
     def service(self) -> str:

@@ -5,8 +5,8 @@ from typing import Optional
 
 
 class MedalMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Medal"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -32,4 +32,4 @@ class MedalMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> MedalClip:
         slug = self.parse_clip_url(url)
-        return MedalClip(slug)
+        return MedalClip(slug, self.cdn_client)

@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class GoogleDriveMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Google Drive"
         self.dl_timeout_secs = 120
 
@@ -49,14 +49,14 @@ class GoogleDriveMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return GoogleDriveClip(file_id)
+        return GoogleDriveClip(file_id, self.cdn_client)
 
 
 class GoogleDriveClip(BaseClip):
-    def __init__(self, file_id):
+    def __init__(self, file_id, cdn_client):
         self._service = "drive"
         self._file_id = file_id
-        super().__init__(file_id)
+        super().__init__(file_id, cdn_client)
 
     @property
     def service(self) -> str:

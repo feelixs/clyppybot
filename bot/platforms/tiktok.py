@@ -5,8 +5,8 @@ from typing import Optional
 
 
 class TikTokMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "TikTok"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -76,15 +76,15 @@ class TikTokMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return TikTokClip(video_id, user)
+        return TikTokClip(video_id, user, self.cdn_client)
 
 
 class TikTokClip(BaseClip):
-    def __init__(self, video_id, user):
+    def __init__(self, video_id, user, cdn_client):
         self._service = "tiktok"
         self._user = user
         self._video_id = video_id
-        super().__init__(video_id)
+        super().__init__(video_id, cdn_client)
 
     @property
     def service(self) -> str:

@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class DailymotionMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Dailymotion"
         self.dl_timeout_secs = 120
 
@@ -49,14 +49,14 @@ class DailymotionMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return DailymotionClip(video_id)
+        return DailymotionClip(video_id, self.cdn_client)
 
 
 class DailymotionClip(BaseClip):
-    def __init__(self, video_id):
+    def __init__(self, video_id, cdn_client):
         self._service = "dailymotion"
         self._video_id = video_id
-        super().__init__(video_id)
+        super().__init__(video_id, cdn_client)
 
     @property
     def service(self) -> str:

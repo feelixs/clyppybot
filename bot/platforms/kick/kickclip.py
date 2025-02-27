@@ -1,12 +1,13 @@
 from bot.classes import BaseClip, DownloadResponse
+from bot.cdn import CdnSpacesClient
 
 
 class KickClip(BaseClip):
-    def __init__(self, slug, user):
+    def __init__(self, slug, user, cdn_client: CdnSpacesClient):
         self._service = "kick"
         self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

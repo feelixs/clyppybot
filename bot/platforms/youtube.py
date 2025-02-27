@@ -4,8 +4,8 @@ from bot.classes import BaseClip, BaseMisc, DownloadResponse, InvalidClipType, V
 
 
 class YtMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "YouTube"
         self.dl_timeout_secs = 120
 
@@ -42,17 +42,17 @@ class YtMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)))
+        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client)
 
 
 class YtClip(BaseClip):
-    def __init__(self, slug, short):
+    def __init__(self, slug, short, cdn_client):
         self._service = "youtube"
         if short:
             self._url = f"https://youtube.com/shorts/{slug}"
         else:
             self._url = f"https://youtube.com/watch/?v={slug}"
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

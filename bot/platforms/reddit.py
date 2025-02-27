@@ -8,8 +8,8 @@ from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, DownloadRe
 
 
 class RedditMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Reddit"
         self.VALID_EXT_VIDEO_DOMAINS = [
             'twitch.tv', 'www.twitch.tv',
@@ -145,15 +145,15 @@ class RedditMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return RedditClip(slug, ext_info)
+        return RedditClip(slug, ext_info, self.cdn_client)
 
 
 class RedditClip(BaseClip):
-    def __init__(self, slug, ext):
+    def __init__(self, slug, ext, cdn_client):
         self._service = "reddit"
         self._url = f"https://redd.it/{slug}"
         self.external_link = ext
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

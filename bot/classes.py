@@ -6,6 +6,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
 from bot.upload import upload_video, UploadFailed
+from bot.cdn import CdnSpacesClient
 import aiohttp
 import hashlib
 import logging
@@ -147,7 +148,8 @@ class BaseClip(ABC):
     """Base class for all clip types"""
 
     @abstractmethod
-    def __init__(self, slug: str):
+    def __init__(self, slug: str, cdn_client: CdnSpacesClient):
+        self.cdn_client = cdn_client
         self.id = slug
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
@@ -480,11 +482,12 @@ class BaseClip(ABC):
 
 
 class BaseMisc(ABC):
-    def __init__(self):
+    def __init__(self, cdn_client: CdnSpacesClient):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
         self.is_nsfw = False
         self.dl_timeout_secs = 30
+        self.cdn_client = cdn_client
 
     @abstractmethod
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BaseClip':

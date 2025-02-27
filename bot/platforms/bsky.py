@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class BlueSkyMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "BlueSky"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -39,14 +39,14 @@ class BlueSkyMisc(BaseMisc):
         if user is None:
             raise InvalidClipType
 
-        return BlueSkyClip(slug, user)
+        return BlueSkyClip(slug, user, self.cdn_client)
 
 
 class BlueSkyClip(BaseClip):
-    def __init__(self, slug, user):
+    def __init__(self, slug, user, cdn_client):
         self._service = "bluesky"
         self._url = f"https://bsky.app/profile/{user}/post/{slug}"
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

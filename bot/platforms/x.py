@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class Xmisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Twitter"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -45,14 +45,14 @@ class Xmisc(BaseMisc):
         user_match = re.search(r'(?:(?:fx)?twitter\.com|(?:fixup)?x\.com)/(\w+)/status/', url)
         user = user_match.group(1) if user_match else None
 
-        return Xclip(slug, user)
+        return Xclip(slug, user, self.cdn_client)
 
 
 class Xclip(BaseClip):
-    def __init__(self, slug, user):
+    def __init__(self, slug, user, cdn_client):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

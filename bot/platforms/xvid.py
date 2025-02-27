@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class XvidMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Xvideos"
         self.is_nsfw = True
         self.dl_timeout_secs = 120
@@ -51,11 +51,11 @@ class XvidMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return XvidClip(first, second, title)
+        return XvidClip(first, second, title, self.cdn_client)
 
 
 class XvidClip(BaseClip):
-    def __init__(self, first, second=None, title=None):
+    def __init__(self, first, second=None, title=None, cdn_client=None):
         self._service = "xvideos"
         self._first = first
         self._second = second
@@ -63,7 +63,7 @@ class XvidClip(BaseClip):
 
         # For internal ID tracking
         self._id = first if second is None or second == "0" else f"{first}/{second}"
-        super().__init__(self._id)
+        super().__init__(self._id, cdn_client)
 
     @property
     def service(self) -> str:

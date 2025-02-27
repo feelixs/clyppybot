@@ -1,12 +1,13 @@
 from bot.classes import BaseMisc
 from bot.platforms.kick import KickClip
+from bot.cdn import CdnSpacesClient
 from typing import Optional
 import re
 
 
 class KickMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client: CdnSpacesClient):
+        super().__init__(cdn_client)
         self.platform_name = "Kick"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -38,4 +39,4 @@ class KickMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> KickClip:
         slug, user = self.parse_clip_url(url), self.get_clip_user(url)
-        return KickClip(slug, user)
+        return KickClip(slug, user, self.cdn_client)

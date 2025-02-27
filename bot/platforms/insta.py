@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class InstagramMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Instagram"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -38,14 +38,14 @@ class InstagramMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return InstagramClip(shortcode)
+        return InstagramClip(shortcode, self.cdn_client)
 
 
 class InstagramClip(BaseClip):
-    def __init__(self, shortcode):
+    def __init__(self, shortcode, cdn_client):
         self._service = "instagram"
         self._shortcode = shortcode
-        super().__init__(shortcode)
+        super().__init__(shortcode, cdn_client)
 
     @property
     def service(self) -> str:

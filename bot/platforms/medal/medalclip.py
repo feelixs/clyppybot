@@ -2,10 +2,10 @@ from bot.classes import BaseClip, DownloadResponse
 
 
 class MedalClip(BaseClip):
-    def __init__(self, slug):
+    def __init__(self, slug, cdn_client):
         self._service = "medal"
         self._url = f"https://medal.tv/clips/{slug}"
-        super().__init__(slug)
+        super().__init__(slug, cdn_client)
 
     @property
     def service(self) -> str:

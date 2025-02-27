@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class NuulsMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Nuuls"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
@@ -28,14 +28,14 @@ class NuulsMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return NuulsClip(shortcode)
+        return NuulsClip(shortcode, self.cdn_client)
 
 
 class NuulsClip(BaseClip):
-    def __init__(self, shortcode):
+    def __init__(self, shortcode, cdn_client):
         self._service = "nuuls"
         self.filanem = shortcode
-        super().__init__(shortcode)
+        super().__init__(shortcode, cdn_client)
 
     @property
     def service(self) -> str:

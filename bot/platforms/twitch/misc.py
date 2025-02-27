@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class TwitchMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
             exit("No Twitch API key found")
@@ -35,4 +35,4 @@ class TwitchMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> TwitchClip:
         slug = self.parse_clip_url(url)
-        return TwitchClip(slug)
+        return TwitchClip(slug, self.cdn_client)

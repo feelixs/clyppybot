@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class PhubMisc(BaseMisc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "PornHub"
         self.is_nsfw = True
         self.dl_timeout_secs = 120
@@ -31,14 +31,14 @@ class PhubMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return PhubClip(shortcode)
+        return PhubClip(shortcode, self.cdn_client)
 
 
 class PhubClip(BaseClip):
-    def __init__(self, shortcode):
+    def __init__(self, shortcode, cdn_client):
         self._service = "pornhub"
         self._shortcode = shortcode
-        super().__init__(shortcode)
+        super().__init__(shortcode, cdn_client)
 
     @property
     def service(self) -> str:
