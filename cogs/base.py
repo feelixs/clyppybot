@@ -65,7 +65,7 @@ class Base(Extension):
         self.bot = bot
         self.ready = False
         self.logger = logging.getLogger(__name__)
-        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 5))  # save db every 30 minutes
+        self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
         self.currently_downloading_for_embed = []
         self.currently_embedding_users = []
 
@@ -638,6 +638,7 @@ class Base(Extension):
     async def on_ready(self):
         if not self.ready:
             self.ready = True
+            self.save_task.start()
             self.logger.info(f"bot logged in as {self.bot.user.username}")
             self.logger.info(f"total shards: {len(self.bot.shards)}")
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
