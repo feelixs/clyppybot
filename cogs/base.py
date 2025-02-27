@@ -66,7 +66,7 @@ class Base(Extension):
         self.bot = bot
         self.ready = False
         self.logger = logging.getLogger(__name__)
-        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
+        self.task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 5))  # save db every 30 minutes
         self.currently_downloading_for_embed = []
 
     @staticmethod
