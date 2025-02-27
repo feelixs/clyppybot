@@ -10,7 +10,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 import os
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
-from bot.upload import upload_video
+from bot.upload import upload_video, UploadFailed
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
@@ -37,10 +37,6 @@ EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
 
 
 class UnknownError(Exception):
-    pass
-
-
-class UploadFailed(Exception):
     pass
 
 
