@@ -15,6 +15,9 @@ class Watch(Extension):
         self.logger = logging.getLogger(__name__)
 
     async def give_votes_roles(self, userid, total_votes: int):
+        # when the 'server' webhook posts a new vote happened in CLYPPY CLUB server
+        # this extension will give the voter the corresponding role in that server
+
         guild = self.bot.get_guild(CLYPPY_SUPPORT_SERVER_ID)
         try:
             member = guild.get_member(userid)
