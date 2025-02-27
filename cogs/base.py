@@ -133,7 +133,7 @@ class Base(Extension):
                 if ctx.author.id != original:
                     embed.add_field(name="First requester", value=f"<@{original}>")
                 embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
-                embed.add_field(name="Upload Location", value=clip_info['url'])
+                embed.add_field(name="Upload Location", value=clip_info['url'] if clyppy_cdn else f"{clip_info['platform']}'s cdn")
                 if clyppy_cdn:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
