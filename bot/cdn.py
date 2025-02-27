@@ -17,7 +17,7 @@ class CdnSpacesClient:
                                 config=Config(signature_version='s3v4')
                                 )
 
-    async def cdn_upload_video(self, file_path, storage_type="temp"):
+    async def cdn_upload_video(self, file_path, storage_type="temp") -> tuple[bool, str]:
         filename = path.basename(file_path)
         self.logger.info(f"Uploading video {file_path} to CDN...")
         try:
@@ -38,7 +38,7 @@ class CdnSpacesClient:
             self.logger.error(f"Error uploading video {file_path}: {str(e)}")
             return False, str(e)
 
-    def put_video(self, video_data, filename, storage_type="temp"):
+    def put_video(self, video_data, filename, storage_type="temp") -> tuple[bool, str]:
         object_key = f"{storage_type}/{filename}"
         cdn_file_url = f"https://clyppy.nyc3.cdn.digitaloceanspaces.com/{object_key}"
         self.logger.info(f"Uploading {filename} to {cdn_file_url}")
