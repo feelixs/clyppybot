@@ -244,7 +244,7 @@ async def upload_video(video_file_path, logger) -> Dict:
                 'Content-Type': 'application/json'
             }
             async with session.post(
-                    'https://clyppy.io/api/addclip/',
+                    url='https://clyppy.io/api/addclip/',
                     json=data,
                     headers=headers
             ) as response:
