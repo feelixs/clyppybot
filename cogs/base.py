@@ -656,9 +656,9 @@ class Base(Extension):
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
-                    await resp.json()
+                    await resp.text()
         except:
-            self.logger.info(f"Failed to post servers to top.gg: code {resp.status}, response: {await resp.json()}")
+            self.logger.info(f"Failed to post servers to top.gg: code {resp.status}")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
