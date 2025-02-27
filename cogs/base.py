@@ -240,6 +240,7 @@ class Base(Extension):
 
             if slug in self.currently_downloading_for_embed:
                 try:
+                    # if its already downloading from another embed command running at the same time
                     await wait_for_download(slug, timeout=platform.dl_timeout_secs)
                 except TimeoutError:
                     pass  # continue with the dl anyway
