@@ -13,8 +13,3 @@ class YtAutoEmbed(Extension):
     async def on_message_create(self, event):
         if self.bot.yt.is_dl_server(event.message.guild):
             await self.embedder.on_message_create(event)
-
-    @listen()
-    async def on_raw_gateway_event(event):
-        if event.name == "INVITE_CREATE":
-            print(f"Raw invite data received: {event.data}")
