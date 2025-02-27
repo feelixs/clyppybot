@@ -30,8 +30,8 @@ class YtMisc(BaseMisc):
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        if "&list=" in slug:
-            slug = slug.split("&list=")[0]
+        if "&list=" in url:
+            url = url.split("&list=")[0]
         valid = await self.is_shortform(
             url=url,
             basemsg=basemsg,
