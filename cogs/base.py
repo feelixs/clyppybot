@@ -1,18 +1,17 @@
-import asyncio
-from interactions import Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen, \
-    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback
+from bot.classes import (BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure,
+                         EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, NoPermsToView)
+from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
+    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
 from interactions.api.events.discord import GuildJoin, GuildLeft
-from bot.tools import create_nexus_str, GuildType
+from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
+from bot.tools import create_nexus_str, GuildType, AutoEmbedder, POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
+from typing import Tuple, Optional
+from re import compile
+import asyncio
 import logging
 import aiohttp
-import os
-from bot.tools import AutoEmbedder
-from bot.tools import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
-from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
-from typing import Tuple, Optional
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, NoPermsToView
 import time
-from re import compile
+import os
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
