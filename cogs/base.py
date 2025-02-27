@@ -15,7 +15,7 @@ import os
 
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
-APPUSE_LOG_WEBHOOK = 'https://discord.com/api/webhooks/1341521799342588006/Yh0AAnoWVzOwIj9WjwHiytvNTr8SWUOcmhU0mv9-UtUzVouYT2tQJL9x-O4rzaHasy68'
+APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
 
 VERSION = "1.5.7b"
 
