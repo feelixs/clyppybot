@@ -4,7 +4,9 @@ import aiohttp
 import base64
 import os
 import uuid
-from bot.classes import MAX_CLYPPYIO_UPLOAD_SIZE
+
+
+MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
 
 
 class UploadFailed(Exception):
