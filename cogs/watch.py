@@ -55,9 +55,12 @@ class Watch(Extension):
                              f"@{event.message.author.username} - \"{event.message.content}\"")
 
             if event.message.author.id == VOTE_WEBHOOK_USERID:
-                pattern = r"<@(\d+)> just gave \(1\) vote\(s\) for <@\d+> on \[[^\]]+\]\([^)]+\) and earned \d+ VIP tokens! They now have (\d+) votes in total!"
+                pattern = r"<@(\d+)> just gave \((\d+)\) vote\(s\) for <@\d+> on \[[^\]]+\]\([^)]+\) and earned \d+ VIP tokens, they now have (\d+) votes in total"
                 match = re.match(pattern, event.message.content)
                 if match:
                     userid = match.group(1)
-                    vote_total = match.group(2)
+                    votes_given = match.group(2)
+                    vote_total = match.group(3)
                     await self.give_votes_roles(userid, vote_total)
+                else:
+                    self.logger.info(f"Couldn't match pattern")
