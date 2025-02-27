@@ -12,8 +12,8 @@ class CdnSpacesClient:
         self.client = session.client('s3',
                                 region_name='nyc3',
                                 endpoint_url='https://nyc3.digitaloceanspaces.com',
-                                aws_access_key_id=getenv("SPACES_CDN_KEY"),
-                                aws_secret_access_key=getenv("SPACES_CDN_SECRET"),
+                                aws_access_key_id=getenv("cdn_id"),
+                                aws_secret_access_key=getenv("cdn_sec"),
                                 config=Config(signature_version='s3v4')
                                 )
 
