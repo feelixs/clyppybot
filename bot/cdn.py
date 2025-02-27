@@ -40,7 +40,7 @@ class CdnSpacesClient:
 
     def put_video(self, video_data, filename, storage_type="temp") -> tuple[bool, str]:
         object_key = f"{storage_type}/{filename}"
-        cdn_file_url = f"https://clyppy.nyc3.cdn.digitaloceanspaces.com/{object_key}"
+        cdn_file_url = f"https://cdn.clyppy.io/{object_key}"
         self.logger.info(f"Uploading {filename} to {cdn_file_url}")
 
         # Upload the file
