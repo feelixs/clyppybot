@@ -64,7 +64,7 @@ class Watch(Extension):
                 pattern = r"<@(\d+)> just gave \((\d+)\) vote\(s\) for <@\d+> on \[[^\]]+\]\([^)]+\) and earned \d+ VIP tokens, they now have (\d+) votes in total"
                 match = re.match(pattern, event.message.content)
                 if match:
-                    userid = match.group(1)
+                    userid = int(match.group(1))
                     votes_given = match.group(2)
                     vote_total = int(match.group(3))
                     await self.give_votes_roles(userid, vote_total)
