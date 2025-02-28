@@ -22,7 +22,7 @@ class Watch(Extension):
         try:
             member = await guild.fetch_member(userid)
             if member is None:
-                self.logger.info(f"Could not find member with ID {userid}")
+                self.logger.info(f"Could not find member with ID {userid} ({type(userid)})")
                 return
             self.logger.info(f"Giving vote roles to {member.username}")
             voter_role = await guild.fetch_role(CLYPPY_VOTE_ROLE)
