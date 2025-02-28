@@ -27,7 +27,7 @@ class Watch(Extension):
             self.logger.info(f"Giving vote roles to {member.username}")
             voter_role = await guild.fetch_role(CLYPPY_VOTE_ROLE)
             if voter_role is None:
-                self.logger.info(f"Could not find voter role with ID {CLYPPY_VOTE_ROLE}")
+                self.logger.info(f"Could not find voter role with ID {CLYPPY_VOTE_ROLE} ({type(CLYPPY_VOTE_ROLE)})")
                 return
         except Exception as e:
             self.logger.info(f"Error getting member or role: {e}")
