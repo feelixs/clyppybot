@@ -20,12 +20,12 @@ class Watch(Extension):
 
         guild = self.bot.get_guild(CLYPPY_SUPPORT_SERVER_ID)
         try:
-            member = guild.get_member(userid)
+            member = await guild.fetch_member(userid)
             if member is None:
                 self.logger.info(f"Could not find member with ID {userid}")
                 return
             self.logger.info(f"Giving vote roles to {member.username}")
-            voter_role = guild.get_role(CLYPPY_VOTE_ROLE)
+            voter_role = await guild.fetch_role(CLYPPY_VOTE_ROLE)
             if voter_role is None:
                 self.logger.info(f"Could not find voter role with ID {CLYPPY_VOTE_ROLE}")
                 return
