@@ -21,8 +21,14 @@ class Watch(Extension):
         guild = self.bot.get_guild(CLYPPY_SUPPORT_SERVER_ID)
         try:
             member = guild.get_member(userid)
+            if member is None:
+                self.logger.info(f"Could not find member with ID {userid}")
+                return
             self.logger.info(f"Giving vote roles to {member.username}")
             voter_role = guild.get_role(CLYPPY_VOTE_ROLE)
+            if voter_role is None:
+                self.logger.info(f"Could not find voter role with ID {CLYPPY_VOTE_ROLE}")
+                return
         except Exception as e:
             self.logger.info(f"Error getting member or role: {e}")
             return
@@ -60,7 +66,7 @@ class Watch(Extension):
                 if match:
                     userid = match.group(1)
                     votes_given = match.group(2)
-                    vote_total = match.group(3)
+                    vote_total = int(match.group(3))
                     await self.give_votes_roles(userid, vote_total)
                 else:
                     self.logger.info(f"Couldn't match pattern")
