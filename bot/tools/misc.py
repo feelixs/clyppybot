@@ -3,7 +3,6 @@ import traceback
 import os
 from interactions import SlashContext
 import asyncio
-import aiohttp
 from dataclasses import dataclass
 from bot.classes import DownloadResponse, UnknownError, BaseClip
 
