@@ -6,6 +6,7 @@ from bot.tools.misc import (SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_L
                             create_nexus_str, GuildType, POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS)
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import AutoEmbedder
+from bot.tools.io import get_aiohttp_session
 from typing import Tuple, Optional
 from re import compile
 import asyncio
