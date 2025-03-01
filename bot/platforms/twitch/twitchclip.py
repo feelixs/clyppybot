@@ -3,7 +3,9 @@ import os
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 import time
-from bot.classes import BaseClip, DownloadResponse, InvalidClipType
+from bot.types import DownloadResponse
+from bot.classes import BaseClip
+from bot.errors import InvalidClipType
 import concurrent.futures
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any

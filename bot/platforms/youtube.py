@@ -1,6 +1,8 @@
 from typing import Optional
 import re
-from bot.classes import BaseClip, BaseMisc, DownloadResponse, InvalidClipType, VideoTooLong
+from bot.classes import BaseClip, BaseMisc
+from bot.types import DownloadResponse
+from bot.errors import InvalidClipType, VideoTooLong
 
 
 class YtMisc(BaseMisc):

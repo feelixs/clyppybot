@@ -1,5 +1,7 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
-from bot.classes import DownloadResponse, VideoTooLong, NoDuration, ClipFailure, UnknownError, DL_SERVER_ID
+from bot.classes import DL_SERVER_ID
+from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
+from bot.types import DownloadResponse
 from bot.tools.io import get_aiohttp_session, is_404
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate

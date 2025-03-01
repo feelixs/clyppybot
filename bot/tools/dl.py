@@ -1,7 +1,8 @@
 from bot.tools.misc import GuildType
 import asyncio
 from bot.types import DownloadResponse
-from bot.errors import UnknownError, BaseClip
+from bot.errors import UnknownError
+from bot.classes import BaseClip
 from bot.env import DL_SERVER_ID
 import os
 

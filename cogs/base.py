@@ -1,5 +1,5 @@
-from bot.classes import (BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, ClipFailure,
-                         EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, NoPermsToView)
+from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
+from bot.errors import VideoTooLong, NoDuration, ClipFailure, NoPermsToView
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
     Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str, GuildType

@@ -1,5 +1,6 @@
 import re
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, InvalidClipType
+from bot.classes import BaseClip, BaseMisc
+from bot.errors import VideoTooLong, InvalidClipType
 from typing import Optional
 
 
