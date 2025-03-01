@@ -4,7 +4,6 @@ import aiohttp
 import base64
 import os
 import uuid
-from bot.tools.misc import get_aiohttp_session
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
@@ -26,7 +25,7 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
     total_chunks = ceil(total_size / chunk_size)
     logger.info(f"Will upload in {total_chunks} chunks")
 
-    async with get_aiohttp_session() as session:
+    async with aiohttp.ClientSession() as session:
         for chunk_number in range(total_chunks):
             start = chunk_number * chunk_size
             end = min(start + chunk_size, total_size)
@@ -99,7 +98,7 @@ async def upload_video(video_file_path, logger) -> Dict:
         'filename': os.path.basename(video_file_path)
     }
 
-    async with get_aiohttp_session() as session:
+    async with aiohttp.ClientSession() as session:
         try:
             headers = {
                 'X-API-Key': os.getenv('clyppy_post_key'),

@@ -6,7 +6,6 @@ from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from bot.tools import create_nexus_str, GuildType, AutoEmbedder, POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from typing import Tuple, Optional
-from bot.tools.misc import get_aiohttp_session
 from re import compile
 import asyncio
 import logging
@@ -78,7 +77,7 @@ class Base(Extension):
             'Content-Type': 'application/json'
         }
         j = {'userid': user.id, 'username': user.username}
-        async with get_aiohttp_session() as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(url, json=j, headers=headers) as response:
                 if response.status == 200:
                     j = await response.json()
@@ -103,7 +102,7 @@ class Base(Extension):
             'X-API-Key': os.getenv('clyppy_post_key'),
             'Content-Type': 'application/json'
         }
-        async with get_aiohttp_session() as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
                     j = await response.json()
