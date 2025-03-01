@@ -25,6 +25,5 @@
 - Use environment variables for all credentials and tokens
 
 ## API Communication
-- Use `bot.tools.misc.get_aiohttp_session()` for API requests to ensure consistent User-Agent
+- Use `bot.upload.get_aiohttp_session()` for clyppy.io API requests to ensure consistent User-Agent
 - All HTTP requests should have User-Agent set to identify ClypyyBot
-- The central User-Agent is defined in `bot.tools.misc.USER_AGENT`
