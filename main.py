@@ -19,7 +19,7 @@ from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
 from aiohttp import FormData
-from bot.tools.misc import get_aiohttp_session
+from cogs.base import get_aiohttp_session
 from bot.cdn import CdnSpacesClient
 import logging
 import asyncio

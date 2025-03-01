@@ -1,10 +1,9 @@
 from typing import Dict
 from math import ceil
-import aiohttp
 import base64
 import os
 import uuid
-from bot.tools.misc import get_aiohttp_session
+from cogs.base import get_aiohttp_session
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
