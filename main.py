@@ -16,8 +16,7 @@ from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
 from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.x import Xmisc
-from bot.tools.misc import Tools
-from bot.tools.io import get_aiohttp_session
+from bot.tools import Tools, get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
 from bot.cdn import CdnSpacesClient
