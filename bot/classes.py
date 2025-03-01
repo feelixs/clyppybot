@@ -7,7 +7,7 @@ from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
 from bot.upload import UploadFailed
 from bot.cdn import CdnSpacesClient
-from bot.tools.io import get_aiohttp_session
+from bot.tools import get_aiohttp_session
 import hashlib
 import logging
 import asyncio
