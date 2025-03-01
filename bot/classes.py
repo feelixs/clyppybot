@@ -456,7 +456,7 @@ class BaseMisc(ABC):
                     error_data = await response.json()
                     raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
-    async def get_len(self, url: str, cookies=False, download=False) -> float:
+    async def get_len(self, url: str, cookies=False, download=False) -> Union[float, LocalFileInfo]:
         """
             Uses yt-dlp to check video length of the provided url
         """
