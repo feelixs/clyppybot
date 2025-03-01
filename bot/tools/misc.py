@@ -3,21 +3,8 @@ import traceback
 from interactions import SlashContext
 from dataclasses import dataclass
 from bot.tools.dl import DownloadManager
-import os
+from env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
 
-
-POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
-POSSIBLE_ON_ERRORS = ["dm", "info"]
-POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
-
-
-SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
-INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
-TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
-INFINITY_VOTE_LINK = "https://infinitybots.gg/bot/1111723928604381314/vote"
-DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
-BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
-DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 
 @dataclass
 class GuildType:

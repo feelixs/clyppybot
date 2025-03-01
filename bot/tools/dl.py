@@ -1,6 +1,7 @@
-from bot.tools.misc import DL_SERVER_ID, GuildType
+from bot.tools.misc import GuildType
 from bot.classes import DownloadResponse, UnknownError, BaseClip
 import asyncio
+from env import DL_SERVER_ID
 import os
 
 

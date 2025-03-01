@@ -2,7 +2,7 @@ import sqlite3
 import logging
 from contextlib import contextmanager
 from typing import Any, Callable
-from bot.tools.misc import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
+from env import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 
 logger = logging.getLogger(__name__)
 

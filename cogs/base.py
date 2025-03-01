@@ -2,8 +2,8 @@ from bot.classes import (BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, 
                          EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, NoPermsToView)
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
     Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
-from bot.tools.misc import (SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK,
-                            create_nexus_str, GuildType, POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS)
+from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str, GuildType
+from env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import AutoEmbedder, get_aiohttp_session
 from typing import Tuple, Optional
