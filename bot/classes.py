@@ -6,11 +6,12 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
 from bot.cdn import CdnSpacesClient
-from bot.tools.io import get_aiohttp_session
+from bot.tools import get_aiohttp_session
 import hashlib
 import logging
 import asyncio
 import os
+from env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN
 
 
 def tryremove(f):
@@ -24,13 +25,6 @@ def is_discord_compatible(filesize: float):
     if filesize is None:
         return False
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
-
-
-MAX_VIDEO_LEN_SEC = 60 * 5
-MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
-DL_SERVER_ID = os.getenv("DL_SERVER_ID")
-EMBED_TOKEN_COST = 1
-EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
 
 
 class UploadFailed(Exception):
