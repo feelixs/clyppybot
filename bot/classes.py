@@ -465,6 +465,7 @@ class BaseMisc(ABC):
             'no_warnings': True,
             'verbose': False,
             'extract_flat': not download,  # only extract metadata, (it won't download if this is true)
+            'user_agent': YT_DLP_USER_AGENT
         }
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
