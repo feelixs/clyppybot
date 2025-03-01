@@ -29,4 +29,4 @@
 
 
 ## Yt-Dlp usage
-- When using yt-dlp or running anything from the associated python module, use the `cogs.base.DEFAULT_YTDLP_USERAGENT`
+- When using yt-dlp or running anything from the associated python module, use the `bot.env.YT_DLP_USER_AGENT`
