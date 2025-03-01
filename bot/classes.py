@@ -6,7 +6,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
 from bot.cdn import CdnSpacesClient
-from bot.tools.io import get_aiohttp_session
+from bot.tools import get_aiohttp_session
 from bot.types import LocalFileInfo, DownloadResponse
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong
 import hashlib

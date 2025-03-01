@@ -1,6 +1,6 @@
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
-from bot.tools import AutoEmbedder
+from bot.tools.embedder import AutoEmbedder
 import logging
 
 
