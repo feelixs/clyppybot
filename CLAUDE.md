@@ -26,4 +26,4 @@
 
 ## API Communication
 - Use `bot.upload.get_aiohttp_session()` for clyppy.io API requests to ensure consistent User-Agent
-- All HTTP requests should have User-Agent set to identify ClyppyBot
+- All HTTP requests sent to clyppy.io should have User-Agent set to identify ClyppyBot
