@@ -4,14 +4,18 @@ import os
 from interactions import SlashContext
 import asyncio
 import aiohttp
+from bot.classes import BaseClip
 from dataclasses import dataclass
-from bot.classes import DownloadResponse, UnknownError, BaseClip
+from bot.classes import DownloadResponse, UnknownError
+from cogs.base import VERSION
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["dm", "info"]
 POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
 
+# Bot identification
+USER_AGENT = f"ClyppyBot/{VERSION}"
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
 INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
@@ -69,6 +73,11 @@ class DownloadManager:
             self._parent.logger.info(f"Was instructed to replace on server for {clip.id}, but skipping bc we can upload to Discord")
 
         return r
+
+
+def get_aiohttp_session():
+    """Create an aiohttp ClientSession with the ClyppyBot user agent."""
+    return aiohttp.ClientSession(headers={"User-Agent": USER_AGENT})
 
 
 class Tools:

@@ -6,6 +6,7 @@ from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, INFINITY_VOTE_LINK, DLIST_VOTE_LINK, BOTLISTME_VOTE_LINK
 from bot.tools import create_nexus_str, GuildType, AutoEmbedder, POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS
 from typing import Tuple, Optional
+from bot.tools.misc import get_aiohttp_session
 from re import compile
 import asyncio
 import logging
@@ -18,12 +19,6 @@ LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
 
 VERSION = "1.5.7b"
-USER_AGENT = f"ClyppyBot/{VERSION}"
-
-
-def get_aiohttp_session():
-    """Create an aiohttp ClientSession with the ClyppyBot user agent."""
-    return aiohttp.ClientSession(headers={"User-Agent": USER_AGENT})
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
