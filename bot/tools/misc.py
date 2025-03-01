@@ -1,12 +1,10 @@
+from bot.classes import DownloadResponse, UnknownError, BaseClip
 import logging
 import traceback
-import os
 from interactions import SlashContext
-from typing import Tuple
-import asyncio
 from dataclasses import dataclass
-from bot.classes import DownloadResponse, UnknownError, BaseClip
-import aiohttp
+import asyncio
+import os
 
 
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
