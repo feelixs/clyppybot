@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
-from bot.upload import upload_video, UploadFailed
+from bot.upload import UploadFailed
+from bot.tools.misc import get_aiohttp_session
 from bot.cdn import CdnSpacesClient
 import aiohttp
 import hashlib
@@ -60,7 +61,7 @@ class ClipFailure(Exception):
 
 async def is_404(url: str, logger=None) -> Tuple[bool, int]:
     try:
-        async with aiohttp.ClientSession() as session:
+        async with get_aiohttp_session() as session:
             async with session.get(url) as response:
                 if logger is not None:
                     logger.info(f"Got response status {response.status} for {url}")
@@ -418,7 +419,7 @@ class BaseClip(ABC):
             'Content-Type': 'application/json'
         }
         j = {'id': self.clyppy_id, 'url': new_url}
-        async with aiohttp.ClientSession() as session:
+        async with get_aiohttp_session() as session:
             async with session.post(url, json=j, headers=headers) as response:
                 if response.status in [201, 202]:
                     return await response.json()
@@ -513,7 +514,7 @@ class BaseMisc(ABC):
             'Content-Type': 'application/json'
         }
         j = {'userid': user.id, 'username': user.username, 'amount': amt}
-        async with aiohttp.ClientSession() as session:
+        async with get_aiohttp_session() as session:
             async with session.post(url, json=j, headers=headers) as response:
                 if response.status == 200:
                     return await response.json()
