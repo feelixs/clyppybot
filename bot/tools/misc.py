@@ -6,7 +6,6 @@ from typing import Tuple
 import asyncio
 from dataclasses import dataclass
 from bot.classes import DownloadResponse, UnknownError, BaseClip
-from cogs.base import CLYPPYIO_USER_AGENT
 import aiohttp
 
 
@@ -33,23 +32,6 @@ class GuildType:
 
 def create_nexus_str():
     return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
-
-
-def get_aiohttp_session():
-    """Create an aiohttp ClientSession with the ClyppyBot user agent."""
-    return aiohttp.ClientSession(headers={"User-Agent": CLYPPYIO_USER_AGENT})
-
-
-async def is_404(url: str, logger=None) -> Tuple[bool, int]:
-    try:
-        async with get_aiohttp_session() as session:
-            async with session.get(url) as response:
-                if logger is not None:
-                    logger.info(f"Got response status {response.status} for {url}")
-                return not str(response.status).startswith('2'), response.status
-    except aiohttp.ClientError:
-        # Handle connection errors, invalid URLs etc
-        return True, 500  # Consider failed connections as effectively 404
 
 
 class DownloadManager:
