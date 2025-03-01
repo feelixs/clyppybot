@@ -17,10 +17,10 @@ from bot.platforms.xvid import XvidMisc
 from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
-from bot.tools.io import get_aiohttp_session
+from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
-from bot.cdn import CdnSpacesClient
+from bot.io.cdn import CdnSpacesClient
 import logging
 import asyncio
 import os

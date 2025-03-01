@@ -1,4 +1,3 @@
-from bot.tools.io import get_aiohttp_session
 from bot.classes import UploadFailed
 from typing import Dict
 from math import ceil

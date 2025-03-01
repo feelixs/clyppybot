@@ -1,5 +1,5 @@
 from bot.classes import BaseClip, DownloadResponse
-from bot.cdn import CdnSpacesClient
+from bot.io.cdn import CdnSpacesClient
 
 
 class KickClip(BaseClip):

@@ -1,6 +1,6 @@
 from bot.classes import BaseMisc
 from bot.platforms.kick import KickClip
-from bot.cdn import CdnSpacesClient
+from bot.io.cdn import CdnSpacesClient
 from typing import Optional
 import re
 

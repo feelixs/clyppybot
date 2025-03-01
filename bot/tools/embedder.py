@@ -1,6 +1,6 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
-from bot.tools.io import get_aiohttp_session, is_404
+from bot.io import get_aiohttp_session, is_404
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.tools.misc import create_nexus_str
