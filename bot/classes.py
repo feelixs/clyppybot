@@ -6,7 +6,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
 from bot.upload import UploadFailed
-from bot.tools.misc import get_aiohttp_session
+from cogs.base import get_aiohttp_session
 from bot.cdn import CdnSpacesClient
 import aiohttp
 import hashlib
