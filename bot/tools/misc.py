@@ -1,9 +1,8 @@
-import logging
-import traceback
+from bot.env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
 from interactions import SlashContext
 from dataclasses import dataclass
 from bot.tools.dl import DownloadManager
-from bot.env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
+import logging
 
 
 @dataclass
@@ -52,5 +51,5 @@ class Tools:
                                   f"This error occurred while trying to embed the clip in {guild.name}. "
                                   f"You're receiving this message because that server has the 'dm' setting "
                                   f"enabled for one of its `/settings`")
-        except:
-            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
+        except Exception as e:
+            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id}) {str(e)}")
