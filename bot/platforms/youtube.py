@@ -1,9 +1,8 @@
-from typing import Optional
-import re
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
 from bot.errors import InvalidClipType, VideoTooLong
-
+from typing import Optional
+import re
 
 class YtMisc(BaseMisc):
     def __init__(self, cdn_client):
