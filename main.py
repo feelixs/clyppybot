@@ -18,7 +18,8 @@ from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.x import Xmisc
 from bot.tools import Tools
 from bot.db import GuildDatabase
-from aiohttp import FormData, ClientSession
+from aiohttp import FormData
+from bot.tools.misc import get_aiohttp_session
 from bot.cdn import CdnSpacesClient
 import logging
 import asyncio
@@ -27,7 +28,7 @@ import os
 
 async def save_to_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
-    async with ClientSession() as session:
+    async with get_aiohttp_session() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             data = FormData()
@@ -46,7 +47,7 @@ async def save_to_server():
 
 async def load_from_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
-    async with ClientSession() as session:
+    async with get_aiohttp_session() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             params = {'env': env}
