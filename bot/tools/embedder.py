@@ -4,8 +4,9 @@ from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.tools import create_nexus_str
 from typing import List, Union
-from bot.tools import GuildType, get_aiohttp_session
+from bot.tools import GuildType
 import traceback
+import aiohttp
 import time
 import re
 import os
@@ -31,7 +32,7 @@ async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=
             j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
         else:
             raise Exception("Invalid call to publish_interaction()")
-        async with get_aiohttp_session() as session:
+        async with aiohttp.ClientSession() as session:
             async with session.post(url, json=j, headers=headers) as response:
                 if response.status == 201:  # Successfully created
                     return await response.json()
