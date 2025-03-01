@@ -1,6 +1,7 @@
 from bot.classes import UploadFailed
 from typing import Dict
 from math import ceil
+from bot.io import get_aiohttp_session
 import base64
 import os
 import uuid
