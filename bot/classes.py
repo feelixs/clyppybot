@@ -1,3 +1,4 @@
+from env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
@@ -11,7 +12,6 @@ import hashlib
 import logging
 import asyncio
 import os
-from env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN
 
 
 def tryremove(f):
