@@ -506,7 +506,7 @@ class BaseMisc(ABC):
 
         except DownloadError as e:
             self.logger.error(f"Error downloading video for {url}: {str(e)}")
-            if 'You don\'t have permission' in str(e):
+            if 'You don\'t have permission' in str(e) or "You\'re unable to view this" in str(e):
                 raise NoPermsToView
             raise VideoTooLong
         except Exception as e:
