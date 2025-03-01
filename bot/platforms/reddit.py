@@ -4,7 +4,9 @@ import aiohttp
 from typing import Optional
 from bot.platforms.kick import KickMisc
 from bot.platforms.medal import MedalMisc
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, DownloadResponse
+from bot.types import DownloadResponse
+from bot.errors import VideoTooLong, NoDuration
+from bot.classes import BaseClip, BaseMisc
 
 
 class RedditMisc(BaseMisc):

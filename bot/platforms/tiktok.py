@@ -1,6 +1,8 @@
 import re
 from aiohttp import ClientSession
-from bot.classes import BaseClip, BaseMisc, VideoTooLong, NoDuration, DownloadResponse
+from bot.types import DownloadResponse
+from bot.errors import VideoTooLong, NoDuration
+from bot.classes import BaseClip, BaseMisc
 from typing import Optional
 
 
