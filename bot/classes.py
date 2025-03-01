@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
-from typing import Tuple, Optional, Union
+from typing import Optional, Union
 from dataclasses import dataclass
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
-from bot.upload import UploadFailed, get_aiohttp_session
+from bot.upload import UploadFailed
 from bot.cdn import CdnSpacesClient
-import aiohttp
+from bot.tools import get_aiohttp_session
 import hashlib
 import logging
 import asyncio
@@ -56,18 +56,6 @@ class NoDuration(Exception):
 
 class ClipFailure(Exception):
     pass
-
-
-async def is_404(url: str, logger=None) -> Tuple[bool, int]:
-    try:
-        async with get_aiohttp_session() as session:
-            async with session.get(url) as response:
-                if logger is not None:
-                    logger.info(f"Got response status {response.status} for {url}")
-                return not str(response.status).startswith('2'), response.status
-    except aiohttp.ClientError:
-        # Handle connection errors, invalid URLs etc
-        return True, 500  # Consider failed connections as effectively 404
 
 
 def get_video_details(file_path) -> 'LocalFileInfo':

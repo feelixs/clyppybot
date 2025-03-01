@@ -1,21 +1,16 @@
+from bot.tools import get_aiohttp_session
 from typing import Dict
 from math import ceil
 import base64
 import os
 import uuid
-import aiohttp
-from cogs.base import CLYPPYIO_USER_AGENT
+
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
 
 
 class UploadFailed(Exception):
     pass
-
-
-def get_aiohttp_session():
-    """Create an aiohttp ClientSession with the ClyppyBot user agent."""
-    return aiohttp.ClientSession(headers={"User-Agent": CLYPPYIO_USER_AGENT})
 
 
 async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None):
