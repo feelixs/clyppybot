@@ -3,7 +3,7 @@ from bot.classes import (BaseMisc, MAX_VIDEO_LEN_SEC, VideoTooLong, NoDuration, 
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
     Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str, GuildType
-from env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, VERSION
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools import AutoEmbedder, get_aiohttp_session
 from typing import Tuple, Optional
@@ -13,7 +13,6 @@ import logging
 import aiohttp
 import time
 import os
-from env import LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, VERSION
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:

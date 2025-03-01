@@ -1,8 +1,7 @@
-from env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN
+from bot.env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
-from dataclasses import dataclass
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
@@ -25,34 +24,6 @@ def is_discord_compatible(filesize: float):
     if filesize is None:
         return False
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
-
-
-class UploadFailed(Exception):
-    pass
-
-
-class UnknownError(Exception):
-    pass
-
-
-class InvalidClipType(Exception):
-    pass
-
-
-class VideoTooLong(Exception):
-    pass
-
-
-class NoPermsToView(Exception):
-    pass
-
-
-class NoDuration(Exception):
-    pass
-
-
-class ClipFailure(Exception):
-    pass
 
 
 def get_video_details(file_path) -> 'LocalFileInfo':
@@ -104,29 +75,6 @@ def fetch_cookies(opts, logger):
         logger.info("No Firefox profile found.")
     except Exception as e:
         logger.error(f"Error fetching cookies: {str(e)}")
-
-
-@dataclass
-class DownloadResponse:
-    remote_url: Optional[str]
-    local_file_path: Optional[str]
-    duration: float
-    width: int
-    height: int
-    filesize: float
-    video_name: Optional[str]
-    can_be_uploaded: Optional[bool]
-
-
-@dataclass
-class LocalFileInfo:
-    local_file_path: Optional[str]
-    duration: float
-    width: int
-    height: int
-    filesize: float
-    video_name: Optional[str]
-    can_be_uploaded: Optional[bool]
 
 
 class BaseClip(ABC):

@@ -3,7 +3,7 @@ import traceback
 from interactions import SlashContext
 from dataclasses import dataclass
 from bot.tools.dl import DownloadManager
-from env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
+from bot.env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
 
 
 @dataclass

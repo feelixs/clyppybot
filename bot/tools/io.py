@@ -1,5 +1,5 @@
 from typing import Tuple
-from env import CLYPPYIO_USER_AGENT
+from bot.env import CLYPPYIO_USER_AGENT
 import aiohttp
 
 
