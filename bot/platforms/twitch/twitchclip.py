@@ -12,6 +12,7 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 import re
 from yt_dlp import YoutubeDL
+from bot.env import YT_DLP_USER_AGENT
 
 
 class TwitchClip(BaseClip):
@@ -60,6 +61,7 @@ class TwitchClip(BaseClip):
                 'format': dlp_format,
                 'quiet': True,
                 'no_warnings': True,
+                'user_agent': YT_DLP_USER_AGENT
             }
             extracted = await asyncio.get_event_loop().run_in_executor(
                 None,
@@ -84,6 +86,7 @@ class TwitchClip(BaseClip):
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
+            'user_agent': YT_DLP_USER_AGENT
         }
         try:
             with YoutubeDL(ydl_opts) as ydl:
