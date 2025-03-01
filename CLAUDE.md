@@ -15,6 +15,7 @@
 - Document classes and complex methods with docstrings
 - Handle exceptions with specific catch blocks and proper logging
 - Use async/await consistently for asynchronous operations
+- Default params are passed in initially as `None` and redefined in the function `if x is None -> x = default`
 
 ## Project Structure
 - Platform-specific code goes in `bot/platforms/`
@@ -27,3 +28,7 @@
 ## API Communication
 - Use `bot.upload.get_aiohttp_session()` for clyppy.io API requests to ensure consistent User-Agent
 - All HTTP requests sent to clyppy.io should have User-Agent set to identify ClyppyBot
+
+
+## Yt-Dlp usage
+- When using yt-dlp or running anything from the associated python module, use the `cogs.base.DEFAULT_YTDLP_USERAGENT`
