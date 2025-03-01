@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext
 from yt_dlp.utils import DownloadError
-from bot.upload import UploadFailed
 from bot.cdn import CdnSpacesClient
 from bot.tools.io import get_aiohttp_session
 import hashlib
@@ -32,6 +31,10 @@ MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 EMBED_TOKEN_COST = 1
 EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
+
+
+class UploadFailed(Exception):
+    pass
 
 
 class UnknownError(Exception):

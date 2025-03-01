@@ -1,4 +1,5 @@
 from bot.tools.io import get_aiohttp_session
+from bot.classes import UploadFailed
 from typing import Dict
 from math import ceil
 import base64
@@ -7,10 +8,6 @@ import uuid
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
-
-
-class UploadFailed(Exception):
-    pass
 
 
 async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None):
