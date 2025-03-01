@@ -1,5 +1,4 @@
-from bot.tools.misc import GuildType
-from bot.types import DownloadResponse
+from bot.types import DownloadResponse, GuildType
 from bot.errors import UnknownError
 from bot.classes import BaseClip
 from bot.env import DL_SERVER_ID

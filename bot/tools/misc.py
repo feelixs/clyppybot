@@ -1,15 +1,7 @@
 from bot.env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
 from interactions import SlashContext
-from dataclasses import dataclass
 from bot.tools.dl import DownloadManager
 import logging
-
-
-@dataclass
-class GuildType:
-    id: int
-    name: str
-    is_dm: bool
 
 
 def create_nexus_str():
