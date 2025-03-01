@@ -1,10 +1,8 @@
 # ClypyyBot Development Guidelines
 
 ## Commands
-- Run bot: `python main.py`
-- Install dependencies: `pip install -r requirements.txt`
-- Create venv: `python -m venv venv`
-- Activate venv: `source venv/bin/activate` (Unix) or `venv\Scripts\activate` (Windows)
+- Not applicable
+- This project is built into a docker container using an unlisted Dockerfile in another folder
 
 ## Code Style
 - Use PEP 8 conventions with 4-space indentation
