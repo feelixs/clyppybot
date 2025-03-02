@@ -500,6 +500,14 @@ class BaseMisc(ABC):
                 raise VideoTooLong
             raise NoDuration
 
+    @staticmethod
+    def is_dl_server(guild):
+        if guild is None:
+            return False
+        elif str(guild.id) == str(DL_SERVER_ID):
+            return True
+        return False
+
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
         try:
             d = await self.get_len(url, cookies)
