@@ -1,4 +1,4 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors, GuildPrivateThread, GuildPublicThread
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
 from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
 from datetime import datetime, timezone, timedelta
@@ -92,7 +92,7 @@ class AutoEmbedder:
                     if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         return 1
 
-                if event.message.channel.type == GuildPrivateThread or event.message.channel.type == GuildPublicThread:
+                if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                     if self.platform_tools.is_nsfw:
                         # GuildPublicThread has no attribute nsfw
                         return 1
