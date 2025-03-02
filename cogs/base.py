@@ -224,7 +224,7 @@ class Base(Extension):
                 await ctx.send(f"This platform is not allowed in this channel. You can either:\n"
                                f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
-                               f" **Note** for iOS users, due to the Apple Store's rules, you may need to access discord.com in your phone's browser to enable this.\n")
+                               f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access discord.com in your phone's browser to enable this.\n")
                 await send_webhook(
                     title=f'{guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
