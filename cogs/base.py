@@ -204,7 +204,7 @@ class Base(Extension):
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
 
-            nsfw_enabed = True if guild.is_dm else self.bot.guild_settings.get_nsfw_enabled(guild.id)
+            nsfw_enabed = True if guild.is_dm else ctx.channel.nsfw
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
@@ -220,9 +220,9 @@ class Base(Extension):
                 )
                 return
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"This platform is not allowed in this server. You can either:\n"
-                               f" - enable nsfw content in this server using `/settings nsfw='True'`\n"
-                               f" - `/embed` the nsfw content in a private message (click my profile, send me a message, and then use embed there)")
+                await ctx.send(f"This platform is not allowed in this channel. You can either:\n"
+                               f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
+                               f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there")
                 await send_webhook(
                     title=f'{guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
@@ -485,7 +485,7 @@ class Base(Extension):
                                                description="Should users in this server be allowed to embed videos which are not safe for work?",
                                                required=False
                                                )])
-    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None, nsfw: bool = None):
+    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -498,7 +498,7 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if on_error is None and embed_buttons is None and quickembeds is None and nsfw is None:
+        if on_error is None and embed_buttons is None and quickembeds is None:
             await self._send_settings_help(ctx, False)
             return
 
@@ -535,30 +535,21 @@ class Base(Extension):
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
-        if nsfw is None:
-            nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
-        else:
-            self.bot.guild_settings.set_nsfw_enabled(ctx.guild.id, nsfw)
-        cur_nsfw = "enabled" if nsfw else "disabled"
-
         chosen_embed = "enabled" if chosen_embed else "disabled"
         await ctx.send(
             "Successfully changed settings:\n\n"
             f"**quickembeds**: {chosen_embed}\n"
             f"**on_error**: {on_error}\n"
-            f"**embed_buttons**: {embed_buttons}\n"
-            f"**nsfw**: {cur_nsfw}\n\n"
+            f"**embed_buttons**: {embed_buttons}\n\n"
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
         qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
-        nsfw = self.bot.guild_settings.get_nsfw_enabled(ctx.guild.id)
 
         es = POSSIBLE_EMBED_BUTTONS[es]
         qe = "enabled" if qe else "disabled"
-        nsfw = "enabled" if nsfw else "disabled"
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
@@ -578,7 +569,7 @@ class Base(Extension):
             '**nsfw** Should users in this server be allowed to embed videos which are not safe for work?:\n'
             ' - `True`: Allow NSFW videos to be embedded in this server\n'
             ' - `False`: NSFW videos won\'t be embedded (default)\n\n'
-            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n**nsfw_enabled**: {nsfw}\n\n'
+            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
