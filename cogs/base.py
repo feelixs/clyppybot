@@ -207,7 +207,6 @@ class Base(Extension):
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
 
-            nsfw_enabed = False
             if guild.is_dm:
                 nsfw_enabed = True
             elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
