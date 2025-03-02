@@ -91,6 +91,10 @@ class AutoEmbedder:
                 if Permissions.SEND_MESSAGES_IN_THREADS not in event.message.channel.permissions_for(event.message.guild.me):
                     if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         return 1
+                if not event.message.channel.nsfw and self.platform_tools.is_nsfw:
+                    # only allow nsfw in nsfw channels
+                    return 1
+
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
