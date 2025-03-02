@@ -165,7 +165,7 @@ class Base(Extension):
                         f"{create_nexus_str()}"
         ))
 
-    @slash_command(name="tokens", description="View a your VIP tokens")
+    @slash_command(name="tokens", description="View your VIP tokens!")
     async def tokens(self, ctx: SlashContext):
         await ctx.defer()
         tokens = await self._fetch_tokens(ctx.user)
