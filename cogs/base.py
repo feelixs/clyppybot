@@ -1,7 +1,7 @@
 from bot.classes import BaseMisc
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, NoPermsToView
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
+    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback, GuildPublicThread, GuildPrivateThread)
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, \
     VERSION, DLIST_VOTE_LINK, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
@@ -207,7 +207,15 @@ class Base(Extension):
             p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
 
-            nsfw_enabed = True if guild.is_dm else ctx.channel.nsfw
+            nsfw_enabed = False
+            if guild.is_dm:
+                nsfw_enabed = True
+            elif ctx.channel.type == GuildPublicThread or ctx.channel.type == GuildPrivateThread:
+                # GuildPublicThread has no attribute nsfw
+                nsfw_enabed = False
+            else:
+                nsfw_enabed = ctx.channel.nsfw
+
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
