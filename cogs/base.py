@@ -161,7 +161,6 @@ class Base(Extension):
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
                         f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
-                        #f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
                         #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
                         f"{create_nexus_str()}"
         ))
