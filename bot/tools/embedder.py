@@ -1,4 +1,4 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors, GuildPrivateThread, GuildPublicThread
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
 from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
 from datetime import datetime, timezone, timedelta
@@ -91,7 +91,11 @@ class AutoEmbedder:
                 if Permissions.SEND_MESSAGES_IN_THREADS not in event.message.channel.permissions_for(event.message.guild.me):
                     if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         return 1
-                if not event.message.channel.nsfw and self.platform_tools.is_nsfw:
+
+                if (event.message.channel.type == GuildPrivateThread or event.message.channel.type == GuildPublicThread) and self.platform_tools.is_nsfw:
+                    # GuildPublicThread has no attribute nsfw
+                    return 1
+                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
                     # only allow nsfw in nsfw channels
                     return 1
 
