@@ -1,9 +1,10 @@
-from bot.classes import BaseMisc, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
+from bot.classes import BaseMisc
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, NoPermsToView
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
     Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, VERSION
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, \
+    VERSION, DLIST_VOTE_LINK, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools.embedder import AutoEmbedder
 from bot.io import get_aiohttp_session
@@ -159,6 +160,7 @@ class Base(Extension):
                         f"View all the vote links below. Your support is appreciated.\n\n"
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
+                        f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
                         #f"** - [Dlist]({DLIST_VOTE_LINK})**\n"
                         #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
                         f"{create_nexus_str()}"
