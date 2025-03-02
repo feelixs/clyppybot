@@ -195,7 +195,7 @@ class AutoEmbedder:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     guild_ctx=guild,
-                    can_send_files=will_send_files  # todo see if we wanna do this in autoembeds
+                    can_send_files=will_send_files
                 )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
