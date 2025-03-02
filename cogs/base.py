@@ -1,7 +1,7 @@
 from bot.classes import BaseMisc
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, NoPermsToView
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback, GuildPublicThread, GuildPrivateThread)
+    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback, TYPE_THREAD_CHANNEL)
 from bot.tools.misc import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, \
     VERSION, DLIST_VOTE_LINK, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
@@ -210,7 +210,7 @@ class Base(Extension):
             nsfw_enabed = False
             if guild.is_dm:
                 nsfw_enabed = True
-            elif ctx.channel.type == GuildPublicThread or ctx.channel.type == GuildPrivateThread:
+            elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
                 # GuildPublicThread has no attribute nsfw
                 nsfw_enabed = False
             else:
