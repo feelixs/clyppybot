@@ -1,6 +1,6 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
-from bot.io import get_aiohttp_session, is_404
+from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.tools.misc import create_nexus_str
@@ -199,6 +199,8 @@ class AutoEmbedder:
                 )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
+                #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
+                #    raise VideoTooLong
                 response = DownloadResponse(
                     remote_url=None,
                     local_file_path=None,

@@ -1,4 +1,5 @@
-from bot.env import MAX_VIDEO_LEN_SEC, MAX_FILE_SIZE_FOR_DISCORD, EMBED_TOKEN_COST, DL_SERVER_ID, EMBED_W_TOKEN_MAX_LEN, YT_DLP_USER_AGENT
+from bot.env import MAX_FILE_SIZE_FOR_DISCORD, DL_SERVER_ID, YT_DLP_USER_AGENT
+from bot.io import author_has_enough_tokens
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
@@ -440,22 +441,6 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
-    @staticmethod
-    async def subtract_tokens(user, amt):
-        url = 'https://clyppy.io/api/tokens/subtract/'
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        j = {'userid': user.id, 'username': user.username, 'amount': amt}
-        async with get_aiohttp_session() as session:
-            async with session.post(url, json=j, headers=headers) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    error_data = await response.json()
-                    raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
-
     async def get_len(self, url: str, cookies=False, download=False) -> Union[float, LocalFileInfo]:
         """
             Uses yt-dlp to check video length of the provided url
@@ -528,29 +513,4 @@ class BaseMisc(ABC):
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
             d = file.duration
 
-        if d <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
-            return True
-        elif d <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
-            if isinstance(basemsg, Message):
-                user = basemsg.author
-            else:
-                user = basemsg.user
-
-            # if we're in dl server, automatically return true without needing any tokens
-            if self.is_dl_server(basemsg.guild):
-                return True
-
-            sub = await self.subtract_tokens(user, EMBED_TOKEN_COST)
-            if sub['success']:
-                if sub['user_success']:  # the user had enough tokens to subtract successfully
-                    return True
-
-        return False
-
-    @staticmethod
-    def is_dl_server(guild):
-        if guild is None:
-            return False
-        elif str(guild.id) == str(DL_SERVER_ID):
-            return True
-        return False
+        return await author_has_enough_tokens(basemsg, d)
