@@ -8,7 +8,7 @@ from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LI
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.tools.embedder import AutoEmbedder
 from bot.io import get_aiohttp_session
-from bot.types import GuildType
+from bot.types import GuildType, COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
 import asyncio
@@ -225,7 +225,7 @@ class Base(Extension):
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Incompatible",
-                    color=65280,
+                    color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK
                 )
                 return
@@ -241,7 +241,7 @@ class Base(Extension):
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - NSFW disabled",
-                    color=65280,
+                    color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK
                 )
                 return
@@ -255,7 +255,7 @@ class Base(Extension):
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Already embedding",
-                    color=65280,
+                    color=COLOR_RED,
                 )
                 return
             else:
@@ -284,7 +284,7 @@ class Base(Extension):
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - Unexpected error",
-                color=65280,
+                color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK
             )
             return
@@ -330,7 +330,7 @@ class Base(Extension):
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - {response}",
-                color=65280,
+                color=[COLOR_GREEN if success else COLOR_RED],
                 url=APPUSE_LOG_WEBHOOK
             )
             try:
@@ -362,6 +362,12 @@ class Base(Extension):
         await ctx.send(
             content="Clyppy is a social bot that makes sharing videos easier!",
             embed=help_embed)
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /help called',
+            load=f"response - success",
+            color=65280,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
                    options=[SlashCommandOption(name="user",
@@ -612,7 +618,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=65280  # green
+                color=COLOR_GREEN  # green
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -629,7 +635,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=16711680  # red
+                color=COLOR_RED  # red
             )
             await self.post_servers(len(self.bot.guilds))
 

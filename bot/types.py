@@ -6,6 +6,10 @@ from typing import Optional
 YT_DLP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0"
 
 
+COLOR_RED = 16711680
+COLOR_GREEN = 65280
+
+
 @dataclass
 class GuildType:
     id: int
