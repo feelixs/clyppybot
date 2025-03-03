@@ -135,11 +135,35 @@ class Base(Extension):
                 if clyppy_cdn:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
+                await send_webhook(
+                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                    load=f"response - success"
+                         f"title: {clip_info['title']}\n"
+                         f"url: {clip_info['url']}\n"
+                         f"platform: {clip_info['platform']}\n"
+                         f"duration: {clip_info['duration']}\n"
+                         f"file_location: {clip_info['url'] if clyppy_cdn else f'Hosted on {clip_info["platform"]}\'s cdn'}"
+                         f"expires: {[clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A']}",
+                    color=COLOR_GREEN,
+                    url=APPUSE_LOG_WEBHOOK
+                )
             else:
                 await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
+                await send_webhook(
+                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                    load=f"response - error clip not found",
+                    color=COLOR_RED,
+                    url=APPUSE_LOG_WEBHOOK
+                )
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
             await ctx.send(f"Uh oh... an error occurred fetching the clip {clyppyid}")
+            await send_webhook(
+                title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                load=f"response - unexpected error: {e}",
+                color=COLOR_RED,
+                url=APPUSE_LOG_WEBHOOK
+            )
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
@@ -164,6 +188,12 @@ class Base(Extension):
                         #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
                         f"{create_nexus_str()}"
         ))
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /vote called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     @slash_command(name="tokens", description="View your VIP tokens!")
     async def tokens(self, ctx: SlashContext):
@@ -172,6 +202,12 @@ class Base(Extension):
         await ctx.send(f"You have `{tokens}` VIP tokens!\n"
                        f"You can gain more by **voting** with `/vote`\n\n"
                        f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /tokens called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
@@ -219,7 +255,7 @@ class Base(Extension):
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
-                    title=f'{guild.name} - /embed called - Failure',
+                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -235,7 +271,7 @@ class Base(Extension):
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                                f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
                 await send_webhook(
-                    title=f'{guild.name} - /embed called - Failure',
+                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -249,7 +285,7 @@ class Base(Extension):
             if ctx.user.id in self.currently_embedding_users:
                 await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
                 await send_webhook(
-                    title=f'{guild.name} - /embed called - Failure',
+                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -278,7 +314,7 @@ class Base(Extension):
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             await send_webhook(
-                title=f'{guild.name} - /embed called - Failure',
+                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
@@ -324,7 +360,7 @@ class Base(Extension):
             timeout_task.cancel()
 
             await send_webhook(
-                title=f'{guild.name} - /embed called - {["Success" if success else "Failure"]}',
+                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - {["Success" if success else "Failure"]}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
@@ -365,7 +401,7 @@ class Base(Extension):
         await send_webhook(
             title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /help called',
             load=f"response - success",
-            color=65280,
+            color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK
         )
 
@@ -618,7 +654,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=COLOR_GREEN  # green
+                color=COLOR_GREEN
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -635,7 +671,7 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=COLOR_RED  # red
+                color=COLOR_RED
             )
             await self.post_servers(len(self.bot.guilds))
 
