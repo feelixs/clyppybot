@@ -139,10 +139,10 @@ class Base(Extension):
                     title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
                     load=f"response - success"
                          f"title: {clip_info['title']}\n"
-                         f"url: {clip_info['url']}\n"
+                         f"url: {clip_info['embedded_url']}\n"
                          f"platform: {clip_info['platform']}\n"
                          f"duration: {clip_info['duration']}\n"
-                         f"file_location: {clip_info['url'] if clyppy_cdn else f'Hosted on {clip_info["platform"]}\'s cdn'}"
+                         f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + clip_info['platform'] + ' cdn'}"
                          f"expires: {[clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A']}",
                     color=COLOR_GREEN,
                     url=APPUSE_LOG_WEBHOOK
