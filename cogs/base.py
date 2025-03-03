@@ -595,6 +595,16 @@ class Base(Extension):
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}\n\n"
         )
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /settings called',
+            load=f'user: {ctx.user.username}\n'
+                 "Successfully changed settings:\n\n"
+            f"**quickembeds**: {chosen_embed}\n"
+            f"**on_error**: {on_error}\n"
+            f"**embed_buttons**: {embed_buttons}\n\n",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
