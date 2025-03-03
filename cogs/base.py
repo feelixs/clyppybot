@@ -631,6 +631,13 @@ class Base(Extension):
 
         tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
         await ctx.send(embed=tutorial_embed)
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /settings called',
+            load=f'user: {ctx.user.username}\n'
+                 f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n',
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     async def db_save_task(self):
         if not self.ready:
