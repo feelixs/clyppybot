@@ -142,7 +142,7 @@ class Base(Extension):
                          f"url: {clip_info['embedded_url']}\n"
                          f"platform: {clip_info['platform']}\n"
                          f"duration: {clip_info['duration']}\n"
-                         f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + clip_info['platform'] + ' cdn'}"
+                         f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}"
                          f"expires: {[clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A']}",
                     color=COLOR_GREEN,
                     url=APPUSE_LOG_WEBHOOK
