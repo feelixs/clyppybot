@@ -596,9 +596,8 @@ class BaseAutoEmbed:
                 for txt_command, func in self.OTHER_TXT_COMMANDS.items():
                     if event.message.content.strip() == txt_command:
                         return await func(event.message)
-
-            # wasn't a command, maybe it's a link?
-            if self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+            elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+                # wasn't a command, maybe it's a link?
                 await self.embedder.on_message_create(event)
 
     @staticmethod
