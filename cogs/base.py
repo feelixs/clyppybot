@@ -331,7 +331,7 @@ class Base(Extension):
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
-                extended_url_formats=True,
+                is_embed_text_command=False,
                 try_send_files=True
             )
             success, response = True, "Success"
