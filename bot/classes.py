@@ -537,13 +537,31 @@ class BaseAutoEmbed:
         self.embedder = AutoEmbedder(bot, platform, self.logger)
         self.currently_downloading_for_embed = []
         self.currently_embedding_users = []
-    
+
     async def handle_message(self, event):
+        if self.platform is None:
+            return
+
         message_is_embed_command = (
                     event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
                     and self.platform.is_clip_link(event.message.content.split(" ")[-1]))
-        if self.platform.is_dl_server(event.message.guild) or message_is_embed_command or self.always_embed_this_platform:
-            await self.embedder.on_message_create(event, is_embed_text_command=message_is_embed_command)
+        if message_is_embed_command:
+            await self.bot.base.command_embed(
+                ctx=event.message,
+                url=event.message.content.split(" ")[-1],
+                platform=self.platform,
+                slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
+            )
+        elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+            await self.embedder.on_message_create(event)
+
+    @staticmethod
+    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
+        """Handle timeout for embed processing"""
+        await asyncio.sleep(amt)
+        if not ctx.responded:
+            await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
+            raise TimeoutError(f"Waiting for clip {url} download timed out")
 
     @staticmethod
     async def fetch_tokens(user):

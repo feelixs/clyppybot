@@ -66,14 +66,6 @@ class Base(Extension):
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
     @staticmethod
-    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
-        """Handle timeout for embed processing"""
-        await asyncio.sleep(amt)
-        if not ctx.responded:
-            await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
-            raise TimeoutError(f"Waiting for clip {url} download timed out")
-
-    @staticmethod
     async def get_clip_info(clip_id: str):
         """Get clip info from clyppyio"""
         url = f"https://clyppy.io/api/clips/get/{clip_id}"
