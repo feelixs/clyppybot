@@ -601,7 +601,6 @@ class BaseAutoEmbed:
             if self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
                 await self.embedder.on_message_create(event)
 
-
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
         """Handle timeout for embed processing"""
