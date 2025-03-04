@@ -27,6 +27,17 @@ import asyncio
 import os
 
 
+class BaseMiscForConsistency(BaseMisc):
+    def __init__(self, bot):
+        super().__init__(bot)
+
+    def parse_clip_url(self, url: str, extended_url_formats=False):
+        return None
+
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+        return None
+
+
 async def save_to_server():
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with get_aiohttp_session() as session:
@@ -72,7 +83,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
-Bot.base = BaseMisc(bot=Bot)
+Bot.base = BaseMiscForConsistency(bot=Bot)
 
 Bot.twitch = TwitchMisc(bot=Bot)
 Bot.kick = KickMisc(bot=Bot)
