@@ -4,14 +4,14 @@ from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL
+from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
-                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK)
+                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure
 import hashlib
 import aiohttp
@@ -570,6 +570,7 @@ class BaseAutoEmbed:
         self.logger = parent.logger
         self.platform = self.autoembedder_cog.platform
         self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
+        self.OTHER_TXT_COMMANDS = {".help ": self.send_help, ".tokens ": self.tokens_cmd}
 
     async def handle_message(self, event):
         if self.platform is None:
@@ -587,6 +588,10 @@ class BaseAutoEmbed:
             )
         elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
             await self.embedder.on_message_create(event)
+        else:
+            for txt_command, func in self.OTHER_TXT_COMMANDS.items():
+                if event.message.content.startswith(txt_command):
+                    await func(event.message)
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
@@ -612,6 +617,48 @@ class BaseAutoEmbed:
                 else:
                     error_data = await response.json()
                     raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
+
+    @staticmethod
+    async def send_help(ctx: Union[SlashContext, Message]):
+        pre, cmds = "/", ""
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            pre, cmds = ".", "Available commands: `.help`, `.embed`, `.vote`, `.tokens`\n\n"
+
+        about = "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n" + cmds
+        about += (
+            f"I will automatically respond to Twitch and Kick clips, and all other compatible platforms are only accessibly through `{pre}embed`\n\n"
+            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!\n\n"
+            "**COMING SOON** We're working on adding server customization for Clyppy, so you can choose which platforms I will automatically reply to!\n\n"
+            f"---------------------------------\n"
+            f"Join our [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
+        help_embed = Embed(title="ABOUT CLYPPY", description=about)
+        help_embed.description += create_nexus_str()
+        help_embed.footer = f"CLYPPY v{VERSION}"
+        await ctx.send(content="Clyppy is a social bot that makes sharing videos easier!", embed=help_embed)
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /help called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
+
+    async def tokens_cmd(self, ctx: Union[SlashContext, Message]):
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+
+        tokens = await self.bot.base.fetch_tokens(ctx.user)
+        await ctx.send(f"You have `{tokens}` VIP tokens!\n"
+                       f"You can gain more by **voting** with `/vote`\n\n"
+                       f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /tokens called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
+
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
         async def wait_for_download(clip_id: str, timeout: float = 30):

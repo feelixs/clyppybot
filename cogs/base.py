@@ -1,6 +1,7 @@
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
+                          Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext,
+                          component_callback, Message)
 from bot.env import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, APPUSE_LOG_WEBHOOK, \
     VERSION, DLIST_VOTE_LINK, EMBED_W_TOKEN_MAX_LEN
@@ -59,7 +60,8 @@ class Base(Extension):
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
-                clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info['url']
+                clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info[
+                    'url']
                 original = int(clip_info['requested_by'])
 
                 embed = Embed(title=f"{clip_info['title']}")
@@ -68,8 +70,10 @@ class Base(Extension):
                 embed.add_field(name="Requested by", value=f'<@{ctx.author.id}>')
                 if ctx.author.id != original:
                     embed.add_field(name="First requester", value=f"<@{original}>")
-                embed.add_field(name="Duration", value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
-                embed.add_field(name="File Location", value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
+                embed.add_field(name="Duration",
+                                value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
+                embed.add_field(name="File Location",
+                                value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
                 if clyppy_cdn:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
@@ -123,7 +127,7 @@ class Base(Extension):
                         f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
                         f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
-                        #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
+            #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
                         f"{create_nexus_str()}"
         ))
         await send_webhook(
@@ -136,16 +140,7 @@ class Base(Extension):
     @slash_command(name="tokens", description="View your VIP tokens!")
     async def tokens(self, ctx: SlashContext):
         await ctx.defer()
-        tokens = await self.bot.base.fetch_tokens(ctx.user)
-        await ctx.send(f"You have `{tokens}` VIP tokens!\n"
-                       f"You can gain more by **voting** with `/vote`\n\n"
-                       f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
-        await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /tokens called',
-            load=f"response - success",
-            color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
-        )
+        await self.bot.base.tokens_cmd(ctx)
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
@@ -167,25 +162,7 @@ class Base(Extension):
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
-        about = (
-            "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n"
-            "I will automatically respond to Twitch and Kick clips, and all other compatible platforms are only accessibly through `/embed`\n\n"
-            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!\n\n"
-            "**COMING SOON** We're working on adding server customization for Clyppy, so you can choose which platforms I will automatically reply to!\n\n"
-            f"---------------------------------\n"
-            f"Join our [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
-        help_embed = Embed(title="ABOUT CLYPPY", description=about)
-        help_embed.description += create_nexus_str()
-        help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send(
-            content="Clyppy is a social bot that makes sharing videos easier!",
-            embed=help_embed)
-        await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /help called',
-            load=f"response - success",
-            color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
-        )
+        return await self.bot.base.send_help(ctx)
 
     @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
                    options=[SlashCommandOption(name="user",
@@ -320,7 +297,8 @@ class Base(Extension):
                                                description="Should users in this server be allowed to embed videos which are not safe for work?",
                                                required=False
                                                )])
-    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None, embed_buttons: str = None):
+    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None,
+                       embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -381,9 +359,9 @@ class Base(Extension):
             title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /settings called',
             load=f'user: {ctx.user.username}\n'
                  "Successfully changed settings:\n\n"
-            f"**quickembeds**: {chosen_embed}\n"
-            f"**on_error**: {on_error}\n"
-            f"**embed_buttons**: {embed_buttons}\n\n",
+                 f"**quickembeds**: {chosen_embed}\n"
+                 f"**on_error**: {on_error}\n"
+                 f"**embed_buttons**: {embed_buttons}\n\n",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK
         )
