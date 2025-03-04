@@ -52,7 +52,6 @@ class AutoEmbedder:
         self.too_large_clips = []
         self.logger = logger
         self.platform_tools = platform_tools
-        self.currently_downloading = []
         self.clip_id_msg_timestamps = {}
 
     @staticmethod
@@ -128,10 +127,10 @@ class AutoEmbedder:
     async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
-        if parsed_id in self.currently_downloading:
+        if parsed_id in self.bot.currently_embedding:
             await self._wait_for_download(parsed_id)
         else:
-            self.currently_downloading.append(parsed_id)
+            self.bot.currently_embedding.append(parsed_id)
         try:
             await self._process_this_clip_link(
                 clip_link=clip_link,
@@ -149,7 +148,7 @@ class AutoEmbedder:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
             try:
-                self.currently_downloading.remove(parsed_id)
+                self.bot.currently_embedding.remove(parsed_id)
             except ValueError:
                 pass
             try:
@@ -159,7 +158,7 @@ class AutoEmbedder:
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):
         start_time = time.time()
-        while clip_id in self.currently_downloading:
+        while clip_id in self.bot.currently_embedding:
             if time.time() - start_time > timeout:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)

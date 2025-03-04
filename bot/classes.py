@@ -570,8 +570,6 @@ class BaseAutoEmbed:
         self.logger = parent.logger
         self.platform = self.autoembedder_cog.platform
         self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
-        self.currently_downloading_for_embed = []
-        self.currently_embedding_users = []
 
     async def handle_message(self, event):
         if self.platform is None:
@@ -618,7 +616,7 @@ class BaseAutoEmbed:
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
         async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time()
-            while clip_id in self.currently_downloading_for_embed:
+            while clip_id in self.bot.currently_downloading:
                 if time() - start_time > timeout:
                     raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
                 await asyncio.sleep(0.1)
@@ -681,7 +679,7 @@ class BaseAutoEmbed:
                 )
                 return
 
-            if ctx.user.id in self.currently_embedding_users:
+            if ctx.user.id in self.bot.currently_embedding_users:
                 await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
                 await send_webhook(
                     title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
@@ -694,16 +692,16 @@ class BaseAutoEmbed:
                 )
                 return
             else:
-                self.currently_embedding_users.append(ctx.user.id)
+                self.bot.currently_embedding_users.append(ctx.user.id)
 
-            if slug in self.currently_downloading_for_embed:
+            if slug in self.bot.currently_downloading:
                 try:
                     # if its already downloading from another embed command running at the same time
                     await wait_for_download(slug, timeout=platform.dl_timeout_secs)
                 except TimeoutError:
                     pass  # continue with the dl anyway
             else:
-                self.currently_downloading_for_embed.append(slug)
+                self.bot.currently_downloading.append(slug)
 
             timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
         except Exception as e:
@@ -773,11 +771,11 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK
             )
             try:
-                self.currently_downloading_for_embed.remove(slug)
+                self.bot.currently_downloading.remove(slug)
             except ValueError:
                 pass
             try:
-                self.currently_embedding_users.remove(ctx.user.id)
+                self.bot.currently_embedding_users.remove(ctx.user.id)
             except ValueError:
                 pass
             try:
