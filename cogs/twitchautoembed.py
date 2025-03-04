@@ -1,12 +1,14 @@
 from bot.classes import BaseAutoEmbed
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
+import logging
 
 
 class TwitchAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.platform = bot.twitch
+        self.logger = logging.getLogger(__name__)
         self.auto_embed = BaseAutoEmbed(self, always_embed=True)
     
     @listen(MessageCreate)
