@@ -729,7 +729,7 @@ class BaseAutoEmbed:
                 self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
             elif isinstance(ctx, Message):
                 # for logging response times - it hasn't been set up for slash commands yet
-                self.embedder._clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
+                self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
             await self.embedder._process_this_clip_link(
                 clip_link=url,
@@ -782,6 +782,6 @@ class BaseAutoEmbed:
                 pass
             try:
                 if isinstance(ctx, Message):
-                    del self.embedder._clip_id_msg_timestamps[ctx.id]
+                    del self.embedder.clip_id_msg_timestamps[ctx.id]
             except KeyError:
                 pass
