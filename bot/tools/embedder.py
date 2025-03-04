@@ -103,8 +103,10 @@ class AutoEmbedder:
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
 
-            if not self.bot.guild_settings.get_embed_enabled(guild.id) and not is_embed_text_command:
-                # quickembeds not enabled
+            if is_embed_text_command:
+                await self.platform_tools.embed_command(event.message, guild)
+            elif not self.bot.guild_settings.get_embed_enabled(guild.id):
+                # quickembeds not enabled, and wasn't a text embed command
                 return 1
 
             words = self._getwords(event.message.content)
@@ -137,7 +139,6 @@ class AutoEmbedder:
                 clip_link=clip_link,
                 respond_to=respond_to,
                 guild=guild,
-                is_embed_text_command=is_embed_text_command,
                 try_send_files=True
             )
         except VideoTooLong:
@@ -165,7 +166,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, is_embed_text_command=False, try_send_files=True) -> None:
+    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True

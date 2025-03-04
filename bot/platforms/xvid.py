@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class XvidMisc(BaseMisc):
-    def __init__(self, cdn_client):
-        super().__init__(cdn_client)
+    def __init__(self, bot):
+        super().__init__(bot)
         self.platform_name = "Xvideos"
         self.is_nsfw = True
         self.dl_timeout_secs = 120
