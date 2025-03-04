@@ -1,62 +1,23 @@
-from bot.env import DL_SERVER_ID, YT_DLP_USER_AGENT, LOGGER_WEBHOOK
+from bot.env import MAX_FILE_SIZE_FOR_DISCORD, DL_SERVER_ID, YT_DLP_USER_AGENT
 from bot.io import author_has_enough_tokens
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
-from typing import Optional, Union, Tuple
-from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL
+from typing import Optional, Union
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from interactions import Message, SlashContext, Extension
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
-from bot.io.io import get_aiohttp_session, fetch_cookies
-from bot.types import LocalFileInfo, COLOR_RED, COLOR_GREEN, GuildType, BaseClipInterface, get_video_details
-from bot.errors import NoDuration, NoPermsToView, VideoTooLong, ClipFailure
-from bot.env import APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, MAX_VIDEO_LEN_SEC
-from bot.tools.misc import create_nexus_str
+from bot.io import get_aiohttp_session
+from bot.tools.embedder import AutoEmbedder
+from bot.types import LocalFileInfo, DownloadResponse
+from interactions import listen
+from interactions.api.events import MessageCreate
+from bot.env import EMBED_TXT_COMMAND
+from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong
+import hashlib
 import logging
 import asyncio
-from time import time
 import os
-import aiohttp
-from bot.tools.embedder import AutoEmbedder
-
-
-def compute_platform(url: str, bot) -> Tuple[Optional['BaseMisc'], Optional[str]]:
-    """Determine the platform and clip ID from the URL"""
-    for this_platform in bot.platform_list:
-        if slug := this_platform.parse_clip_url(url):
-            return this_platform, slug
-
-    return None, None
-
-
-async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
-    if not in_test and os.getenv("TEST"):
-        return
-
-    if url is None:
-        url = LOGGER_WEBHOOK
-
-    # Create a rich embed
-    if color is None:
-        color = 5814783  # Blue color
-    payload = {
-        "embeds": [{
-            "title": title,
-            "description": load,
-            "color": color,
-        }]
-    }
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(url, json=payload) as response:
-                if response.status == 204:
-                    print(f"Successfully sent logger webhook: {load}")
-                else:
-                    print(f"Failed to send logger webhook. Status: {response.status}")
-                return response.status
-        except Exception as e:
-            print(f"Error sending log webhook: {str(e)}")
-            return None
 
 
 def tryremove(f):
@@ -66,24 +27,409 @@ def tryremove(f):
         pass
 
 
-class BaseClip(BaseClipInterface):
+def is_discord_compatible(filesize: float):
+    if filesize is None:
+        return False
+    return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
+
+
+def get_video_details(file_path) -> 'LocalFileInfo':
+    try:
+        clip = VideoFileClip(file_path)
+        try:
+            size = os.path.getsize(file_path)
+        except OSError:
+            size = 0
+        return LocalFileInfo(
+            width=clip.w,
+            height=clip.h,
+            filesize=size,
+            duration=clip.duration,
+            local_file_path=file_path,
+            video_name=None,
+            can_be_uploaded=is_discord_compatible(size)
+        )
+        #return {
+        #    'width': clip.w,
+        #    'height': clip.h,
+        #    'url': url,
+        #    'filesize': os.path.getsize(file_path),
+        #    'duration': clip.duration
+        #}
+    except Exception as e:
+        raise
+    finally:
+        # Make sure we close the clip to free resources
+        if 'clip' in locals():
+            clip.close()
+
+
+def fetch_cookies(opts, logger):
+    try:
+        profile_dir = None
+        for item in os.listdir('/firefox-profiles'):
+            if item.endswith('.default-release'):
+                profile_dir = item
+                break
+
+        if profile_dir:
+            profile_path = f"/firefox-profiles/{profile_dir}"
+            logger.info(f"Using Firefox profile: {profile_path}")
+            cookies_string = ('firefox', profile_path, None, None)
+            opts['cookiesfrombrowser'] = cookies_string
+            return
+
+        logger.info("No Firefox profile found.")
+    except Exception as e:
+        logger.error(f"Error fetching cookies: {str(e)}")
+
+
+class BaseClip(ABC):
     """Base class for all clip types"""
 
     @abstractmethod
     def __init__(self, slug: str, cdn_client: CdnSpacesClient):
-        super().__init__(slug, cdn_client)
+        self.cdn_client = cdn_client
+        self.id = slug
+        self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self.service}, {slug}")
+        self.title = None
+
+    @property
+    @abstractmethod
+    def service(self) -> str:
+        """Service name must be implemented by child classes"""
+        pass
+
+    @property
+    @abstractmethod
+    def url(self) -> str:
+        pass
+
+    @property
+    def clyppy_url(self) -> str:
+        """Generate the clyppy URL using the service and ID"""
+        return f"https://clyppy.io/{self.clyppy_id}"
+
+    def _extract_info(self, ydl_opts: dict) -> DownloadResponse:
+        """
+        Helper method to extract URL, duration, file size and dimension information using yt-dlp.
+        Runs in thread pool to avoid blocking the event loop.
+        """
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(self.url, download=False)
+            if not info:
+                raise ValueError("Could not extract video information")
+
+            # Get duration
+            duration = info.get('duration', 0)
+
+            def extract_format_info(fmt, h=None, w=None):
+                """Helper to extract format details"""
+                a = {
+                    'url': fmt.get('url'),
+                    'width': fmt.get('width', 0),
+                    'height': fmt.get('height', 0),
+                }
+                if h is not None:
+                    a['height'] = h
+                if w is not None:
+                    a['width'] = w
+                return a
+
+            # Get direct URL and format info
+            if 'url' in info:
+                # Direct URL available in info
+                if "production.assets.clips.twitchcdn.net" in info['url']:
+                    # if its a twitch or kick clip, we can use a default height/width (kick class already handles this)
+                    self.logger.info("Using default dimensions of 1280x720 for twitch clip")
+                    format_info = extract_format_info(fmt=info, h=720, w=1280)
+                else:
+                    format_info = extract_format_info(info)
+                if not format_info['width']:
+                    self.logger.info("Width was 0, checking manually")
+                    # Download file to determine width
+                    o = ydl_opts.copy()
+                    fn = f'temp{self.id}.mp4'
+                    o['outtmpl'] = fn
+                    with YoutubeDL(o) as tmpdl:
+                        tmpdl.download([self.url])
+                    self.logger.info(os.path.isfile(fn))
+                    format_info = get_video_details(fn)
+                    format_info = {
+                        'url': info['url'],
+                        'duration': format_info.duration,
+                        'width': format_info.width,
+                        'height': format_info.height
+                    }
+                    os.remove(fn)
+
+                if info.get('title') is not None:
+                    title = info['title']
+                    self.title = title
+                else:
+                    title = None
+
+                self.logger.info(f"Found [best] direct URL")
+                return DownloadResponse(
+                    remote_url=format_info['url'],
+                    local_file_path=None,
+                    duration=duration,
+                    filesize=info.get('filesize', 0),
+                    width=format_info['width'],
+                    height=format_info['height'],
+                    video_name=title,
+                    can_be_uploaded=None
+                )
+            elif 'formats' in info and info['formats']:
+                # Get best MP4 format
+                mp4_formats = [f for f in info['formats'] if f.get('ext') == 'mp4']
+                if mp4_formats:
+                    # Sort by quality with safe default values
+                    def get_sort_key(fmt):
+                        # Use 0 as default for both filesize and tbr
+                        filesize = fmt.get('filesize', 0) or 0
+                        tbr = fmt.get('tbr', 0) or 0
+                        return filesize or tbr  # Return filesize if present, otherwise tbr
+
+                    best_format = sorted(
+                        mp4_formats,
+                        key=get_sort_key,
+                        reverse=True
+                    )[0]
+                    format_info = extract_format_info(best_format)
+                    self.logger.info(f"Found direct URL: {format_info['url']}")
+                    if info.get('title') is not None:
+                        title = info['title']
+                        self.title = title
+                    else:
+                        title = None
+                    if not format_info['width']:
+                        self.logger.info("in 'get best mp4 format' the width was 0, so we're gonna use the default 1280x720")
+                        format_info['height'] = 720
+                        format_info['width'] = 1280
+                    return DownloadResponse(
+                        remote_url=format_info['url'],
+                        local_file_path=None,
+                        duration=duration,
+                        filesize=best_format.get('filesize', 0),
+                        width=format_info['width'],
+                        height=format_info['height'],
+                        video_name=title,
+                        can_be_uploaded=None
+                    )
+
+            raise ValueError("No suitable URL found in video info")
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+        resp = await self._fetch_external_url(dlp_format, cookies)
+        self.logger.info(f"[download] Got filesize {resp.filesize} for {self.id}")
+        if is_discord_compatible(resp.filesize) and can_send_files:
+            self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
+            local = await self.dl_download(
+                    filename=filename,
+                    dlp_format=dlp_format,
+                    can_send_files=can_send_files,
+                    cookies=cookies
+                )
+            return DownloadResponse(
+                    remote_url=None,
+                    local_file_path=local.local_file_path,
+                    duration=local.duration,
+                    width=local.width,
+                    height=local.height,
+                    filesize=local.filesize,
+                    video_name=local.video_name,
+                    can_be_uploaded=True
+                )
+        else:
+            resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
+            return resp
+
+    async def _fetch_external_url(self, dlp_format='best/bv*+ba', cookies=False) -> DownloadResponse:
+        """
+        Gets direct media URL and duration from the clip URL without downloading.
+        Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
+        """
+        ydl_opts = {
+            'format': dlp_format,
+            'quiet': True,
+            'no_warnings': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+        if cookies:
+            fetch_cookies(ydl_opts, self.logger)
+
+        try:
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._extract_info,
+                ydl_opts
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to get direct URL: {str(e)}")
+            raise NoDuration
+
+    async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
+        local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies)
+        if local_file is None:
+            raise UnknownError
+        return local_file
+
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
+        """
+            Download the clip file, and return the local file info if its within Discord's file size limit,
+            otherwise return None
+        """
+        local = None
+        if can_send_files:
+            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
+            if is_discord_compatible(local.filesize):
+                return DownloadResponse(
+                    remote_url=None,
+                    local_file_path=local.local_file_path,
+                    duration=local.duration,
+                    width=local.width,
+                    height=local.height,
+                    filesize=local.filesize,
+                    video_name=local.video_name,
+                    can_be_uploaded=True
+                )
+
+        if upload_if_large:
+            if local is None:
+                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
+            return await self.upload_to_clyppyio(local)
+
+        return None
+
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
+        if os.path.isfile(filename):
+            self.logger.info("file already exists! returning...")
+            return get_video_details(filename)
+
+        ydl_opts = {
+            'format': dlp_format,
+            'outtmpl': filename,
+            'quiet': True,
+            'no_warnings': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        if cookies:
+            fetch_cookies(ydl_opts, self.logger)
+
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                # Run download in a thread pool to avoid blocking
+                await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: ydl.download([self.url])
+                )
+
+            if os.path.exists(filename):
+                extracted = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self._extract_info,
+                    ydl_opts
+                )
+
+                d = get_video_details(filename)
+                d.video_name = extracted.video_name
+                if is_discord_compatible(d.filesize) and can_send_files:
+                    self.logger.info(f"{self.id} can be uploaded to discord...")
+                    d.can_be_uploaded = True
+
+                return d
+
+            self.logger.info(f"Could not find file")
+            raise UnknownError
+        except Exception as e:
+            self.logger.error(f"yt-dlp download error: {str(e)}")
+            raise
+
+    async def overwrite_mp4(self, new_url: str):
+        url = 'https://clyppy.io/api/overwrite/'
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        j = {'id': self.clyppy_id, 'url': new_url}
+        async with get_aiohttp_session() as session:
+            async with session.post(url, json=j, headers=headers) as response:
+                if response.status in [201, 202]:
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to overwrite clip data: {error_data.get('error', 'Unknown error')}")
+
+    async def upload_to_clyppyio(self, local_file_info: LocalFileInfo) -> DownloadResponse:
+        try:
+            success, remote_url = await self.cdn_client.cdn_upload_video(
+                file_path=local_file_info.local_file_path
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to upload video: {str(e)}")
+            raise UploadFailed
+        if success:
+            self.logger.info(f"Uploaded video: {remote_url}")
+            return DownloadResponse(
+                remote_url=remote_url,
+                local_file_path=local_file_info.local_file_path,
+                duration=local_file_info.duration,
+                filesize=local_file_info.filesize,
+                height=local_file_info.height,
+                width=local_file_info.width,
+                video_name=local_file_info.video_name,
+                can_be_uploaded=None
+            )
+        else:
+            self.logger.error(f"Failed to upload video: {remote_url}")
+            raise UploadFailed
+
+    @staticmethod
+    def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
+        """
+        Generates a fixed-length lowercase ID from any input string.
+        Will always return the same ID for the same input.
+
+        Args:
+            input_str: Any string input to generate ID from
+            length: Desired length of output ID (default 8)
+
+        Returns:
+            A fixed-length lowercase alphanumeric string
+        """
+        # Create hash of input
+        hash_object = hashlib.sha256(input_str.encode())
+        hash_hex = hash_object.hexdigest()
+
+        # Convert to base36 (lowercase letters + numbers)
+        # First convert hex to int, then to base36
+        hash_int = int(hash_hex, 16)
+        base36 = '0123456789abcdefghijklmnopqrstuvwxyz'
+        base36_str = ''
+
+        while hash_int:
+            hash_int, remainder = divmod(hash_int, 36)
+            base36_str = base36[remainder] + base36_str
+        # Take first 'length' characters, pad with 'a' if too short
+        result = base36_str[:length]
+        if len(result) < length:
+            result = result + 'a' * (length - len(result))
+        return result
 
 
 class BaseMisc(ABC):
-    def __init__(self, bot):
+    def __init__(self, cdn_client: CdnSpacesClient):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
-        self.bot = bot
         self.is_nsfw = False
         self.dl_timeout_secs = 30
-        self.cdn_client = bot.cdn_client
-        self.currently_downloading_for_embed = []
-        self.currently_embedding_users = []
+        self.cdn_client = cdn_client
 
     @abstractmethod
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BaseClip':
@@ -92,195 +438,6 @@ class BaseMisc(ABC):
     @abstractmethod
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         ...
-
-    @staticmethod
-    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
-        """Handle timeout for embed processing"""
-        await asyncio.sleep(amt)
-        if not ctx.responded:
-            await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
-            raise TimeoutError(f"Waiting for clip {url} download timed out")
-
-    @staticmethod
-    async def fetch_tokens(user):
-        url = 'https://clyppy.io/api/tokens/get/'
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        j = {'userid': user.id, 'username': user.username}
-        async with get_aiohttp_session() as session:
-            async with session.get(url, json=j, headers=headers) as response:
-                if response.status == 200:
-                    j = await response.json()
-                    return j['tokens']
-                else:
-                    error_data = await response.json()
-                    raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
-
-    async def command_embed(self, ctx: Union[Message, SlashContext], url: str):
-        async def wait_for_download(clip_id: str, timeout: float = 30):
-            start_time = time()
-            while clip_id in self.currently_downloading_for_embed:
-                if time() - start_time > timeout:
-                    raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
-                await asyncio.sleep(0.1)
-
-        timeout_task = None
-        if isinstance(ctx, SlashContext):
-            await ctx.defer(ephemeral=False)
-        elif isinstance(ctx, Message):
-            ctx.send = ctx.reply
-
-        if ctx.guild:
-            guild = GuildType(ctx.guild.id, ctx.guild.name, False)
-            ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
-        else:
-            guild = GuildType(ctx.author.id, ctx.author.username, True)
-            ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
-
-        slug, p = None, None
-        try:
-            if not url.startswith("https://"):
-                url = "https://" + url
-            platform, slug = compute_platform(url, self.bot)
-
-            p = platform.platform_name if platform is not None else None
-            self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
-
-            if guild.is_dm:
-                nsfw_enabed = True
-            elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
-                # GuildPublicThread has no attribute nsfw
-                nsfw_enabed = False
-            else:
-                nsfw_enabed = ctx.channel.nsfw
-
-            if platform is None:
-                self.logger.info(f"return incompatible for /embed {url}")
-                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
-                await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
-                    load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
-                         f"platform: {p}\n"
-                         f"slug: {slug}\n"
-                         f"response - Incompatible",
-                    color=COLOR_RED,
-                    url=APPUSE_LOG_WEBHOOK
-                )
-                return
-            elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"This platform is not allowed in this channel. You can either:\n"
-                               f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
-                               f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
-                               f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
-                await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
-                    load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
-                         f"platform: {p}\n"
-                         f"slug: {slug}\n"
-                         f"response - NSFW disabled",
-                    color=COLOR_RED,
-                    url=APPUSE_LOG_WEBHOOK
-                )
-                return
-
-            if ctx.user.id in self.currently_embedding_users:
-                await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
-                await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
-                    load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
-                         f"platform: {p}\n"
-                         f"slug: {slug}\n"
-                         f"response - Already embedding",
-                    color=COLOR_RED,
-                )
-                return
-            else:
-                self.currently_embedding_users.append(ctx.user.id)
-
-            if slug in self.currently_downloading_for_embed:
-                try:
-                    # if its already downloading from another embed command running at the same time
-                    await wait_for_download(slug, timeout=platform.dl_timeout_secs)
-                except TimeoutError:
-                    pass  # continue with the dl anyway
-            else:
-                self.currently_downloading_for_embed.append(slug)
-
-            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
-            e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
-        except Exception as e:
-            if timeout_task is not None:
-                timeout_task.cancel()
-            self.logger.info(f"Exception in /embed: {str(e)}")
-            await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
-            await send_webhook(
-                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
-                load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url}\n"
-                     f"platform: {p}\n"
-                     f"slug: {slug}\n"
-                     f"response - Unexpected error",
-                color=COLOR_RED,
-                url=APPUSE_LOG_WEBHOOK
-            )
-            return
-
-        success, response = False, "Unknown error"
-        try:
-            await e._process_this_clip_link(
-                clip_link=url,
-                respond_to=ctx,
-                guild=guild,
-                try_send_files=True
-            )
-            success, response = True, "Success"
-        except NoDuration:
-            await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
-            success, response = False, "No duration"
-        except NoPermsToView:
-            await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
-            success, response = False, "No permisions"
-        except VideoTooLong:
-            if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
-                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
-            else:
-                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"Voting with `/vote` will increase it to {EMBED_W_TOKEN_MAX_LEN // 60} minutes! {create_nexus_str()}")
-            success, response = False, "Video too long"
-        except ClipFailure:
-            await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
-            success, response = False, "Clip failure"
-        except Exception as e:
-            self.logger.info(f'Unexpected error in /embed: {str(e)}')
-            await ctx.send(f"An unexpected error occurred with your input `{url}` {create_nexus_str()}")
-            success, response = False, "Unexpected error"
-        finally:
-            timeout_task.cancel()
-
-            await send_webhook(
-                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - {["Success" if success else "Failure"]}',
-                load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url}\n"
-                     f"platform: {p}\n"
-                     f"slug: {slug}\n"
-                     f"response - {response}",
-                color=[COLOR_GREEN if success else COLOR_RED],
-                url=APPUSE_LOG_WEBHOOK
-            )
-            try:
-                self.currently_downloading_for_embed.remove(slug)
-            except ValueError:
-                pass
-            try:
-                self.currently_embedding_users.remove(ctx.user.id)
-            except ValueError:
-                pass
 
     def is_clip_link(self, url: str) -> bool:
         """
@@ -369,3 +526,17 @@ class BaseMisc(ABC):
             d = file.duration
 
         return await author_has_enough_tokens(basemsg, d)
+
+
+class BaseAutoEmbed(Extension):
+    def __init__(self, bot, platform):
+        self.platform = platform
+        self.embedder = AutoEmbedder(bot, self.platform, logging.getLogger(__name__))
+
+    @listen(MessageCreate)
+    async def on_message_create(self, event):
+        message_is_embed_command = (
+                    event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
+                    and self.platform.is_clip_link(event.message.content.split(" ")[-1]))
+        if self.platform.is_dl_server(event.message.guild) or message_is_embed_command:
+            await self.embedder.on_message_create(event, is_embed_text_command=message_is_embed_command)
