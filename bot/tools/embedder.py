@@ -103,6 +103,7 @@ class AutoEmbedder:
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
+                # quickembeds not enabled
                 return 1
 
             words = self._getwords(event.message.content)
