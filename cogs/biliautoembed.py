@@ -6,7 +6,7 @@ from interactions.api.events import MessageCreate
 class BiliAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.bili, always_embed=False)
+        self.auto_embed = BaseAutoEmbed(bot, bot.bili)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

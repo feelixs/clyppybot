@@ -6,7 +6,7 @@ from interactions.api.events import MessageCreate
 class XvidAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.xvid, always_embed=False)
+        self.auto_embed = BaseAutoEmbed(bot, bot.xvid)
 
     @listen(MessageCreate)
     async def on_message_create(self, event):

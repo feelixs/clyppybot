@@ -6,7 +6,7 @@ from interactions.api.events import MessageCreate
 class YtAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.yt, always_embed=False)
+        self.auto_embed = BaseAutoEmbed(bot, bot.yt)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):
