@@ -724,7 +724,7 @@ class BaseAutoEmbed:
 
         success, response = False, "Unknown error"
         try:
-            await self.platform._process_this_clip_link(
+            await self.embedder._process_this_clip_link(
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
