@@ -614,7 +614,7 @@ class BaseAutoEmbed:
                     error_data = await response.json()
                     raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
-    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform=None, slug=None):
+    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
         async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time()
             while clip_id in self.currently_downloading_for_embed:
