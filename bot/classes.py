@@ -15,6 +15,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure
 import hashlib
 import aiohttp
+from datetime import datetime
 import logging
 import asyncio
 from time import time
@@ -724,7 +725,12 @@ class BaseAutoEmbed:
 
         success, response = False, "Unknown error"
         try:
-            self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
+            if isinstance(ctx, SlashContext):
+                self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
+            elif isinstance(ctx, Message):
+                # for logging response times - it hasn't been set up for slash commands yet
+                self.embedder._clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
+
             await self.embedder._process_this_clip_link(
                 clip_link=url,
                 respond_to=ctx,
@@ -773,4 +779,9 @@ class BaseAutoEmbed:
             try:
                 self.currently_embedding_users.remove(ctx.user.id)
             except ValueError:
+                pass
+            try:
+                if isinstance(ctx, Message):
+                    del self.embedder._clip_id_msg_timestamps[ctx.id]
+            except KeyError:
                 pass
