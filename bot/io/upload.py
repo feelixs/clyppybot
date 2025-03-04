@@ -5,9 +5,43 @@ from bot.io import get_aiohttp_session
 import base64
 import os
 import uuid
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from bot.io.io import is_discord_compatible
+from bot.types import LocalFileInfo
 
 
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
+
+
+def get_video_details(file_path) -> 'LocalFileInfo':
+    try:
+        clip = VideoFileClip(file_path)
+        try:
+            size = os.path.getsize(file_path)
+        except OSError:
+            size = 0
+        return LocalFileInfo(
+            width=clip.w,
+            height=clip.h,
+            filesize=size,
+            duration=clip.duration,
+            local_file_path=file_path,
+            video_name=None,
+            can_be_uploaded=is_discord_compatible(size)
+        )
+        #return {
+        #    'width': clip.w,
+        #    'height': clip.h,
+        #    'url': url,
+        #    'filesize': os.path.getsize(file_path),
+        #    'duration': clip.duration
+        #}
+    except Exception as e:
+        raise
+    finally:
+        # Make sure we close the clip to free resources
+        if 'clip' in locals():
+            clip.close()
 
 
 async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None):

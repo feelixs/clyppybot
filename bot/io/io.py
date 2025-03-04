@@ -1,8 +1,35 @@
 from interactions import Message
 from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOKEN_COST, DL_SERVER_ID
 from typing import Tuple
-from os import getenv
 import aiohttp
+from bot.env import MAX_FILE_SIZE_FOR_DISCORD
+import os
+
+
+def is_discord_compatible(filesize: float):
+    if filesize is None:
+        return False
+    return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
+
+
+def fetch_cookies(opts, logger):
+    try:
+        profile_dir = None
+        for item in os.listdir('/firefox-profiles'):
+            if item.endswith('.default-release'):
+                profile_dir = item
+                break
+
+        if profile_dir:
+            profile_path = f"/firefox-profiles/{profile_dir}"
+            logger.info(f"Using Firefox profile: {profile_path}")
+            cookies_string = ('firefox', profile_path, None, None)
+            opts['cookiesfrombrowser'] = cookies_string
+            return
+
+        logger.info("No Firefox profile found.")
+    except Exception as e:
+        logger.error(f"Error fetching cookies: {str(e)}")
 
 
 def get_aiohttp_session():
@@ -25,7 +52,7 @@ async def is_404(url: str, logger=None) -> Tuple[bool, int]:
 async def subtract_tokens(user, amt):
     url = 'https://clyppy.io/api/tokens/subtract/'
     headers = {
-        'X-API-Key': getenv('clyppy_post_key'),
+        'X-API-Key': os.getenv('clyppy_post_key'),
         'Content-Type': 'application/json'
     }
     j = {'userid': user.id, 'username': user.username, 'amount': amt}

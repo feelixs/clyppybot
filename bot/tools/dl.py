@@ -1,6 +1,5 @@
-from bot.types import DownloadResponse, GuildType
+from bot.types import DownloadResponse, GuildType, BaseClipInterface
 from bot.errors import UnknownError
-from bot.classes import BaseClip
 from bot.env import DL_SERVER_ID
 import asyncio
 import os
@@ -12,13 +11,13 @@ class DownloadManager:
         max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
-    async def download_clip(self, clip: BaseClip, guild_ctx: GuildType,
+    async def download_clip(self, clip: BaseClipInterface, guild_ctx: GuildType,
                             always_download=False, overwrite_on_server=False,
                             can_send_files=False) -> DownloadResponse:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
         desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
         async with self._semaphore:
-            if not isinstance(clip, BaseClip):
+            if not isinstance(clip, BaseClipInterface):
                 raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")
             self._parent.logger.info("Run clip.download()")
         if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
