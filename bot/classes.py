@@ -10,9 +10,11 @@ from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
-from bot.env import EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN
+from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
+                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure
 import hashlib
+import aiohttp
 import logging
 import asyncio
 from time import time
@@ -30,6 +32,37 @@ def is_discord_compatible(filesize: float):
     if filesize is None:
         return False
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
+
+
+async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
+    if not in_test and os.getenv("TEST"):
+        return
+
+    if url is None:
+        url = LOGGER_WEBHOOK
+
+    # Create a rich embed
+    if color is None:
+        color = 5814783  # Blue color
+    payload = {
+        "embeds": [{
+            "title": title,
+            "description": load,
+            "color": color,
+        }]
+    }
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, json=payload) as response:
+                if response.status == 204:
+                    print(f"Successfully sent logger webhook: {load}")
+                else:
+                    print(f"Failed to send logger webhook. Status: {response.status}")
+                return response.status
+        except Exception as e:
+            print(f"Error sending log webhook: {str(e)}")
+            return None
 
 
 def get_video_details(file_path) -> 'LocalFileInfo':

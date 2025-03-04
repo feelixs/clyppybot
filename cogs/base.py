@@ -1,20 +1,16 @@
-from bot.classes import BaseMisc
-from bot.errors import VideoTooLong, NoDuration, ClipFailure, NoPermsToView
+from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback, TYPE_THREAD_CHANNEL)
+    Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, component_callback)
 from bot.env import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, LOGGER_WEBHOOK, APPUSE_LOG_WEBHOOK, \
-    VERSION, DLIST_VOTE_LINK, MAX_VIDEO_LEN_SEC, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, APPUSE_LOG_WEBHOOK, \
+    VERSION, DLIST_VOTE_LINK, EMBED_W_TOKEN_MAX_LEN
 from interactions.api.events.discord import GuildJoin, GuildLeft
-from bot.tools.embedder import AutoEmbedder
 from bot.io import get_aiohttp_session
-from bot.types import GuildType, COLOR_GREEN, COLOR_RED
+from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
-import asyncio
 import logging
 import aiohttp
-import time
 import os
 
 
@@ -25,37 +21,6 @@ def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
             return this_platform, slug
 
     return None, None
-
-
-async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
-    if not in_test and os.getenv("TEST"):
-        return
-
-    if url is None:
-        url = LOGGER_WEBHOOK
-
-    # Create a rich embed
-    if color is None:
-        color = 5814783  # Blue color
-    payload = {
-        "embeds": [{
-            "title": title,
-            "description": load,
-            "color": color,
-        }]
-    }
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(url, json=payload) as response:
-                if response.status == 204:
-                    print(f"Successfully sent logger webhook: {load}")
-                else:
-                    print(f"Failed to send logger webhook. Status: {response.status}")
-                return response.status
-        except Exception as e:
-            print(f"Error sending log webhook: {str(e)}")
-            return None
 
 
 class Base(Extension):
