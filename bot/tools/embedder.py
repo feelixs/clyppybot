@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
 from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.tools.misc import create_nexus_str
+from bot.env import create_nexus_str
 from bot.types import DownloadResponse, GuildType
 from bot.classes import DL_SERVER_ID
 from typing import List, Union

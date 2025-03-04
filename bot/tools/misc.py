@@ -1,11 +1,6 @@
-from bot.env import INVITE_LINK, SUPPORT_SERVER_URL, TOPGG_VOTE_LINK
 from interactions import SlashContext
 from bot.tools.dl import DownloadManager
 import logging
-
-
-def create_nexus_str():
-    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
 class Tools:
