@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(BlueSkyAutoEmbed(bot))
+    bot.load_extension(BlueSkyAutoEmbed(bot))
 
 
 class BlueSkyAutoEmbed(BaseAutoEmbed):

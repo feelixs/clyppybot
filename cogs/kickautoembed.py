@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(KickAutoEmbed(bot))
+    bot.load_extension(KickAutoEmbed(bot))
 
 
 class KickAutoEmbed(BaseAutoEmbed):

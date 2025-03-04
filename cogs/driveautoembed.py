@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(DriveAutoEmbed(bot))
+    bot.load_extension(DriveAutoEmbed(bot))
 
 
 class DriveAutoEmbed(BaseAutoEmbed):

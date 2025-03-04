@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(TwitchAutoEmbed(bot))
+    bot.load_extension(TwitchAutoEmbed(bot))
 
 
 class TwitchAutoEmbed(BaseAutoEmbed):

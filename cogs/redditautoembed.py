@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(RedditAutoEmbed(bot))
+    bot.load_extension(RedditAutoEmbed(bot))
 
 
 class RedditAutoEmbed(BaseAutoEmbed):

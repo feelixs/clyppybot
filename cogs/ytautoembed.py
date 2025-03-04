@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(YtAutoEmbed(bot))
+    bot.load_extension(YtAutoEmbed(bot))
 
 
 class YtAutoEmbed(BaseAutoEmbed):

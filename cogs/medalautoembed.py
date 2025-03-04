@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(MedalAutoEmbed(bot))
+    bot.load_extension(MedalAutoEmbed(bot))
 
 
 class MedalAutoEmbed(BaseAutoEmbed):

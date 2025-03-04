@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(PhubAutoEmbed(bot))
+    bot.load_extension(PhubAutoEmbed(bot))
 
 
 class PhubAutoEmbed(BaseAutoEmbed):

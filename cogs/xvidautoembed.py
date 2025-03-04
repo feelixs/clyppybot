@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(XvidAutoEmbed(bot))
+    bot.load_extension(XvidAutoEmbed(bot))
 
 
 class XvidAutoEmbed(BaseAutoEmbed):

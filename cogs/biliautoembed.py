@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(BilibiliAutoEmbed(bot))
+    bot.load_extension(BilibiliAutoEmbed(bot))
 
 
 class BilibiliAutoEmbed(BaseAutoEmbed):

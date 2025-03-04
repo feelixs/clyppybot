@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(DailymotionAutoEmbed(bot))
+    bot.load_extension(DailymotionAutoEmbed(bot))
 
 
 class DailymotionAutoEmbed(BaseAutoEmbed):

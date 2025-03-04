@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(InstaAutoEmbed(bot))
+    bot.load_extension(InstaAutoEmbed(bot))
 
 
 class InstaAutoEmbed(BaseAutoEmbed):

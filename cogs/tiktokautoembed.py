@@ -2,7 +2,7 @@ from bot.classes import BaseAutoEmbed
 
 
 def setup(bot):
-    bot.add_extension(TikTokAutoEmbed(bot))
+    bot.load_extension(TikTokAutoEmbed(bot))
 
 
 class TikTokAutoEmbed(BaseAutoEmbed):
