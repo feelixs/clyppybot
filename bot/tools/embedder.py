@@ -102,7 +102,10 @@ class AutoEmbedder:
 
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
-            if not self.bot.guild_settings.get_embed_enabled(guild.id):
+
+            message_is_embed_command = (event.message.content.startswith("!embed ")
+                                        and self.platform_tools.is_clip_link(event.message.content.split(" ")[-1]))
+            if not self.bot.guild_settings.get_embed_enabled(guild.id) and not message_is_embed_command:
                 # quickembeds not enabled
                 return 1
 
