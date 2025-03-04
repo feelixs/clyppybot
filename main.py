@@ -31,6 +31,7 @@ class BaseMiscForConsistency(BaseAutoEmbed):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.platform = None
         super().__init__(self)
 
 
