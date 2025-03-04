@@ -7,7 +7,7 @@ def create_nexus_str():
 
 YT_DLP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0"
 
-EMBED_TXT_COMMAND = "!embed"
+EMBED_TXT_COMMAND = ".embed"
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
