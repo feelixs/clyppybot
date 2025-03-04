@@ -591,12 +591,15 @@ class BaseAutoEmbed:
                 platform=self.platform,
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
-        elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
-            await self.embedder.on_message_create(event)
         else:
             for txt_command, func in self.OTHER_TXT_COMMANDS.items():
                 if event.message.content.startswith(txt_command):
-                    await func(event.message)
+                    return await func(event.message)
+
+            # wasn't a command, maybe its a link?
+            if self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+                await self.embedder.on_message_create(event)
+
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
