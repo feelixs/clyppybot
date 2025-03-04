@@ -546,7 +546,7 @@ class BaseAutoEmbed:
                     event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
                     and self.platform.is_clip_link(event.message.content.split(" ")[-1]))
         if message_is_embed_command:
-            await self.bot.base.command_embed(
+            await self.command_embed(
                 ctx=event.message,
                 url=event.message.content.split(" ")[-1],
                 platform=self.platform,
