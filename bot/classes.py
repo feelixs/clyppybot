@@ -592,6 +592,7 @@ class BaseAutoEmbed:
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
         else:
+            # try the other commands (ones with no params)
             for txt_command, func in self.OTHER_TXT_COMMANDS.items():
                 if event.message.content.startswith(txt_command):
                     return await func(event.message)
