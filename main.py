@@ -106,9 +106,9 @@ Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
-Bot.currently_embedding = []
-Bot.currently_downloading = []
-Bot.currently_embedding_users = []
+Bot.currently_embedding = []  # used in embedder.py (AutoEmbedder) -> for quickembeds (and i guess also triggers for command embeds)
+Bot.currently_downloading = []  # used in command embeds across all platforms
+Bot.currently_embedding_users = []  # used for command embeds
 
 
 async def main():
