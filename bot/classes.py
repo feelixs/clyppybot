@@ -534,7 +534,8 @@ class BaseAutoEmbed(Extension):
         self.platform = platform
         self.bot = bot
         self.always_embed_this_platform = always_embed
-        self.embedder = AutoEmbedder(bot, platform, logging.getLogger(__name__))
+        self.logger = logging.getLogger(__name__)
+        self.embedder = AutoEmbedder(bot, platform, self.logger)
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
