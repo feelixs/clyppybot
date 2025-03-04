@@ -597,7 +597,7 @@ class BaseAutoEmbed:
                 if event.message.content.startswith(txt_command):
                     return await func(event.message)
 
-            # wasn't a command, maybe its a link?
+            # wasn't a command, maybe it's a link?
             if self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
                 await self.embedder.on_message_create(event)
 
