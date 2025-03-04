@@ -7,7 +7,7 @@ YT_DLP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/2
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
 
-VERSION = "1.5.8b"
+VERSION = "1.6.0b"
 CLYPPYIO_USER_AGENT = f"ClyppyBot/{VERSION}"
 
 
