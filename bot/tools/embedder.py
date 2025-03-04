@@ -104,7 +104,7 @@ class AutoEmbedder:
                 return 1  # don't respond to the bot's own messages
 
             if is_embed_text_command:
-                await self.platform_tools.command_embed(event.message, guild)
+                await self.platform_tools.embed_command(event.message, guild)
             elif not self.bot.guild_settings.get_embed_enabled(guild.id):
                 # quickembeds not enabled, and wasn't a text embed command
                 return 1
