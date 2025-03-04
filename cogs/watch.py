@@ -56,6 +56,10 @@ class Watch(Extension):
         if event.message.guild is None:
             return  # in dms it won't work
 
+        if event.message.author.id in [1111723928604381314, 1305624117818560664]:
+            # clyppy or test clyppy sent msg
+            return
+
         if "clyppy" in event.message.content or '1111723928604381314' in event.message.content:
             self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
                              f"@{event.message.author.username} - \"{event.message.content}\"")
