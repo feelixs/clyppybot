@@ -533,7 +533,7 @@ class BaseAutoEmbed(Extension):
     def __init__(self, bot, platform, always_embed=False):
         self.platform = platform
         self.always_embed_this_platform = always_embed
-        self.embedder = AutoEmbedder(bot, self.platform, logging.getLogger(__name__))
+        self.embedder = AutoEmbedder(bot, platform, logging.getLogger(__name__))
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
