@@ -1,4 +1,5 @@
-from bot.classes import BaseClip, DownloadResponse
+from bot.classes import BaseClip
+from bot.types import DownloadResponse
 
 
 class MedalClip(BaseClip):
