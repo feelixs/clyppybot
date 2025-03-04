@@ -572,8 +572,8 @@ class BaseAutoEmbed:
         self.platform = self.autoembedder_cog.platform
         self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
         self.OTHER_TXT_COMMANDS = {
-            ".help ": self.send_help,
-            ".tokens ": self.tokens_cmd,
+            ".help": self.send_help,
+            ".tokens": self.tokens_cmd,
             ".vote": self.vote_cmd
         }
 
@@ -594,7 +594,7 @@ class BaseAutoEmbed:
         else:
             # try the other commands (ones with no params)
             for txt_command, func in self.OTHER_TXT_COMMANDS.items():
-                if event.message.content.startswith(txt_command):
+                if event.message.content.strip() == txt_command:
                     return await func(event.message)
 
             # wasn't a command, maybe it's a link?
