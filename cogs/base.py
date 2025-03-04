@@ -5,7 +5,6 @@ from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LI
 from interactions.api.events.discord import GuildJoin, GuildLeft
 from bot.types import COLOR_GREEN, COLOR_RED
 from bot.io import get_aiohttp_session
-from bot.classes import send_webhook
 from re import compile
 import logging
 import aiohttp
