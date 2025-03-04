@@ -1,6 +1,5 @@
 from bot.env import DL_SERVER_ID, YT_DLP_USER_AGENT, LOGGER_WEBHOOK
 from bot.io import author_has_enough_tokens
-from bot.io.upload import get_video_details
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union, Tuple
@@ -8,7 +7,7 @@ from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io.io import get_aiohttp_session, fetch_cookies
-from bot.types import LocalFileInfo, COLOR_RED, COLOR_GREEN, GuildType, BaseClipInterface
+from bot.types import LocalFileInfo, COLOR_RED, COLOR_GREEN, GuildType, BaseClipInterface, get_video_details
 from bot.errors import NoDuration, NoPermsToView, VideoTooLong, ClipFailure
 from bot.env import APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, EMBED_W_TOKEN_MAX_LEN, MAX_VIDEO_LEN_SEC
 from bot.tools.misc import create_nexus_str
