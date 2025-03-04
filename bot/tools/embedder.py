@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.tools.misc import create_nexus_str
 from bot.types import DownloadResponse, GuildType
-from bot.classes import DL_SERVER_ID
+from bot.env import DL_SERVER_ID
 from typing import List, Union
 import traceback
 import asyncio
