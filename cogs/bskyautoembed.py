@@ -6,7 +6,8 @@ from interactions.api.events import MessageCreate
 class BlueSkyAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.bsky)
+        self.platform = bot.bsky
+        self.auto_embed = BaseAutoEmbed(self, bot)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

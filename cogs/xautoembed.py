@@ -6,7 +6,8 @@ from interactions.api.events import MessageCreate
 class XAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.x)
+        self.platform = bot.x
+        self.auto_embed = BaseAutoEmbed(self, bot)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

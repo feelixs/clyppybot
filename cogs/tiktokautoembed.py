@@ -6,7 +6,8 @@ from interactions.api.events import MessageCreate
 class TikTokAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.tiktok)
+        self.platform = bot.tiktok
+        self.auto_embed = BaseAutoEmbed(self, bot)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

@@ -7,7 +7,8 @@ class VimeoAutoEmbed(Extension):
     
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.vimeo)
+        self.platform = bot.vimeo
+        self.auto_embed = BaseAutoEmbed(self, bot)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

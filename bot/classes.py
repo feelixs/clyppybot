@@ -562,12 +562,13 @@ class BaseMisc(ABC):
 
 
 class BaseAutoEmbed:
-    def __init__(self, bot, platform, always_embed=False):
-        self.platform = platform
+    def __init__(self, parent, bot, always_embed=False):
+        self.autoembedder_cog = parent
         self.bot = bot
         self.always_embed_this_platform = always_embed
         self.logger = logging.getLogger(__name__)
-        self.embedder = AutoEmbedder(bot, platform, self.logger)
+        self.platform = self.autoembedder_cog.platform
+        self.embedder = AutoEmbedder(bot, self.platform, self.logger)
         self.currently_downloading_for_embed = []
         self.currently_embedding_users = []
 
@@ -704,7 +705,6 @@ class BaseAutoEmbed:
                 self.currently_downloading_for_embed.append(slug)
 
             timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
-            e = AutoEmbedder(self.bot, platform, logging.getLogger(__name__))
         except Exception as e:
             if timeout_task is not None:
                 timeout_task.cancel()
@@ -724,7 +724,7 @@ class BaseAutoEmbed:
 
         success, response = False, "Unknown error"
         try:
-            await e._process_this_clip_link(
+            await self.autoembedder_cog._process_this_clip_link(
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,

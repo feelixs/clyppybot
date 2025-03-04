@@ -6,7 +6,8 @@ from interactions.api.events import MessageCreate
 class DailymotionAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.auto_embed = BaseAutoEmbed(bot, bot.dailymotion)
+        self.platform = bot.dailymotion
+        self.auto_embed = BaseAutoEmbed(self, bot)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):
