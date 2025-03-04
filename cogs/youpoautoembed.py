@@ -1,10 +1,4 @@
 from bot.classes import BaseAutoEmbed
 
-
 def setup(bot):
-    bot.load_extension(YoupoAutoEmbed(bot))
-
-
-class YoupoAutoEmbed(BaseAutoEmbed):
-    def __init__(self, bot):
-        super().__init__(bot, bot.youp)
+    return BaseAutoEmbed(bot, bot.youp)
