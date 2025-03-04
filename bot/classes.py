@@ -11,7 +11,8 @@ from bot.io import get_aiohttp_session
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
-                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION)
+                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
+                     INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure
 import hashlib
 import aiohttp
@@ -570,7 +571,11 @@ class BaseAutoEmbed:
         self.logger = parent.logger
         self.platform = self.autoembedder_cog.platform
         self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
-        self.OTHER_TXT_COMMANDS = {".help ": self.send_help, ".tokens ": self.tokens_cmd}
+        self.OTHER_TXT_COMMANDS = {
+            ".help ": self.send_help,
+            ".tokens ": self.tokens_cmd,
+            ".vote": self.vote_cmd
+        }
 
     async def handle_message(self, event):
         if self.platform is None:
@@ -659,6 +664,31 @@ class BaseAutoEmbed:
             url=APPUSE_LOG_WEBHOOK
         )
 
+    async def vote_cmd(self, ctx: Union[SlashContext, Message]):
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+
+        await ctx.send(embed=Embed(
+            title="Vote for Clyppy!",
+            description=f"Give Clyppy your support by voting in popular bot sites! By voting, receive the "
+                        f"following benefits:\n\n"
+                        f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
+                        f"- (2) VIP tokens per vote!\n"
+                        f"- VIP tokens allow you to embed videos up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes in length!\n\n"
+                        f"View all the vote links below. Your support is appreciated.\n\n"
+                        f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
+                        f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
+                        f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
+                        # f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
+                        f"{create_nexus_str()}"
+        ))
+        await send_webhook(
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {ctx.user.username} - /vote called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK
+        )
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
         async def wait_for_download(clip_id: str, timeout: float = 30):

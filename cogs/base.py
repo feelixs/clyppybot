@@ -116,26 +116,7 @@ class Base(Extension):
 
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
-        await ctx.send(embed=Embed(
-            title="Vote for Clyppy!",
-            description=f"Give Clyppy your support by voting in popular bot sites! By voting, receive the "
-                        f"following benefits:\n\n"
-                        f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
-                        f"- (2) VIP tokens per vote!\n"
-                        f"- VIP tokens allow you to embed videos up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes in length!\n\n"
-                        f"View all the vote links below. Your support is appreciated.\n\n"
-                        f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
-                        f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
-                        f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
-            #f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
-                        f"{create_nexus_str()}"
-        ))
-        await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /vote called',
-            load=f"response - success",
-            color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
-        )
+        await self.bot.base.vote_cmd(ctx)
 
     @slash_command(name="tokens", description="View your VIP tokens!")
     async def tokens(self, ctx: SlashContext):
