@@ -7,7 +7,7 @@ class NuulsAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.platform = bot.nuuls
-        self.auto_embed = BaseAutoEmbed(self, bot)
+        self.auto_embed = BaseAutoEmbed(self)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

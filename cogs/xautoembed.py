@@ -7,7 +7,7 @@ class XAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.platform = bot.x
-        self.auto_embed = BaseAutoEmbed(self, bot)
+        self.auto_embed = BaseAutoEmbed(self)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

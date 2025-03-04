@@ -562,13 +562,13 @@ class BaseMisc(ABC):
 
 
 class BaseAutoEmbed:
-    def __init__(self, parent, bot, always_embed=False):
+    def __init__(self, parent, always_embed=False):
         self.autoembedder_cog = parent
-        self.bot = bot
+        self.bot = parent.bot
         self.always_embed_this_platform = always_embed
-        self.logger = logging.getLogger(__name__)
+        self.logger = parent.logger
         self.platform = self.autoembedder_cog.platform
-        self.embedder = AutoEmbedder(bot, self.platform, self.logger)
+        self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
         self.currently_downloading_for_embed = []
         self.currently_embedding_users = []
 

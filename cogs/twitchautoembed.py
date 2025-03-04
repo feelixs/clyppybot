@@ -7,7 +7,7 @@ class TwitchAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.platform = bot.twitch
-        self.auto_embed = BaseAutoEmbed(self, bot, always_embed=True)
+        self.auto_embed = BaseAutoEmbed(self, always_embed=True)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):

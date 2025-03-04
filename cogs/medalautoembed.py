@@ -1,13 +1,15 @@
 from bot.classes import BaseAutoEmbed
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
+import logging
 
 
 class MedalAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
         self.platform = bot.medal
-        self.auto_embed = BaseAutoEmbed(self, bot)
+        self.logger = logging.getLogger(__name__)
+        self.auto_embed = BaseAutoEmbed(self)
     
     @listen(MessageCreate)
     async def on_message_create(self, event):
