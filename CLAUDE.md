@@ -5,7 +5,7 @@
 - This project is built into a docker container using an unlisted Dockerfile in another folder
 
 ## Code Style
-- Use PEP 8 conventions with 4-space indentation
+- Use PEP 8 conventions with 4-space indentation and 2-blank line separation between functions (unless inside a class)
 - Classes: CamelCase (e.g., `BaseClip`, `TwitchMisc`)
 - Functions/methods: snake_case (e.g., `get_clip`, `parse_clip_url`)
 - Constants: UPPER_CASE (e.g., `MAX_VIDEO_LEN_SEC`)
