@@ -74,7 +74,7 @@ class AutoEmbedder:
                 n += 1
         return n
 
-    async def on_message_create(self, event: MessageCreate):
+    async def on_message_create(self, event: MessageCreate, is_embed_text_command=False):
         try:
             if event.message.guild is None:
                 # if we're in dm context, set the guild id to the author id
@@ -103,9 +103,7 @@ class AutoEmbedder:
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
 
-            message_is_embed_command = (event.message.content.startswith("!embed ")  # support text command (!embed url)
-                                        and self.platform_tools.is_clip_link(event.message.content.split(" ")[-1]))
-            if not self.bot.guild_settings.get_embed_enabled(guild.id) and not message_is_embed_command:
+            if not self.bot.guild_settings.get_embed_enabled(guild.id) and not is_embed_text_command:
                 # quickembeds not enabled
                 return 1
 
