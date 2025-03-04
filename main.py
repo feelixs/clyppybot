@@ -27,7 +27,7 @@ import asyncio
 import os
 
 
-class BaseMiscForConsistency(BaseAutoEmbed):
+class BaseAutoEmbedForConsistency(BaseAutoEmbed):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -80,7 +80,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
-Bot.base = BaseMiscForConsistency(bot=Bot)
+Bot.base = BaseAutoEmbedForConsistency(bot=Bot)
 
 Bot.twitch = TwitchMisc(bot=Bot)
 Bot.kick = KickMisc(bot=Bot)
