@@ -1,13 +1,6 @@
-from interactions import Extension, listen
-from interactions.api.events import MessageCreate
-from bot.tools.embedder import AutoEmbedder
-import logging
+from bot.classes import BaseAutoEmbed
 
 
-class TwitchAutoEmbed(Extension):
+class TwitchAutoEmbed(BaseAutoEmbed):
     def __init__(self, bot):
-        self.embedder = AutoEmbedder(bot, bot.twitch, logging.getLogger(__name__))
-
-    @listen(MessageCreate)
-    async def on_message_create(self, event):
-        await self.embedder.on_message_create(event)
+        super().__init__(bot, self.bot.twitch, always_embed=True)
