@@ -590,15 +590,14 @@ class BaseAutoEmbed:
                 platform=self.platform,
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
-        else:
-            if self.platform is None:  # this means we're in the 'base' instance, meaning it's the one who will process misc cmds
-                # try the other commands (ones with no params)
-                for txt_command, func in self.OTHER_TXT_COMMANDS.items():
-                    if event.message.content.strip() == txt_command:
-                        return await func(event.message)
-            elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
-                # wasn't a command, maybe it's a link?
-                await self.embedder.on_message_create(event)
+        elif self.platform is None:  # this means we're in the 'base' instance, meaning it's the one who will process misc cmds
+            # try the other commands (ones with no params)
+            for txt_command, func in self.OTHER_TXT_COMMANDS.items():
+                if event.message.content.strip() == txt_command:
+                    return await func(event.message)
+        elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+            # wasn't a command, maybe it's a link?
+            await self.embedder.on_message_create(event)
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
