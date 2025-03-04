@@ -626,7 +626,7 @@ class BaseAutoEmbed:
         if isinstance(ctx, SlashContext):
             await ctx.defer(ephemeral=False)
         elif isinstance(ctx, Message):
-            ctx.reply = ctx.send
+            ctx.send = ctx.reply
 
         if ctx.guild:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
