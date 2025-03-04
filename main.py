@@ -1,5 +1,5 @@
 from interactions import AutoShardedClient, Intents
-from bot.classes import BaseMisc
+from bot.classes import BaseAutoEmbed
 from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.drive import GoogleDriveMisc
 from bot.platforms.insta import InstagramMisc
@@ -27,15 +27,11 @@ import asyncio
 import os
 
 
-class BaseMiscForConsistency(BaseMisc):
+class BaseMiscForConsistency(BaseAutoEmbed):
     def __init__(self, bot):
-        super().__init__(bot)
-
-    def parse_clip_url(self, url: str, extended_url_formats=False):
-        return None
-
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
-        return None
+        self.bot = bot
+        self.logger = logging.getLogger(self.__class__.__name__)
+        super().__init__(self)
 
 
 async def save_to_server():
