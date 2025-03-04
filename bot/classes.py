@@ -4,11 +4,15 @@ from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from interactions import Message, SlashContext
+from interactions import Message, SlashContext, Extension
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
+from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse
+from interactions import listen
+from interactions.api.events import MessageCreate
+from bot.env import EMBED_TXT_COMMAND
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong
 import hashlib
 import logging
@@ -522,3 +526,17 @@ class BaseMisc(ABC):
             d = file.duration
 
         return await author_has_enough_tokens(basemsg, d)
+
+
+class BaseAutoEmbed(Extension):
+    def __init__(self, bot, platform):
+        self.platform = platform
+        self.embedder = AutoEmbedder(bot, self.platform, logging.getLogger(__name__))
+
+    @listen(MessageCreate)
+    async def on_message_create(self, event):
+        message_is_embed_command = (
+                    event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
+                    and self.platform.is_clip_link(event.message.content.split(" ")[-1]))
+        if self.platform.is_dl_server(event.message.guild) or message_is_embed_command:
+            await self.embedder.on_message_create(event, is_embed_text_command=message_is_embed_command)
