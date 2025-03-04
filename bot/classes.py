@@ -529,8 +529,9 @@ class BaseMisc(ABC):
 
 
 class BaseAutoEmbed(Extension):
-    def __init__(self, bot, platform):
+    def __init__(self, bot, platform, always_embed=False):
         self.platform = platform
+        self.always_embed_this_platform = always_embed
         self.embedder = AutoEmbedder(bot, self.platform, logging.getLogger(__name__))
 
     @listen(MessageCreate)
@@ -538,5 +539,5 @@ class BaseAutoEmbed(Extension):
         message_is_embed_command = (
                     event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
                     and self.platform.is_clip_link(event.message.content.split(" ")[-1]))
-        if self.platform.is_dl_server(event.message.guild) or message_is_embed_command:
+        if self.platform.is_dl_server(event.message.guild) or message_is_embed_command or self.always_embed_this_platform:
             await self.embedder.on_message_create(event, is_embed_text_command=message_is_embed_command)
