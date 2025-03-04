@@ -74,7 +74,7 @@ class AutoEmbedder:
                 n += 1
         return n
 
-    async def on_message_create(self, event: MessageCreate, is_embed_text_command=False):
+    async def on_message_create(self, event: MessageCreate):
         try:
             if event.message.guild is None:
                 # if we're in dm context, set the guild id to the author id
@@ -103,7 +103,7 @@ class AutoEmbedder:
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
 
-            if not self.bot.guild_settings.get_embed_enabled(guild.id) and not is_embed_text_command:
+            if not self.bot.guild_settings.get_embed_enabled(guild.id):
                 # quickembeds not enabled
                 return 1
 
@@ -113,7 +113,7 @@ class AutoEmbedder:
                 contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
-                await self._process_clip_one_at_a_time(words[index], event.message, guild, is_embed_text_command)
+                await self._process_clip_one_at_a_time(words[index], event.message, guild)
             elif num_links > 1:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
@@ -121,11 +121,11 @@ class AutoEmbedder:
                     next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
                     if not next_link_exists:
                         return 1
-                    await self._process_clip_one_at_a_time(words[index], event.message, guild, is_embed_text_command)
+                    await self._process_clip_one_at_a_time(words[index], event.message, guild)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
-    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, is_embed_text_command=False):
+    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         self._clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
         if parsed_id in self.currently_downloading:
@@ -137,7 +137,6 @@ class AutoEmbedder:
                 clip_link=clip_link,
                 respond_to=respond_to,
                 guild=guild,
-                is_embed_text_command=is_embed_text_command,
                 try_send_files=True
             )
         except VideoTooLong:
@@ -165,7 +164,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, is_embed_text_command=False, try_send_files=True) -> None:
+    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True

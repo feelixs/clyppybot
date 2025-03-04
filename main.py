@@ -1,4 +1,5 @@
 from interactions import AutoShardedClient, Intents
+from bot.classes import BaseMisc
 from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.drive import GoogleDriveMisc
 from bot.platforms.insta import InstagramMisc
@@ -71,6 +72,7 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
+Bot.base = BaseMisc(bot=Bot)
 
 Bot.twitch = TwitchMisc(bot=Bot)
 Bot.kick = KickMisc(bot=Bot)
