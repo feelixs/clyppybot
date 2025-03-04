@@ -10,8 +10,8 @@ from bot.classes import BaseClip, BaseMisc
 
 
 class RedditMisc(BaseMisc):
-    def __init__(self, bot):
-        super().__init__(bot)
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Reddit"
         self.VALID_EXT_VIDEO_DOMAINS = [
             'twitch.tv', 'www.twitch.tv',

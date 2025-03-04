@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class TwitchMisc(BaseMisc):
-    def __init__(self, bot):
-        super().__init__(bot)
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         tid = getenv("CLYPP_TWITCH_ID")
         if tid is None:
             exit("No Twitch API key found")

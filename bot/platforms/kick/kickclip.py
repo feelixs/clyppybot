@@ -1,5 +1,4 @@
-from bot.classes import BaseClip
-from bot.types import DownloadResponse
+from bot.classes import BaseClip, DownloadResponse
 from bot.io.cdn import CdnSpacesClient
 
 

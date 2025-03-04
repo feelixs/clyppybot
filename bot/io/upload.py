@@ -1,4 +1,4 @@
-from bot.errors import UploadFailed
+from bot.classes import UploadFailed
 from typing import Dict
 from math import ceil
 from bot.io import get_aiohttp_session

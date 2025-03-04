@@ -7,8 +7,8 @@ from typing import Optional
 
 
 class TikTokMisc(BaseMisc):
-    def __init__(self, bot):
-        super().__init__(bot)
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "TikTok"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:

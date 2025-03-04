@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class BiliMisc(BaseMisc):
-    def __init__(self, bot):
-        super().__init__(bot)
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Bilibili"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:

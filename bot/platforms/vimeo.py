@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class VimeoMisc(BaseMisc):
-    def __init__(self, bot):
-        super().__init__(bot)
+    def __init__(self, cdn_client):
+        super().__init__(cdn_client)
         self.platform_name = "Vimeo"
         self.dl_timeout_secs = 120
 
