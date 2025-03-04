@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class NuulsMisc(BaseMisc):
-    def __init__(self, cdn_client):
-        super().__init__(cdn_client)
+    def __init__(self, bot):
+        super().__init__(bot)
         self.platform_name = "Nuuls"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:

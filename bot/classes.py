@@ -424,12 +424,13 @@ class BaseClip(ABC):
 
 
 class BaseMisc(ABC):
-    def __init__(self, cdn_client: CdnSpacesClient):
+    def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
         self.is_nsfw = False
         self.dl_timeout_secs = 30
-        self.cdn_client = cdn_client
+        self.bot = bot
+        self.cdn_client = bot.cdn_client
 
     @abstractmethod
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'BaseClip':
