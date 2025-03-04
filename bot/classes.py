@@ -517,7 +517,10 @@ class BaseMisc(ABC):
                 await asyncio.sleep(0.1)
 
         timeout_task = None
-        await ctx.defer(ephemeral=False)
+        if isinstance(ctx, SlashContext):
+            await ctx.defer(ephemeral=False)
+        elif isinstance(ctx, Message):
+            ctx.send = ctx.reply
 
         if ctx.guild:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
