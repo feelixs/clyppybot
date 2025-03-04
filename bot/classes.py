@@ -724,6 +724,7 @@ class BaseAutoEmbed:
 
         success, response = False, "Unknown error"
         try:
+            self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
             await self.embedder._process_this_clip_link(
                 clip_link=url,
                 respond_to=ctx,
