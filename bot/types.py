@@ -1,6 +1,5 @@
 from bot.errors import NoDuration, UnknownError, UploadFailed
 from bot.io.io import get_aiohttp_session, is_discord_compatible, fetch_cookies
-from bot.io.upload import get_video_details
 from dataclasses import dataclass
 from typing import Optional
 from abc import ABC, abstractmethod
@@ -9,6 +8,38 @@ import hashlib
 from yt_dlp import YoutubeDL
 import os
 import asyncio
+from moviepy.video.io.VideoFileClip import VideoFileClip
+
+
+def get_video_details(file_path) -> 'LocalFileInfo':
+    try:
+        clip = VideoFileClip(file_path)
+        try:
+            size = os.path.getsize(file_path)
+        except OSError:
+            size = 0
+        return LocalFileInfo(
+            width=clip.w,
+            height=clip.h,
+            filesize=size,
+            duration=clip.duration,
+            local_file_path=file_path,
+            video_name=None,
+            can_be_uploaded=is_discord_compatible(size)
+        )
+        #return {
+        #    'width': clip.w,
+        #    'height': clip.h,
+        #    'url': url,
+        #    'filesize': os.path.getsize(file_path),
+        #    'duration': clip.duration
+        #}
+    except Exception as e:
+        raise
+    finally:
+        # Make sure we close the clip to free resources
+        if 'clip' in locals():
+            clip.close()
 
 
 # Default user-agent for yt-dlp
