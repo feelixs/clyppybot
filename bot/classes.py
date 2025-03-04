@@ -529,16 +529,15 @@ class BaseMisc(ABC):
         return await author_has_enough_tokens(basemsg, d)
 
 
-class BaseAutoEmbed(Extension):
+class BaseAutoEmbed:
     def __init__(self, bot, platform, always_embed=False):
         self.platform = platform
         self.bot = bot
         self.always_embed_this_platform = always_embed
         self.logger = logging.getLogger(__name__)
         self.embedder = AutoEmbedder(bot, platform, self.logger)
-
-    @listen(MessageCreate)
-    async def on_message_create(self, event):
+    
+    async def handle_message(self, event):
         message_is_embed_command = (
                     event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
                     and self.platform.is_clip_link(event.message.content.split(" ")[-1]))

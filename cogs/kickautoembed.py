@@ -1,6 +1,13 @@
 from bot.classes import BaseAutoEmbed
+from interactions import Extension, listen
+from interactions.api.events import MessageCreate
 
 
-def setup(bot):
-    # Create a BaseAutoEmbed instance with the Kick platform
-    return BaseAutoEmbed(bot, bot.kick, always_embed=True)
+class KickAutoEmbed(Extension):
+    def __init__(self, bot):
+        self.bot = bot
+        self.auto_embed = BaseAutoEmbed(bot, bot.kick, always_embed=True)
+    
+    @listen(MessageCreate)
+    async def on_message_create(self, event):
+        await self.auto_embed.handle_message(event)
