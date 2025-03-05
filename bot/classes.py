@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed
+from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
@@ -711,6 +711,13 @@ class BaseAutoEmbed:
         if ctx.guild:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
+            if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
+                return 1
+            elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
+                return await ctx.send(f"I don't have permission to embed links in this channel {create_nexus_str()}")
+            if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
+                if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
+                    return 1
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
