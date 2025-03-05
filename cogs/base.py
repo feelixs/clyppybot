@@ -77,7 +77,7 @@ class Base(Extension):
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
                 await send_webhook(
-                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - success"
                          f"title: {clip_info['title']}\n"
                          f"url: {clip_info['embedded_url']}\n"
@@ -92,7 +92,7 @@ class Base(Extension):
             else:
                 await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
                 await send_webhook(
-                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - error clip not found",
                     color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK,
@@ -102,7 +102,7 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
             await ctx.send(f"Uh oh... an error occurred fetching the clip {clyppyid}")
             await send_webhook(
-                title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
+                title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
                 load=f"response - unexpected error: {e}",
                 color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
