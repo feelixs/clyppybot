@@ -147,15 +147,16 @@ class RedditMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return RedditClip(slug, ext_info, self.cdn_client)
+        return RedditClip(slug, ext_info, self.bot)
 
 
 class RedditClip(BaseClip):
-    def __init__(self, slug, ext, cdn_client):
+    def __init__(self, slug, ext, bot):
         self._service = "reddit"
         self._url = f"https://redd.it/{slug}"
         self.external_link = ext
-        super().__init__(slug, cdn_client)
+        self.bot = bot
+        super().__init__(slug, bot.cdn_client)
 
     @property
     def service(self) -> str:
@@ -166,12 +167,12 @@ class RedditClip(BaseClip):
         return self._url
 
     async def _download_kick(self, filename, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
-        k = KickMisc()
+        k = KickMisc(bot=self.bot)
         kclip = await k.get_clip(self.external_link)
         return await kclip.download(filename, dlp_format, can_send_files)
 
     async def _download_medal(self, filename, dlp_format='best/bv*+ba', can_send_files=False) -> DownloadResponse:
-        m = MedalMisc()
+        m = MedalMisc(bot=self.bot)
         mclip = await m.get_clip(self.external_link)
         return await mclip.download(filename, dlp_format, can_send_files)
 
