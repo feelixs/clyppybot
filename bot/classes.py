@@ -741,7 +741,7 @@ class BaseAutoEmbed:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -758,7 +758,7 @@ class BaseAutoEmbed:
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                                f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
                 await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -773,7 +773,7 @@ class BaseAutoEmbed:
             if ctx.user.id in self.bot.currently_embedding_users:
                 await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
                 await send_webhook(
-                    title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
                          f"cmd - /embed url:{url}\n"
                          f"platform: {p}\n"
@@ -802,7 +802,7 @@ class BaseAutoEmbed:
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             await send_webhook(
-                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - Failure',
+                title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
@@ -854,13 +854,13 @@ class BaseAutoEmbed:
             timeout_task.cancel()
 
             await send_webhook(
-                title=f'{["DM" if guild.is_dm else guild.name]} - /embed called - {["Success" if success else "Failure"]}',
+                title=f'{"DM" if guild.is_dm else guild.name} - /embed called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - /embed url:{url}\n"
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - {response}",
-                color=[COLOR_GREEN if success else COLOR_RED],
+                color=COLOR_GREEN if success else COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
