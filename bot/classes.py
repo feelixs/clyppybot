@@ -834,7 +834,7 @@ class BaseAutoEmbed:
             success, response = False, "No duration"
         except NoPermsToView:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
-            success, response = False, "No permisions"
+            success, response = False, "No permissions"
         except VideoTooLong:
             if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
