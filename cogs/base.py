@@ -110,14 +110,14 @@ class Base(Extension):
     async def on_message_create(self, event):
         if event.author.bot:
             return
-        
+
         msg = event.message.content
         if len(msg.split(' ')) > 1:
             return
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
             msg = msg.strip()
             if msg == txt_command:
-                return await func(msg)
+                return await func(event.message)
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
