@@ -116,6 +116,11 @@ class Base(Extension):
         if msg.startswith(EMBED_TXT_COMMAND):
             if len(split) <= 1:
                 return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
+            else:
+                # handle case where a cog doesnt capture it and take over error handling (platform is None)
+                platform, _ = compute_platform(split[1], self.bot)
+                if platform is None:
+                    return await event.message.reply("Sorry, I can't embed that link (incompatible platform)")
 
         if len(split) > 1:
             # other misc commands don't take arguments
