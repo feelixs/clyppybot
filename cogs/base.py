@@ -111,7 +111,6 @@ class Base(Extension):
         msg = event.message
         if len(msg.split(' ')) > 1:
             return
-        self.logger.info(f"Checking for misc commands...")
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
             msg = msg.content.strip()
             if msg == txt_command:
