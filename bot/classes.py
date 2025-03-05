@@ -625,7 +625,8 @@ class BaseAutoEmbed:
         pre, cmds = "/", ""
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
-            pre, cmds = ".", "Available commands: `.help`, `.vote`, `.tokens`, `.embed url`,\n\n"
+            pre, cmds = ".", ("Available commands: `.help`, `.vote`, `.tokens`, `.embed url`,\n"
+                              "For a better experience, remember to give me permission to use slash commands!\n\n")
 
         about = "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n" + cmds
         about += (
