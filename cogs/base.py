@@ -471,8 +471,8 @@ class Base(Extension):
             await self.bot.change_presence(
                 activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
-            thech  = await self.client.fetch_channel(922239656555327510)
-            msg = await thech.fetch_message(1345012662055993355)
+            thech  = await self.client.fetch_channel(1203216165426696212)
+            msg = await thech.fetch_message(1208331551834771506)
             await msg.add_reaction(':man_bald:')
 
     async def post_servers(self, num: int):
