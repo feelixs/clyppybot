@@ -640,32 +640,36 @@ class BaseAutoEmbed:
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(content="Clyppy is a social bot that makes sharing videos easier!", embed=help_embed)
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /help called',
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}help called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK
         )
 
     async def tokens_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
             ctx.user = ctx.author
+            pre = '.'
 
         tokens = await self.bot.base.fetch_tokens(ctx.user)
         await ctx.send(f"You have `{tokens}` VIP tokens!\n"
-                       f"You can gain more by **voting** with `/vote`\n\n"
+                       f"You can gain more by **voting** with `{pre}vote`\n\n"
                        f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /tokens called',
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}tokens called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK
         )
 
     async def vote_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
             ctx.user = ctx.author
+            pre = '.'
 
         await ctx.send(embed=Embed(
             title="Vote for Clyppy!",
@@ -682,7 +686,7 @@ class BaseAutoEmbed:
                         f"{create_nexus_str()}"
         ))
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {ctx.user.username} - /vote called',
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK
