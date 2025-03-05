@@ -108,10 +108,14 @@ class Base(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
+        msg = event.message
+        if len(msg.split(' ')) > 1:
+            return
         self.logger.info(f"Checking for misc commands...")
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
-            if event.message.content.strip() == txt_command:
-                return await func(event.message)
+            msg = msg.content.strip()
+            if msg == txt_command:
+                return await func(msg)
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
