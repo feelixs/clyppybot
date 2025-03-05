@@ -36,7 +36,7 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
-async def send_webhook(title: str, load: str, color=None, url=None, in_test=False):
+async def send_webhook(title: str, load: str, logger, color=None, url=None, in_test=False):
     if not in_test and os.getenv("TEST"):
         return
 
@@ -58,12 +58,12 @@ async def send_webhook(title: str, load: str, color=None, url=None, in_test=Fals
         try:
             async with session.post(url, json=payload) as response:
                 if response.status == 204:
-                    print(f"Successfully sent logger webhook: {load}")
+                    logger.info(f"Successfully sent logger webhook: {load}")
                 else:
-                    print(f"Failed to send logger webhook. Status: {response.status}")
+                    logger.info(f"Failed to send logger webhook. Status: {response.status}")
                 return response.status
         except Exception as e:
-            print(f"Error sending log webhook: {str(e)}")
+            logger.info(f"Error sending log webhook: {str(e)}")
             return None
 
 
@@ -643,7 +643,8 @@ class BaseAutoEmbed:
             title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}help called',
             load=f"response - success",
             color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
         )
 
     async def tokens_cmd(self, ctx: Union[SlashContext, Message]):
@@ -661,7 +662,8 @@ class BaseAutoEmbed:
             title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}tokens called',
             load=f"response - success",
             color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
         )
 
     async def vote_cmd(self, ctx: Union[SlashContext, Message]):
@@ -689,7 +691,8 @@ class BaseAutoEmbed:
             title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
             color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
         )
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
@@ -722,8 +725,8 @@ class BaseAutoEmbed:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
 
+        p = platform.platform_name if platform is not None else None
         try:
-            p = platform.platform_name if platform is not None else None
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
 
             if guild.is_dm:
@@ -745,7 +748,8 @@ class BaseAutoEmbed:
                          f"slug: {slug}\n"
                          f"response - Incompatible",
                     color=COLOR_RED,
-                    url=APPUSE_LOG_WEBHOOK
+                    url=APPUSE_LOG_WEBHOOK,
+                    logger=self.logger
                 )
                 return
             elif platform.is_nsfw and not nsfw_enabed:
@@ -761,7 +765,8 @@ class BaseAutoEmbed:
                          f"slug: {slug}\n"
                          f"response - NSFW disabled",
                     color=COLOR_RED,
-                    url=APPUSE_LOG_WEBHOOK
+                    url=APPUSE_LOG_WEBHOOK,
+                    logger=self.logger
                 )
                 return
 
@@ -775,6 +780,7 @@ class BaseAutoEmbed:
                          f"slug: {slug}\n"
                          f"response - Already embedding",
                     color=COLOR_RED,
+                    logger=self.logger
                 )
                 return
             else:
@@ -803,7 +809,8 @@ class BaseAutoEmbed:
                      f"slug: {slug}\n"
                      f"response - Unexpected error",
                 color=COLOR_RED,
-                url=APPUSE_LOG_WEBHOOK
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
             )
             return
 
@@ -854,7 +861,8 @@ class BaseAutoEmbed:
                      f"slug: {slug}\n"
                      f"response - {response}",
                 color=[COLOR_GREEN if success else COLOR_RED],
-                url=APPUSE_LOG_WEBHOOK
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
             )
             try:
                 self.bot.currently_downloading.remove(slug)

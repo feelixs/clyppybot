@@ -86,7 +86,8 @@ class Base(Extension):
                          f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}"
                          f"expires: {[clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A']}",
                     color=COLOR_GREEN,
-                    url=APPUSE_LOG_WEBHOOK
+                    url=APPUSE_LOG_WEBHOOK,
+                    logger=self.logger
                 )
             else:
                 await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
@@ -94,7 +95,8 @@ class Base(Extension):
                     title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
                     load=f"response - error clip not found",
                     color=COLOR_RED,
-                    url=APPUSE_LOG_WEBHOOK
+                    url=APPUSE_LOG_WEBHOOK,
+                    logger=self.logger
                 )
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
@@ -103,7 +105,8 @@ class Base(Extension):
                 title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - \'info\' called on {clyppyid}',
                 load=f"response - unexpected error: {e}",
                 color=COLOR_RED,
-                url=APPUSE_LOG_WEBHOOK
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
             )
 
     @listen(MessageCreate)
@@ -367,7 +370,8 @@ class Base(Extension):
                  f"**on_error**: {on_error}\n"
                  f"**embed_buttons**: {embed_buttons}\n\n",
             color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
@@ -410,7 +414,8 @@ class Base(Extension):
             load=f'user: {ctx.user.username}\n'
                  f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n',
             color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
         )
 
     async def db_save_task(self):
@@ -435,7 +440,8 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=COLOR_GREEN
+                color=COLOR_GREEN,
+                logger=self.logger
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -452,7 +458,8 @@ class Base(Extension):
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
-                color=COLOR_RED
+                color=COLOR_RED,
+                logger=self.logger
             )
             await self.post_servers(len(self.bot.guilds))
 
