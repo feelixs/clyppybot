@@ -107,8 +107,8 @@ class Base(Extension):
             )
 
     @listen(MessageCreate)
-    async def on_message_create(self, event):
-        if event.author.bot:
+    async def on_message_create(self, event: MessageCreate):
+        if event.message.author.bot:
             return
 
         msg = event.message.content
