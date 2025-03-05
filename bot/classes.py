@@ -581,14 +581,14 @@ class BaseAutoEmbed:
         if self.platform is None:
             return
 
-        message_is_embed_command = (
-                    event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
-                    and self.platform.is_clip_link(event.message.content.split(" ")[-1])
-        )
-        if message_is_embed_command:
+        if event.message.content.startswith(f"{EMBED_TXT_COMMAND} "):
+            split = event.message.content.split(" ")
+            if len(split) <= 1:
+                return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
+
             await self.command_embed(
                 ctx=event.message,
-                url=event.message.content.split(" ")[-1],
+                url=split[-1],
                 platform=self.platform,
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
