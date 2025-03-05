@@ -3,7 +3,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext,
                           component_callback)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
 from bot.io import get_aiohttp_session
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -112,7 +112,12 @@ class Base(Extension):
             return
 
         msg = event.message.content
-        if len(msg.split(' ')) > 1:
+        split = msg.split(' ')
+        if msg.startswith(EMBED_TXT_COMMAND):
+            if len(split) <= 1:
+                return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
+
+        if len(split) > 1:
             return
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
             msg = msg.strip()
