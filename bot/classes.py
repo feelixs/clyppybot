@@ -659,8 +659,8 @@ class BaseAutoEmbed:
                        f"You can gain more by **voting** with `{pre}vote`\n\n"
                        f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}tokens called',
-            load=f"response - success",
+            title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - {pre}tokens called',
+            load=f"response - {tokens} tokens",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
