@@ -108,7 +108,7 @@ class Base(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        msg = event.message
+        msg = event.message.content
         if len(msg.split(' ')) > 1:
             return
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
