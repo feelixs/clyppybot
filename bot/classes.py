@@ -588,7 +588,7 @@ class BaseAutoEmbed:
 
             await self.command_embed(
                 ctx=event.message,
-                url=split[1],  # the second word
+                url=split[1],
                 platform=self.platform,
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
