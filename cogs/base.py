@@ -1,11 +1,10 @@
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext,
-                          component_callback, Message)
-from bot.env import SUPPORT_SERVER_URL, TOPGG_VOTE_LINK, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, INFINITY_VOTE_LINK, APPUSE_LOG_WEBHOOK, \
-    VERSION, DLIST_VOTE_LINK, EMBED_W_TOKEN_MAX_LEN
-from interactions.api.events.discord import GuildJoin, GuildLeft
+                          component_callback)
+from bot.env import SUPPORT_SERVER_URL, create_nexus_str
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION
+from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
 from bot.io import get_aiohttp_session
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
@@ -106,6 +105,13 @@ class Base(Extension):
                 color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK
             )
+
+    @listen(MessageCreate)
+    async def on_message_create(self, event):
+        self.logger.info(f"Checking for misc commands...")
+        for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
+            if event.message.content.strip() == txt_command:
+                return await func(event.message)
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
