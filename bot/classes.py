@@ -704,9 +704,11 @@ class BaseAutoEmbed:
 
         timeout_task = None
 
+        pre = "/"
         if isinstance(ctx, SlashContext):
             await ctx.defer(ephemeral=False)
         elif isinstance(ctx, Message):
+            pre = "."
             ctx.send = ctx.reply
             ctx.user = ctx.author
 
@@ -740,9 +742,9 @@ class BaseAutoEmbed:
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
+                         f"cmd - {pre}embed url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Incompatible",
@@ -757,9 +759,9 @@ class BaseAutoEmbed:
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                                f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
+                         f"cmd - {pre}embed url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - NSFW disabled",
@@ -772,9 +774,9 @@ class BaseAutoEmbed:
             if ctx.user.id in self.bot.currently_embedding_users:
                 await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - /embed url:{url}\n"
+                         f"cmd - {pre}embed url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Already embedding",
@@ -801,9 +803,9 @@ class BaseAutoEmbed:
             self.logger.info(f"Exception in /embed: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             await send_webhook(
-                title=f'{"DM" if guild.is_dm else guild.name} - /embed called - Failure',
+                title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url}\n"
+                     f"cmd - {pre}embed url:{url}\n"
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - Unexpected error",
@@ -853,9 +855,9 @@ class BaseAutoEmbed:
             timeout_task.cancel()
 
             await send_webhook(
-                title=f'{"DM" if guild.is_dm else guild.name} - /embed called - {"Success" if success else "Failure"}',
+                title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - /embed url:{url}\n"
+                     f"cmd - {pre}embed url:{url}\n"
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - {response}",
