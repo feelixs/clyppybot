@@ -101,7 +101,7 @@ class RedditMisc(BaseMisc):
                     for domain in self.VALID_EXT_VIDEO_DOMAINS:
                         if domain in txt:
                             try:
-                                matches = re.findall(f'https?://(?:www\.)?{domain}[^\s"\'<>]+', txt)
+                                matches = re.findall(f'https?://(?:www\\.)?{domain}[^\\s"\'<>]+', txt)
                                 if matches:
                                     return True, matches[0].split("&")[0]
                             except Exception as e:
