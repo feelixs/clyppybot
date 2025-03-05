@@ -117,7 +117,8 @@ class Base(Extension):
             if len(split) <= 1:
                 return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
 
-        if len(split) > 1:  # other misc commands don't take arguments
+        if len(split) > 1:
+            # other misc commands don't take arguments
             return
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
             msg = msg.strip()
