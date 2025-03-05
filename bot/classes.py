@@ -688,7 +688,7 @@ class BaseAutoEmbed:
                         f"{create_nexus_str()}"
         ))
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {ctx.user.username} - {pre}vote called',
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
