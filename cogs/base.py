@@ -112,7 +112,7 @@ class Base(Extension):
         if len(msg.split(' ')) > 1:
             return
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
-            msg = msg.content.strip()
+            msg = msg.strip()
             if msg == txt_command:
                 return await func(msg)
 
