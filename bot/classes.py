@@ -620,8 +620,7 @@ class BaseAutoEmbed:
                     error_data = await response.json()
                     raise Exception(f"Failed to fetch user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
-    @staticmethod
-    async def send_help(ctx: Union[SlashContext, Message]):
+    async def send_help(self, ctx: Union[SlashContext, Message]):
         pre, cmds = "/", ""
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
@@ -640,7 +639,7 @@ class BaseAutoEmbed:
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(content="Clyppy is a social bot that makes sharing videos easier!", embed=help_embed)
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - {pre}help called',
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {pre}help called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
@@ -659,7 +658,7 @@ class BaseAutoEmbed:
                        f"You can gain more by **voting** with `{pre}vote`\n\n"
                        f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - {pre}tokens called',
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - {pre}tokens called',
             load=f"response - {tokens} tokens",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,

@@ -77,14 +77,14 @@ class Base(Extension):
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 await ctx.send(embed=embed)
                 await send_webhook(
-                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                    title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - success"
                          f"title: {clip_info['title']}\n"
                          f"url: {clip_info['embedded_url']}\n"
                          f"platform: {clip_info['platform']}\n"
                          f"duration: {clip_info['duration']}\n"
                          f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}"
-                         f"expires: {[clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A']}",
+                         f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}",
                     color=COLOR_GREEN,
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
@@ -92,7 +92,7 @@ class Base(Extension):
             else:
                 await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
                 await send_webhook(
-                    title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                    title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - error clip not found",
                     color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK,
@@ -102,7 +102,7 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
             await ctx.send(f"Uh oh... an error occurred fetching the clip {clyppyid}")
             await send_webhook(
-                title=f'{["DM" if ctx.guild is None else ctx.guild.name]}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                 load=f"response - unexpected error: {e}",
                 color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
@@ -363,7 +363,7 @@ class Base(Extension):
             f"**embed_buttons**: {embed_buttons}\n\n"
         )
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /settings called',
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - /settings called',
             load=f'user: {ctx.user.username}\n'
                  "Successfully changed settings:\n\n"
                  f"**quickembeds**: {chosen_embed}\n"
@@ -410,7 +410,7 @@ class Base(Extension):
         tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
         await ctx.send(embed=tutorial_embed)
         await send_webhook(
-            title=f'{["DM" if ctx.guild is None else ctx.guild.name]} - /settings called',
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - /settings called',
             load=f'user: {ctx.user.username}\n'
                  f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n',
             color=COLOR_GREEN,
