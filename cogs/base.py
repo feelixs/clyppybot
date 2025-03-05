@@ -108,6 +108,9 @@ class Base(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
+        if event.author.bot:
+            return
+        
         msg = event.message.content
         if len(msg.split(' ')) > 1:
             return
