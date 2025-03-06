@@ -139,6 +139,13 @@ class BaseClip(ABC):
     @property
     @abstractmethod
     def url(self) -> str:
+        """Url yt-dlp will use to extract video information"""
+        pass
+
+    @property
+    @abstractmethod
+    def share_url(self) -> str:
+        """If different from url property"""
         pass
 
     @property
