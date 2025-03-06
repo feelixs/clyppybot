@@ -18,16 +18,16 @@ class DiscordMisc(BaseMisc):
             return None
 
         return {
-            'server': match.group(1),
-            'channel': match.group(2),
+            'channel': match.group(1),
+            'some_id': match.group(2),
             'filename': match.group(3),
             'url_params': match.group(4)
         }
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'DiscordAttachment':
         attrs = self.parse_clip_url(url)
-        server, chn, filename, ext = attrs.get('server'), attrs.get('channel'), attrs.get('filename'), attrs.get('url_params')
-        if not server or not chn or not filename or not ext:
+        the_id, chn, filename, ext = attrs.get('some_id'), attrs.get('channel'), attrs.get('filename'), attrs.get('url_params')
+        if not the_id or not chn or not filename or not ext:
             self.logger.info(f"Invalid Discord URL: {url}")
             raise NoDuration
 
@@ -52,7 +52,7 @@ class DiscordAttachment(BaseClip):
         self._service = "discord"
         self.cdn_client = attrs.get('cdn_client')
         self._message_id = attrs.get('message_id')
-        self._server = attrs.get('server')
+        self._some_id = attrs.get('some_id')
         self._channel = attrs.get('channel')
         self._filename = attrs.get('filename')
         self._url_params = attrs.get('url_params')
@@ -64,11 +64,7 @@ class DiscordAttachment(BaseClip):
 
     @property
     def url(self) -> str:
-        return f"https://cdn.discordapp.com/attachments/{self._server}/{self._channel}/{self._filename}?{self._url_params}"
-
-    @property
-    def share_url(self):
-        return f"https://discord.com/channels/{self._server}/{self._channel}/{self._message_id}"
+        return f"https://cdn.discordapp.com/attachments/{self._channel}/{self._some_id}/{self._filename}?{self._url_params}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.url}) run dl_check_size(upload_if_large=True)...")
