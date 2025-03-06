@@ -16,6 +16,7 @@ from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
 from bot.platforms.nuuls import NuulsMisc
+from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
 from bot.io import get_aiohttp_session
@@ -99,9 +100,10 @@ Bot.tiktok = TikTokMisc(bot=Bot)
 Bot.nuuls = NuulsMisc(bot=Bot)
 Bot.vimeo = VimeoMisc(bot=Bot)
 Bot.drive = GoogleDriveMisc(bot=Bot)
+Bot.dsc = DiscordMisc(bot=Bot)
 
 Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
-                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.nuuls]
+                     Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.nuuls, Bot.dsc]
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
@@ -130,6 +132,7 @@ async def main():
     Bot.load_extension('cogs.xvidautoembed')
     Bot.load_extension('cogs.dailymotionautoembed')
     Bot.load_extension('cogs.driveautoembed')
+    Bot.load_extension('cogs.discordattach_embed')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
     await Bot.astart(token=os.getenv('CLYPP_TOKEN'))

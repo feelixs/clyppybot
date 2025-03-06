@@ -14,7 +14,7 @@ import re
 import os
 
 
-INVALID_DL_PLATFORMS = []
+INVALID_DL_PLATFORMS = ['discord']
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
