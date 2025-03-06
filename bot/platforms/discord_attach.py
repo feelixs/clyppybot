@@ -21,7 +21,7 @@ class DiscordMisc(BaseMisc):
             'server': match.group(1),
             'channel': match.group(2),
             'filename': match.group(3),
-            'url_param': match.group(4)
+            'extension': match.group(4)
         }
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'DiscordAttachment':
