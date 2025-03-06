@@ -819,6 +819,7 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
+        finally:
             try:
                 self.bot.currently_downloading.remove(slug)
             except ValueError:
