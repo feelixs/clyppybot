@@ -22,6 +22,10 @@ class NoDuration(Exception):
     pass
 
 
+class InvalidFileType(Exception):
+    pass
+
+
 class ClipFailure(Exception):
     pass
 

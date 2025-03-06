@@ -13,7 +13,7 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
-from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure
+from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, InvalidFileType
 import hashlib
 import aiohttp
 from datetime import datetime
@@ -542,7 +542,7 @@ class BaseMisc(ABC):
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             if 'MoviePy error: failed to read the first frame of video file' in str(e):
-                raise VideoTooLong
+                raise InvalidFileType
             raise NoDuration
 
     @staticmethod
@@ -839,6 +839,9 @@ class BaseAutoEmbed:
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
             success, response = False, "No duration"
+        except InvalidFileType:
+            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file) {create_nexus_str()}")
+            success, response = False, "Invalid file type"
         except NoPermsToView:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
             success, response = False, "No permissions"
