@@ -606,7 +606,7 @@ class BaseAutoEmbed:
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
         if not ctx.responded:
-            await ctx.send(f"An error occurred with your input `{url}` {create_nexus_str()}")
+            await ctx.send(f"The timeout was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
             raise TimeoutError(f"Waiting for clip {url} download timed out")
 
     @staticmethod
