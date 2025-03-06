@@ -11,7 +11,7 @@ class DiscordMisc(BaseMisc):
         self.platform_name = "Discord"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[Dict]:
-        pattern = r'(?:https?://)?(?:www\.)?cdn\.discordapp\.com/attachments/(\d+)/(\d+)/([^?]+)(?:\?([^&]+))?'
+        pattern = r'(?:https?://)?(?:www\.)?cdn\.discordapp\.com/attachments/(\d+)/(\d+)/([^?]+)(?:\?([^&=]+)=([^&]+))?'
         match = re.match(pattern, url)
 
         if not match:
