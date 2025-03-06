@@ -18,15 +18,15 @@ class DiscordMisc(BaseMisc):
             return None
 
         return {
-            'server_id': match.group(1),
-            'channel_id': match.group(2),
+            'server': match.group(1),
+            'channel': match.group(2),
             'filename': match.group(3),
             'url_param': match.group(4)
         }
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'DiscordAttachment':
         attrs = self.parse_clip_url(url)
-        server, chn, filename, ext = attrs.get('server_id'), attrs.get('channel_id'), attrs.get('filename'), attrs.get('extension')
+        server, chn, filename, ext = attrs.get('server'), attrs.get('channel'), attrs.get('filename'), attrs.get('extension')
         if not server or not chn or not filename or not ext:
             self.logger.info(f"Invalid Discord URL: {url}")
             raise NoDuration
