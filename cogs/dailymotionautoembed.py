@@ -4,10 +4,10 @@ from interactions.api.events import MessageCreate
 import logging
 
 
-class MedalAutoEmbed(Extension):
+class DailymotionAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.platform = bot.medal
+        self.platform = bot.dailymotion
         self.logger = logging.getLogger(__name__)
         self.auto_embed = BaseAutoEmbed(self)
     

@@ -1,3 +1,34 @@
+class UploadFailed(Exception):
+    pass
+
+
+class UnknownError(Exception):
+    pass
+
+
+class InvalidClipType(Exception):
+    pass
+
+
+class VideoTooLong(Exception):
+    pass
+
+
+class NoPermsToView(Exception):
+    pass
+
+
+class NoDuration(Exception):
+    pass
+
+
+class InvalidFileType(Exception):
+    pass
+
+
+class ClipFailure(Exception):
+    pass
+
 
 class DriverDownloadFailed(Exception):
     pass

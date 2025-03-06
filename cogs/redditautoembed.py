@@ -1,13 +1,16 @@
+from bot.classes import BaseAutoEmbed
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
-from bot.tools import AutoEmbedder
 import logging
 
 
 class RedditAutoEmbed(Extension):
     def __init__(self, bot):
-        self.embedder = AutoEmbedder(bot, bot.reddit, logging.getLogger(__name__))
-
+        self.bot = bot
+        self.platform = bot.reddit
+        self.logger = logging.getLogger(__name__)
+        self.auto_embed = BaseAutoEmbed(self)
+    
     @listen(MessageCreate)
     async def on_message_create(self, event):
-        await self.embedder.on_message_create(event)
+        await self.auto_embed.handle_message(event)

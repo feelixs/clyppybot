@@ -4,10 +4,10 @@ from interactions.api.events import MessageCreate
 import logging
 
 
-class MedalAutoEmbed(Extension):
+class TikTokAutoEmbed(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.platform = bot.medal
+        self.platform = bot.tiktok
         self.logger = logging.getLogger(__name__)
         self.auto_embed = BaseAutoEmbed(self)
     

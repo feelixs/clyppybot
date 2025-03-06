@@ -1,14 +1,16 @@
+from bot.classes import BaseAutoEmbed
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
-from bot.tools import AutoEmbedder
 import logging
 
 
 class YtAutoEmbed(Extension):
     def __init__(self, bot):
-        self.embedder = AutoEmbedder(bot, bot.yt, logging.getLogger(__name__))
-
-    # don't auto embed yt links, should only work via /embed command
-    #@listen(MessageCreate)
-    #async def on_message_create(self, event):
-    #    await self.embedder.on_message_create(event)
+        self.bot = bot
+        self.platform = bot.yt
+        self.logger = logging.getLogger(__name__)
+        self.auto_embed = BaseAutoEmbed(self)
+    
+    @listen(MessageCreate)
+    async def on_message_create(self, event):
+        await self.auto_embed.handle_message(event)

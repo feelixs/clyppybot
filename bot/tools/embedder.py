@@ -1,46 +1,49 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext
-from interactions import errors, TYPE_THREAD_CHANNEL
-from interactions.api.events import MessageCreate
-from bot.tools import GuildType
-from bot.tools import create_nexus_str
-from bot.errors import FailedTrim, FailureHandled
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
+from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
+from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
 from datetime import datetime, timezone, timedelta
+from interactions.api.events import MessageCreate
+from bot.env import create_nexus_str
+from bot.types import DownloadResponse, GuildType
+from bot.classes import DL_SERVER_ID
 from typing import List, Union
 import traceback
-import aiohttp
+import asyncio
 import time
 import re
 import os
-import asyncio
-from bot.classes import DownloadResponse, is_404, VideoTooLong, NoDuration
 
 
-INVALID_DL_PLATFORMS = []
-DL_SERVER_ID = os.getenv("DL_SERVER_ID")
+INVALID_VIEW_ON_PLATFORMS = ['discord']
+INVALID_DL_PLATFORMS = ['discord']
 
 
-async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None):
-    url = 'https://clyppy.io/api/publish/'
-    headers = {
-        'X-API-Key': apikey,
-        'Content-Type': 'application/json'
-    }
-    if edit_type is None:
-        # publish new interaction
-        j = interaction_data
-    elif edit_type == "response_time":
-        if edit_id is None:
-            raise Exception("both edit_id and edit_type must be defined, or both None")
-        j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
-    else:
-        raise Exception("Invalid call to publish_interaction()")
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=j, headers=headers) as response:
-            if response.status == 201:  # Successfully created
-                return await response.json()
-            else:
-                error_data = await response.json()
-                raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
+async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
+    try:
+        url = 'https://clyppy.io/api/publish/'
+        headers = {
+            'X-API-Key': apikey,
+            'Content-Type': 'application/json'
+        }
+        if edit_type is None:
+            # publish new interaction
+            j = interaction_data
+        elif edit_type == "response_time":
+            if edit_id is None:
+                raise Exception("both edit_id and edit_type must be defined, or both None")
+            j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
+        else:
+            raise Exception("Invalid call to publish_interaction()")
+        async with get_aiohttp_session() as session:
+            async with session.post(url, json=j, headers=headers) as response:
+                if response.status == 201:  # Successfully created
+                    return await response.json()
+                else:
+                    error_data = await response.json()
+                    logger.info(error_data)
+                    raise Exception(f"Failed to publish interaction: {error_data.get('error', 'Unknown error')}")
+    except:
+        logger.info(traceback.format_exc())
 
 
 class AutoEmbedder:
@@ -50,8 +53,7 @@ class AutoEmbedder:
         self.too_large_clips = []
         self.logger = logger
         self.platform_tools = platform_tools
-        self.currently_downloading = []
-        self._clip_id_msg_timestamps = {}
+        self.clip_id_msg_timestamps = {}
 
     @staticmethod
     def _getwords(text: str) -> List[str]:
@@ -89,9 +91,20 @@ class AutoEmbedder:
                 if Permissions.SEND_MESSAGES_IN_THREADS not in event.message.channel.permissions_for(event.message.guild.me):
                     if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         return 1
+
+                if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
+                    if self.platform_tools.is_nsfw:
+                        # GuildPublicThread has no attribute nsfw
+                        return 1
+                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
+                    # only allow nsfw in nsfw channels
+                    return 1
+
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
+
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
+                # quickembeds not enabled
                 return 1
 
             words = self._getwords(event.message.content)
@@ -108,72 +121,84 @@ class AutoEmbedder:
                     next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
                     if not next_link_exists:
                         return 1
-                    await self._process_clip_one_at_a_time(words[index], event.message, guild, True)
+                    await self._process_clip_one_at_a_time(words[index], event.message, guild)
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
-    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, include_link=False):
+    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
-        self._clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
-        if parsed_id in self.currently_downloading:
+        self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
+        if parsed_id in self.bot.currently_embedding:
             await self._wait_for_download(parsed_id)
         else:
-            self.currently_downloading.append(parsed_id)
+            self.bot.currently_embedding.append(parsed_id)
         try:
-            await self._process_this_clip_link(parsed_id, clip_link, respond_to, guild, include_link)
+            await self._process_this_clip_link(
+                clip_link=clip_link,
+                respond_to=respond_to,
+                guild=guild,
+                try_send_files=True
+            )
         except VideoTooLong:
             self.logger.info(f"VideoTooLong was reported for {clip_link}")
         except NoDuration:
             self.logger.info(f"NoDuration was reported for {clip_link}")
+        except ClipFailure:
+            self.logger.info(f"ClipFailure was reported for {clip_link}")
         except Exception as e:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
             try:
-                self.currently_downloading.remove(parsed_id)
+                self.bot.currently_embedding.remove(parsed_id)
             except ValueError:
                 pass
             try:
-                del self._clip_id_msg_timestamps[respond_to.id]
+                del self.clip_id_msg_timestamps[respond_to.id]
             except:
                 pass
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):
         start_time = time.time()
-        while clip_id in self.currently_downloading:
+        while clip_id in self.bot.currently_embedding:
             if time.time() - start_time > timeout:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def _process_this_clip_link(self, parsed_id: str, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, include_link=False) -> None:
-        clip = await self.platform_tools.get_clip(clip_link)
+    async def _process_this_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
+        clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
+        if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
+            has_file_perms = True
+        else:
+            has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
+
+        will_send_files = has_file_perms and try_send_files
+
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
             return None
         # retrieve clip video url
-        video_doesnt_exist = await is_404(clip.clyppy_url, self.logger)
+        video_doesnt_exist, error_code = await is_404(clip.clyppy_url, self.logger)
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
-            if await is_404(f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4'):
+            the_file = f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4'
+            file_exists, _ = await is_404(the_file)
+            if file_exists:
                 # we're assuming the StoredVideo object exists for this clip, and now we know that
                 # its file_url is pointing to another cdn (we don't have its file in our server to be downloaded)
                 # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
                 self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uplaoded to the server")
-                response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                response = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     guild_ctx=guild,
                     always_download=True,
-                    overwrite_on_server=True
+                    overwrite_on_server=True,
+                    can_send_files=False
                 )
-                if response is None:
-                    self.logger.info(f"Failed to fetch clip for server upload.. {clip_link} Cancelling")
-                    await respond_to.reply(f"Failed to fetch clip for server upload.. {clip_link}")
-                    return
                 await respond_to.reply(f"Success for {clip_link}")
-                return
             else:
-                self.logger.info("Video file already exists on the server! Cancelling")
+                self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
                 await respond_to.reply("Video file already exists on the server!")
                 return
         else:
@@ -181,14 +206,13 @@ class AutoEmbedder:
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,
-                    guild_ctx=guild
+                    guild_ctx=guild,
+                    can_send_files=will_send_files
                 )
-                if response is None:
-                    self.logger.info(f"Failed to fetch clip {clip_link}: {traceback.format_exc()}")
-                    return
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
-                # video already exists
+                #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care, i'll also need to query clyppyio - getclip to see the videos duration
+                #    raise VideoTooLong
                 response = DownloadResponse(
                     remote_url=None,
                     local_file_path=None,
@@ -196,19 +220,23 @@ class AutoEmbedder:
                     width=None,
                     height=None,
                     filesize=None,
-                    video_name=None
+                    video_name=None,
+                    can_be_uploaded=None
                 )
 
         # send embed
         try:
             comp = []
             # refer to: ["all", "view", "dl", "none"]
-            btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
+            if self.platform_tools.platform_name.lower() not in INVALID_VIEW_ON_PLATFORMS:
+                btn_idx = 10
+            else:
+                btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
             if btn_idx <= 1:
                 comp.append(Button(
                     style=ButtonStyle.LINK,
                     label=f"View On {self.platform_tools.platform_name}",
-                    url=clip.url
+                    url=clip.url if clip.share_url is None else clip.share_url
                 ))
             if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
                 comp.append(Button(
@@ -230,6 +258,9 @@ class AutoEmbedder:
             elif clip.service == 'twitch':
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=10)
                 expires_at = expires_at.timestamp()
+            elif clip.service == 'instagram':   # idk if these actually expire
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=24)
+                expires_at = expires_at.timestamp()
             else:
                 expires_at = None
             if clip.title is not None:
@@ -238,6 +269,12 @@ class AutoEmbedder:
                 t = response.video_name[:100]
             else:
                 t = None
+
+            uploading_to_discord = response.can_be_uploaded and has_file_perms
+            if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
+                self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
+                raise UnknownError
+
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
@@ -258,17 +295,20 @@ class AutoEmbedder:
                 'generated_id': clip.clyppy_id,
                 'original_id': clip.id,
                 'video_file_size': response.filesize,
+                'uploaded_to_discord': uploading_to_discord,
                 'video_file_dur': response.duration,
                 'expires_at_timestamp': expires_at,
+                'error': error_code
             }
 
             try:
                 try:
-                    result = await publish_interaction(interaction_data, apikey=self.api_key)
+                    result = await publish_interaction(interaction_data, apikey=self.api_key, logger=self.logger)
                 except Exception as e:
                     self.logger.info(f"Failed to post interaction to API: {e}\ninteraction_data: {interaction_data}")
                     raise
 
+                self.logger.info(f"got back from server {result}")
                 if result['success']:
                     # sometimes the server will generate a new and improved clyppy id
                     # to bypass invalid discord caches of old clyppy urls
@@ -278,17 +318,33 @@ class AutoEmbedder:
                             self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
                             clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
                 else:
-                    self.logger.info(f"")
+                    self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
 
+                if not uploading_to_discord:  # discord uploads wont have an info button
+                    info_button = Button(
+                        style=ButtonStyle.SECONDARY,
+                        label="ⓘ Info",
+                        custom_id=f"ibtn-{clip.clyppy_id}"
+                    )
+                    comp = [info_button] + comp
+                    comp = ActionRow(*comp)
+
+                # send message
                 if isinstance(respond_to, SlashContext):
-                    await respond_to.send(clip.clyppy_url, components=comp)
+                    if uploading_to_discord:
+                        await respond_to.send(file=response.local_file_path, components=comp)
+                    else:
+                        await respond_to.send(clip.clyppy_url, components=comp)
                 else:
-                    await respond_to.reply(clip.clyppy_url, components=comp)
+                    if uploading_to_discord:
+                        await respond_to.reply(file=response.local_file_path, components=comp)
+                    else:
+                        await respond_to.reply(clip.clyppy_url, components=comp)
 
                 if isinstance(respond_to, Message):
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
-                    respond_to_utc = self._clip_id_msg_timestamps[respond_to.id]
+                    respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                     if result['success']:
@@ -301,6 +357,7 @@ class AutoEmbedder:
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
+                raise
 
         except errors.HTTPException as e:
             self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
@@ -317,7 +374,7 @@ class AutoEmbedder:
                 bot=self.bot,
                 delete_after_on_reply=60
             )
-            return
+            raise
         except Exception:
             self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
             emb = Embed(title="**Oops...**",
@@ -333,4 +390,4 @@ class AutoEmbedder:
                 bot=self.bot,
                 delete_after_on_reply=60
             )
-            return
+            raise

@@ -1,75 +1,6 @@
-import logging
-import traceback
-import os
 from interactions import SlashContext
-import subprocess
-import concurrent.futures
-import asyncio
-from bot.classes import BaseClip
-from typing import Optional, Union
-from dataclasses import dataclass
-from bot.classes import DownloadResponse
-
-
-POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
-POSSIBLE_ON_ERRORS = ["dm", "info"]
-POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
-
-SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
-INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
-TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
-DL_SERVER_ID = os.getenv("DL_SERVER_ID")
-
-
-def tryremove(f):
-    try:
-        os.remove(f)
-    except:
-        pass
-
-
-@dataclass
-class GuildType:
-    id: int
-    name: str
-    is_dm: bool
-
-
-def create_nexus_str():
-    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
-
-
-class DownloadManager:
-    def __init__(self, p):
-        self._parent = p
-        max_concurrent = os.getenv('MAX_RUNNING_AUTOEMBED_DOWNLOADS', 5)
-        self._semaphore = asyncio.Semaphore(int(max_concurrent))
-
-    async def download_clip(self, clip: BaseClip, guild_ctx: GuildType,
-                            always_download=False, overwrite_on_server=False) -> Optional[DownloadResponse]:
-        """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
-        desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
-        async with self._semaphore:
-            if not isinstance(clip, BaseClip):
-                self._parent.logger.error(f"Invalid clip object passed to download_clip of type {type(clip)}")
-                return None
-            self._parent.logger.info("Run clip.download()")
-        if str(guild_ctx.id) == str(DL_SERVER_ID) or always_download:
-            r = await clip.dl_download(filename=desired_filename)
-        else:
-            r = await clip.download(filename=desired_filename)
-        if r is None:
-            return None
-
-        if overwrite_on_server:
-            self._parent.logger.info(f"Uploading video for {clip.clyppy_id} ({clip.url}) to server...")
-            new = await clip.upload_to_clyppyio(r)
-            self._parent.logger.info(f"Overwriting video url for {clip.clyppy_id} on server with {new.remote_url}...")
-            await clip.overwrite_mp4(new.remote_url)
-            r.filesize = new.filesize
-            r.remote_url = new.remote_url
-
-        return r
+from bot.tools.dl import DownloadManager
+import logging
 
 
 class Tools:
@@ -107,5 +38,5 @@ class Tools:
                                   f"This error occurred while trying to embed the clip in {guild.name}. "
                                   f"You're receiving this message because that server has the 'dm' setting "
                                   f"enabled for one of its `/settings`")
-        except:
-            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id})\n{traceback.format_exc()}")
+        except Exception as e:
+            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id}) {str(e)}")
