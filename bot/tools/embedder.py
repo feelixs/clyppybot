@@ -229,7 +229,7 @@ class AutoEmbedder:
             comp = []
             # refer to: ["all", "view", "dl", "none"]
             if self.platform_tools.platform_name.lower() in INVALID_VIEW_ON_PLATFORMS:
-                btn_idx = 10
+                btn_idx = 2
             else:
                 btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
             if btn_idx <= 1:
