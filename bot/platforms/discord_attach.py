@@ -42,6 +42,7 @@ class DiscordMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
+        attrs['message_id'] = basemsg.id
         attrs['cdn_client'] = self.cdn_client
         return DiscordAttachment(attrs)
 
