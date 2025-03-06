@@ -14,6 +14,7 @@ import re
 import os
 
 
+INVALID_VIEW_ON_PLATFORMS = ['discord']
 INVALID_DL_PLATFORMS = ['discord']
 
 
@@ -227,7 +228,10 @@ class AutoEmbedder:
         try:
             comp = []
             # refer to: ["all", "view", "dl", "none"]
-            btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
+            if self.platform_tools.platform_name.lower() not in INVALID_VIEW_ON_PLATFORMS:
+                btn_idx = 10
+            else:
+                btn_idx = self.bot.guild_settings.get_embed_buttons(guild.id)
             if btn_idx <= 1:
                 comp.append(Button(
                     style=ButtonStyle.LINK,
