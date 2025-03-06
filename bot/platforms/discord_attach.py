@@ -68,7 +68,7 @@ class DiscordAttachment(BaseClip):
 
     @property
     def share_url(self):
-        return f"https://discord.com/channels/{self._channel}/{self._message_id}"
+        return f"https://discord.com/channels/{self._server}/{self._channel}/{self._message_id}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.url}) run dl_check_size(upload_if_large=True)...")
