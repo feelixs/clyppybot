@@ -144,9 +144,9 @@ class BaseClip(ABC):
 
     @property
     @abstractmethod
-    def share_url(self) -> str:
+    def share_url(self) -> Optional[str]:
         """If different from url property"""
-        pass
+        return None
 
     @property
     def clyppy_url(self) -> str:
