@@ -601,7 +601,7 @@ class BaseAutoEmbed:
         elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
             await self.embedder.on_message_create(event)
 
-    async def _handle_timeout(self, ctx: SlashContext, url: str, amt: int):
+    async def _handle_timeout(self, ctx: SlashContext, url: str, amt: int, slug: str):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
         if not ctx.responded:
@@ -814,7 +814,7 @@ class BaseAutoEmbed:
             else:
                 self.bot.currently_downloading.append(slug)
 
-            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
+            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs, slug))
         except Exception as e:
             if timeout_task is not None:
                 timeout_task.cancel()
