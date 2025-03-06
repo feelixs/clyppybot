@@ -143,7 +143,6 @@ class BaseClip(ABC):
         pass
 
     @property
-    @abstractmethod
     def share_url(self) -> Optional[str]:
         """If different from url property"""
         return None
