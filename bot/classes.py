@@ -601,12 +601,24 @@ class BaseAutoEmbed:
         elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
             await self.embedder.on_message_create(event)
 
-    @staticmethod
-    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
+    async def _handle_timeout(self, ctx: SlashContext, url: str, amt: int):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
         if not ctx.responded:
             await ctx.send(f"The timeout was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
+            try:
+                self.bot.currently_downloading.remove(slug)
+            except ValueError:
+                pass
+            try:
+                self.bot.currently_embedding_users.remove(ctx.user.id)
+            except ValueError:
+                pass
+            try:
+                if isinstance(ctx, Message):
+                    del self.embedder.clip_id_msg_timestamps[ctx.id]
+            except KeyError:
+                pass
             raise TimeoutError(f"Waiting for clip {url} download timed out")
 
     @staticmethod
