@@ -43,7 +43,6 @@ class YtMisc(BaseMisc):
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
-
         return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client)
 
 
