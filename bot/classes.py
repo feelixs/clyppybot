@@ -1,5 +1,5 @@
 from bot.env import MAX_FILE_SIZE_FOR_DISCORD, DL_SERVER_ID, YT_DLP_USER_AGENT
-from bot.io import author_has_enough_tokens
+from bot.io import author_has_enough_tokens, author_has_premium
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
@@ -554,6 +554,9 @@ class BaseMisc(ABC):
         return False
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
+        if author_has_premium(basemsg.author):
+            return True
+        
         try:
             d = await self.get_len(url, cookies)
         except NoDuration:

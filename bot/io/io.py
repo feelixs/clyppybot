@@ -38,6 +38,10 @@ async def subtract_tokens(user, amt):
                 raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
 
+async def author_has_premium(user):
+    return str(user.id) == '164115540426752001'
+
+
 async def author_has_enough_tokens(msg, video_dur):
     def is_dl_server(guild):
         if guild is None:
@@ -49,10 +53,7 @@ async def author_has_enough_tokens(msg, video_dur):
     if video_dur <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
         return True
     elif video_dur <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
-        if isinstance(msg, Message):
-            user = msg.author
-        else:
-            user = msg.user
+        user = msg.author
 
         # if we're in dl server, automatically return true without needing any tokens
         if is_dl_server(msg.guild):
