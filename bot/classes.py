@@ -729,7 +729,6 @@ class BaseAutoEmbed:
             if guild.is_dm:
                 nsfw_enabed = True
             elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
-                # GuildPublicThread has no attribute nsfw
                 nsfw_enabed = ctx.channel.parent_channel.nsfw
             else:
                 nsfw_enabed = ctx.channel.nsfw
