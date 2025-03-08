@@ -15,7 +15,7 @@ import os
 
 
 INVALID_VIEW_ON_PLATFORMS = ['discord']
-INVALID_DL_PLATFORMS = ['discord']
+INVALID_DL_PLATFORMS = ['discord', 'rule34']
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
