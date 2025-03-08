@@ -591,26 +591,13 @@ class BaseAutoEmbed:
         elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
             await self.embedder.on_message_create(event)
 
-    async def _handle_timeout(self, ctx: SlashContext, url: str, amt: int, slug: str):
+    @staticmethod
+    async def _handle_timeout(ctx: SlashContext, url: str, amt: int):
         """Handle timeout for embed processing"""
         await asyncio.sleep(amt)
 
         # will be cancelled early if main execution finished before the sleep
         await ctx.send(f"The timeout was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
-        try:
-            self.bot.currently_downloading.remove(slug)
-        except ValueError:
-            pass
-        try:
-            self.bot.currently_embedding_users.remove(ctx.user.id)
-        except ValueError:
-            pass
-        try:
-            if isinstance(ctx, Message):
-                del self.embedder.clip_id_msg_timestamps[ctx.id]
-        except KeyError:
-            pass
-        raise TimeoutError(f"Waiting for clip {url} download timed out")
 
     @staticmethod
     async def fetch_tokens(user):
@@ -790,6 +777,7 @@ class BaseAutoEmbed:
                          f"slug: {slug}\n"
                          f"response - Already embedding",
                     color=COLOR_RED,
+                    url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
                 return
@@ -805,7 +793,7 @@ class BaseAutoEmbed:
             else:
                 self.bot.currently_downloading.append(slug)
 
-            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs, slug))
+            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
         except Exception as e:
             if timeout_task is not None:
                 timeout_task.cancel()
@@ -843,8 +831,7 @@ class BaseAutoEmbed:
             platform=platform,
             slug=slug,
             platform_name=p,
-            guild=guild,
-            timeout_task=timeout_task
+            guild=guild
         ))
 
         done, pending = await asyncio.wait(
@@ -875,7 +862,7 @@ class BaseAutoEmbed:
             except KeyError:
                 pass
 
-    async def _main_embed_task(self, ctx: Union[Message, SlashContext], url: str, slug: str, platform: BaseMisc, platform_name: str, guild: GuildType, timeout_task):
+    async def _main_embed_task(self, ctx: Union[Message, SlashContext], url: str, slug: str, platform: BaseMisc, platform_name: str, guild: GuildType):
         pre = "/"
         if isinstance(ctx, Message):
             pre = '.'
@@ -921,8 +908,6 @@ class BaseAutoEmbed:
             success, response = False, "Unexpected error"
 
         finally:
-            timeout_task.cancel()
-
             await send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
