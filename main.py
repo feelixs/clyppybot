@@ -8,6 +8,7 @@ from bot.platforms.twitch import TwitchMisc
 from bot.platforms.reddit import RedditMisc
 from bot.platforms.bsky import BlueSkyMisc
 from bot.platforms.vimeo import VimeoMisc
+from bot.platforms.r34 import R34Misc
 from bot.platforms.medal import MedalMisc
 from bot.platforms.youtube import YtMisc
 from bot.platforms.bili import BiliMisc
@@ -93,6 +94,7 @@ Bot.yt = YtMisc(bot=Bot)
 Bot.youp = YoupoMisc(bot=Bot)
 Bot.x = Xmisc(bot=Bot)
 Bot.xvid = XvidMisc(bot=Bot)
+Bot.r34 = R34Misc(bot=Bot)
 Bot.bsky = BlueSkyMisc(bot=Bot)
 Bot.bili = BiliMisc(bot=Bot)
 Bot.phub = PhubMisc(bot=Bot)
@@ -102,7 +104,7 @@ Bot.vimeo = VimeoMisc(bot=Bot)
 Bot.drive = GoogleDriveMisc(bot=Bot)
 Bot.dsc = DiscordMisc(bot=Bot)
 
-Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok,
+Bot.platform_list = [Bot.twitch, Bot.kick, Bot.insta, Bot.medal, Bot.reddit, Bot.yt, Bot.x, Bot.bsky, Bot.tiktok, Bot.r34,
                      Bot.xvid, Bot.phub, Bot.youp, Bot.vimeo, Bot.bili, Bot.dailymotion, Bot.drive, Bot.nuuls, Bot.dsc]
 
 Bot.tools = Tools()
@@ -117,6 +119,7 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.twitchautoembed')
     Bot.load_extension('cogs.kickautoembed')
+    Bot.load_extension('cogs.r34autoembed')
     Bot.load_extension('cogs.vimeoautoembed')
     Bot.load_extension('cogs.tiktokautoembed')
     Bot.load_extension('cogs.medalautoembed')
