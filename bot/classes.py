@@ -836,6 +836,35 @@ class BaseAutoEmbed:
                 pass
             return
 
+        main_task = asyncio.create_task(self._main_embed_task(
+            ctx=ctx,
+            url=url,
+            platform=platform,
+            slug=slug,
+            platform_name=p,
+            guild=guild,
+            timeout_task=timeout_task
+        ))
+
+        done, pending = await asyncio.wait(
+            [main_task, timeout_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        for task in pending:
+            task.cancel()
+        try:
+            for task in done:
+                # This will re-raise any exceptions that occurred in the task
+                await task
+        except Exception as e:
+            # Log any unexpected exceptions not handled in the tasks themselves
+            self.logger.info(f"Task exception: {str(e)}")
+
+    async def _main_embed_task(self, ctx: Union[Message, SlashContext], url: str, slug: str, platform: BaseMisc, platform_name: str, guild: GuildType, timeout_task):
+        pre = "/"
+        if isinstance(ctx, Message):
+            pre = '.'
+
         success, response = False, "Unknown error"
         try:
             if isinstance(ctx, SlashContext):
@@ -883,7 +912,7 @@ class BaseAutoEmbed:
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - {pre}embed url:{url}\n"
-                     f"platform: {p}\n"
+                     f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
                      f"response - {response}",
                 color=COLOR_GREEN if success else COLOR_RED,
