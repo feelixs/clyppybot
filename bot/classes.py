@@ -934,16 +934,3 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
-            try:
-                self.bot.currently_downloading.remove(slug)
-            except ValueError:
-                pass
-            try:
-                self.bot.currently_embedding_users.remove(ctx.user.id)
-            except ValueError:
-                pass
-            try:
-                if isinstance(ctx, Message):
-                    del self.embedder.clip_id_msg_timestamps[ctx.id]
-            except KeyError:
-                pass
