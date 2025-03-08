@@ -791,12 +791,8 @@ class BaseAutoEmbed:
                     pass  # continue with the dl anyway
             else:
                 self.bot.currently_downloading.append(slug)
-
-            timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs))
         except Exception as e:
-            if timeout_task is not None:
-                timeout_task.cancel()
-            self.logger.info(f"Exception in /embed: {str(e)}")
+            self.logger.info(f"Exception in /embed preparation: {str(e)}")
             await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
             await send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
@@ -824,6 +820,12 @@ class BaseAutoEmbed:
                 pass
             return
 
+        timeout_task = asyncio.create_task(self._handle_timeout(
+            ctx=ctx,
+            url=url,
+            amt=platform.dl_timeout_secs
+        ))
+
         main_task = asyncio.create_task(self._main_embed_task(
             ctx=ctx,
             url=url,
@@ -845,7 +847,7 @@ class BaseAutoEmbed:
                 await task
         except Exception as e:
             # Log any unexpected exceptions not handled in the tasks themselves
-            self.logger.info(f"Task exception: {str(e)}")
+            self.logger.info(f"/embed Task exception: {str(e)}")
         finally:
             try:
                 self.bot.currently_downloading.remove(slug)
