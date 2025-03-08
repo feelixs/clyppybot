@@ -860,6 +860,20 @@ class BaseAutoEmbed:
         except Exception as e:
             # Log any unexpected exceptions not handled in the tasks themselves
             self.logger.info(f"Task exception: {str(e)}")
+        finally:
+            try:
+                self.bot.currently_downloading.remove(slug)
+            except ValueError:
+                pass
+            try:
+                self.bot.currently_embedding_users.remove(ctx.user.id)
+            except ValueError:
+                pass
+            try:
+                if isinstance(ctx, Message):
+                    del self.embedder.clip_id_msg_timestamps[ctx.id]
+            except KeyError:
+                pass
 
     async def _main_embed_task(self, ctx: Union[Message, SlashContext], url: str, slug: str, platform: BaseMisc, platform_name: str, guild: GuildType, timeout_task):
         pre = "/"
