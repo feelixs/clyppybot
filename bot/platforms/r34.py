@@ -17,7 +17,7 @@ class R34Misc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'R34clip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True) -> 'R34clip':
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
@@ -48,7 +48,7 @@ class R34clip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
