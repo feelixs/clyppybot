@@ -873,13 +873,13 @@ class BaseAutoEmbed:
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
             success, response = False, "Clip failure"
+        except TimeoutError:
+            # this might not even be called since _handle_timeout is ran in create_task()
+            return  # cleanup is handled in _handle_timeout
         except Exception as e:
             self.logger.info(f'Unexpected error in /embed: {str(e)}')
             await ctx.send(f"An unexpected error occurred with your input `{url}` {create_nexus_str()}")
             success, response = False, "Unexpected error"
-        except TimeoutError:
-            # this might not even be called since _handle_timeout is ran in create_task()
-            return  # cleanup is handled in _handle_timeout
 
         finally:
             timeout_task.cancel()
