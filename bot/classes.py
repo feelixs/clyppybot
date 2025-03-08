@@ -188,22 +188,9 @@ class BaseClip(ABC):
                 else:
                     format_info = extract_format_info(info)
                 if not format_info['width']:
-                    self.logger.info("Width was 0, checking manually")
-                    # Download file to determine width
-                    o = ydl_opts.copy()
-                    fn = f'temp{self.id}.mp4'
-                    o['outtmpl'] = fn
-                    with YoutubeDL(o) as tmpdl:
-                        tmpdl.download([self.url])
-                    self.logger.info(os.path.isfile(fn))
-                    format_info = get_video_details(fn)
-                    format_info = {
-                        'url': info['url'],
-                        'duration': format_info.duration,
-                        'width': format_info.width,
-                        'height': format_info.height
-                    }
-                    os.remove(fn)
+                    self.logger.info("Width was 0, using default")
+                    format_info['width'] = 1280
+                    format_info['height'] = 720
 
                 if info.get('title') is not None:
                     title = info['title']
