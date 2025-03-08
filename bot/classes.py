@@ -807,6 +807,10 @@ class BaseAutoEmbed:
                 self.bot.currently_downloading.append(slug)
 
             timeout_task = asyncio.create_task(self._handle_timeout(ctx, url, platform.dl_timeout_secs, slug))
+        except TimeoutError:
+            # this might not even be called since _handle_timeout is ran in create_task()
+            return  # cleanup is handled in _handle_timeout
+
         except Exception as e:
             if timeout_task is not None:
                 timeout_task.cancel()
