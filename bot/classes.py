@@ -582,12 +582,14 @@ class BaseAutoEmbed:
                     and self.platform.is_clip_link(event.message.content.split(" ")[1])
         )
         if message_is_embed_command:
+            event.message.responded = False
             await self.command_embed(
                 ctx=event.message,
                 url=event.message.content.split(" ")[1],  # the second word is the url
                 platform=self.platform,
                 slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
+            event.message.responded = True
         elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
             await self.embedder.on_message_create(event)
 
