@@ -1,6 +1,6 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
-from bot.io import get_aiohttp_session, is_404, author_has_enough_tokens
+from bot.io import get_aiohttp_session, is_404, fetch_video_status
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import create_nexus_str
@@ -178,7 +178,8 @@ class AutoEmbedder:
             # should silently fail
             return None
         # retrieve clip video url
-        video_doesnt_exist, error_code = await is_404(clip.clyppy_url, self.logger)
+        status = await fetch_video_status(clip.clyppy_id)
+        video_doesnt_exist = not status['exists']
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             the_file = f'https://clyppy.io/media/clips/{clip.service}_{clip.clyppy_id}.mp4'
@@ -297,8 +298,7 @@ class AutoEmbedder:
                 'video_file_size': response.filesize,
                 'uploaded_to_discord': uploading_to_discord,
                 'video_file_dur': response.duration,
-                'expires_at_timestamp': expires_at,
-                'error': error_code
+                'expires_at_timestamp': expires_at
             }
 
             try:
