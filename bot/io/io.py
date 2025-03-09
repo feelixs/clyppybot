@@ -17,7 +17,7 @@ async def fetch_video_status(clip_id: str):
         'Content-Type': 'application/json'
     }
     async with get_aiohttp_session() as session:
-        async with session.post(url, json={'clip_id': clip_id}, headers=headers) as response:
+        async with session.get(url, json={'clip_id': clip_id}, headers=headers) as response:
             if response.status == 200:
                 return await response.json()
             else:
