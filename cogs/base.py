@@ -1,7 +1,7 @@
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext,
-                          component_callback)
+                          component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
@@ -75,7 +75,11 @@ class Base(Extension):
                                 value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
                 if clyppy_cdn:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
-                await ctx.send(embed=embed)
+                await ctx.send(embed=embed, components=[Button(
+                    style=ButtonStyle.LINK,
+                    label=f"View your clips",
+                    url='https://clyppy.io/profile/clips'
+                )])
                 await send_webhook(
                     title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - success"
