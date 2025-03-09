@@ -18,11 +18,11 @@ async def fetch_video_status(clip_id: str):
     }
     async with get_aiohttp_session() as session:
         async with session.get(url, json={'clip_id': clip_id}, headers=headers) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
+            if response.status == 500:
                 error_data = await response.json()
                 raise Exception(f"Failed to retrieve clip status for {clip_id}: {error_data.get('error', 'Unknown error')}")
+            else:
+                return await response.json()
 
 
 async def is_404(url: str, logger=None) -> Tuple[bool, int]:
