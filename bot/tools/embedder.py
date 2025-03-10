@@ -277,6 +277,7 @@ class AutoEmbedder:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
             elif not uploading_to_discord and response.local_file_path is not None:
+                # if we actually downloaded this file locally, create its thumbnail
                 clip_webp = await clip.create_first_frame_webp(response.local_file_path)
                 thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
 
