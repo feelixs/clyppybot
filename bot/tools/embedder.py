@@ -278,8 +278,12 @@ class AutoEmbedder:
                 raise UnknownError
             elif not uploading_to_discord and response.local_file_path is not None:
                 # if we actually downloaded this file locally, create its thumbnail
-                clip_webp = await clip.create_first_frame_webp(response.local_file_path)
-                thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                try:
+                    clip_webp = await clip.create_first_frame_webp(response.local_file_path)
+                    thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                except Exception as e:
+                    self.logger.info(f"Exception in creating/uploading webp thumbnail for {clip.url}: {str(e)}")
+                    # keep thumb_url as None
 
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
