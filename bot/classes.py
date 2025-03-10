@@ -14,6 +14,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, InvalidFileType
+from PIL import Image
 import hashlib
 import aiohttp
 from datetime import datetime
@@ -417,6 +418,55 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to upload video: {remote_url}")
             raise UploadFailed
 
+    async def create_first_frame_webp(self, video_path: str, output_path: Optional[str] = None) -> str:
+        """
+        Creates a webp file from the first frame of an mp4 video.
+        
+        Args:
+            video_path: Path to the mp4 video file
+            output_path: Optional path for the resulting webp file. If not provided,
+                         will use the same location as the video with .webp extension
+        
+        Returns:
+            Path to the generated webp file
+        
+        Raises:
+            FileNotFoundError: If the video file doesn't exist
+            Exception: If there's an error processing the video
+        """
+        try:
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Video file not found: {video_path}")
+                
+            if output_path is None:
+                # Replace .mp4 extension with .webp
+                base_path = os.path.splitext(video_path)[0]
+                output_path = f"{base_path}.webp"
+            
+            # Use MoviePy to get the first frame
+            self.logger.info(f"Extracting first frame from {video_path}")
+            clip = VideoFileClip(video_path)
+            
+            try:
+                # Get the first frame at t=0
+                frame = clip.get_frame(0)
+                
+                # Convert the numpy array to a PIL Image
+                img = Image.fromarray(frame)
+                
+                # Save the image as webp
+                img.save(output_path, 'webp', quality=85, method=6)
+                
+                self.logger.info(f"Successfully created webp thumbnail: {output_path}")
+                return output_path
+            finally:
+                # Ensure the clip is closed to free resources
+                clip.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error creating webp thumbnail: {str(e)}")
+            raise
+    
     @staticmethod
     def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
         """

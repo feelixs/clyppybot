@@ -271,6 +271,8 @@ class AutoEmbedder:
             else:
                 t = None
 
+            clip_webp = await clip.create_first_frame_webp(response.local_file_path)
+            thumb_url = self.bot.cdn_client.upload_webp(clip_webp)
             uploading_to_discord = response.can_be_uploaded and has_file_perms
             if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
@@ -281,6 +283,7 @@ class AutoEmbedder:
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,
                 'channel_name': chn,
+                'thumbnail': thumb_url,
                 'title': t,
                 'user_name': respond_to.author.username,
                 'server_id': str(guild.id),

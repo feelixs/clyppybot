@@ -36,4 +36,5 @@ moviepy==2.1.1
 webdriver-manager
 yt-dlp
 boto3
+pillow
 botocore
