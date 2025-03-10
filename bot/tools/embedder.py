@@ -31,7 +31,7 @@ async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=
         elif edit_type == "response_time":
             if edit_id is None:
                 raise Exception("both edit_id and edit_type must be defined, or both None")
-            j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data}
+            j = {'edit': True, 'id': edit_id, 'response_time_seconds': interaction_data['response_time'], 'msg_id': interaction_data['msg_id']}
         else:
             raise Exception("Invalid call to publish_interaction()")
         async with get_aiohttp_session() as session:
@@ -346,14 +346,14 @@ class AutoEmbedder:
                 # send message
                 if isinstance(respond_to, SlashContext):
                     if uploading_to_discord:
-                        await respond_to.send(file=response.local_file_path, components=comp)
+                        bot_message = await respond_to.send(file=response.local_file_path, components=comp)
                     else:
-                        await respond_to.send(clip.clyppy_url, components=comp)
+                        bot_message = await respond_to.send(clip.clyppy_url, components=comp)
                 else:
                     if uploading_to_discord:
-                        await respond_to.reply(file=response.local_file_path, components=comp)
+                        bot_message = await respond_to.reply(file=response.local_file_path, components=comp)
                     else:
-                        await respond_to.reply(clip.clyppy_url, components=comp)
+                        bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
 
                 if isinstance(respond_to, Message):
                     # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
@@ -362,7 +362,12 @@ class AutoEmbedder:
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                     if result['success']:
                         if my_response_time > 0:
-                            await publish_interaction(my_response_time, apikey=self.api_key, edit_id=result['id'], edit_type='response_time')
+                            await publish_interaction(
+                                interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
+                                apikey=self.api_key,
+                                edit_id=result['id'],
+                                edit_type='response_time'
+                            )
                         else:
                             self.logger.info(f"Skipping edit response time for {clip.id} ({guild.name} - #{chn})...")
                     else:
