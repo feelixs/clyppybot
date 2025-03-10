@@ -280,7 +280,10 @@ class AutoEmbedder:
                 # if we actually downloaded this file locally, create its thumbnail
                 try:
                     clip_webp = await clip.create_first_frame_webp(response.local_file_path)
-                    thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                    status, thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                    if not status:
+                        self.logger.info(f"Uploading {clip_webp} failed (status = False)")
+                        thumb_url = None
                 except Exception as e:
                     self.logger.info(f"Exception in creating/uploading webp thumbnail for {clip.url}: {str(e)}")
                     # keep thumb_url as None
