@@ -271,12 +271,14 @@ class AutoEmbedder:
             else:
                 t = None
 
-            clip_webp = await clip.create_first_frame_webp(response.local_file_path)
-            thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+            thumb_url = None
             uploading_to_discord = response.can_be_uploaded and has_file_perms
             if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
+            elif not uploading_to_discord and response.local_file_path is not None:
+                clip_webp = await clip.create_first_frame_webp(response.local_file_path)
+                thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
 
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
