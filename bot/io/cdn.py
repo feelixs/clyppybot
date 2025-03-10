@@ -52,6 +52,7 @@ class CdnSpacesClient:
                 ACL='public-read',
                 ContentType='image/webp'
             )
+            return True, f"https://cdn.clyppy.io/{cdn_patj}"
         except Exception as e:
             self.logger.info(f"Error uploading {filename}: {str(e)}")
             return False, str(e)
