@@ -362,15 +362,12 @@ class AutoEmbedder:
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                 if result['success']:
-                    if my_response_time > 0 or isinstance(respond_to, SlashContext):
-                        await publish_interaction(
-                            interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
-                            apikey=self.api_key,
-                            edit_id=result['id'],
-                            edit_type='response_time'
-                        )
-                    else:
-                        self.logger.info(f"Skipping edit response time for {clip.id} ({guild.name} - #{chn})...")
+                    await publish_interaction(
+                        interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
+                        apikey=self.api_key,
+                        edit_id=result['id'],
+                        edit_type='response_time'
+                    )
                 else:
                     self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
