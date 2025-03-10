@@ -355,23 +355,24 @@ class AutoEmbedder:
                     else:
                         bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
 
+                # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
+                my_response_time = 0
                 if isinstance(respond_to, Message):
-                    # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
-                    if result['success']:
-                        if my_response_time > 0:
-                            await publish_interaction(
-                                interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
-                                apikey=self.api_key,
-                                edit_id=result['id'],
-                                edit_type='response_time'
-                            )
-                        else:
-                            self.logger.info(f"Skipping edit response time for {clip.id} ({guild.name} - #{chn})...")
+                if result['success']:
+                    if my_response_time > 0 or isinstance(respond_to, SlashContext):
+                        await publish_interaction(
+                            interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
+                            apikey=self.api_key,
+                            edit_id=result['id'],
+                            edit_type='response_time'
+                        )
                     else:
-                        self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
+                        self.logger.info(f"Skipping edit response time for {clip.id} ({guild.name} - #{chn})...")
+                else:
+                    self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
