@@ -355,9 +355,9 @@ class AutoEmbedder:
                     else:
                         bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
 
-                # don't publish on /embeds, we could but we need a way to pull timestamp from SlashContext
                 my_response_time = 0
                 if isinstance(respond_to, Message):
+                    # don't publish response_time on /embeds, we could but we need a way to pull timestamp from SlashContext
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
