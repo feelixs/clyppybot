@@ -27,6 +27,7 @@ class TwitchClip(BaseClip):
         #    log_path=os.path.join('logs', 'twitch-api-usage.log')
         #)
         self.api = None
+        self._thumbnail_url = None
 
     @property
     def service(self) -> str:
@@ -44,6 +45,9 @@ class TwitchClip(BaseClip):
             api=self.api,
             logger=self.logger
         )
+
+    async def get_thumbnail(self):
+        return self._thumbnail_url
 
     async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False) -> DownloadResponse:
         dl = await super().dl_check_size(
@@ -93,12 +97,12 @@ class TwitchClip(BaseClip):
                 info = ydl.extract_info(self.url, download=False)
                 if not info.get('thumbnail'):
                     raise Exception("No thumbnail URL found in clip info")
-                thumbnail_url = info['thumbnail']
-                if '/clips-media-assets2.twitch.tv/' not in thumbnail_url:
+                self._thumbnail_url = info['thumbnail']
+                if '/clips-media-assets2.twitch.tv/' not in self._thumbnail_url:
                     raise InvalidClipType
 
                 self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
-                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', thumbnail_url)
+                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', self._thumbnail_url)
                 return mp4_url
         except InvalidClipType:
             raise

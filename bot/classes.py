@@ -153,6 +153,9 @@ class BaseClip(ABC):
         """Generate the clyppy URL using the service and ID"""
         return f"https://clyppy.io/{self.clyppy_id}"
 
+    async def get_thumbnail(self):
+        return None
+
     def _extract_info(self, ydl_opts: dict) -> DownloadResponse:
         """
         Helper method to extract URL, duration, file size and dimension information using yt-dlp.

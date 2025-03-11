@@ -287,6 +287,13 @@ class AutoEmbedder:
                 except Exception as e:
                     self.logger.info(f"Exception in creating/uploading webp thumbnail for {clip.url}: {str(e)}")
                     # keep thumb_url as None
+            elif not uploading_to_discord and response.local_file_path is None:
+                if clip.service == 'twitch':
+                    try:
+                        thumb_url = await clip.get_thumbnail()
+                    except Exception as e:
+                        self.logger.info(f"Failed to get twitch thumbnail for {clip.url}: {str(e)}")
+                        thumb_url = None
 
             interaction_data = {
                 'edit': False,  # create new BotInteraction obj
