@@ -766,6 +766,8 @@ class BaseAutoEmbed:
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
             if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
                 return 1
+            elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
+                return await ctx.send(f"I don't have the permission `Read Message History` in this channel, which is required for text commands {create_nexus_str()}")
             elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
                 return await ctx.send(f"I don't have permission to embed links in this channel {create_nexus_str()}")
             if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
