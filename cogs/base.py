@@ -144,9 +144,12 @@ class Base(Extension):
             elif response['ctx'] is not None:
                 # maybe theres more than 1 message by this user of this clip
                 for clip in response['ctx']:
-                    chn = await self.bot.fetch_channel(clip['channel_id'])
-                    msg: Message = await chn.fetch_message(clip['message_id'])
-                    asyncio.create_task(msg.delete())
+                    try:
+                        chn = await self.bot.fetch_channel(clip['channel_id'])
+                        msg: Message = await chn.fetch_message(clip['message_id'])
+                        asyncio.create_task(msg.delete())
+                    except Exception as e:
+                        self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not delete message {clip['message_id']} from channel {clip['channel_id']}: {str(e)}")
 
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
