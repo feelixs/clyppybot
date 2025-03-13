@@ -146,7 +146,7 @@ class Base(Extension):
                 for clip in response['ctx']:
                     try:
                         # clyppy uploads the clip to clyppyio with the serverid as the userid if it's uploaded inside that user's DM with CLYPPY
-                        is_dm = clip['server_id'] == ctx.author.id
+                        is_dm = str(clip['server_id']) == str(ctx.author.id)
                         if is_dm:
                             chn = await ctx.author.fetch_dm()
                             msg: Message = await chn.fetch_message(clip['message_id'])
