@@ -147,6 +147,7 @@ class Base(Extension):
                     chn = await self.bot.fetch_channel(clip['channel_id'])
                     msg: Message = await chn.fetch_message(clip['message_id'])
                     asyncio.create_task(msg.delete())
+
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
             await ctx.send(f"Uh oh... an error occurred deleting the clip {clyppyid}:\n{str(e)}", components=[Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')])
