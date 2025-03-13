@@ -148,7 +148,7 @@ class Base(Extension):
                         # clyppy uploads the clip to clyppyio with the serverid as the userid if it's uploaded inside that user's DM with CLYPPY
                         is_dm = str(clip['server_id']) == str(ctx.author.id)
                         if is_dm:
-                            chn = await ctx.author.fetch_dm()
+                            chn = await ctx.author.fetch_dm(force=False)
                             msg: Message = await chn.fetch_message(clip['message_id'])
                         else:
                             chn = await self.bot.fetch_channel(clip['channel_id'])
