@@ -145,8 +145,14 @@ class Base(Extension):
                 # maybe theres more than 1 message by this user of this clip
                 for clip in response['ctx']:
                     try:
-                        chn = await self.bot.fetch_channel(clip['channel_id'])
-                        msg: Message = await chn.fetch_message(clip['message_id'])
+                        # clyppy uploads the clip to clyppyio with the serverid as the userid if it's uploaded inside that user's DM with CLYPPY
+                        is_dm = clip['server_id'] == ctx.author.id
+                        if is_dm:
+                            chn = await ctx.author.fetch_dm()
+                            msg: Message = await chn.fetch_message(clip['message_id'])
+                        else:
+                            chn = await self.bot.fetch_channel(clip['channel_id'])
+                            msg: Message = await chn.fetch_message(clip['message_id'])
                         asyncio.create_task(msg.delete())
                     except Exception as e:
                         self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not delete message {clip['message_id']} from channel {clip['channel_id']}: {str(e)}")
