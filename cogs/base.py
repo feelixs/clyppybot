@@ -139,6 +139,8 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
+            elif response['code'] != 200:
+                raise Exception(f"Error: {response['code']}")
             elif response['ctx'] is not None:
                 # maybe theres more than 1 message by this user of this clip
                 for clip in response['ctx']:
