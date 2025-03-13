@@ -33,6 +33,19 @@ async def is_404(url: str, logger=None) -> Tuple[bool, int]:
         return True, 500  # Consider failed connections as effectively 404
 
 
+async def callback_clip_delete_msg(data, key) -> dict:
+    async with get_aiohttp_session() as session:
+        async with session.post(
+                'https://clyppy.io/api/callback/msg-get-delete/',
+                json=data,
+                headers={
+                    'X-API-Key': key,
+                    'Content-Type': 'application/json'
+                }
+        ) as response:
+            return await response.json()
+
+
 async def subtract_tokens(user, amt):
     url = 'https://clyppy.io/api/tokens/subtract/'
     headers = {

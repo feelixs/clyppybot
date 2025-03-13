@@ -1,11 +1,13 @@
+import asyncio
+
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-                          Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext,
+                          Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
-from bot.io import get_aiohttp_session
+from bot.io import get_aiohttp_session, callback_clip_delete_msg
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
@@ -55,6 +57,12 @@ class Base(Extension):
         """
         await ctx.defer(ephemeral=True)
         clyppyid = ctx.custom_id.split("-")[1]
+
+        buttons = [
+            Button(style=ButtonStyle.DANGER, label="X", custom_id=f"ibtn-delete-{clyppyid}"),
+            Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')
+        ]
+
         try:
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
@@ -79,11 +87,7 @@ class Base(Extension):
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 elif clyppy_cdn and deleted:
                     embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
-                await ctx.send(embed=embed, components=[Button(
-                    style=ButtonStyle.LINK,
-                    label=f"View your clips",
-                    url='https://clyppy.io/profile/clips'
-                )])
+                await ctx.send(embed=embed, components=buttons)
                 await send_webhook(
                     title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                     load=f"response - success"
@@ -112,6 +116,49 @@ class Base(Extension):
             await ctx.send(f"Uh oh... an error occurred fetching the clip {clyppyid}")
             await send_webhook(
                 title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                load=f"response - unexpected error: {e}",
+                color=COLOR_RED,
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
+            )
+
+    @component_callback(compile(r"ibtn-delete-.*"))
+    async def delete_button_response(self, ctx: ComponentContext):
+        clyppyid = ctx.custom_id.split("-")[-1]
+        await ctx.send(f"Are you sure you want to delete this clip?", components=[
+            Button(style=ButtonStyle.SUCCESS, label="Confirm", custom_id=f"ibtn-confirm-delete-{clyppyid}")
+        ])
+
+    @component_callback(compile(r"ibtn-confirm-delete-.*"))
+    async def confirm_delete_button_response(self, ctx: ComponentContext):
+        await ctx.defer(ephemeral=True)
+        clyppyid = ctx.custom_id.split("-")[-1]
+        try:
+            response = await callback_clip_delete_msg({
+                "video_id": clyppyid,
+                "user_id": ctx.author.id,
+            }, key=os.getenv('clyppy_post_key'))
+            if response['code'] == 401:
+                raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
+            elif response['ctx'] is not None:
+                chn = await self.bot.fetchchannel(response['ctx']['channel_id'])
+                msg: Message = await chn.fetch_message(response['ctx']['message_id'])
+                asyncio.create_task(msg.delete())
+    
+            await ctx.send("The clip has been deleted.")
+            await send_webhook(
+                title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
+                load=f"response - success"
+                     f"title: {clyppyid}",
+                color=COLOR_GREEN,
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
+            )
+        except Exception as e:
+            self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
+            await ctx.send(f"Uh oh... an error occurred deleting the clip {clyppyid}:\n{str(e)}", components=[Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')])
+            await send_webhook(
+                title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
                 load=f"response - unexpected error: {e}",
                 color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
