@@ -125,7 +125,7 @@ class Base(Extension):
     @component_callback(compile(r"ibtn-delete-.*"))
     async def delete_button_response(self, ctx: ComponentContext):
         clyppyid = ctx.custom_id.split("-")[-1]
-        await ctx.send(f"Are you sure you want to delete this clip?", components=[
+        await ctx.send(f"Are you sure you want to delete this clip?", ephemeral=True, components=[
             Button(style=ButtonStyle.SUCCESS, label="Confirm", custom_id=f"ibtn-confirm-delete-{clyppyid}")
         ])
 
@@ -144,7 +144,7 @@ class Base(Extension):
                 chn = await self.bot.fetchchannel(response['ctx']['channel_id'])
                 msg: Message = await chn.fetch_message(response['ctx']['message_id'])
                 asyncio.create_task(msg.delete())
-    
+
             await ctx.send("The clip has been deleted.")
             await send_webhook(
                 title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
