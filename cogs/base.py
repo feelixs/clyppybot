@@ -7,7 +7,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
-from bot.io import get_aiohttp_session, callback_clip_delete_msg
+from bot.io import get_aiohttp_session, callback_clip_delete_msg, add_reqqed_by
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
@@ -133,11 +133,9 @@ class Base(Extension):
     async def confirm_delete_button_response(self, ctx: ComponentContext):
         await ctx.defer(ephemeral=True)
         clyppyid = ctx.custom_id.split("-")[-1]
+        data = {"video_id": clyppyid, "user_id": ctx.author.id}
         try:
-            response = await callback_clip_delete_msg({
-                "video_id": clyppyid,
-                "user_id": ctx.author.id,
-            }, key=os.getenv('clyppy_post_key'))
+            response = await callback_clip_delete_msg(data, key=os.getenv('clyppy_post_key'))
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
@@ -147,16 +145,6 @@ class Base(Extension):
                     chn = await self.bot.fetch_channel(clip['channel_id'])
                     msg: Message = await chn.fetch_message(clip['message_id'])
                     asyncio.create_task(msg.delete())
-
-            await ctx.send("The clip has been deleted.")
-            await send_webhook(
-                title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
-                load=f"response - success"
-                     f"title: {clyppyid}",
-                color=COLOR_GREEN,
-                url=APPUSE_LOG_WEBHOOK,
-                logger=self.logger
-            )
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
             await ctx.send(f"Uh oh... an error occurred deleting the clip {clyppyid}:\n{str(e)}", components=[Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')])
@@ -167,6 +155,20 @@ class Base(Extension):
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
+            try:
+                await add_reqqed_by(data, key=os.getenv('clyppy_post_key'))
+            except:
+                self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not re-add reqqed by for user {ctx.author.id}")
+
+        await ctx.send("The clip has been deleted.")
+        await send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
+            load=f"response - success"
+                 f"title: {clyppyid}",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        )
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
