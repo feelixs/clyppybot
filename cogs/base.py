@@ -63,6 +63,7 @@ class Base(Extension):
                     'url']
                 original = int(clip_info['requested_by'])
                 deleted = clip_info['is_deleted']
+                dstr = clip_info['deleted_at_str']
 
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
@@ -77,7 +78,7 @@ class Base(Extension):
                 if clyppy_cdn and not deleted:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 elif clyppy_cdn and deleted:
-                    embed.add_field(name="Deleted at", value=clip_info['deleted_at_str'])
+                    embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
                 await ctx.send(embed=embed, components=[Button(
                     style=ButtonStyle.LINK,
                     label=f"View your clips",
