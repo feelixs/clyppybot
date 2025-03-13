@@ -125,7 +125,7 @@ class Base(Extension):
     @component_callback(compile(r"ibtn-delete-.*"))
     async def delete_button_response(self, ctx: ComponentContext):
         clyppyid = ctx.custom_id.split("-")[-1]
-        await ctx.send(f"Are you sure you want to delete this clip? It will also delete all corresponding CLYPPY embeds you've requested", ephemeral=True, components=[
+        await ctx.send(f"Are you sure you want to delete this clip? It will also delete all CLYPPY embeds you've requested of it.", ephemeral=True, components=[
             Button(style=ButtonStyle.SUCCESS, label="Confirm", custom_id=f"ibtn-confirm-delete-{clyppyid}")
         ])
 
