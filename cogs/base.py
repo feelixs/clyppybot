@@ -163,6 +163,7 @@ class Base(Extension):
             )
             if 'Unauthorized' in str(e):
                 return
+
             try:
                 await add_reqqed_by(data, key=os.getenv('clyppy_post_key'))
             except:
