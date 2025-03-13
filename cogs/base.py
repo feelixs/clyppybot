@@ -141,7 +141,7 @@ class Base(Extension):
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
             elif response['ctx'] is not None:
-                chn = await self.bot.fetchchannel(response['ctx']['channel_id'])
+                chn = await self.bot.fetch_channel(response['ctx']['channel_id'])
                 msg: Message = await chn.fetch_message(response['ctx']['message_id'])
                 asyncio.create_task(msg.delete())
 
