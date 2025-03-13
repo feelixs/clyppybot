@@ -62,6 +62,7 @@ class Base(Extension):
                 clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info[
                     'url']
                 original = int(clip_info['requested_by'])
+                deleted = clip_info['is_deleted']
 
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
@@ -73,8 +74,10 @@ class Base(Extension):
                                 value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
                 embed.add_field(name="File Location",
                                 value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
-                if clyppy_cdn:
+                if clyppy_cdn and not deleted:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
+                elif clyppy_cdn and deleted:
+                    embed.add_field(name="Deleted at", value=clip_info['deleted_at'])
                 await ctx.send(embed=embed, components=[Button(
                     style=ButtonStyle.LINK,
                     label=f"View your clips",
@@ -88,7 +91,8 @@ class Base(Extension):
                          f"platform: {clip_info['platform']}\n"
                          f"duration: {clip_info['duration']}\n"
                          f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
-                         f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}",
+                         f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
+                         f"deleted: {deleted}",
                     color=COLOR_GREEN,
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
