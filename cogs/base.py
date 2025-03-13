@@ -138,6 +138,7 @@ class Base(Extension):
                 "video_id": clyppyid,
                 "user_id": ctx.author.id,
             }, key=os.getenv('clyppy_post_key'))
+            self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
             elif response['ctx'] is not None:
