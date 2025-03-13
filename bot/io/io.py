@@ -36,7 +36,7 @@ async def is_404(url: str, logger=None) -> Tuple[bool, int]:
 async def callback_clip_delete_msg(data, key) -> dict:
     async with get_aiohttp_session() as session:
         async with session.post(
-                'https://clyppy.io/api/callback/msg-get-delete/',
+                'https://clyppy.io/api/clips/msg-get-delete/',
                 json=data,
                 headers={
                     'X-API-Key': key,
