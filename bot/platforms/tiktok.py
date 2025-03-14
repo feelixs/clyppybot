@@ -46,19 +46,6 @@ class TikTokMisc(BaseMisc):
                 else:
                     return f"https://www.tiktok.com/@{user}/video/{video_id}"
 
-                # photos still probably won't be compatibly with yt-dlp but at least it'll narrow the error to
-                # 'not a video post' instead of 'unexpected error'
-                p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fphoto\\u002F(\d+)"'
-                video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
-                if user is None:
-                    self.logger.info(f"(photo) Invalid TikTok URL: {shorturl} (user was None)")
-                    raise NoDuration
-                elif video_id is None:
-                    self.logger.info(f"(photo) Invalid TikTok URL: {shorturl} (video_id was None)")
-                    raise NoDuration
-                else:
-                    return f"https://www.tiktok.com/@{user}/photo/{video_id}"
-
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
