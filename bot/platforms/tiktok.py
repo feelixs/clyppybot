@@ -3,7 +3,7 @@ from aiohttp import ClientSession
 from bot.types import DownloadResponse
 from bot.errors import VideoTooLong, NoDuration
 from bot.classes import BaseClip, BaseMisc
-from typing import Optional
+from typing import Optional, Tuple
 
 
 class TikTokMisc(BaseMisc):
@@ -31,7 +31,7 @@ class TikTokMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def _resolve_url(self, shorturl) -> str:
+    async def _resolve_url(self, shorturl) -> Tuple[str, str]:
         # retrieve actual url
         self.logger.info(f'Retrieving actual url from shortened url {shorturl}')
         async with ClientSession() as session:
@@ -46,7 +46,7 @@ class TikTokMisc(BaseMisc):
                     self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (video_id was None)")
                     raise NoDuration
                 else:
-                    return f"https://www.tiktok.com/@{user.group(1)}/video/{video_id.group(2)}"
+                    return f"https://www.tiktok.com/@{user.group(1)}/video/{video_id.group(2)}", user
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
@@ -60,7 +60,7 @@ class TikTokMisc(BaseMisc):
         ]
 
         if any(re.match(pattern, url) for pattern in short_url_patterns):
-            url = await self._resolve_url(url)
+            url, user = await self._resolve_url(url)
         else:
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
