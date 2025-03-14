@@ -48,8 +48,7 @@ class TikTokMisc(BaseMisc):
                 else:
                     return f"https://www.tiktok.com/@{user}/video/{video_id}"
 
-                p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fphoto\\u002F(\d+)"'
-                txt = await response.text()
+                p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fphoto\\u002F(\d+)"'   
                 video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
                 if user is None:
                     self.logger.info(f"Invalid TikTok URL: {shorturl} (user was None)")
