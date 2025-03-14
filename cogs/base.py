@@ -57,9 +57,9 @@ class Base(Extension):
         """
         await ctx.defer(ephemeral=True)
 
-        clip_ctx = ctx.custom_id.split("-")[1]
-        if clip_ctx == "d":  # was a discord upload
-            clyppyid = ctx.custom_id.split("-")[-1]
+        clip_ctx = ctx.custom_id.split("-")
+        if clip_ctx[1] == "d":  # was a discord upload
+            clyppyid = clip_ctx[-1]
         else:
             clyppyid = clip_ctx
 
