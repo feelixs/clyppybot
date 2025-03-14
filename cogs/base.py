@@ -33,11 +33,12 @@ class Base(Extension):
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
     @staticmethod
-    async def get_clip_info(clip_id: str):
+    async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
         """Get clip info from clyppyio"""
         url = f"https://clyppy.io/api/clips/get/{clip_id}"
         headers = {
             'X-API-Key': os.getenv('clyppy_post_key'),
+            'Request-Type': ctx_type,
             'Content-Type': 'application/json'
         }
         async with get_aiohttp_session() as session:
