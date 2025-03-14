@@ -53,18 +53,12 @@ class TikTokMisc(BaseMisc):
                 video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
                 if user is None:
                     self.logger.info(f"Invalid TikTok URL: {shorturl} (user was None)")
-                    p = None
+                    raise NoDuration
                 elif video_id is None:
                     self.logger.info(f"Invalid TikTok URL: {shorturl} (video_id was None)")
-                    p = None
-                if p is None and v is None:
                     raise NoDuration
-                elif v is None and p is not None:
-                    return f"https://www.tiktok.com/@{user}/photo/{video_id}"
-                elif v is not None and p is not None:
-                    return f"https://www.tiktok.com/@{user}/video/{video_id}"
                 else:
-                    raise NoDuration
+                    return f"https://www.tiktok.com/@{user}/photo/{video_id}"
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
