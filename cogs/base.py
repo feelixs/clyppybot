@@ -61,7 +61,9 @@ class Base(Extension):
         clip_ctx = ctx.custom_id.split("-")
         if clip_ctx[1] == "d":  # was a discord upload
             clyppyid = clip_ctx[-1]
+            ctx_type = 'BotInteraction'
         else:
+            ctx_type = 'StoredVideo'
             clyppyid = clip_ctx
 
         buttons = [
@@ -70,7 +72,7 @@ class Base(Extension):
         ]
 
         try:
-            clip_info = await self.get_clip_info(clyppyid)
+            clip_info = await self.get_clip_info(clyppyid, ctx_type=ctx_type)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info['url']
