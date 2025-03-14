@@ -38,15 +38,13 @@ class TikTokMisc(BaseMisc):
             async with session.get(shorturl) as response:
                 v = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
                 txt = await response.text()
-                video_id, user = re.search(v, txt), re.search(v, txt)
-                if user is None:
-                    self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (user was None)")
-                    raise NoDuration
-                elif video_id is None:
-                    self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (video_id was None)")
+                match = re.search(v, txt)
+                if match is None:
+                    self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (match was None)")
                     raise NoDuration
                 else:
-                    video_id, user = video_id.group(2), user.group(1)
+                    user = match.group(1)
+                    video_id = match.group(2)
                     return f"https://www.tiktok.com/@{user}/video/{video_id}", user
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
