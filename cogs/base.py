@@ -79,9 +79,13 @@ class Base(Extension):
                 original = clip_info['requested_by']
                 if original is not None:
                     original = int(original)
-                    
+
                 deleted = clip_info['is_deleted']
                 dstr = clip_info['deleted_at_str']
+
+                dyr = clip_info['duration']
+                if dyr is None:
+                    dyr = 0
 
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
@@ -90,7 +94,7 @@ class Base(Extension):
                 #if ctx.author.id != original:
                 #    embed.add_field(name="First requester", value=f"<@{original}>")
                 embed.add_field(name="Duration",
-                                value=f"{clip_info['duration'] // 60}m {round(clip_info['duration'] % 60, 2)}s")
+                                value=f"{dyr // 60}m {round(dyr % 60, 2)}s")
                 embed.add_field(name="File Location",
                                 value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
                 if clyppy_cdn and not deleted:
