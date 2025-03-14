@@ -31,7 +31,7 @@ class TikTokMisc(BaseMisc):
                 return match.group(1)
         return None
 
-    async def _resolve_url(self, shorturl) -> Tuple[str, str]:
+    async def _resolve_url(self, shorturl) -> Tuple[str, str, str]:
         # retrieve actual url
         self.logger.info(f'Retrieving actual url from shortened url {shorturl}')
         async with ClientSession() as session:
@@ -45,7 +45,7 @@ class TikTokMisc(BaseMisc):
                 else:
                     user = match.group(1)
                     video_id = match.group(2)
-                    return f"https://www.tiktok.com/@{user}/video/{video_id}", user
+                    return f"https://www.tiktok.com/@{user}/video/{video_id}", video_id, user
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
@@ -59,7 +59,7 @@ class TikTokMisc(BaseMisc):
         ]
 
         if any(re.match(pattern, url) for pattern in short_url_patterns):
-            url, user = await self._resolve_url(url)
+            url, video_id, user = await self._resolve_url(url)
         else:
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
