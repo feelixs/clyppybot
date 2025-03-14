@@ -71,6 +71,7 @@ class TikTokMisc(BaseMisc):
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")
             raise NoDuration
+
         short_url_patterns = [
             r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?',
             r'(?:https?://)?(?:vt\.|vm\.)?tiktok\.com/([A-Za-z0-9]+)/?'
