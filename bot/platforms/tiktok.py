@@ -16,17 +16,14 @@ class TikTokMisc(BaseMisc):
         Extracts the TikTok video ID from various URL formats.
         Returns None if the URL is not a valid TikTok video URL.
         """
-        # Mathes URLs like:
-        # - https://www.tiktok.com/@username/video/123456789
-        # - https://m.tiktok.com/video/123456789
-        # - https://vm.tiktok.com/video/123456789
-        pattern = [
+        patterns = [
             r'(?:https?://)?(?:www\.|vm\.|m\.)?tiktok\.com/(?:@[^/]+/)?video/(\d+)',
-            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?',
-            r'(?:https?://)?(?:vt\.|vm\.)?tiktok\.com/([A-Za-z0-9]+)/?'
+            r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9_-]+)/?',
+            r'(?:https?://)?(?:vt\.|vm\.)?tiktok\.com/([A-Za-z0-9_-]+)/?'
         ]
-        for p in pattern:
-            match = re.match(p, url)
+
+        for p in patterns:
+            match = re.search(p, url)
             if match:
                 return match.group(1)
         return None
