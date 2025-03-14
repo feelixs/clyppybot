@@ -41,8 +41,10 @@ class TikTokMisc(BaseMisc):
                 video_id, user = re.search(v, txt), re.search(v, txt)
                 if user is None:
                     self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (user was None)")
+                    raise NoDuration
                 elif video_id is None:
                     self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (video_id was None)")
+                    raise NoDuration
                 else:
                     return f"https://www.tiktok.com/@{user.group(1)}/video/{video_id.group(2)}"
 
