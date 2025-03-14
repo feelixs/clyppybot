@@ -46,7 +46,8 @@ class TikTokMisc(BaseMisc):
                     self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (video_id was None)")
                     raise NoDuration
                 else:
-                    return f"https://www.tiktok.com/@{user.group(1)}/video/{video_id.group(2)}", user
+                    video_id, user = video_id.group(2), user.group(1)
+                    return f"https://www.tiktok.com/@{user}/video/{video_id}", user
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
