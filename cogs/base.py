@@ -76,7 +76,10 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info['url']
-                original = int(clip_info['requested_by'])
+                original = clip_info['requested_by']
+                if original is not None:
+                    original = int(original)
+                    
                 deleted = clip_info['is_deleted']
                 dstr = clip_info['deleted_at_str']
 
