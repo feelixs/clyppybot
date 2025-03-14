@@ -81,7 +81,7 @@ class Base(Extension):
                 embed = Embed(title=f"{clip_info['title']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(name="Original URL", value=clip_info['embedded_url'])
-                embed.add_field(name="Requested by", value=f'<@{ctx.author.id}>')
+                embed.add_field(name="Requested by", value=f'<@{ctx.message.author.id}>')
                 #if ctx.author.id != original:
                 #    embed.add_field(name="First requester", value=f"<@{original}>")
                 embed.add_field(name="Duration",
