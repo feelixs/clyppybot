@@ -31,34 +31,53 @@ class TikTokMisc(BaseMisc):
                 return match.group(1)
         return None
 
+    async def _resolve_url(self, shorturl) -> str:
+        # retrieve actual url
+        self.logger.info(f'Retrieving actual url from shortened url {shorturl}')
+        async with ClientSession() as session:
+            async with session.get(shorturl) as response:
+                v = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
+                txt = await response.text()
+                video_id, user = re.search(v, txt).group(2), re.search(v, txt).group(1)
+                if user is None:
+                    self.logger.info(f"Invalid TikTok URL: {shorturl} (user was None)")
+                    v = None
+                elif video_id is None:
+                    self.logger.info(f"Invalid TikTok URL: {shorturl} (video_id was None)")
+                    v = None
+                if v is not None:
+                    return f"https://www.tiktok.com/@{user}/video/{video_id}"
+
+                p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fphoto\\u002F(\d+)"'
+                txt = await response.text()
+                video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
+                if user is None:
+                    self.logger.info(f"Invalid TikTok URL: {shorturl} (user was None)")
+                    p = None
+                elif video_id is None:
+                    self.logger.info(f"Invalid TikTok URL: {shorturl} (video_id was None)")
+                    p = None
+                if p is None and v is None:
+                    raise NoDuration
+                elif v is None and p is not None:
+                    return f"https://www.tiktok.com/@{user}/photo/{video_id}"
+                elif v is not None and p is not None:
+                    return f"https://www.tiktok.com/@{user}/video/{video_id}"
+                else:
+                    raise NoDuration
+
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
             self.logger.info(f"Invalid TikTok URL: {url}")
             raise NoDuration
-
         short_url_patterns = [
             r'(?:https?://)?(?:www\.)?tiktok\.com/t/([A-Za-z0-9]+)/?',
             r'(?:https?://)?(?:vt\.|vm\.)?tiktok\.com/([A-Za-z0-9]+)/?'
         ]
 
         if any(re.match(pattern, url) for pattern in short_url_patterns):
-            # retrieve actual url
-            self.logger.info(f'Retrieving actual url from shortened url {url}')
-            async with ClientSession() as session:
-                async with session.get(url) as response:
-                    p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002F(?:video|photo)\\u002F(\d+)"'
-                    txt = await response.text()
-                    video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
-                    if user is None:
-                        self.logger.info(f"Invalid TikTok URL: {url} (user was None)")
-                        raise NoDuration
-                    elif video_id is None:
-                        self.logger.info(f"Invalid TikTok URL: {url} (video_id was None)")
-                        raise NoDuration
-
-                    url = f"https://www.tiktok.com/@{user}/video/{video_id}"
-                    self.logger.info(f'Got actual url: {url}')
+            url = await self._resolve_url(url)
         else:
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
