@@ -341,14 +341,17 @@ class AutoEmbedder:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
 
-                if not uploading_to_discord:  # discord uploads wont have an info button
-                    info_button = Button(
-                        style=ButtonStyle.SECONDARY,
-                        label="ⓘ Info",
-                        custom_id=f"ibtn-{clip.clyppy_id}"
-                    )
-                    comp = [info_button] + comp
-                    comp = ActionRow(*comp)
+                dctx = ""
+                if uploading_to_discord:
+                    dctx = "d-"
+
+                info_button = Button(
+                    style=ButtonStyle.SECONDARY,
+                    label="ⓘ Info",
+                    custom_id=f"ibtn-{dctx}{clip.clyppy_id}"
+                )
+                comp = [info_button] + comp
+                comp = ActionRow(*comp)
 
                 # send message
                 if isinstance(respond_to, SlashContext):

@@ -56,7 +56,12 @@ class Base(Extension):
         This function gets called whenever a user clicks an info button.
         """
         await ctx.defer(ephemeral=True)
-        clyppyid = ctx.custom_id.split("-")[1]
+
+        clip_ctx = ctx.custom_id.split("-")[1]
+        if clip_ctx == "d":  # was a discord upload
+            clyppyid = ctx.custom_id.split("-")[-1]
+        else:
+            clyppyid = clip_ctx
 
         buttons = [
             Button(style=ButtonStyle.DANGER, label="X", custom_id=f"ibtn-delete-{clyppyid}"),
