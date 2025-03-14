@@ -108,7 +108,7 @@ class Base(Extension):
                          f"title: {clip_info['title']}\n"
                          f"url: {clip_info['embedded_url']}\n"
                          f"platform: {clip_info['platform']}\n"
-                         f"duration: {clip_info['duration']}\n"
+                         f"duration: {dyr}\n"
                          f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
                          f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
                          f"deleted: {deleted}",
