@@ -72,8 +72,7 @@ class Base(Extension):
             clip_info = await self.get_clip_info(clyppyid)
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
-                clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info[
-                    'url']
+                clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info['url']
                 original = int(clip_info['requested_by'])
                 deleted = clip_info['is_deleted']
                 dstr = clip_info['deleted_at_str']
