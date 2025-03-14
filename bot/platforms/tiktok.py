@@ -45,7 +45,7 @@ class TikTokMisc(BaseMisc):
                 elif video_id is None:
                     self.logger.info(f"Invalid TikTok URL: {shorturl} (video_id was None)")
                     v = None
-                if v is not None:
+                else:
                     return f"https://www.tiktok.com/@{user}/video/{video_id}"
 
                 p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fphoto\\u002F(\d+)"'
