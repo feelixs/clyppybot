@@ -98,6 +98,7 @@ class Base(Extension):
                     name="Duration",
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
                 )
+
                 if clip_url is not None:
                     clyppy_cdn = 'https://clyppy.io/media/' in clip_url or 'https://cdn.clyppy.io' in clip_url
                     embed.add_field(
