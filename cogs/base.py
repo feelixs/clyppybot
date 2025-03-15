@@ -192,6 +192,8 @@ class Base(Extension):
         clyppyid = clip_ctx[-1]
         is_discord_uploaded = clip_ctx[-2] == "d"
 
+        success_codes = [200, 201, 404]  # all the status codes where we wouldn't want to re-add reqqed by on error
+
         data = {"video_id": clyppyid, "user_id": ctx.author.id}
         try:
             response = await callback_clip_delete_msg(
@@ -202,8 +204,7 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
-            elif response['code'] not in [200, 201, 404]:
-                # all the other codes where we wouldn't want to re-add reqqed by on error
+            elif response['code'] not in success_codes:
                 raise Exception(f"Error: {response['code']}")
             elif response['ctx'] is not None:
                 # maybe there's more than 1 message by this user of this clip
