@@ -67,7 +67,11 @@ class Base(Extension):
             clyppyid = clip_ctx
 
         buttons = [
-            Button(style=ButtonStyle.DANGER, label="X", custom_id=f"ibtn-delete-{clyppyid}"),
+            Button(
+                style=ButtonStyle.DANGER,
+                label="X",
+                custom_id=f"ibtn-delete-d-{clyppyid}" if is_discord_uploaded else f"ibtn-delete-{clyppyid}"
+            ),
             Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')
         ]
 
@@ -165,25 +169,52 @@ class Base(Extension):
 
     @component_callback(compile(r"ibtn-delete-.*"))
     async def delete_button_response(self, ctx: ComponentContext):
-        clyppyid = ctx.custom_id.split("-")[-1]
-        await ctx.send(f"Are you sure you want to delete this clip? It will also delete all CLYPPY embeds you've requested of it.", ephemeral=True, components=[
-            Button(style=ButtonStyle.SUCCESS, label="Confirm", custom_id=f"ibtn-confirm-delete-{clyppyid}")
-        ])
+        clip_ctx = ctx.custom_id.split("-")
+        is_discord_uploaded = False
+        if clip_ctx[-2] == "d":
+            clyppyid = clip_ctx[-1]
+            is_discord_uploaded = True
+        else:
+            clyppyid = clip_ctx[-1]
+
+        await ctx.send(
+            content=f"Are you sure you want to delete this clip? It will also delete all CLYPPY embeds you've requested of it.",
+            ephemeral=True,
+            components=[
+                Button(
+                    style=ButtonStyle.SUCCESS,
+                    label="Confirm",
+                    custom_id=f"ibtn-confirm-delete-d-{clyppyid}" if is_discord_uploaded else f"ibtn-confirm-delete-{clyppyid}"
+                )
+            ]
+        )
 
     @component_callback(compile(r"ibtn-confirm-delete-.*"))
     async def confirm_delete_button_response(self, ctx: ComponentContext):
         await ctx.defer(ephemeral=True)
-        clyppyid = ctx.custom_id.split("-")[-1]
+        clip_ctx = ctx.custom_id.split("-")
+        is_discord_uploaded = False
+        if clip_ctx[-2] == "d":
+            clyppyid = clip_ctx[-1]
+            is_discord_uploaded = True
+        else:
+            clyppyid = clip_ctx[-1]
+
         data = {"video_id": clyppyid, "user_id": ctx.author.id}
         try:
-            response = await callback_clip_delete_msg(data, key=os.getenv('clyppy_post_key'))
+            response = await callback_clip_delete_msg(
+                data=data,
+                key=os.getenv('clyppy_post_key'),
+                ctx_type='BotInteraction' if is_discord_uploaded else 'StoredVideo'
+            )
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
             elif response['code'] not in [200, 201, 404]:  # all the codes where we wouldn't want to re-add reqqed by
                 raise Exception(f"Error: {response['code']}")
             elif response['ctx'] is not None:
-                # maybe theres more than 1 message by this user of this clip
+                # maybe there's more than 1 message by this user of this clip
+                delete_tasks = []
                 for clip in response['ctx']:
                     try:
                         # clyppy uploads the clip to clyppyio with the serverid as the userid if it's uploaded inside that user's DM with CLYPPY
@@ -194,9 +225,10 @@ class Base(Extension):
                         else:
                             chn = await self.bot.fetch_channel(clip['channel_id'])
                             msg: Message = await chn.fetch_message(clip['message_id'])
-                        asyncio.create_task(msg.delete())
+                        delete_tasks.append(asyncio.create_task(msg.delete()))
                     except Exception as e:
                         self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not delete message {clip['message_id']} from channel {clip['channel_id']}: {str(e)}")
+                await asyncio.gather(*delete_tasks)
 
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
