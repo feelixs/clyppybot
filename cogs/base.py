@@ -60,9 +60,7 @@ class Base(Extension):
 
         clip_ctx = ctx.custom_id.split("-")
         clyppyid = clip_ctx[-1]
-        is_discord_uploaded = False
-        if clip_ctx[1] == "d":  # was a discord upload
-            is_discord_uploaded = True
+        is_discord_uploaded = clip_ctx[1] == "d"  # was it a discord upload
 
         buttons = [
             Button(
