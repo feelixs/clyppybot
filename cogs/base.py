@@ -299,6 +299,12 @@ class Base(Extension):
                             ]
                    )
     async def embed(self, ctx: SlashContext, url: str):
+        # trim off extra characters at start or beginning
+        while url.startswith('*') or url.startswith('['):
+            url = url[1:]
+        while url.endswith('*') or url.endswith(']'):
+            url = url[:-1]
+
         if not url.startswith("https://"):
             url = "https://" + url
         platform, slug = compute_platform(url, self.bot)
