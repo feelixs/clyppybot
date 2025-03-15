@@ -200,6 +200,9 @@ class Base(Extension):
                 ctx_type='BotInteraction' if is_discord_uploaded else 'StoredVideo'
             )
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
+            if is_discord_uploaded:
+                return
+
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
             elif response['code'] not in [200, 201, 404]:  # all the codes where we wouldn't want to re-add reqqed by
