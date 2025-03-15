@@ -203,7 +203,7 @@ class Base(Extension):
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
             elif response['code'] not in [200, 201, 404]:  # all the codes where we wouldn't want to re-add reqqed by
-                raise Exception(f"Error: {response['code']}")
+                raise Exception(f"Error: {response['code']} (no readd)")
             elif response['ctx'] is not None:
                 # maybe there's more than 1 message by this user of this clip
                 delete_tasks = []
@@ -232,7 +232,7 @@ class Base(Extension):
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
-            if 'Unauthorized' in str(e) or is_discord_uploaded:
+            if 'Unauthorized' in str(e) or '(no readd)' in str(e) or is_discord_uploaded:
                 return
 
             try:
