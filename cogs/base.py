@@ -170,12 +170,8 @@ class Base(Extension):
     @component_callback(compile(r"ibtn-delete-.*"))
     async def delete_button_response(self, ctx: ComponentContext):
         clip_ctx = ctx.custom_id.split("-")
-        is_discord_uploaded = False
-        if clip_ctx[-2] == "d":
-            clyppyid = clip_ctx[-1]
-            is_discord_uploaded = True
-        else:
-            clyppyid = clip_ctx[-1]
+        clyppyid = clip_ctx[-1]
+        is_discord_uploaded = clip_ctx[-2] == "d"
 
         await ctx.send(
             content=f"Are you sure you want to delete this clip? It will also delete all CLYPPY embeds you've requested of it.",
@@ -193,12 +189,8 @@ class Base(Extension):
     async def confirm_delete_button_response(self, ctx: ComponentContext):
         await ctx.defer(ephemeral=True)
         clip_ctx = ctx.custom_id.split("-")
-        is_discord_uploaded = False
-        if clip_ctx[-2] == "d":
-            clyppyid = clip_ctx[-1]
-            is_discord_uploaded = True
-        else:
-            clyppyid = clip_ctx[-1]
+        clyppyid = clip_ctx[-1]
+        is_discord_uploaded = clip_ctx[-2] == "d"
 
         data = {"video_id": clyppyid, "user_id": ctx.author.id}
         try:
