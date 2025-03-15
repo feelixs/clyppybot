@@ -174,7 +174,7 @@ class Base(Extension):
         is_discord_uploaded = clip_ctx[-2] == "d"
 
         await ctx.send(
-            content=f"Are you sure you want to delete this {'upload' if is_discord_uploaded else 'clip'}? It will also delete all CLYPPY embeds you've requested of it.",
+            content=f"Are you sure you want to delete this clip?{'It will also delete all CLYPPY embeds you\'ve requested of it.' if not is_discord_uploaded else ''}",
             ephemeral=True,
             components=[
                 Button(
