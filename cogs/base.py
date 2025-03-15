@@ -74,7 +74,7 @@ class Base(Extension):
         try:
             clyppy_cdn = False
 
-            clip_info = await self.get_clip_info(clyppyid, ctx_type='BotInteraction' if is_uploaded else 'StoredVideo')
+            clip_info = await self.get_clip_info(clyppyid, ctx_type='BotInteraction' if is_discord_uploaded else 'StoredVideo')
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 clip_url = clip_info['url']
