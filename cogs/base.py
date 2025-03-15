@@ -115,6 +115,7 @@ class Base(Extension):
                 await ctx.send(embed=embed, components=buttons)
 
                 if not is_discord_uploaded:
+                    # from external/clyppy cdn
                     await send_webhook(
                         title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                         load=f"response - success"
