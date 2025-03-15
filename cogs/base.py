@@ -59,12 +59,10 @@ class Base(Extension):
         await ctx.defer(ephemeral=True)
 
         clip_ctx = ctx.custom_id.split("-")
+        clyppyid = clip_ctx[-1]
         is_discord_uploaded = False
         if clip_ctx[1] == "d":  # was a discord upload
-            clyppyid = clip_ctx[-1]
             is_discord_uploaded = True
-        else:
-            clyppyid = clip_ctx
 
         buttons = [
             Button(
