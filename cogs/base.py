@@ -72,6 +72,8 @@ class Base(Extension):
         ]
 
         try:
+            clyppy_cdn = False
+
             clip_info = await self.get_clip_info(clyppyid, ctx_type='BotInteraction' if is_uploaded else 'StoredVideo')
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
@@ -111,20 +113,34 @@ class Base(Extension):
                         embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
 
                 await ctx.send(embed=embed, components=buttons)
-                await send_webhook(
-                    title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
-                    load=f"response - success"
-                         f"title: {clip_info['title']}\n"
-                         f"url: {clip_info['embedded_url']}\n"
-                         f"platform: {clip_info['platform']}\n"
-                         f"duration: {dyr}\n"
-                         f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
-                         f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
-                         f"deleted: {deleted}",
-                    color=COLOR_GREEN,
-                    url=APPUSE_LOG_WEBHOOK,
-                    logger=self.logger
-                )
+
+                if clip_url is None:
+                    await send_webhook(
+                        title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                        load=f"response - success"
+                             f"title: {clip_info['title']}\n"
+                             f"url: {clip_info['embedded_url']}\n"
+                             f"platform: {clip_info['platform']}\n"
+                             f"duration: {dyr}\n",
+                        color=COLOR_GREEN,
+                        url=APPUSE_LOG_WEBHOOK,
+                        logger=self.logger
+                    )
+                else:
+                    await send_webhook(
+                        title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
+                        load=f"response - success"
+                             f"title: {clip_info['title']}\n"
+                             f"url: {clip_info['embedded_url']}\n"
+                             f"platform: {clip_info['platform']}\n"
+                             f"duration: {dyr}\n"
+                             f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
+                             f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
+                             f"deleted: {deleted}",
+                        color=COLOR_GREEN,
+                        url=APPUSE_LOG_WEBHOOK,
+                        logger=self.logger
+                    )
             else:
                 await ctx.send(f"Uh oh... it seems the clip {clyppyid} doesn't exist!")
                 await send_webhook(
