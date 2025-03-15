@@ -59,10 +59,10 @@ class Base(Extension):
         await ctx.defer(ephemeral=True)
 
         clip_ctx = ctx.custom_id.split("-")
-        is_uploaded = False
+        is_discord_uploaded = False
         if clip_ctx[1] == "d":  # was a discord upload
             clyppyid = clip_ctx[-1]
-            is_uploaded = True
+            is_discord_uploaded = True
         else:
             clyppyid = clip_ctx
 
@@ -101,7 +101,7 @@ class Base(Extension):
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
                 )
 
-                if not is_uploaded:
+                if not is_discord_uploaded:
                     clyppy_cdn = 'https://clyppy.io/media/' in clip_url or 'https://cdn.clyppy.io' in clip_url
                     embed.add_field(
                         name="File Location",
@@ -114,7 +114,7 @@ class Base(Extension):
 
                 await ctx.send(embed=embed, components=buttons)
 
-                if is_uploaded:
+                if not is_discord_uploaded:
                     await send_webhook(
                         title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                         load=f"response - success"
