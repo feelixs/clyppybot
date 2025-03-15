@@ -169,7 +169,7 @@ class Base(Extension):
         is_discord_uploaded = clip_ctx[-2] == "d"
 
         await ctx.send(
-            content=f"Are you sure you want to delete this clip?{' It will also delete all CLYPPY embeds you\'ve requested of it.' if not is_discord_uploaded else ''}",
+            content=f"Are you sure you want to continue? This will delete all CLYPPY embeds you\'ve requested of this clip.",
             ephemeral=True,
             components=[
                 Button(
@@ -241,7 +241,7 @@ class Base(Extension):
             except:
                 self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not re-add reqqed by for user {ctx.author.id}")
 
-        await ctx.send("The clip has been deleted.")
+        await ctx.send("The clip has been deleted." if not is_discord_uploaded else "All embeds you've requested of this clip have been deleted.")
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
             load=f"response - success"
