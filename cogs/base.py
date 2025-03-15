@@ -202,8 +202,7 @@ class Base(Extension):
             self.logger.info(f"@component_callback for button {ctx.custom_id} - response: {response}")
             if response['code'] == 401:
                 raise Exception(f"Unauthorized: User <@{ctx.author.id}> did not embed this clip!")
-            elif is_discord_uploaded or response['code'] not in [200, 201, 404]:
-                # all the codes where we wouldn't want to re-add reqqed by
+            elif response['code'] not in [200, 201, 404]:  # all the codes where we wouldn't want to re-add reqqed by
                 raise Exception(f"Error: {response['code']}")
             elif response['ctx'] is not None:
                 # maybe there's more than 1 message by this user of this clip
