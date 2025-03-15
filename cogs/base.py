@@ -75,7 +75,8 @@ class Base(Extension):
             clip_info = await self.get_clip_info(clyppyid, ctx_type='BotInteraction' if is_uploaded else 'StoredVideo')
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
-                clyppy_cdn = 'https://clyppy.io/media/' in clip_info['url'] or 'https://cdn.clyppy.io' in clip_info['url']
+                clip_url = clip_info['url']
+
                 original = clip_info['requested_by']
                 if original is not None:
                     original = int(original)
@@ -97,15 +98,17 @@ class Base(Extension):
                     name="Duration",
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
                 )
-                if clip_info['url'] is not None:
+                if clip_url is not None:
+                    clyppy_cdn = 'https://clyppy.io/media/' in clip_url or 'https://cdn.clyppy.io' in clip_url
                     embed.add_field(
                         name="File Location",
-                        value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn"
+                        value=clip_url if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn"
                     )
-                if clyppy_cdn and not deleted:
-                    embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
-                elif clyppy_cdn and deleted:
-                    embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
+                    if clyppy_cdn and not deleted:
+                        embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
+                    elif clyppy_cdn and deleted:
+                        embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
+
                 await ctx.send(embed=embed, components=buttons)
                 await send_webhook(
                     title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
