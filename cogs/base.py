@@ -101,7 +101,7 @@ class Base(Extension):
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
                 )
 
-                if clip_url is not None:
+                if not is_uploaded:
                     clyppy_cdn = 'https://clyppy.io/media/' in clip_url or 'https://cdn.clyppy.io' in clip_url
                     embed.add_field(
                         name="File Location",
@@ -114,14 +114,17 @@ class Base(Extension):
 
                 await ctx.send(embed=embed, components=buttons)
 
-                if clip_url is None:
+                if is_uploaded:
                     await send_webhook(
                         title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                         load=f"response - success"
                              f"title: {clip_info['title']}\n"
                              f"url: {clip_info['embedded_url']}\n"
                              f"platform: {clip_info['platform']}\n"
-                             f"duration: {dyr}\n",
+                             f"duration: {dyr}\n"
+                             f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
+                             f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
+                             f"deleted: {deleted}",
                         color=COLOR_GREEN,
                         url=APPUSE_LOG_WEBHOOK,
                         logger=self.logger
@@ -133,10 +136,7 @@ class Base(Extension):
                              f"title: {clip_info['title']}\n"
                              f"url: {clip_info['embedded_url']}\n"
                              f"platform: {clip_info['platform']}\n"
-                             f"duration: {dyr}\n"
-                             f"file_location: {clip_info['url'] if clyppy_cdn else 'Hosted on ' + str(clip_info['platform']) + ' cdn'}\n"
-                             f"expires: {clip_info['expiry_ts_str'] if clyppy_cdn else 'N/A'}"
-                             f"deleted: {deleted}",
+                             f"duration: {dyr}\n",
                         color=COLOR_GREEN,
                         url=APPUSE_LOG_WEBHOOK,
                         logger=self.logger
