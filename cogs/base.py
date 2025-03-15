@@ -233,7 +233,7 @@ class Base(Extension):
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
-            if 'Unauthorized' in str(e):
+            if 'Unauthorized' in str(e) or is_discord_uploaded:
                 return
 
             try:
