@@ -131,6 +131,7 @@ class Base(Extension):
                         logger=self.logger
                     )
                 else:
+                    # uploaded to discord
                     await send_webhook(
                         title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'info\' called on {clyppyid}',
                         load=f"response - success"
