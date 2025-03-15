@@ -93,10 +93,15 @@ class Base(Extension):
                 embed.add_field(name="Requested by", value=f'<@{ctx.message.author.id}>')
                 #if ctx.author.id != original:
                 #    embed.add_field(name="First requester", value=f"<@{original}>")
-                embed.add_field(name="Duration",
-                                value=f"{dyr // 60}m {round(dyr % 60, 2)}s")
-                embed.add_field(name="File Location",
-                                value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn")
+                embed.add_field(
+                    name="Duration",
+                    value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
+                )
+                if clip_info['url'] is not None:
+                    embed.add_field(
+                        name="File Location",
+                        value=clip_info['url'] if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn"
+                    )
                 if clyppy_cdn and not deleted:
                     embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
                 elif clyppy_cdn and deleted:
