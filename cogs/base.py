@@ -194,7 +194,7 @@ class Base(Extension):
 
         success_codes = [200, 201, 404]  # all the status codes where we wouldn't want to re-add reqqed by on error
 
-        data = {"video_id": clyppyid, "user_id": ctx.author.id}
+        data = {"video_id": clyppyid, "user_id": ctx.author.id, "msg_id": ctx.message.id}
         try:
             response = await callback_clip_delete_msg(
                 data=data,
