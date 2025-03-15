@@ -232,10 +232,11 @@ class Base(Extension):
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
+
             if 'Unauthorized' in str(e):
                 return
             elif is_discord_uploaded:
-                return 
+                return
 
             try:
                 await add_reqqed_by(data, key=os.getenv('clyppy_post_key'))
