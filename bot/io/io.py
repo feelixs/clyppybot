@@ -46,13 +46,14 @@ async def add_reqqed_by(data, key):
             return await response.json()
 
 
-async def callback_clip_delete_msg(data, key) -> dict:
+async def callback_clip_delete_msg(data, key, ctx_type: str = "StoredVideo") -> dict:
     async with get_aiohttp_session() as session:
         async with session.post(
                 'https://clyppy.io/api/clips/msg-get-delete/',
                 json=data,
                 headers={
                     'X-API-Key': key,
+                    'Request-Type': ctx_type,
                     'Content-Type': 'application/json'
                 }
         ) as response:
