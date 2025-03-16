@@ -91,10 +91,13 @@ class Base(Extension):
                     dyr = 0
 
                 embed = Embed(title=f"{clip_info['title']}")
-                embed.add_field(name="Command", value=f".embed {clip_info['embedded_url']}")
-                embed.add_field(name="Platform", value=clip_info['platform'])
                 if original is not None:
+                    embed.add_field(name="Command", value=f"<@{original}> used `.embed {clip_info['embedded_url']}`")
                     embed.add_field(name="Requested by", value=f'<@{original}>')
+                else:
+                    embed.add_field(name="Command", value=f"`.embed {clip_info['embedded_url']}`")
+
+                embed.add_field(name="Platform", value=clip_info['platform'])
                 embed.add_field(
                     name="Duration",
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
