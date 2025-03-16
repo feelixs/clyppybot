@@ -91,8 +91,8 @@ class Base(Extension):
                     dyr = 0
 
                 embed = Embed(title=f"{clip_info['title']}")
+                embed.add_field(name="Command", value=f".embed {clip_info['embedded_url']}")
                 embed.add_field(name="Platform", value=clip_info['platform'])
-                embed.add_field(name="Original URL", value=clip_info['embedded_url'])
                 if original is not None:
                     embed.add_field(name="Requested by", value=f'<@{original}>')
                 embed.add_field(
