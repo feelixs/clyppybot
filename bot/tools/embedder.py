@@ -376,7 +376,7 @@ class AutoEmbedder:
                             )
                         else:
                             bot_message = await respond_to.channel.send(
-                                content=f'<@{respond_to.author.id}>\n{clip.clyppy_url}',
+                                content=f'<@{respond_to.author.id}>, {clip.clyppy_url}',
                                 components=comp
                             )
 
