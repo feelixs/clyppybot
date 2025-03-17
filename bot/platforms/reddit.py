@@ -134,8 +134,9 @@ class RedditMisc(BaseMisc):
             raise NoDuration
         self.logger.info(f"{url} is_video=True")
 
-        if re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url) or \
-                re.match(r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)', url):  # retrieve the actual slug from a share link
+        if (re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url) or
+                re.match(r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)', url) or 
+                re.match(r'(?:https?://)?(?:www\.)?reddit\.com/u/[^/]+/s/([a-zA-Z0-9]+)', url)):  # retrieve the actual slug from a share link
             try:
                 slug = await self._get_actual_slug(url)
                 self.logger.info(f"Retrieving actual slug from shared url {url}")
