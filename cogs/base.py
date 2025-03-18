@@ -31,6 +31,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
+        self.base_embedder = self.bot.base.embedder
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
@@ -58,9 +59,9 @@ class Base(Extension):
                 return await func(event.message)
 
         # check for quickembed links
-        words = self.bot.base.embedder.get_words(event.message.content)
+        words = self.base_embedder.get_words(event.message.content)
         for p in self.bot.platform_list:
-            contains_clip_link, index = p.get_next_clip_link_loc(words, 0)
+            contains_clip_link, index = self.base_embedder.get_next_clip_link_loc(words, 0)
             if contains_clip_link:
                 return self.bot.base.handle_message(event, p)
 
