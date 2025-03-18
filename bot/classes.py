@@ -628,7 +628,7 @@ class BaseAutoEmbed:
         }
 
     async def handle_message(self, event: MessageCreate, platform: BaseMisc):
-        if platform is None:
+        if platform.platform_name is None:
             return
 
         message_is_embed_command = (
