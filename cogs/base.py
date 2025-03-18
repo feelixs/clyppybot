@@ -340,6 +340,8 @@ class Base(Extension):
         for p in self.bot.platform_embedders:
             if slug := p.platform.parse_clip_url(url):
                 platform = p.platform.platform_name
+            if slug is not None and platform is not None:
+                break
 
         return await self.bot.base_embedder.command_embed(ctx, url, platform, slug)
 
