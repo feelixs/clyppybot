@@ -14,6 +14,10 @@ class VideoTooLong(Exception):
     pass
 
 
+class UnsupportedError(Exception):
+    pass
+
+
 class NoPermsToView(Exception):
     pass
 

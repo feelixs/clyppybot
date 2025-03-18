@@ -14,7 +14,8 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
-from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, InvalidFileType
+from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, \
+    InvalidFileType, UnsupportedError
 from PIL import Image
 import hashlib
 import aiohttp
@@ -580,6 +581,8 @@ class BaseMisc(ABC):
             self.logger.error(f"Error downloading video for {url}: {str(e)}")
             if 'You don\'t have permission' in str(e) or "unable to view this" in str(e):
                 raise NoPermsToView
+            elif 'Unsupported URL:' in str(e) or 'is not a valid URL' in str(e):
+                raise UnsupportedError
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
@@ -942,6 +945,9 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
+        except UnsupportedError:
+            await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+            success, response = False, "Incompatible"
         except NoDuration:
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
             success, response = False, "No duration"
