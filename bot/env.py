@@ -42,6 +42,7 @@ EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
     'xxxymovies',
     'youjizz',
     '4tube',
+    'tube8',
     'cam4',
     'camsoda',
     'fux',
@@ -55,5 +56,6 @@ EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
     'slutload',
     'spankbang',
     'stripchat',
-    'noodlemagazine'
+    'noodlemagazine',
+    'tnaflix'
 ]
