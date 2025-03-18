@@ -63,7 +63,7 @@ class Base(Extension):
         for p in self.bot.platform_embedders:
             contains_clip_link, _ = p.embedder.get_next_clip_link_loc(words, 0)
             if contains_clip_link:
-                return p.handle_message(event)
+                return await p.handle_message(event)
 
     @staticmethod
     async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
