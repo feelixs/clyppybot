@@ -341,7 +341,7 @@ class Base(Extension):
                 return await self.bot.base_embedder.command_embed(
                     ctx=ctx,
                     url=url,
-                    platform=p.platform.platform_name,
+                    platform=p.platform,
                     slug=slug
                 )
         # incompatible (should never get here, since bot.base is a catch-all)
