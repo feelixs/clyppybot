@@ -31,7 +31,7 @@ class BASIC_MISC(BaseMisc):
         self.platform_name = "base"
 
     def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
-        return BaseClip(url, self.cdn_client)
+        return BASIC_CLIP(url, self.cdn_client)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
         return url
