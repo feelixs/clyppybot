@@ -38,7 +38,7 @@ class BASIC_MISC(BaseMisc):
 
 
 class BASIC_CLIP(BaseClip):
-    def __init__(self, url, cdn_client):
+    def __init__(self, url: str, cdn_client):
         self._service = 'base'
         self._url = url
         super().__init__(url, cdn_client)
