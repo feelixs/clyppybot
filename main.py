@@ -57,10 +57,6 @@ cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
-Bot.currently_embedding = []  # used in embedder.py (AutoEmbedder) -> for quickembeds (and i guess also triggers for command embeds)
-Bot.currently_downloading = []  # used in command embeds across all platforms
-Bot.currently_embedding_users = []  # used for command embeds
-
 
 async def main():
     Bot.load_extension('cogs.base')

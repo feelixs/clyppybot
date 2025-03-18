@@ -53,6 +53,10 @@ def init_misc(bot):
     bot.dsc = DiscordMisc(bot=bot)
     bot.tools = Tools()
 
+    bot.currently_embedding = []  # used in embedder.py (AutoEmbedder) -> for quickembeds (and i guess also triggers for command embeds)
+    bot.currently_downloading = []  # used in command embeds across all platforms
+    bot.currently_embedding_users = []  # used for command embeds
+
     bot.platform_list = [
         bot.twitch,
         bot.kick,
