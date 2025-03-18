@@ -617,6 +617,7 @@ class BaseMisc(ABC):
 class BaseAutoEmbed:
     def __init__(self, platform: BaseMisc, always_embed=False):
         self.bot = platform.bot
+        self.is_base = False
         self.always_embed_this_platform = always_embed
         self.platform = platform
         self.logger = platform.logger

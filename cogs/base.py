@@ -75,6 +75,8 @@ class Base(Extension):
         # but structuring like this will reduce unwanted calls handle_message()
         words = self.base_embedder.get_words(event.message.content)
         for p in self.bot.platform_embedders:
+            if p.is_base:
+                continue  # don't use autoembed on base embed (bot.base -> raw yt-dlp)
             contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
                 words=words,
                 n=0,

@@ -38,6 +38,7 @@ class BASIC_MISC(BaseMisc):
 class BaseEmbedder(BaseAutoEmbed):
     def __init__(self, bot):
         self.bot = bot
+        self.is_base = True
         self.logger = logging.getLogger(self.__class__.__name__)
         self.platform = BASIC_MISC(bot)
         super().__init__(
