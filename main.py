@@ -1,5 +1,5 @@
 from interactions import AutoShardedClient, Intents
-from bot.tools import init_misc
+from bot.setup import init_misc
 from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
