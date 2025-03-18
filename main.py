@@ -52,12 +52,10 @@ async def load_from_server():
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
+Bot = init_platforms(Bot)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
-
-Bot = init_platforms(Bot)
-
 
 Bot.tools = Tools()
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
