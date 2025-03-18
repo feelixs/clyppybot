@@ -1,10 +1,11 @@
-from bot.env import MAX_FILE_SIZE_FOR_DISCORD, DL_SERVER_ID, YT_DLP_USER_AGENT
+from bot.env import MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT
 from bot.io import author_has_enough_tokens, author_has_premium
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions
+from interactions.api.events import MessageCreate
 from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
@@ -619,30 +620,29 @@ class BaseAutoEmbed:
         self.bot = parent.bot
         self.always_embed_this_platform = always_embed
         self.logger = parent.logger
-        self.platform = self.autoembedder_cog.platform
-        self.embedder = AutoEmbedder(self.bot, self.platform, self.logger)
+        self.embedder = AutoEmbedder(self.bot, self.autoembedder_cog.platform, self.logger)
         self.OTHER_TXT_COMMANDS = {
             ".help": self.send_help,
             ".tokens": self.tokens_cmd,
             ".vote": self.vote_cmd
         }
 
-    async def handle_message(self, event):
-        if self.platform is None:
+    async def handle_message(self, event: MessageCreate, platform: BaseMisc):
+        if platform is None:
             return
 
         message_is_embed_command = (
                     event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
-                    and self.platform.is_clip_link(event.message.content.split(" ")[1])
+                    and platform.is_clip_link(event.message.content.split(" ")[1])
         )
         if message_is_embed_command:
             await self.command_embed(
                 ctx=event.message,
                 url=event.message.content.split(" ")[1],  # the second word is the url
-                platform=self.platform,
-                slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
+                platform=platform,
+                slug=platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
-        elif self.platform.is_dl_server(event.message.guild) or self.always_embed_this_platform:
+        elif platform.is_dl_server(event.message.guild) or platform.always_embed:
             await self.embedder.on_message_create(event)
 
     @staticmethod

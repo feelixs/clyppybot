@@ -32,6 +32,38 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
 
+    @listen(MessageCreate)
+    async def on_message_create(self, event: MessageCreate):
+        if event.message.author.bot:
+            return
+
+        # check for text commands
+        msg = event.message.content.strip()
+        split = msg.split(' ')
+        if msg.startswith(EMBED_TXT_COMMAND):
+            if len(split) <= 1:
+                return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
+            else:
+                # handle case where a cog doesn't capture it and take over error handling (platform is None)
+                platform, _ = compute_platform(split[1], self.bot)
+                if platform is None:
+                    return await event.message.reply("Sorry, I can't embed that link (incompatible platform)")
+
+        if len(split) > 1:
+            # other misc commands don't take arguments
+            return
+
+        for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
+            if msg == txt_command:
+                return await func(event.message)
+
+        # check for quickembed links
+        words = self.bot.base._getwords(event.message.content)
+        for p in self.bot.platform_list:
+            contains_clip_link, index = p._get_next_clip_link_loc(words, 0)
+            if contains_clip_link:
+                return self.bot.base.handle_message(event, p)
+
     @staticmethod
     async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
         """Get clip info from clyppyio"""
@@ -253,30 +285,6 @@ class Base(Extension):
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
         )
-
-    @listen(MessageCreate)
-    async def on_message_create(self, event: MessageCreate):
-        if event.message.author.bot:
-            return
-
-        msg = event.message.content
-        split = msg.split(' ')
-        if msg.startswith(EMBED_TXT_COMMAND):
-            if len(split) <= 1:
-                return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
-            else:
-                # handle case where a cog doesn't capture it and take over error handling (platform is None)
-                platform, _ = compute_platform(split[1], self.bot)
-                if platform is None:
-                    return await event.message.reply("Sorry, I can't embed that link (incompatible platform)")
-
-        if len(split) > 1:
-            # other misc commands don't take arguments
-            return
-        for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
-            msg = msg.strip()
-            if msg == txt_command:
-                return await func(event.message)
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
