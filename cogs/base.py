@@ -336,7 +336,6 @@ class Base(Extension):
         if not url.startswith("https://"):
             url = "https://" + url
 
-        platform, slug = None, None
         for p in self.bot.platform_embedders:
             if slug := p.platform.parse_clip_url(url):
                 return await self.bot.base_embedder.command_embed(
