@@ -1,5 +1,3 @@
-from typing import Optional
-
 from interactions import Client
 from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.drive import GoogleDriveMisc
@@ -34,7 +32,7 @@ class BASIC_MISC(BaseMisc):
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
         raise NotImplemented("Cannot call BASIC_MISC.parse_clip_url")
-    
+
 
 class BaseAutoEmbedForConsistency(BaseAutoEmbed):
     def __init__(self, bot):
