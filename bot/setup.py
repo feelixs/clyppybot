@@ -20,6 +20,7 @@ from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
 from bot.classes import BaseAutoEmbed, BaseMisc, BaseClip
+from bot.types import DownloadResponse
 import logging
 
 
