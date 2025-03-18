@@ -35,7 +35,7 @@ class BASIC_MISC(BaseMisc):
         return url
 
 
-class BaseAutoEmbedForConsistency(BaseAutoEmbed):
+class BaseEmbedder(BaseAutoEmbed):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -47,7 +47,7 @@ class BaseAutoEmbedForConsistency(BaseAutoEmbed):
 
 
 def init_misc(bot: Client) -> Client:
-    bot.base = BaseAutoEmbedForConsistency(bot=bot)
+    bot.base = BaseEmbedder(bot=bot)
     bot.twitch = TwitchMisc(bot=bot)
     bot.kick = KickMisc(bot=bot)
     bot.insta = InstagramMisc(bot=bot)
