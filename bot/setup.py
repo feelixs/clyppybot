@@ -23,9 +23,6 @@ from bot.classes import BaseAutoEmbed, BaseMisc
 import logging
 
 
-ALWAYS_EMBED_PLATFORMS = ['kick', 'twitch']
-
-
 class BASIC_MISC(BaseMisc):
     """Raw implementation for usage in BaseAutoEmbed (bot.base)"""
     def __init__(self, bot):
@@ -98,10 +95,11 @@ def init_misc(bot: Client) -> Client:
         bot.dsc
     ]
 
+    quickembed_platforms = ['kick', 'twitch']
     bot.platform_embedders = [
         BaseAutoEmbed(
             platform=platform,
-            always_embed=[platform.platform_name in ALWAYS_EMBED_PLATFORMS]
+            always_embed=[platform.platform_name in quickembed_platforms]
         )
         for platform in bot.platform_list
     ]
