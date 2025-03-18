@@ -14,6 +14,10 @@ class VideoTooLong(Exception):
     pass
 
 
+class YtDlpForbiddenError(Exception):
+    pass
+
+
 class UnsupportedError(Exception):
     pass
 

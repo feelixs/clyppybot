@@ -15,7 +15,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, \
-    InvalidFileType, UnsupportedError
+    InvalidFileType, UnsupportedError, YtDlpForbiddenError
 from PIL import Image
 import hashlib
 import aiohttp
@@ -583,6 +583,8 @@ class BaseMisc(ABC):
                 raise NoPermsToView
             elif 'Unsupported URL:' in str(e) or 'is not a valid URL' in str(e):
                 raise UnsupportedError
+            elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
+                raise YtDlpForbiddenError
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
@@ -944,6 +946,9 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
+        except YtDlpForbiddenError:
+            await ctx.send(f"I couldn't download that video file, as the domain returned 403 Forbidden. Maybe try again later, or use a different hosting website? {create_nexus_str()}")
+            success, response = False, "403 Forbidden"
         except UnsupportedError:
             await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
             success, response = False, "Incompatible"
