@@ -41,7 +41,6 @@ class TwitchClip(BaseClip):
         self._service = "twitch"
         self._url = f"https://clips.twitch.tv/{slug}"
         super().__init__(slug, cdn_client)
-        self.api = None
         self._thumbnail_url = None
 
     @property
