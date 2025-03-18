@@ -54,5 +54,6 @@ EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
     'redgifs',
     'slutload',
     'spankbang',
-    'stripchat'
+    'stripchat',
+    'noodlemagazine'
 ]
