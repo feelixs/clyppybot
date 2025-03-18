@@ -55,6 +55,7 @@ EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
     'redgifs',
     'slutload',
     'spankbang',
+    'gelbooru',
     'stripchat',
     'noodlemagazine',
     'tnaflix'
