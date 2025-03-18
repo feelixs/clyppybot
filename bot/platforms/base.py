@@ -11,7 +11,7 @@ class BASIC_MISC(BaseMisc):
         super().__init__(bot)
         self.platform_name = "base"
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True):
         valid = await self.is_shortform(
             url=url,
             basemsg=basemsg,
@@ -49,7 +49,7 @@ class BASIC_CLIP(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
