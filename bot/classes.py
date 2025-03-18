@@ -632,8 +632,8 @@ class BaseAutoEmbed:
             return
 
         message_is_embed_command = (
-                    event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
-                    and platform.is_clip_link(event.message.content.split(" ")[1])
+                event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
+                and platform.is_clip_link(event.message.content.split(" ")[1])
         )
         if message_is_embed_command:
             await self.command_embed(
