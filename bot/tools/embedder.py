@@ -56,7 +56,7 @@ class AutoEmbedder:
         self.clip_id_msg_timestamps = {}
 
     @staticmethod
-    def _getwords(text: str) -> List[str]:
+    def get_words(text: str) -> List[str]:
         return re.split(r"[ \n]+", text)
 
     def _get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
@@ -107,7 +107,7 @@ class AutoEmbedder:
                 # quickembeds not enabled
                 return 1
 
-            words = self._getwords(event.message.content)
+            words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
             if num_links == 1:
                 contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
