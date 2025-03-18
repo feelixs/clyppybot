@@ -620,9 +620,10 @@ class BaseAutoEmbed:
         self.bot = parent.bot
         self.always_embed_this_platform = always_embed
         self.logger = parent.logger
+        self.platform = self.autoembedder_cog.platform
         self.embedder = AutoEmbedder(
             bot=self.bot,
-            platform_tools=self.autoembedder_cog.platform,
+            platform_tools=self.platform,
             logger=self.logger
         )
         self.OTHER_TXT_COMMANDS = {
@@ -631,19 +632,19 @@ class BaseAutoEmbed:
             ".vote": self.vote_cmd
         }
 
-    async def handle_message(self, event: MessageCreate, platform: BaseMisc):
+    async def handle_message(self, event: MessageCreate):
         message_is_embed_command = (
                 event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
-                and platform.is_clip_link(event.message.content.split(" ")[1])
+                and self.platform.is_clip_link(event.message.content.split(" ")[1])
         )
         if message_is_embed_command:
             await self.command_embed(
                 ctx=event.message,
                 url=event.message.content.split(" ")[1],  # the second word is the url
-                platform=platform,
-                slug=platform.parse_clip_url(event.message.content.split(" ")[-1])
+                platform=self.platform,
+                slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
             )
-        elif platform.is_dl_server(event.message.guild) or platform.always_embed:
+        elif self.platform.is_dl_server(event.message.guild) or self.platform.always_embed:
             await self.embedder.on_message_create(event)
 
     @staticmethod
