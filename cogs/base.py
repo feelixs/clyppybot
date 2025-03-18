@@ -335,7 +335,12 @@ class Base(Extension):
 
         if not url.startswith("https://"):
             url = "https://" + url
-        platform, slug = compute_platform(url, self.bot)
+
+        platform, slug = None, None
+        for p in self.bot.platform_embedders:
+            if slug := p.platform.parse_clip_url(url):
+                platform = p.platform.platform_name
+
         return await self.bot.base_embedder.command_embed(ctx, url, platform, slug)
 
     #@slash_command(name="alerts", description="Configure Clyppy Alerts (Live Notifications, Video Uploads, etc.")
