@@ -60,8 +60,6 @@ class Base(Extension):
         # check for quickembed links
         words = self.bot.base._getwords(event.message.content)
         for p in self.bot.platform_list:
-            if p.platform is None:  # bot.base should not autoembed
-                continue
             contains_clip_link, index = p._get_next_clip_link_loc(words, 0)
             if contains_clip_link:
                 return self.bot.base.handle_message(event, p)
