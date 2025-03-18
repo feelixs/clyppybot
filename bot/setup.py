@@ -79,3 +79,5 @@ def init_misc(bot: Client):
         bot.nuuls,
         bot.dsc
     ]
+
+    return bot
