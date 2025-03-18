@@ -16,7 +16,7 @@ class DownloadManager:
                             always_download=False, overwrite_on_server=False,
                             can_send_files=False) -> DownloadResponse:
         """Return the remote video file url (first, download it and upload to https://clyppy.io for kick etc)"""
-        desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4'
+        desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4' if clip.service != 'base' else f'{clip.clyppy_id}.mp4'
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")

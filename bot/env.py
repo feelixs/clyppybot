@@ -34,3 +34,25 @@ BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
 
 EMBED_TOKEN_COST = 1
 EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
+
+NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']
+EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
+    'xhamster',
+    'xstream',
+    'xxxymovies',
+    'youjizz',
+    '4tube',
+    'cam4',
+    'camsoda',
+    'fux',
+    'xvideos',
+    'redtube',
+    'motherless',
+    'moviefap',
+    'murrtube',
+    'peekvids',
+    'redgifs',
+    'slutload',
+    'spankbang',
+    'stripchat'
+]

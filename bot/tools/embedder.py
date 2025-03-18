@@ -236,7 +236,7 @@ class AutoEmbedder:
             if btn_idx <= 1:
                 comp.append(Button(
                     style=ButtonStyle.LINK,
-                    label=f"View On {self.platform_tools.platform_name}" if self.platform_tools.platform_name != "base" else "View Original",
+                    label=f"View On {self.platform_tools.platform_name}" if self.platform_tools.platform_name != "base" else "View Source",
                     url=clip.url if clip.share_url is None else clip.share_url
                 ))
             if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:

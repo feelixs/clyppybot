@@ -140,7 +140,7 @@ class Base(Extension):
                 embed = Embed(title=f"{clip_info['title']}")
                 if original is not None:
                     embed.add_field(name="Command", value=f"<@{original}> used `.embed {clip_info['embedded_url']}`")
-                    embed.add_field(name="Requested by", value=f'<@{original}>')
+                    #embed.add_field(name="Requested by", value=f'<@{original}>')
                 else:
                     embed.add_field(name="Command", value=f"`.embed {clip_info['embedded_url']}`")
 
