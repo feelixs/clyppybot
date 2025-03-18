@@ -47,7 +47,7 @@ class BaseEmbedder(BaseAutoEmbed):
 
 
 def init_misc(bot: Client) -> Client:
-    bot.base = BaseEmbedder(bot=bot)
+    bot.base_embedder = BaseEmbedder(bot=bot)
     bot.twitch = TwitchMisc(bot=bot)
     bot.kick = KickMisc(bot=bot)
     bot.insta = InstagramMisc(bot=bot)
@@ -103,5 +103,6 @@ def init_misc(bot: Client) -> Client:
         )
         for platform in bot.platform_list
     ]
+    bot.platform_embedders.append(bot.base_embedder)
 
     return bot

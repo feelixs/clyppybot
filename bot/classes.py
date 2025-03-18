@@ -704,7 +704,7 @@ class BaseAutoEmbed:
             ctx.user = ctx.author
             pre = '.'
 
-        tokens = await self.bot.base.fetch_tokens(ctx.user)
+        tokens = await self.bot.base_embedder.fetch_tokens(ctx.user)
         await ctx.send(f"You have `{tokens}` VIP tokens!\n"
                        f"You can gain more by **voting** with `{pre}vote`\n\n"
                        f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")

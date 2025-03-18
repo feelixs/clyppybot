@@ -31,7 +31,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
-        self.base_embedder = self.bot.base.embedder
+        self.base_embedder = self.bot.base_embedder.embedder
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
@@ -66,7 +66,7 @@ class Base(Extension):
             return
 
         msg = msg.strip()
-        for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
+        for txt_command, func in self.bot.base_embedder.OTHER_TXT_COMMANDS.items():
             if msg == txt_command:
                 return await func(event.message)
 
@@ -314,12 +314,12 @@ class Base(Extension):
 
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
-        await self.bot.base.vote_cmd(ctx)
+        await self.bot.base_embedder.vote_cmd(ctx)
 
     @slash_command(name="tokens", description="View your VIP tokens!")
     async def tokens(self, ctx: SlashContext):
         await ctx.defer()
-        await self.bot.base.tokens_cmd(ctx)
+        await self.bot.base_embedder.tokens_cmd(ctx)
 
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
@@ -338,7 +338,7 @@ class Base(Extension):
         if not url.startswith("https://"):
             url = "https://" + url
         platform, slug = compute_platform(url, self.bot)
-        return await self.bot.base.command_embed(ctx, url, platform, slug)
+        return await self.bot.base_embedder.command_embed(ctx, url, platform, slug)
 
     #@slash_command(name="alerts", description="Configure Clyppy Alerts (Live Notifications, Video Uploads, etc.")
     #async def alerts(self, ctx: SlashContext):
@@ -347,7 +347,7 @@ class Base(Extension):
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
-        return await self.bot.base.send_help(ctx)
+        return await self.bot.base_embedder.send_help(ctx)
 
     @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
                    options=[SlashCommandOption(name="user",
