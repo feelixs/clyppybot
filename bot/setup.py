@@ -29,10 +29,10 @@ class BASIC_MISC(BaseMisc):
         super().__init__(bot)
 
     def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
-        raise NotImplemented("Cannot call BASIC_MISC.get_clip")
+        return url
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
-        raise NotImplemented("Cannot call BASIC_MISC.parse_clip_url")
+        return url
 
 
 class BaseAutoEmbedForConsistency(BaseAutoEmbed):
