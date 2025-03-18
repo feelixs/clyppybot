@@ -54,8 +54,9 @@ class Base(Extension):
             # other misc commands don't take arguments
             return
 
+        msg = msg.strip()
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
-            if msg.strip() == txt_command:
+            if msg == txt_command:
                 return await func(event.message)
 
         # check for quickembed links
