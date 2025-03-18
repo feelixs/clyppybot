@@ -30,7 +30,7 @@ class BaseAutoEmbedForConsistency(BaseAutoEmbed):
         super().__init__(self)
 
 
-def init_platforms(bot):
+def init_misc(bot):
     bot.base = BaseAutoEmbedForConsistency(bot=bot)
     bot.twitch = TwitchMisc(bot=bot)
     bot.kick = KickMisc(bot=bot)

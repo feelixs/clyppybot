@@ -1,0 +1,1 @@
+from bot.tools.misc_setup import init_misc

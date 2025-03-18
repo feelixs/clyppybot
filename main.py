@@ -1,5 +1,5 @@
 from interactions import AutoShardedClient, Intents
-from bot.tools.platform_setup import init_platforms
+from bot.tools import init_misc
 from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
@@ -51,7 +51,7 @@ async def load_from_server():
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
-Bot = init_platforms(Bot)
+Bot = init_misc(Bot)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
