@@ -1,5 +1,4 @@
 from interactions import AutoShardedClient, Intents
-from bot.classes import BaseAutoEmbed
 from bot.tools.misc import Tools
 from bot.tools.platform_setup import init_platforms
 from bot.io import get_aiohttp_session
@@ -9,14 +8,6 @@ from bot.io.cdn import CdnSpacesClient
 import logging
 import asyncio
 import os
-
-
-class BaseAutoEmbedForConsistency(BaseAutoEmbed):
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.platform = None
-        super().__init__(self)
 
 
 async def save_to_server():
@@ -64,7 +55,6 @@ Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
-Bot.base = BaseAutoEmbedForConsistency(bot=Bot)
 
 Bot = init_platforms(Bot)
 

@@ -17,9 +17,20 @@ from bot.platforms.xvid import XvidMisc
 from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
+from bot.classes import BaseAutoEmbed
+import logging
+
+
+class BaseAutoEmbedForConsistency(BaseAutoEmbed):
+    def __init__(self, bot):
+        self.bot = bot
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.platform = None
+        super().__init__(self)
 
 
 def init_platforms(bot):
+    bot.base = BaseAutoEmbedForConsistency(bot=bot)
     bot.twitch = TwitchMisc(bot=bot)
     bot.kick = KickMisc(bot=bot)
     bot.insta = InstagramMisc(bot=bot)
