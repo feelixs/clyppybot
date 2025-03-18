@@ -292,6 +292,7 @@ class Base(Extension):
                 await add_reqqed_by(data, key=os.getenv('clyppy_post_key'))
             except:
                 self.logger.info(f"@component_callback for button {ctx.custom_id} - Could not re-add reqqed by for user {ctx.author.id}")
+            return
 
         await ctx.send("The clip has been deleted." if not is_discord_uploaded else "All embeds you've requested of this clip have been deleted.")
         await send_webhook(
