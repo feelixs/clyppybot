@@ -98,10 +98,12 @@ def init_misc(bot: Client) -> Client:
         bot.dsc
     ]
 
-    bot.platform_embedders = [BaseAutoEmbed(platform) for platform in bot.platform_list]
-
-    for embedder in bot.platform_embedders:
-        if embedder.platform.platform_name in ALWAYS_EMBED_PLATFORMS:
-            embedder.always_embed_this_platform = True
+    bot.platform_embedders = [
+        BaseAutoEmbed(
+            platform=platform,
+            always_embed=[platform.platform_name in ALWAYS_EMBED_PLATFORMS]
+        )
+        for platform in bot.platform_list
+    ]
 
     return bot
