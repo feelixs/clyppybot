@@ -3,9 +3,8 @@ from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
 from bot.io import get_aiohttp_session, is_404, fetch_video_status
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import create_nexus_str
+from bot.env import create_nexus_str, DL_SERVER_ID
 from bot.types import DownloadResponse, GuildType
-from bot.classes import DL_SERVER_ID
 from typing import List, Union
 import traceback
 import asyncio
