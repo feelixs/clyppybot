@@ -61,7 +61,10 @@ class Base(Extension):
         # check for quickembed links
         words = self.base_embedder.get_words(event.message.content)
         for p in self.bot.platform_embedders:
-            contains_clip_link, _ = p.embedder.get_next_clip_link_loc(words, 0)
+            contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
+                words=words,
+                n=0,
+                print=False)
             if contains_clip_link:
                 return await p.handle_message(event)
 
