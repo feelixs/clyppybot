@@ -344,14 +344,9 @@ class Base(Extension):
                     platform=p.platform.platform_name,
                     slug=slug
                 )
-
         # incompatible (should never get here, since bot.base is a catch-all)
-        return await self.bot.base_embedder.command_embed(
-            ctx=ctx,
-            url=url,
-            platform=None,
-            slug=None
-        )
+        await ctx.send("An unexpected error occurred.")
+        raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
 
     #@slash_command(name="alerts", description="Configure Clyppy Alerts (Live Notifications, Video Uploads, etc.")
     #async def alerts(self, ctx: SlashContext):
