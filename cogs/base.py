@@ -39,7 +39,7 @@ class Base(Extension):
             return
 
         # check for text commands
-        msg = event.message.content.strip()
+        msg = event.message.content
         split = msg.split(' ')
         if msg.startswith(EMBED_TXT_COMMAND):
             if len(split) <= 1:
@@ -55,7 +55,7 @@ class Base(Extension):
             return
 
         for txt_command, func in self.bot.base.OTHER_TXT_COMMANDS.items():
-            if msg == txt_command:
+            if msg.strip() == txt_command:
                 return await func(event.message)
 
         # check for quickembed links
