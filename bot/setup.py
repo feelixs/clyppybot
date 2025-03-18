@@ -80,4 +80,8 @@ def init_misc(bot: Client) -> Client:
         bot.dsc
     ]
 
+    bot.platform_embedders = [
+
+    ]
+
     return bot
