@@ -382,6 +382,8 @@ class BaseClip(ABC):
             raise UnknownError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
+            if 'Duration: N/A, bitrate: N/A' in str(e):
+                raise NoDuration
             raise
 
     async def overwrite_mp4(self, new_url: str):
