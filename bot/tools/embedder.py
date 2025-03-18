@@ -59,7 +59,7 @@ class AutoEmbedder:
     def get_words(text: str) -> List[str]:
         return re.split(r"[ \n]+", text)
 
-    def _get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
+    def get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
         for i in range(n, len(words)):
             word = words[i]
             if self.platform_tools.is_clip_link(word):
@@ -110,7 +110,7 @@ class AutoEmbedder:
             words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
             if num_links == 1:
-                contains_clip_link, index = self._get_next_clip_link_loc(words, 0)
+                contains_clip_link, index = self.get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
                 await self._process_clip_one_at_a_time(words[index], event.message, guild)
@@ -118,7 +118,7 @@ class AutoEmbedder:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
                 while next_link_exists:
-                    next_link_exists, index = self._get_next_clip_link_loc(words, index + 1)
+                    next_link_exists, index = self.get_next_clip_link_loc(words, index + 1)
                     if not next_link_exists:
                         return 1
                     await self._process_clip_one_at_a_time(words[index], event.message, guild)
