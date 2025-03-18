@@ -19,7 +19,7 @@ from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
-from bot.classes import BaseAutoEmbed
+from bot.classes import BaseAutoEmbed, BaseMisc
 import logging
 
 
@@ -29,7 +29,7 @@ class BaseAutoEmbedForConsistency(BaseAutoEmbed):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.platform = None
         super().__init__(
-            platform=None,
+            platform=BaseMisc(bot),
             always_embed=False
         )
 
