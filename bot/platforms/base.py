@@ -32,7 +32,7 @@ class BASIC_MISC(BaseMisc):
 
         # if it doesn't, check if any of the known nsfw domains are in the netloc
         if not self.is_nsfw:
-            any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)
+            self.is_nsfw = any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)
 
         return url
 
