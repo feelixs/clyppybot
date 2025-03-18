@@ -58,10 +58,13 @@ class AutoEmbedder:
     def get_words(text: str) -> List[str]:
         return re.split(r"[ \n]+", text)
 
-    def get_next_clip_link_loc(self, words: List[str], n=0) -> (bool, int):
+    def get_next_clip_link_loc(self, words: List[str], n=0, platform=None) -> (bool, int):
+        if platform is None:
+            platform = self.platform_tools
+
         for i in range(n, len(words)):
             word = words[i]
-            if self.platform_tools.is_clip_link(word):
+            if platform.is_clip_link(word):
                 self.logger.info(f"Found clip link: {word}")
                 return True, i
         return False, 0
