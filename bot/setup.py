@@ -19,7 +19,7 @@ from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
-from bot.classes import BaseAutoEmbed, BaseMisc
+from bot.classes import BaseAutoEmbed, BaseMisc, BaseClip
 import logging
 
 
@@ -27,12 +27,38 @@ class BASIC_MISC(BaseMisc):
     """Raw implementation for usage in BaseAutoEmbed (bot.base)"""
     def __init__(self, bot):
         super().__init__(bot)
+        self.platform_name = "base"
 
     def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
-        return url
+        return BaseClip(url, self.cdn_client)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
         return url
+
+
+class BASIC_CLIP(BaseClip):
+    def __init__(self, url, cdn_client):
+        self._service = 'base'
+        self._url = url
+        super().__init__(url, cdn_client)
+
+    @property
+    def service(self) -> str:
+        return self._service
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
+        return await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=True
+        )
 
 
 class BaseEmbedder(BaseAutoEmbed):

@@ -14,7 +14,7 @@ import os
 
 
 INVALID_VIEW_ON_PLATFORMS = ['discord']
-INVALID_DL_PLATFORMS = ['discord', 'rule34']
+INVALID_DL_PLATFORMS = ['discord', 'rule34', 'base']
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
@@ -236,7 +236,7 @@ class AutoEmbedder:
             if btn_idx <= 1:
                 comp.append(Button(
                     style=ButtonStyle.LINK,
-                    label=f"View On {self.platform_tools.platform_name}",
+                    label=f"View On {self.platform_tools.platform_name}" if self.platform_tools.platform_name != "base" else "View Original",
                     url=clip.url if clip.share_url is None else clip.share_url
                 ))
             if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
