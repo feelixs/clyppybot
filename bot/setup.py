@@ -24,6 +24,7 @@ import logging
 
 
 class BASIC_MISC(BaseMisc):
+    """Raw implementation for usage in BaseAutoEmbed (bot.base)"""
     def __init__(self, bot):
         super().__init__(bot)
 
