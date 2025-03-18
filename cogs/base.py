@@ -144,7 +144,9 @@ class Base(Extension):
                 else:
                     embed.add_field(name="Command", value=f"`.embed {clip_info['embedded_url']}`")
 
-                embed.add_field(name="Platform", value=clip_info['platform'])
+                if clip_info['platform'] != 'base':
+                    embed.add_field(name="Platform", value=clip_info['platform'])
+
                 embed.add_field(
                     name="Duration",
                     value=f"{dyr // 60}m {round(dyr % 60, 2)}s"
