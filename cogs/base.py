@@ -50,6 +50,7 @@ class Base(Extension):
                 if platform is None:
                     return await event.message.reply("Sorry, I can't embed that link (incompatible platform)")
 
+            # handle .embed command
             words = self.base_embedder.get_words(event.message.content)
             for p in self.bot.platform_embedders:
                 contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
@@ -69,7 +70,9 @@ class Base(Extension):
             if msg == txt_command:
                 return await func(event.message)
 
-        # check for quickembed links
+        # handle quickembed links -> both .embed and quickembed
+        # will use the same function, and will both do checks to ensure if it should continue
+        # but structuring like this will reduce unwanted calls handle_message()
         words = self.base_embedder.get_words(event.message.content)
         for p in self.bot.platform_embedders:
             contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
