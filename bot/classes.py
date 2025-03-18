@@ -620,7 +620,11 @@ class BaseAutoEmbed:
         self.bot = parent.bot
         self.always_embed_this_platform = always_embed
         self.logger = parent.logger
-        self.embedder = AutoEmbedder(self.bot, self.autoembedder_cog.platform, self.logger)
+        self.embedder = AutoEmbedder(
+            bot=self.bot,
+            platform_tools=self.autoembedder_cog.platform,
+            logger=self.logger
+        )
         self.OTHER_TXT_COMMANDS = {
             ".help": self.send_help,
             ".tokens": self.tokens_cmd,
