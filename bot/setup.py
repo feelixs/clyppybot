@@ -15,7 +15,6 @@ from bot.platforms.kick import KickMisc
 from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
-from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
@@ -101,7 +100,6 @@ def init_misc(bot: Client) -> Client:
     bot.bili = BiliMisc(bot=bot)
     bot.phub = PhubMisc(bot=bot)
     bot.tiktok = TikTokMisc(bot=bot)
-    bot.nuuls = NuulsMisc(bot=bot)
     bot.vimeo = VimeoMisc(bot=bot)
     bot.drive = GoogleDriveMisc(bot=bot)
     bot.dsc = DiscordMisc(bot=bot)
@@ -129,7 +127,6 @@ def init_misc(bot: Client) -> Client:
         bot.bili,
         bot.dailymotion,
         bot.drive,
-        bot.nuuls,
         bot.dsc
     ]
 
