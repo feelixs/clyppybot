@@ -28,7 +28,10 @@ class BaseAutoEmbedForConsistency(BaseAutoEmbed):
         self.bot = bot
         self.logger = logging.getLogger(self.__class__.__name__)
         self.platform = None
-        super().__init__(self)
+        super().__init__(
+            platform=None,
+            always_embed=False
+        )
 
 
 def init_misc(bot: Client) -> Client:
@@ -80,8 +83,6 @@ def init_misc(bot: Client) -> Client:
         bot.dsc
     ]
 
-    bot.platform_embedders = [
-
-    ]
+    bot.platform_embedders = [BaseAutoEmbed(platform) for platform in bot.platform_list]
 
     return bot

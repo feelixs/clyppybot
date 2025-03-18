@@ -615,12 +615,11 @@ class BaseMisc(ABC):
 
 
 class BaseAutoEmbed:
-    def __init__(self, parent, always_embed=False):
-        self.autoembedder_cog = parent
-        self.bot = parent.bot
+    def __init__(self, platform: BaseMisc, always_embed=False):
+        self.bot = platform.bot
         self.always_embed_this_platform = always_embed
-        self.logger = parent.logger
-        self.platform = self.autoembedder_cog.platform
+        self.platform = platform
+        self.logger = platform.logger
         self.embedder = AutoEmbedder(
             bot=self.bot,
             platform_tools=self.platform,
