@@ -507,8 +507,9 @@ class BaseMisc(ABC):
     def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
+        self.always_embed = False  # are quickembeds enabled for this platform?
         self.is_nsfw = False
-        self.dl_timeout_secs = 30
+        self.dl_timeout_secs = 120
         self.bot = bot
         self.cdn_client = bot.cdn_client
 
