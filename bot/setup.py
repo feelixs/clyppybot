@@ -30,7 +30,7 @@ class BASIC_MISC(BaseMisc):
         super().__init__(bot)
         self.platform_name = "base"
 
-    def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
         return BASIC_CLIP(url, self.cdn_client)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
