@@ -791,6 +791,7 @@ class BaseAutoEmbed:
                 nsfw_enabed = ctx.channel.nsfw
 
             if platform is None:
+                # todo: run yt-dlp anyway and return a message with "view original" instead of 'view on platform'
                 self.logger.info(f"return incompatible for /embed {url}")
                 await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
                 await send_webhook(
