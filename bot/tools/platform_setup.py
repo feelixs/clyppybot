@@ -17,6 +17,7 @@ from bot.platforms.xvid import XvidMisc
 from bot.platforms.nuuls import NuulsMisc
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
+from bot.tools.misc import Tools
 from bot.classes import BaseAutoEmbed
 import logging
 
@@ -50,6 +51,7 @@ def init_platforms(bot):
     bot.vimeo = VimeoMisc(bot=bot)
     bot.drive = GoogleDriveMisc(bot=bot)
     bot.dsc = DiscordMisc(bot=bot)
+    bot.tools = Tools()
 
     bot.platform_list = [
         bot.twitch,
