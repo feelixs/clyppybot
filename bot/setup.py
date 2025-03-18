@@ -21,6 +21,7 @@ from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
 from bot.classes import BaseAutoEmbed, BaseMisc, BaseClip
 from bot.types import DownloadResponse
+from bot.errors import VideoTooLong
 import logging
 
 
@@ -31,6 +32,15 @@ class BASIC_MISC(BaseMisc):
         self.platform_name = "base"
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+        valid = await self.is_shortform(
+            url=url,
+            basemsg=basemsg,
+            cookies=cookies
+        )
+        if not valid:
+            self.logger.info(f"{url} is_shortform=False")
+            raise VideoTooLong
+        self.logger.info(f"{url} is_shortform=True")
         return BASIC_CLIP(url, self.cdn_client)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
