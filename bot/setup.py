@@ -1,3 +1,4 @@
+from interactions import Client
 from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.drive import GoogleDriveMisc
 from bot.platforms.insta import InstagramMisc
@@ -30,7 +31,7 @@ class BaseAutoEmbedForConsistency(BaseAutoEmbed):
         super().__init__(self)
 
 
-def init_misc(bot):
+def init_misc(bot: Client):
     bot.base = BaseAutoEmbedForConsistency(bot=bot)
     bot.twitch = TwitchMisc(bot=bot)
     bot.kick = KickMisc(bot=bot)
