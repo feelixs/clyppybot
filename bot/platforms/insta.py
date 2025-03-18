@@ -29,7 +29,6 @@ class InstagramMisc(BaseMisc):
             self.logger.info(f"Invalid Instagram URL: {url}")
             raise NoDuration
 
-        # Verify video length (Reels are up to 90 seconds)
         valid = await self.is_shortform(
             url=url,
             basemsg=basemsg,
