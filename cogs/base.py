@@ -663,8 +663,7 @@ class Base(Extension):
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
-            await self.bot.change_presence(
-                activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
+            await self.bot.change_presence(activity=Activity(type=ActivityType.STREAMING, name="/help", url="https://twitch.tv/hesmen"))
 
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
