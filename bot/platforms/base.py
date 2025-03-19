@@ -36,7 +36,7 @@ class BASIC_MISC(BaseMisc):
         # check if the netloc contains any nsfw trigger word
         is_nsfw = any(trigger in netloc for trigger in NSFW_DOMAIN_TRIGGERS)
         if is_nsfw:
-            self.logger.info(f"{url} is_nsfw=True")
+            self.logger.info(f"{url} is_nsfw=True") 
             return True
 
         # if it doesn't, check if any of the known nsfw domains are in the netloc
