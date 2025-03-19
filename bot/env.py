@@ -25,7 +25,7 @@ POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
 
 
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
-INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314&permissions=182272&scope=bot%20applications.commands"
+INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314"
 TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 INFINITY_VOTE_LINK = "https://infinitybots.gg/bot/1111723928604381314/vote"
 DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
