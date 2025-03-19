@@ -944,7 +944,7 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
-        except FileNotFoundError:
+        except FileNotFoundError:  # ytdlp failed to download the file, but the output wasn't captured
             await ctx.send(f"The file could not be downloaded. Does the url points to a video file? {create_nexus_str()}")
             success, response = False, "FileNotFound"
         except VideoSaidUnavailable:
