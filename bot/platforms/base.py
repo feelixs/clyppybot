@@ -11,7 +11,7 @@ class BASIC_MISC(BaseMisc):
         super().__init__(bot)
         self.platform_name = "base"
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=True):
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
         valid = await self.is_shortform(
             url=url,
             basemsg=basemsg,
