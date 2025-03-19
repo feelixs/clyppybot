@@ -389,7 +389,7 @@ class BaseClip(ABC):
                 return d
 
             self.logger.info(f"dl_download error: Could not find file")
-            raise UnknownError
+            raise FileNotFoundError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
             handle_yt_dlp_err(str(e))
@@ -944,6 +944,9 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
+        except FileNotFoundError:
+            await ctx.send(f"The file could not be downloaded. Does the url points to a video file? {create_nexus_str()}")
+            success, response = False, "FileNotFound"
         except VideoSaidUnavailable:
             await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
