@@ -581,7 +581,8 @@ class Base(Extension):
             self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
             await send_webhook(
                 title='new invite',
-                load=f"here - https://discord.gg/{event.invite.code}",
+                load="hellow",
+                content=f"here - https://discord.gg/{event.invite.code}",
                 color=COLOR_GREEN,
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
