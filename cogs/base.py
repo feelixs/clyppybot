@@ -649,7 +649,7 @@ class Base(Extension):
     @listen(InviteCreate)
     async def on_invite_create(self, event: InviteCreate):
         if self.ready:
-            self.logger.info(f"New invite {event.invite.__dict__}")
+            self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
 
     @listen()
     async def on_ready(self):
