@@ -388,6 +388,8 @@ class BaseClip(ABC):
                 raise VideoSaidUnavailable
             elif 'ERROR: Unsupported URL' in str(e):
                 raise UnsupportedError
+            elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
+                raise YtDlpForbiddenError
             raise
 
     async def overwrite_mp4(self, new_url: str):
