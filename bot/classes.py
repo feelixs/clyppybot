@@ -34,8 +34,8 @@ def tryremove(f):
 
 
 def get_random_face():
-    faces = ['(⌯˃̶᷄ ﹏ ˂̶᷄⌯)']
-    return f'`{random.choice(faces)}`'
+    faces = ['`(⌯˃̶᷄ ﹏ ˂̶᷄⌯)`', 'ヽ(゜～゜o)ノ', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ']
+    return f'{random.choice(faces)}'
 
 def is_discord_compatible(filesize: float):
     if filesize is None:
@@ -961,7 +961,7 @@ class BaseAutoEmbed:
             success, response = False, "No permissions"
         except VideoTooLong:
             if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
-                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
             else:
                 await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
