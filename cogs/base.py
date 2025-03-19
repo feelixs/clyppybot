@@ -624,7 +624,7 @@ class Base(Extension):
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w.instant_invite if w is not None else None}\n",
+                     f"widget - {w}\n",
                 color=COLOR_GREEN,
                 logger=self.logger
             )
@@ -640,7 +640,7 @@ class Base(Extension):
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w.instant_invite if w is not None else None}\n",
+                     f"widget - {w}\n",
                 color=COLOR_RED,
                 logger=self.logger
             )
