@@ -618,15 +618,13 @@ class Base(Extension):
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
             self.logger.info(f'Joined new guild: {event.guild.name}')
-            w = None
-            if event.guild.widget_enabled:
-                w = await event.guild.fetch_widget()
+            w = await event.guild.fetch_widget()
             await send_webhook(
                 title=f'Joined new guild: {event.guild.name}',
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w.instant_invite}\n",
+                     f"widget - {w.instant_invite if w is not None else None}\n",
                 color=COLOR_GREEN,
                 logger=self.logger
             )
@@ -636,15 +634,13 @@ class Base(Extension):
     async def on_guild_left(self, event: GuildLeft):
         if self.ready:
             self.logger.info(f'Left guild: {event.guild.name}')
-            w = None
-            if event.guild.widget_enabled:
-                w = await event.guild.fetch_widget()
+            w = await event.guild.fetch_widget()
             await send_webhook(
                 title=f'Left guild: {event.guild.name}',
                 load=f"id - {event.guild.id}\n"
                      f"large - {event.guild.large}\n"
                      f"members - {event.guild.member_count}\n"
-                     f"widget - {w.instant_invite}\n",
+                     f"widget - {w.instant_invite if w is not None else None}\n",
                 color=COLOR_RED,
                 logger=self.logger
             )
