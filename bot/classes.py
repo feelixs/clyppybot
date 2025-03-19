@@ -587,6 +587,8 @@ class BaseMisc(ABC):
                 raise UnsupportedError
             elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
                 raise YtDlpForbiddenError
+            elif 'Temporary failure in name resolution' in str(e):
+                raise UrlUnparsable
             raise VideoTooLong
         except Exception as e:
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
