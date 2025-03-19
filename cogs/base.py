@@ -349,88 +349,10 @@ class Base(Extension):
         await ctx.send("An unexpected error occurred.")
         raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
 
-    #@slash_command(name="alerts", description="Configure Clyppy Alerts (Live Notifications, Video Uploads, etc.")
-    #async def alerts(self, ctx: SlashContext):
-    #    pass
-
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
         return await self.bot.base_embedder.send_help(ctx)
-
-    @slash_command(name="logs", description="Display the chatlogs for a Twitch user",
-                   options=[SlashCommandOption(name="user",
-                                               description="the Twitch user to check logs for",
-                                               required=True,
-                                               type=OptionType.STRING),
-                            SlashCommandOption(name="channel",
-                                               description="the Twitch channel (username) where they sent chat messages",
-                                               required=True,
-                                               type=OptionType.STRING),
-                            SlashCommandOption(name="year",
-                                               description="the year to retrieve logs from",
-                                               required=False,
-                                               type=OptionType.INTEGER),
-                            SlashCommandOption(name="month",
-                                               description="the month to retrieve logs from",
-                                               required=False,
-                                               type=OptionType.INTEGER)
-                            ])
-    async def logs(self, ctx: SlashContext, user: str, channel: str, year: int = None, month: int = None):
-        try:
-            async with aiohttp.ClientSession() as session:
-                if year is not None and month is not None:
-                    async with session.get(f"https://logs.ivr.fi/channel/{channel}/user/{user}/{year}/{month}") as resp:
-                        logs_output = await resp.text()
-                elif year is None and month is None:
-                    async with session.get(f"https://logs.ivr.fi/channel/{channel}/user/{user}") as resp:
-                        logs_output = await resp.text()
-                else:
-                    return await ctx.send(
-                        "An error occurred: year & month must be either both filled out, or none filled out",
-                        ephemeral=True)
-                if logs_output.count("\n") == 0:
-                    if "[" in logs_output:
-                        return await ctx.send(logs_output)
-                    else:
-                        return await ctx.send(
-                            f'for user `{user}` on Twitch channel `{channel}`:\n`' + logs_output + '`')
-                else:
-                    logs_output = self._get_last_lines(logs_output)
-                    logs_output = self._format_log(logs_output)
-                    if logs_output == "":
-                        return await ctx.send(f"No logs available for `{user}` in Twitch channel `{channel}`")
-                    else:
-                        return await ctx.send(logs_output)
-        except:
-            return await ctx.send(
-                "An error occurred retrieving Twitch logs, please contact out support team if the issue persists",
-                ephemeral=True)
-
-    # @slash_command(name="twitch", description="Embed a Twitch clip with chat",
-    #               options=[SlashCommandOption(name="clip_url", type=OptionType.STRING,
-    #                                           description="Link to the Twitch clip",
-    #                                           required=True)]
-    #               )
-    # async def twitch(self, ctx, clip_url: str):
-    #    await ctx.defer()
-    #    if not self.bot.twitch.is_clip_link(clip_url):
-    #        return await ctx.send(f"`{clip_url}` was not a valid twitch clip link")
-    #    clip = await self.bot.twitch.get_clip(clip_url)
-    #    clip_ctx = await clip.fetch_data()
-    #    if not clip_ctx.video_id:
-    #        return await ctx.send("Unable to retrieve the Twitch VOD from that clip")
-    #    clipfile, _ = await self.bot.tools.dl.download_clip(
-    #        clip=clip,
-    #        guild_ctx=GuildType(ctx.guild.id, ctx.guild.name, True),
-    #        root_msg=ctx.message,
-    #        too_large_setting='trim'
-    #    )
-    #    try:
-    #        videofile = await clip_ctx.add_chat(clipfile)
-    #        await ctx.send(files=videofile)
-    #    except Exception as e:
-    #        return await ctx.send(f"Failed to render chat: {e}")
 
     @slash_command(name="setup", description="Display or change Clyppy's general settings",
                    options=[SlashCommandOption(name="error_channel", type=OptionType.CHANNEL,
