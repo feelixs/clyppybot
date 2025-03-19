@@ -773,6 +773,8 @@ class BaseAutoEmbed:
                     raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
                 await asyncio.sleep(0.1)
 
+        timeout_task = None
+
         pre = "/"
         if isinstance(ctx, SlashContext):
             await ctx.defer(ephemeral=False)
