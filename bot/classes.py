@@ -43,7 +43,7 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
-async def send_webhook(title: str, load: str, logger, color=None, url=None, in_test=False):
+async def send_webhook(title: str, load: str, logger, color=None, url=None, in_test=False, content=None):
     if not in_test and os.getenv("TEST"):
         return
 
@@ -54,6 +54,7 @@ async def send_webhook(title: str, load: str, logger, color=None, url=None, in_t
     if color is None:
         color = 5814783  # Blue color
     payload = {
+        "content": content,
         "embeds": [{
             "title": title,
             "description": load,
