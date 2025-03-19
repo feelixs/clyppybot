@@ -32,15 +32,13 @@ class BASIC_MISC(BaseMisc):
 
         parse = urlparse(url)
         netloc = parse.netloc.lower()
-        self.logger.info(f"{url} netloc={netloc}")
+
         # check if the netloc contains any nsfw trigger word
         is_nsfw = any(trigger in netloc for trigger in NSFW_DOMAIN_TRIGGERS)
         if is_nsfw:
-            self.logger.info(f"{url} is_nsfw=True")
             return True
 
         # if it doesn't, check if any of the known nsfw domains are in the netloc
-        self.logger.info(f"{url} is_nsfw={any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)}")
         return any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)
 
 
