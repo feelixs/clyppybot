@@ -673,7 +673,7 @@ class Base(Extension):
             for s in self.bot.guilds:
                 b = s.get_member(self.bot.user.id)
                 if b.has_permission(Permissions.MANAGE_GUILD):
-                    ss[s.name] = s.joined_at
+                    ss[s.name] = s.joined_at.format()
             self.logger.info(f"guilds: {ss}")
 
     async def post_servers(self, num: int):
