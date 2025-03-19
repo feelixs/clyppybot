@@ -15,7 +15,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, \
-    InvalidFileType, UnsupportedError, YtDlpForbiddenError
+    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable
 from PIL import Image
 import hashlib
 import aiohttp
@@ -592,6 +592,8 @@ class BaseMisc(ABC):
             self.logger.error(f"Error checking video length for {url}: {str(e)}")
             if 'MoviePy error: failed to read the first frame of video file' in str(e):
                 raise InvalidFileType
+            elif 'label empty or too long' in str(e):
+                raise UrlUnparsable
             raise NoDuration
 
     @staticmethod
@@ -948,6 +950,9 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
+        except UrlUnparsable:
+            await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
+            success, response = False, "UrlParseError"
         except YtDlpForbiddenError:
             await ctx.send(f"I couldn't download that video file, as the domain returned 403 Forbidden. Maybe try again later, or use a different hosting website? {create_nexus_str()}")
             success, response = False, "403 Forbidden"

@@ -18,6 +18,10 @@ class YtDlpForbiddenError(Exception):
     pass
 
 
+class UrlUnparsable(Exception):
+    pass
+
+
 class UnsupportedError(Exception):
     pass
 
