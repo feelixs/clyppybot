@@ -579,7 +579,7 @@ class BaseMisc(ABC):
             )
             return duration
 
-        except Exception as e:
+        except DownloadError as e:
             self.logger.error(f"Error downloading video for {url}: {str(e)}")
             if 'You don\'t have permission' in str(e) or "unable to view this" in str(e):
                 raise NoPermsToView
@@ -587,9 +587,12 @@ class BaseMisc(ABC):
                 raise UnsupportedError
             elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
                 raise YtDlpForbiddenError
-            elif 'MoviePy error: failed to read the first frame of video file' in str(e):
+            raise VideoTooLong
+        except Exception as e:
+            self.logger.error(f"Error checking video length for {url}: {str(e)}")
+            if 'MoviePy error: failed to read the first frame of video file' in str(e):
                 raise InvalidFileType
-            elif 'label empty or too long' in str(e) or 'Temporary failure in name resolution' in str(e):
+            elif 'label empty or too long' in str(e):
                 raise UrlUnparsable
             raise NoDuration
 
