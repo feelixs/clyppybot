@@ -516,7 +516,7 @@ class BaseMisc(ABC):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
         self.always_embed = False  # are quickembeds enabled for this platform?
-        self.is_nsfw = False
+        self._is_nsfw = False
         self.dl_timeout_secs = 120
         self.bot = bot
         self.cdn_client = bot.cdn_client
@@ -528,6 +528,10 @@ class BaseMisc(ABC):
     @abstractmethod
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         ...
+
+
+    def is_nsfw(self, url: str = None) -> bool:
+        return self._is_nsfw
 
     def is_clip_link(self, url: str) -> bool:
         """
@@ -821,7 +825,7 @@ class BaseAutoEmbed:
                     logger=self.logger
                 )
                 return
-            elif platform.is_nsfw and not nsfw_enabed:
+            elif platform.is_nsfw(url) and not nsfw_enabed:
                 await ctx.send(f"This platform is not allowed in this channel. You can either:\n"
                                f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
