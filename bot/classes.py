@@ -587,7 +587,7 @@ class BaseMisc(ABC):
                 raise UnsupportedError
             elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
                 raise YtDlpForbiddenError
-            elif 'Temporary failure in name resolution' in str(e):
+            elif 'Temporary failure in name resolution' in str(e) or 'Name or service not known' in str(e):
                 raise UrlUnparsable
             raise VideoTooLong
         except Exception as e:
