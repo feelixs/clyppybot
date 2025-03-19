@@ -392,7 +392,7 @@ class BaseClip(ABC):
             raise FileNotFoundError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
-            handle_yt_dlp_err(str(e))
+            handle_yt_dlp_err(str(e), filename)
 
     async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'
