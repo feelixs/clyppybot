@@ -113,9 +113,6 @@ class RedditMisc(BaseMisc):
             logging.error(f"Error fetching URL {url}: {str(e)}")
             return False, None
         except Exception as e:
-            if 'label empty or too long' in str(e):
-                raise UnsupportedError
-
             logging.error(f"Unexpected error checking video for {url}: {str(e)}")
             return False, None
 
