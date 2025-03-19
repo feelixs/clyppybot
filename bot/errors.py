@@ -76,6 +76,8 @@ class RateLimitExceededError(Exception):
 def handle_yt_dlp_err(err: str):
     if 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
+    elif 'Video unavailable' in err:
+        raise VideoSaidUnavailable
     elif 'Unsupported URL:' in err or 'is not a valid URL' in err:
         raise UnsupportedError
     elif 'Unable to download webpage: HTTP Error 403: Forbidden' in err:
