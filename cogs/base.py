@@ -675,7 +675,7 @@ class Base(Extension):
                 if b.has_permission(Permissions.MANAGE_GUILD):
                     ss[s.name] = s.joined_at
             self.logger.info(f"guilds: {ss}")
-    
+
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
