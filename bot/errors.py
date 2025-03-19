@@ -92,7 +92,7 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
     elif 'Temporary failure in name resolution' in err or 'Name or service not known' in err:
         raise UrlUnparsable
     elif 'MoviePy error: failed to read the first frame of video file' in err:
-        if file_path is not None:
+        if file_path is not None:  # this can be raised after the file is partially downloaded
             try:
                 os.remove(file_path)
             except:
