@@ -6,7 +6,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
-from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
+from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_aiohttp_session, callback_clip_delete_msg, add_reqqed_by
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
@@ -645,6 +645,11 @@ class Base(Extension):
                 logger=self.logger
             )
             await self.post_servers(len(self.bot.guilds))
+
+    @listen(InviteCreate)
+    async def on_invite_create(self, event: InviteCreate):
+        if self.ready:
+            self.logger.info(f"New invite {event.invite.__dict__}")
 
     @listen()
     async def on_ready(self):
