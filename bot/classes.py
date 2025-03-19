@@ -388,7 +388,7 @@ class BaseClip(ABC):
 
                 return d
 
-            self.logger.info(f"Could not find file")
+            self.logger.info(f"dl_download error: Could not find file")
             raise UnknownError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
