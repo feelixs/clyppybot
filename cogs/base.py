@@ -547,7 +547,10 @@ class Base(Extension):
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
             self.logger.info(f'Joined new guild: {event.guild.name}')
-            w = await event.guild.fetch_widget()
+            try:
+                w = await event.guild.fetch_widget()
+            except:
+                w = None
             await send_webhook(
                 title=f'Joined new guild: {event.guild.name}',
                 load=f"id - {event.guild.id}\n"
@@ -563,7 +566,10 @@ class Base(Extension):
     async def on_guild_left(self, event: GuildLeft):
         if self.ready:
             self.logger.info(f'Left guild: {event.guild.name}')
-            w = await event.guild.fetch_widget()
+            try:
+                w = await event.guild.fetch_widget()
+            except:
+                w = None
             await send_webhook(
                 title=f'Left guild: {event.guild.name}',
                 load=f"id - {event.guild.id}\n"
