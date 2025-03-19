@@ -669,6 +669,13 @@ class Base(Extension):
                 url="https://twitch.tv/hesmen"
             ))
 
+            ss = {}
+            for s in self.bot.guilds:
+                b = s.get_member(self.bot.user.id)
+                if b.has_permission(Permissions.MANAGE_GUILD):
+                    ss[s.name] = s.joined_at
+            self.logger.info(f"guilds: {ss}")
+    
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
