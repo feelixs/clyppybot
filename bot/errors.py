@@ -74,7 +74,9 @@ class RateLimitExceededError(Exception):
 
 
 def handle_yt_dlp_err(err: str):
-    if 'You don\'t have permission' in err or "unable to view this" in err:
+    if 'Duration: N/A, bitrate: N/A' in err:
+        raise NoDuration
+    elif 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
     elif 'Video unavailable' in err:
         raise VideoSaidUnavailable
