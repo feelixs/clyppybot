@@ -665,7 +665,7 @@ class Base(Extension):
             self.logger.info("--------------")
             await self.bot.change_presence(activity=Activity(
                 type=ActivityType.STREAMING,
-                name="/help", 
+                name="/help",
                 url="https://twitch.tv/hesmen"
             ))
 
