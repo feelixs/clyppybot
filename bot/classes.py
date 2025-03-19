@@ -799,7 +799,7 @@ class BaseAutoEmbed:
                 )
                 return
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"This platform is not allowed in this channel. You can either:\n"
+                await ctx.send(f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
                                f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                                f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
@@ -934,7 +934,7 @@ class BaseAutoEmbed:
             )
             success, response = True, "Success"
         except VideoSaidUnavailable:
-            await ctx.send(f"The video returned 'Unavailable'. Try again later? {create_nexus_str()}")
+            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region '(ᗒᗣᗕ)՞ {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
