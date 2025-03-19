@@ -15,7 +15,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, \
-    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable
+    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable
 from PIL import Image
 import hashlib
 import aiohttp
@@ -384,6 +384,8 @@ class BaseClip(ABC):
             self.logger.error(f"yt-dlp download error: {str(e)}")
             if 'Duration: N/A, bitrate: N/A' in str(e):
                 raise NoDuration
+            elif 'Video unavailable' in str(e):
+                raise VideoSaidUnavailable
             raise
 
     async def overwrite_mp4(self, new_url: str):
@@ -952,6 +954,9 @@ class BaseAutoEmbed:
                 try_send_files=True
             )
             success, response = True, "Success"
+        except VideoSaidUnavailable:
+            await ctx.send(f"The video returned 'Unavailable'. Try again later? {create_nexus_str()}")
+            success, response = False, "VideoUnavailable"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
             success, response = False, "UrlParseError"

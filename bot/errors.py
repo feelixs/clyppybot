@@ -30,6 +30,10 @@ class NoPermsToView(Exception):
     pass
 
 
+class VideoSaidUnavailable(Exception):
+    pass
+
+
 class NoDuration(Exception):
     pass
 
