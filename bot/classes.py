@@ -945,7 +945,7 @@ class BaseAutoEmbed:
             )
             success, response = True, "Success"
         except FileNotFoundError:  # ytdlp failed to download the file, but the output wasn't captured
-            await ctx.send(f"The file could not be downloaded. Does the url points to a video file? {create_nexus_str()}")
+            await ctx.send(f"The file could not be downloaded. Does the url points to a video? {create_nexus_str()}")
             success, response = False, "FileNotFound"
         except VideoSaidUnavailable:
             await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
