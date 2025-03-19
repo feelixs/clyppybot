@@ -5,7 +5,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_aiohttp_session, callback_clip_delete_msg, add_reqqed_by
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -584,7 +584,7 @@ class Base(Extension):
                 load="hellow",
                 content=f"here - https://discord.gg/{event.invite.code}",
                 color=COLOR_GREEN,
-                url=APPUSE_LOG_WEBHOOK,
+                url=IN_WEBHOOK,
                 logger=self.logger
             )
 
