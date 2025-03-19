@@ -386,6 +386,8 @@ class BaseClip(ABC):
                 raise NoDuration
             elif 'Video unavailable' in str(e):
                 raise VideoSaidUnavailable
+            elif 'ERROR: Unsupported URL' in str(e):
+                raise UnsupportedError
             raise
 
     async def overwrite_mp4(self, new_url: str):
