@@ -22,6 +22,7 @@ from datetime import datetime
 import logging
 import asyncio
 from time import time
+import random
 import os
 
 
@@ -31,6 +32,10 @@ def tryremove(f):
     except:
         pass
 
+
+def get_random_face():
+    faces = ['(⌯˃̶᷄ ﹏ ˂̶᷄⌯)']
+    return f'`{random.choice(faces)}`'
 
 def is_discord_compatible(filesize: float):
     if filesize is None:
@@ -799,7 +804,7 @@ class BaseAutoEmbed:
                 )
                 return
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
+                await ctx.send(f"`( ͡~ ͜ʖ ͡°)` This platform is not allowed in this channel. You can either:\n"
                                f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
                                f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                                f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
@@ -934,7 +939,7 @@ class BaseAutoEmbed:
             )
             success, response = True, "Success"
         except VideoSaidUnavailable:
-            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region '(ᗒᗣᗕ)՞ {create_nexus_str()}")
+            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
@@ -959,7 +964,8 @@ class BaseAutoEmbed:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
             else:
-                await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                r = get_random_face()
+                await ctx.send(f"{r} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"Voting with `/vote` will increase it to {EMBED_W_TOKEN_MAX_LEN // 60} minutes! {create_nexus_str()}")
             success, response = False, "Video too long"
         except ClipFailure:
