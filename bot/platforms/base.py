@@ -26,21 +26,6 @@ class BASIC_MISC(BaseMisc):
     def parse_clip_url(self, url: str, extended_url_formats=False):
         return url
 
-    def is_nsfw(self, url: str = None):
-        if url is None:
-            raise Exception("BASIC_MISC.is_nsfw must include an url param")
-
-        parse = urlparse(url)
-        netloc = parse.netloc.lower()
-
-        # check if the netloc contains any nsfw trigger word
-        is_nsfw = any(trigger in netloc for trigger in NSFW_DOMAIN_TRIGGERS)
-        if is_nsfw:
-            return True
-
-        # if it doesn't, check if any of the known nsfw domains are in the netloc
-        return any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)
-
 
 class BASIC_CLIP(BaseClip):
     def __init__(self, url: str, cdn_client):

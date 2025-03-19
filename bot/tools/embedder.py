@@ -93,9 +93,10 @@ class AutoEmbedder:
                         return 1
 
                 if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
-                    if not event.message.channel.parent_channel.nsfw and self.platform_tools.is_nsfw():
+                    if self.platform_tools.is_nsfw:
+                        # GuildPublicThread has no attribute nsfw
                         return 1
-                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw():
+                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
                     # only allow nsfw in nsfw channels
                     return 1
 

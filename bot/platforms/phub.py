@@ -9,7 +9,7 @@ class PhubMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "PornHub"
-        self._is_nsfw = True
+        self.is_nsfw = True
         self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
