@@ -15,7 +15,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, \
-    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable
+    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, handle_yt_dlp_err
 from PIL import Image
 import hashlib
 import aiohttp
@@ -382,15 +382,7 @@ class BaseClip(ABC):
             raise UnknownError
         except Exception as e:
             self.logger.error(f"yt-dlp download error: {str(e)}")
-            if 'Duration: N/A, bitrate: N/A' in str(e):
-                raise NoDuration
-            elif 'Video unavailable' in str(e):
-                raise VideoSaidUnavailable
-            elif 'ERROR: Unsupported URL' in str(e):
-                raise UnsupportedError
-            elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
-                raise YtDlpForbiddenError
-            raise
+            handle_yt_dlp_err(str(e))
 
     async def overwrite_mp4(self, new_url: str):
         url = 'https://clyppy.io/api/overwrite/'
@@ -584,25 +576,9 @@ class BaseMisc(ABC):
                 None, get_duration
             )
             return duration
-
-        except DownloadError as e:
-            self.logger.error(f"Error downloading video for {url}: {str(e)}")
-            if 'You don\'t have permission' in str(e) or "unable to view this" in str(e):
-                raise NoPermsToView
-            elif 'Unsupported URL:' in str(e) or 'is not a valid URL' in str(e):
-                raise UnsupportedError
-            elif 'Unable to download webpage: HTTP Error 403: Forbidden' in str(e):
-                raise YtDlpForbiddenError
-            elif 'Temporary failure in name resolution' in str(e) or 'Name or service not known' in str(e):
-                raise UrlUnparsable
-            raise VideoTooLong
         except Exception as e:
-            self.logger.error(f"Error checking video length for {url}: {str(e)}")
-            if 'MoviePy error: failed to read the first frame of video file' in str(e):
-                raise InvalidFileType
-            elif 'label empty or too long' in str(e):
-                raise UrlUnparsable
-            raise NoDuration
+            self.logger.error(f"Error downloading video for {url}: {str(e)}")
+            handle_yt_dlp_err(str(e))
 
     @staticmethod
     def is_dl_server(guild):

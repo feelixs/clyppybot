@@ -71,3 +71,19 @@ class RateLimitExceededError(Exception):
     def __init__(self, resets_when, *args):
         super().__init__(*args)
         self.resets_when = resets_when
+
+
+def handle_yt_dlp_err(err: str):
+    if 'You don\'t have permission' in err or "unable to view this" in err:
+        raise NoPermsToView
+    elif 'Unsupported URL:' in err or 'is not a valid URL' in err:
+        raise UnsupportedError
+    elif 'Unable to download webpage: HTTP Error 403: Forbidden' in err:
+        raise YtDlpForbiddenError
+    elif 'Temporary failure in name resolution' in err or 'Name or service not known' in err:
+        raise UrlUnparsable
+    elif 'MoviePy error: failed to read the first frame of video file' in err:
+        raise InvalidFileType
+    elif 'label empty or too long' in err:
+        raise UrlUnparsable
+    raise
