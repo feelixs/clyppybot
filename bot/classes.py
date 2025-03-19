@@ -43,7 +43,7 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
-async def send_webhook(title: str, load: str, logger, color=None, url=None, in_test=False, content=None):
+async def send_webhook(logger, content: Optional[str] = None, title: Optional[str] = None, load: Optional[str] = None, url: Optional[str]=None, color=None, in_test=False):
     if not in_test and os.getenv("TEST"):
         return
 
@@ -53,13 +53,18 @@ async def send_webhook(title: str, load: str, logger, color=None, url=None, in_t
     # Create a rich embed
     if color is None:
         color = 5814783  # Blue color
+
+    e = []
+    if title is not None and load is not None:
+        e = [{
+                "title": title,
+                "description": load,
+                "color": color,
+            }]
+
     payload = {
         "content": content,
-        "embeds": [{
-            "title": title,
-            "description": load,
-            "color": color,
-        }]
+        "embeds": e
     }
 
     async with aiohttp.ClientSession() as session:
