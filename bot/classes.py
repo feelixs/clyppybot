@@ -940,7 +940,7 @@ class BaseAutoEmbed:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
             success, response = False, "UrlParseError"
         except YtDlpForbiddenError:
-            await ctx.send(f"I couldn't download that video file, as the domain returned 403 Forbidden. Maybe try again later, or use a different hosting website? {create_nexus_str()}")
+            await ctx.send(f"I couldn't download that video file, the domain returned 403 Forbidden. Maybe try again later, or use a different hosting website? {create_nexus_str()}")
             success, response = False, "403 Forbidden"
         except UnsupportedError:
             await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
