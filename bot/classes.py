@@ -964,8 +964,7 @@ class BaseAutoEmbed:
                 await ctx.send(f"This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
             else:
-                r = get_random_face()
-                await ctx.send(f"{r} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"Voting with `/vote` will increase it to {EMBED_W_TOKEN_MAX_LEN // 60} minutes! {create_nexus_str()}")
             success, response = False, "Video too long"
         except ClipFailure:
