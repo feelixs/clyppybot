@@ -305,10 +305,10 @@ class Base(Extension):
         )
 
     @slash_command(name="setquickembeds", scopes=[759798762171662399], options=[
-        SlashCommandOption(name="guild_id", type=OptionType.INTEGER, required=True),
+        SlashCommandOption(name="guild_id", type=OptionType.STRING, required=True),
         SlashCommandOption(name="value", type=OptionType.BOOLEAN, required=True)])
-    async def setquickembeds(self, ctx, guild_id: int, value: bool):
-        self.bot.guild_settings.set_embed_enabled(guild_id, value)
+    async def setquickembeds(self, ctx, guild_id: str, value: bool):
+        self.bot.guild_settings.set_embed_enabled(int(guild_id), value)
         return await ctx.send("OK!")
 
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
