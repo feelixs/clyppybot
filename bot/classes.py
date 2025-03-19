@@ -6,7 +6,6 @@ from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions
 from interactions.api.events import MessageCreate
-from yt_dlp.utils import DownloadError
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
 from bot.tools.embedder import AutoEmbedder
