@@ -5,7 +5,7 @@ from typing import Optional
 from bot.platforms.kick import KickMisc
 from bot.platforms.medal import MedalMisc
 from bot.types import DownloadResponse
-from bot.errors import VideoTooLong, NoDuration
+from bot.errors import VideoTooLong, NoDuration, UnsupportedError
 from bot.classes import BaseClip, BaseMisc
 
 
@@ -113,6 +113,9 @@ class RedditMisc(BaseMisc):
             logging.error(f"Error fetching URL {url}: {str(e)}")
             return False, None
         except Exception as e:
+            if 'label empty or too long' in str(e):
+                raise UnsupportedError
+
             logging.error(f"Unexpected error checking video for {url}: {str(e)}")
             return False, None
 
