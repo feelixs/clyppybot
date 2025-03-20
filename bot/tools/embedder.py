@@ -149,7 +149,7 @@ class AutoEmbedder:
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
             try:
-                self.bot.currently_embedding.remove(parsed_id)
+                self.bot.currently_embedding.clear(parsed_id)
             except ValueError:
                 pass
             try:

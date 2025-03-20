@@ -827,8 +827,8 @@ class BaseAutoEmbed:
                 )
                 return
 
-            if ctx.user.id in self.bot.currently_embedding_users:
-                await ctx.send(f"You're already embedding a video. Please wait for it to finish before trying again.")
+            if self.bot.currently_embedding_users.count(ctx.user.id) >= 2:
+                await ctx.send(f"You're already embedding 2 videos. Please wait for one to finish before trying again.")
                 await send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
@@ -867,11 +867,11 @@ class BaseAutoEmbed:
                 logger=self.logger
             )
             try:
-                self.bot.currently_downloading.remove(slug)
+                self.bot.currently_downloading.clear(slug)
             except ValueError:
                 pass
             try:
-                self.bot.currently_embedding_users.remove(ctx.user.id)
+                self.bot.currently_embedding_users.clear(ctx.user.id)
             except ValueError:
                 pass
             try:
@@ -911,11 +911,11 @@ class BaseAutoEmbed:
             self.logger.info(f"/embed Task exception: {str(e)}")
         finally:
             try:
-                self.bot.currently_downloading.remove(slug)
+                self.bot.currently_downloading.clear(slug)
             except ValueError:
                 pass
             try:
-                self.bot.currently_embedding_users.remove(ctx.user.id)
+                self.bot.currently_embedding_users.clear(ctx.user.id)
             except ValueError:
                 pass
             try:
