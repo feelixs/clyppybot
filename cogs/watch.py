@@ -92,7 +92,7 @@ class Watch(Extension):
                             try:
                                 chn = await self.bot.fetch_channel(chnid)
                                 msg = await chn.fetch_message(msgid)
-                                delete_tasks.append(msg.delete())
+                                delete_tasks.append(asyncio.create_task(msg.delete()))
                             except Exception as e:
                                 self.logger.error(f"Error fetching message {fullstr}: {e}")
                 else:
