@@ -76,15 +76,26 @@ class Watch(Extension):
                 if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
                     return
 
-                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(\d+(?:,\d+)*)\]"
-                message_ids = re.findall(pattern, event.message.content)
-
+                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \['([\d-]+(?:,\s*[\d-]+)*)'\]"
+                match = re.search(pattern, event.message.content)
+                
                 delete_tasks = []
-                for fullstr in message_ids:
-                    fullstr = fullstr.split('-')
-                    chnid, msgid = fullstr[0], fullstr[1]
-                    chn = await self.bot.fetch_channel(chnid)
-                    msg = await chn.fetch_message(msgid)
-                    delete_tasks.append(msg.delete())
+                if match:
+                    # Get the list of IDs from the third group
+                    id_str = match.group(3)
+                    message_ids = [s.strip() for s in id_str.split(',')]
+                    
+                    for fullstr in message_ids:
+                        parts = fullstr.split('-')
+                        if len(parts) == 2:
+                            chnid, msgid = parts[0], parts[1]
+                            try:
+                                chn = await self.bot.fetch_channel(chnid)
+                                msg = await chn.fetch_message(msgid)
+                                delete_tasks.append(msg.delete())
+                            except Exception as e:
+                                self.logger.error(f"Error fetching message {fullstr}: {e}")
+                else:
+                    self.logger.info(f"No match found for delete command in: {event.message.content}")
 
                 await asyncio.gather(*delete_tasks)
