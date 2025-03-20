@@ -71,6 +71,7 @@ class Watch(Extension):
                     await self.give_votes_roles(userid, vote_total)
                 else:
                     self.logger.info(f"Couldn't match pattern")
+
             elif event.message.author.id == CLYPPY_CMD_WEBHOOK_ID:  # cmd webhook sent a command to clyppy (delete a msg, etc)
                 # should only work in this channel (unneeded validation)
                 if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
