@@ -75,5 +75,5 @@ class Watch(Extension):
                 if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
                     return
 
-                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> ((\d+)) said to delete these: [\d+]"
+                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(\d+(?:,\d+)*)\]"
                 message_ids = re.findall(pattern, event.message.content)
