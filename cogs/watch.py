@@ -1,12 +1,8 @@
+from bot.env import CLYPPY_SUPPORT_SERVER_ID, CLYPPY_CMD_WEBHOOK_ID, CLYPPY_CMD_WEBHOOK_CHANNEL, CLYPPY_VOTE_ROLE, VOTE_WEBHOOK_USERID, CLYPPYBOT_ID
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 import logging
 import re
-
-
-CLYPPY_SUPPORT_SERVER_ID = 1117149574730104872
-CLYPPY_VOTE_ROLE = 1337067081941647472
-VOTE_WEBHOOK_USERID = 1337076281040179240
 
 
 class Watch(Extension):
@@ -56,15 +52,15 @@ class Watch(Extension):
         if event.message.guild is None:
             return  # in dms it won't work
 
-        if event.message.author.id in [1111723928604381314, 1305624117818560664]:
-            # clyppy or test clyppy sent msg
+        if event.message.author.id in [CLYPPYBOT_ID, 1305624117818560664]:
+            # clyppy or test clyppy (cassandra) sent msg
             return
 
-        if "clyppy" in event.message.content or '1111723928604381314' in event.message.content:
+        if "clyppy" in event.message.content or str(CLYPPYBOT_ID) in event.message.content:
             self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
                              f"@{event.message.author.username} - \"{event.message.content}\"")
 
-            if event.message.author.id == VOTE_WEBHOOK_USERID:
+            if event.message.author.id == VOTE_WEBHOOK_USERID:  # vote webhook sent a new vote registered
                 pattern = r"<@(\d+)> just gave \((\d+)\) vote\(s\) for <@\d+> on \[[^\]]+\]\([^)]+\) and earned \d+ VIP tokens, they now have (\d+) votes in total"
                 match = re.match(pattern, event.message.content)
                 if match:
@@ -74,3 +70,10 @@ class Watch(Extension):
                     await self.give_votes_roles(userid, vote_total)
                 else:
                     self.logger.info(f"Couldn't match pattern")
+            elif event.message.author.id == CLYPPY_CMD_WEBHOOK_ID:  # cmd webhook sent a command to clyppy (delete a msg, etc)
+                # should only work in this channel (unneeded validation)
+                if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
+                    return
+
+                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> ((\d+)) said to delete these: [\d+]"
+                message_ids = re.findall(pattern, event.message.content)
