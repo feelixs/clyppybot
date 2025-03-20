@@ -867,11 +867,13 @@ class BaseAutoEmbed:
                 logger=self.logger
             )
             try:
-                self.bot.currently_downloading.clear(slug)
+                while slug in self.bot.currently_downloading:
+                    self.bot.currently_downloading.remove(slug)
             except ValueError:
                 pass
             try:
-                self.bot.currently_embedding_users.clear(ctx.user.id)
+                while ctx.user.id in self.bot.currently_embedding_users:
+                    self.bot.currently_embedding_users.remove(ctx.user.id)
             except ValueError:
                 pass
             try:
@@ -911,11 +913,13 @@ class BaseAutoEmbed:
             self.logger.info(f"/embed Task exception: {str(e)}")
         finally:
             try:
-                self.bot.currently_downloading.clear(slug)
+                while slug in self.bot.currently_downloading:
+                    self.bot.currently_downloading.remove(slug)
             except ValueError:
                 pass
             try:
-                self.bot.currently_embedding_users.clear(ctx.user.id)
+                while ctx.user.id in self.bot.currently_embedding_users:
+                    self.bot.currently_embedding_users.remove(ctx.user.id)
             except ValueError:
                 pass
             try:
