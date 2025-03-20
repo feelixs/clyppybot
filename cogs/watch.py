@@ -2,6 +2,7 @@ from bot.env import CLYPPY_SUPPORT_SERVER_ID, CLYPPY_CMD_WEBHOOK_ID, CLYPPY_CMD_
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 import logging
+import asyncio
 import re
 
 
@@ -77,3 +78,13 @@ class Watch(Extension):
 
                 pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(\d+(?:,\d+)*)\]"
                 message_ids = re.findall(pattern, event.message.content)
+
+                delete_tasks = []
+                for fullstr in message_ids:
+                    fullstr = fullstr.split('-')
+                    chnid, msgid = fullstr[0], fullstr[1]
+                    chn = await self.bot.fetch_channel(chnid)
+                    msg = await chn.fetch_message(msgid)
+                    delete_tasks.append(msg.delete())
+
+                await asyncio.gather(*delete_tasks)
