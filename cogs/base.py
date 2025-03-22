@@ -74,7 +74,7 @@ class Base(Extension):
             contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
                 words=words,
                 n=0,
-                print=False
+                print=True
             )
             if contains_clip_link:
                 return await p.handle_message(event)
