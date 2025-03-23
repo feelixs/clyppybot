@@ -933,7 +933,7 @@ class BaseAutoEmbed:
         if isinstance(ctx, Message):
             pre = '.'
 
-        success, response = False, "Unknown error"
+        success, response = False, "Timeout reached"
         try:
             if isinstance(ctx, SlashContext):
                 self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
