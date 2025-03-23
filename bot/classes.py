@@ -656,7 +656,7 @@ class BaseAutoEmbed:
         await asyncio.sleep(amt)
 
         # will be cancelled early if main execution finished before the sleep
-        await ctx.send(f"The timeout was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
+        await ctx.send(f"The timeout of {amt // 60}m was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
 
     @staticmethod
     async def fetch_tokens(user):
