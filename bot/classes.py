@@ -952,7 +952,7 @@ class BaseAutoEmbed:
             await ctx.send(f"The file could not be downloaded. Does the url points to a video? {create_nexus_str()}")
             success, response = False, "FileNotFound"
         except IPBlockedError:
-            await ctx.send(f"{get_random_face()} The platform said my IP was blocked... {create_nexus_str()}")
+            await ctx.send(f"{get_random_face()} The platform said my IP was blocked from viewing that link {create_nexus_str()}")
             success, response = False, "IPBlocked"
         except VideoSaidUnavailable:
             await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
