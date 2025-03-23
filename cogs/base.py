@@ -55,14 +55,12 @@ class Base(Extension):
                 if contains_clip_link:
                     return await p.handle_message(event)
 
-        if len(split) > 1:
-            # other misc commands don't take arguments
-            return
-
+        # Check for single-word commands
         msg = msg.strip()
-        for txt_command, func in self.bot.base_embedder.OTHER_TXT_COMMANDS.items():
-            if msg == txt_command:
-                return await func(event.message)
+        if len(split) == 1:  # Only check for commands with no arguments
+            for txt_command, func in self.bot.base_embedder.OTHER_TXT_COMMANDS.items():
+                if msg == txt_command:
+                    return await func(event.message)
 
         # handle quickembed links -> both .embed and quickembed
         # will use the same function, and will both do checks to ensure if it should continue
