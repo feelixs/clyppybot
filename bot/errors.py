@@ -70,6 +70,10 @@ class TooManyTriesError(Exception):
     pass
 
 
+class IPBlockedError(Exception):
+    pass
+
+
 class RateLimitExceededError(Exception):
     def __init__(self, resets_when, *args):
         super().__init__(*args)
@@ -81,6 +85,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise NoDuration
     elif 'HTTP Error 404: Not Found' in err:
         raise VideoSaidUnavailable
+    elif 'Your IP address is blocked from accessing this post' in err:
+        raise IPBlockedError
     elif 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
     elif 'Video unavailable' in err:
