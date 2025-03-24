@@ -1,5 +1,5 @@
 import asyncio
-
+from datetime import datetime, timezone
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
@@ -157,7 +157,12 @@ class Base(Extension):
                         value=clip_url if clyppy_cdn else f"Hosted on {clip_info['platform']}'s cdn"
                     )
                     if clyppy_cdn and not deleted:
-                        embed.add_field(name="Expires", value=f"{clip_info['expiry_ts_str']}")
+                        expires_dt = None if clip_info['expires_at'] is None else datetime.fromtimestamp(clip_info['expires_at'], tz=timezone.utc)
+                        if expires_dt is not None and expires_dt > datetime.now(timezone.utc):
+                            exp_str = "Expires"
+                        else:
+                            exp_str = "Expired"
+                        embed.add_field(name=exp_str, value=f"{clip_info['expiry_ts_str']}")
                     elif clyppy_cdn and deleted:
                         embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
 
