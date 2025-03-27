@@ -77,25 +77,29 @@ class Watch(Extension):
                 if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
                     return
 
-                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \['([\d-]+(?:,\s*[\d-]+)*)'\]"
+                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(.*?)\]"
                 match = re.search(pattern, event.message.content)
                 
                 delete_tasks = []
                 if match:
                     # Get the list of IDs from the third group
-                    id_str = match.group(3)
-                    message_ids = [s.strip() for s in id_str.split(',')]
+                    id_list_str = match.group(3)
+                    # Extract individual IDs (handling both quoted and unquoted formats)
+                    message_ids = re.findall(r"'([\d-]+)'|\"([\d-]+)\"|(\d+-\d+)", id_list_str)
                     
-                    for fullstr in message_ids:
-                        parts = fullstr.split('-')
-                        if len(parts) == 2:
-                            chnid, msgid = parts[0], parts[1]
-                            try:
-                                chn = await self.bot.fetch_channel(chnid)
-                                msg = await chn.fetch_message(msgid)
-                                delete_tasks.append(asyncio.create_task(msg.delete()))
-                            except Exception as e:
-                                self.logger.error(f"Error fetching message {fullstr}: {e}")
+                    for match_groups in message_ids:
+                        # Each match is a tuple with 3 possible groups - find the non-empty one
+                        fullstr = next((group for group in match_groups if group), None)
+                        if fullstr:
+                            parts = fullstr.split('-')
+                            if len(parts) == 2:
+                                chnid, msgid = parts[0], parts[1]
+                                try:
+                                    chn = await self.bot.fetch_channel(chnid)
+                                    msg = await chn.fetch_message(msgid)
+                                    delete_tasks.append(asyncio.create_task(msg.delete()))
+                                except Exception as e:
+                                    self.logger.error(f"Error fetching message {fullstr}: {e}")
                 else:
                     self.logger.info(f"No match found for delete command in: {event.message.content}")
 
