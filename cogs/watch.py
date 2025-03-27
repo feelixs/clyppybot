@@ -98,7 +98,7 @@ class Watch(Extension):
                                     if chnid.startswith('d'):
                                         # Handle DM channel case
                                         userid = chnid[1:]  # Remove the 'd' prefix to get the user ID
-                                        self.logger.info(f"Fetching dm with user {user.username}")
+                                        self.logger.info(f"Fetching user {userid}")
                                         user = await self.bot.fetch_user(userid)
                                         dm_channel = await user.fetch_dm(force=True)
                                         msg = await dm_channel.fetch_message(msgid)
