@@ -97,7 +97,8 @@ class Watch(Extension):
                                 try:
                                     if chnid.startswith('d'):
                                         # Handle DM channel case
-                                        user = await self.bot.fetch_user(msgid)
+                                        userid = chnid[1:]  # Remove the 'd' prefix to get the user ID
+                                        user = await self.bot.fetch_user(userid)
                                         dm_channel = await user.fetch_dm(force=True)
                                         msg = await dm_channel.fetch_message(msgid)
                                     else:
