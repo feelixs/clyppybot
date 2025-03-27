@@ -108,7 +108,7 @@ class Watch(Extension):
                                         msg = await chn.fetch_message(msgid)
                                     delete_tasks.append(asyncio.create_task(msg.delete()))
                                 except Exception as e:
-                                    self.logger.error(f"Error fetching message {fullstr}: {e}")
+                                    self.logger.error(f"Error fetching message {msgid} in channel: {chnid}: {e}")
                 else:
                     self.logger.info(f"No match found for delete command in: {event.message.content}")
 
