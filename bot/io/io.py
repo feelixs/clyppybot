@@ -60,6 +60,24 @@ async def callback_clip_delete_msg(data, key, ctx_type: str = "StoredVideo") -> 
             return await response.json()
 
 
+async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
+    url = f"https://clyppy.io/api/clips/get/{clip_id}"
+    headers = {
+        'X-API-Key': getenv('clyppy_post_key'),
+        'Request-Type': ctx_type,
+        'Content-Type': 'application/json'
+    }
+    async with get_aiohttp_session() as session:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                j = await response.json()
+                return j
+            elif response.status == 404:
+                return {'match': False}
+            else:
+                raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
+
+
 async def subtract_tokens(user, amt):
     url = 'https://clyppy.io/api/tokens/subtract/'
     headers = {

@@ -1,6 +1,6 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
-from bot.io import get_aiohttp_session, is_404, fetch_video_status
+from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import create_nexus_str, DL_SERVER_ID
@@ -213,17 +213,18 @@ class AutoEmbedder:
                 )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
-                #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care, i'll also need to query clyppyio - getclip to see the videos duration
+                info = await get_clip_info(clip.clyppy_id)
+                #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
                 #    raise VideoTooLong
                 response = DownloadResponse(
-                    remote_url=None,
+                    remote_url=info['url'],
                     local_file_path=None,
-                    duration=None,
-                    width=None,
-                    height=None,
-                    filesize=None,
-                    video_name=None,
-                    can_be_uploaded=None
+                    duration=info['duration'],
+                    width=info['width'],
+                    height=info['height'],
+                    filesize=info['file_size'],
+                    video_name=info['title'],
+                    can_be_uploaded=False
                 )
 
         # send embed

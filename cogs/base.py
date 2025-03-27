@@ -7,7 +7,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK, CLYPPYBOT_ID
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
-from bot.io import get_aiohttp_session, callback_clip_delete_msg, add_reqqed_by
+from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
@@ -77,25 +77,6 @@ class Base(Extension):
             if contains_clip_link:
                 return await p.handle_message(event)
 
-    @staticmethod
-    async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
-        """Get clip info from clyppyio"""
-        url = f"https://clyppy.io/api/clips/get/{clip_id}"
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Request-Type': ctx_type,
-            'Content-Type': 'application/json'
-        }
-        async with get_aiohttp_session() as session:
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    j = await response.json()
-                    return j
-                elif response.status == 404:
-                    return {'match': False}
-                else:
-                    raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
-
     @component_callback(compile(r"ibtn-.*"))
     async def info_button_response(self, ctx: ComponentContext):
         """
@@ -119,7 +100,7 @@ class Base(Extension):
         try:
             clyppy_cdn = False
 
-            clip_info = await self.get_clip_info(clyppyid, ctx_type='BotInteraction' if is_discord_uploaded else 'StoredVideo')
+            clip_info = await get_clip_info(clyppyid, ctx_type='BotInteraction' if is_discord_uploaded else 'StoredVideo')
             self.logger.info(f"@component_callback for button {ctx.custom_id} - clip_info: {clip_info}")
             if clip_info['match']:
                 clip_url = clip_info['url']
