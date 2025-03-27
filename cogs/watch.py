@@ -100,6 +100,7 @@ class Watch(Extension):
                                         userid = chnid[1:]  # Remove the 'd' prefix to get the user ID
                                         self.logger.info(f"Fetching user {userid}")
                                         user = await self.bot.fetch_user(userid)
+                                        self.logger.info(f"Fetching dm with user {user.username}")
                                         dm_channel = await user.fetch_dm(force=True)
                                         msg = await dm_channel.fetch_message(msgid)
                                     else:
