@@ -248,7 +248,7 @@ class AutoEmbedder:
                 ))
 
             if guild.is_dm:
-                chn = "dm"
+                chn = "{dm}"
                 chnid = 0
             else:
                 chn = respond_to.channel.name
