@@ -95,8 +95,14 @@ class Watch(Extension):
                             if len(parts) == 2:
                                 chnid, msgid = parts[0], parts[1]
                                 try:
-                                    chn = await self.bot.fetch_channel(chnid)
-                                    msg = await chn.fetch_message(msgid)
+                                    if chnid.startswith('d'):
+                                        # Handle DM channel case
+                                        user = await self.bot.fetch_user(msgid)
+                                        dm_channel = await user.fetch_dm(force=True)
+                                        msg = await dm_channel.fetch_message(msgid)
+                                    else:
+                                        chn = await self.bot.fetch_channel(chnid)
+                                        msg = await chn.fetch_message(msgid)
                                     delete_tasks.append(asyncio.create_task(msg.delete()))
                                 except Exception as e:
                                     self.logger.error(f"Error fetching message {fullstr}: {e}")
