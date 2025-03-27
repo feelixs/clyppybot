@@ -3,7 +3,6 @@ from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 import logging
 import asyncio
-from bot.io import add_reqqed_by
 import re
 
 
