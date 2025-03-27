@@ -84,8 +84,8 @@ class Watch(Extension):
                 if match:
                     # Get the list of IDs from the third group
                     id_list_str = match.group(3)
-                    # Extract individual IDs (handling both quoted and unquoted formats)
-                    message_ids = re.findall(r"'([\d-]+)'|\"([\d-]+)\"|(\d+-\d+)", id_list_str)
+                    # Extract individual IDs (handling both quoted and unquoted formats with 'd' prefix)
+                    message_ids = re.findall(r"'([d\d-]+)'|\"([d\d-]+)\"|([d\d-]+)", id_list_str)
                     
                     for match_groups in message_ids:
                         # Each match is a tuple with 3 possible groups - find the non-empty one
@@ -108,7 +108,7 @@ class Watch(Extension):
                                         msg = await chn.fetch_message(msgid)
                                     delete_tasks.append(asyncio.create_task(msg.delete()))
                                 except Exception as e:
-                                    self.logger.error(f"Error fetching message {msgid} in channel: {chnid} - {e}")
+                                    self.logger.error(f"Error fetching message {msgid} in channel: {chnid}: {e}")
                 else:
                     self.logger.info(f"No match found for delete command in: {event.message.content}")
 
