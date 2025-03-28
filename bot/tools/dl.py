@@ -18,11 +18,11 @@ class DownloadManager:
             if not isinstance(clip, BaseClip):
                 raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")
             self._parent.logger.info("Run clip.download()")
-        if not skip_upload:
-            r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
-        else:
+        if skip_upload:
             # force manual override of auto-upload (download() may upload, but dl_download() doesn't)
             r = await clip.dl_download(filename=desired_filename, can_send_files=can_send_files)
+        else:
+            r = await clip.download(filename=desired_filename, can_send_files=can_send_files)
         if r is None:
             raise UnknownError
         return r
