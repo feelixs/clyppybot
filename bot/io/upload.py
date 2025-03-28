@@ -94,7 +94,8 @@ async def upload_video(video_file_path, logger, delete_soon=False) -> Dict:
 
     data = {
         'file': file_data,
-        'filename': os.path.basename(video_file_path)
+        'filename': os.path.basename(video_file_path),
+        'delete_soon': delete_soon
     }
 
     async with get_aiohttp_session() as session:
