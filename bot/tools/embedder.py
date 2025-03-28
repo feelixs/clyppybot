@@ -179,9 +179,7 @@ class AutoEmbedder:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
             return None
-        # retrieve clip video url
-        status = await fetch_video_status(clip.clyppy_id)
-        video_doesnt_exist = not status['exists']
+
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             the_file = f'https://cdn.clyppy.com/temp/{clip.service}_{clip.clyppy_id}.mp4'
@@ -203,6 +201,10 @@ class AutoEmbedder:
                 return
         else:
             # proceed normally
+
+            # retrieve clip video url
+            status = await fetch_video_status(clip.clyppy_id)
+            video_doesnt_exist = not status['exists']
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(clip, can_send_files=will_send_files)
             else:
