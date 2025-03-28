@@ -93,6 +93,7 @@ async def upload_video(video_file_path, logger, delete_soon=False) -> Dict:
         file_data = base64.b64encode(f.read()).decode()
 
     data = {
+        'chunked': False,
         'file': file_data,
         'filename': os.path.basename(video_file_path),
         'delete_soon': delete_soon
