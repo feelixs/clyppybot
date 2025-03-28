@@ -183,18 +183,18 @@ class AutoEmbedder:
 
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
-            the_file = f'https://cdn.clyppy.com/temp/{clip.service}_{clip.clyppy_id}.mp4'
-            cdn_file_not_exists, _ = await is_404(the_file)
-            if cdn_file_not_exists:
+            the_file = f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'
+            file_not_exists, _ = await is_404(the_file)
+            if file_not_exists:
                 self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
                 response = await self.bot.tools.dl.download_clip(clip, can_send_files=False)
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
-                    delete_soon=True
-                )
-                await respond_to.reply(f"Success for {clip_link}")
+                    remote_path=the_file
+                )  # delete this https://clyppy.io/media/clips/youtube_4w6gk3iz.mp4
+                await respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}")
                 return
             else:
                 self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
