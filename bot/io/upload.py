@@ -74,6 +74,7 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
 
 
 async def upload_video(video_file_path, logger, remote_path=None) -> Dict:
+    """args :remote_path -> the path where the file should be stored. the filename will be pulled from video_file_path"""
     with open(video_file_path, 'rb') as f:
         file_data = f.read()
     total_size = len(file_data)
