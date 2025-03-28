@@ -188,7 +188,7 @@ class AutoEmbedder:
             if file_not_exists:
                 self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
-                response = await self.bot.tools.dl.download_clip(clip, can_send_files=False)
+                response = await self.bot.tools.dl.download_clip(clip, can_send_files=False, skip_upload=True)
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
