@@ -53,8 +53,8 @@ class Watch(Extension):
         if event.message.guild is None:
             return  # in dms it won't work
 
-        if event.message.author.id in [CLYPPYBOT_ID, 1305624117818560664]:
-            # clyppy or test clyppy (cassandra) sent msg
+        if event.message.author.id == self.bot.user.id:
+            # the bot sent the message
             return
 
         if "clyppy" in event.message.content or str(CLYPPYBOT_ID) in event.message.content:
