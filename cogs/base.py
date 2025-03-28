@@ -400,11 +400,8 @@ class Base(Extension):
                                                required=False),
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
-                                               required=False),
-                            SlashCommandOption(name="nsfw", type=OptionType.BOOLEAN,
-                                               description="Should users in this server be allowed to embed videos which are not safe for work?",
-                                               required=False
-                                               )])
+                                               required=False)
+                            ])
     async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None,
                        embed_buttons: str = None):
         await ctx.defer()
@@ -498,9 +495,6 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
-            '**nsfw** Should users in this server be allowed to embed videos which are not safe for work?:\n'
-            ' - `True`: Allow NSFW videos to be embedded in this server\n'
-            ' - `False`: NSFW videos won\'t be embedded (default)\n\n'
             f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
