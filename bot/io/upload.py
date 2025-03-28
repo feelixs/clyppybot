@@ -10,7 +10,7 @@ import uuid
 MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
 
 
-async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None, remote_path=False):
+async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None, autodelete=False):
     file_id = str(uuid.uuid4())
     if total_size is None:
         # Read the file and get total size
@@ -41,7 +41,7 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
                 'chunked': True,
                 'file': chunk_b64,
                 'filename': os.path.basename(file_path),
-                'remote_path': remote_path
+                'autodelete': autodelete
             }
 
             logger.info(f"Uploading chunk {chunk_number + 1}/{total_chunks} ({len(chunk) / 1024 / 1024:.1f}MB)")
@@ -73,7 +73,7 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
     raise UploadFailed
 
 
-async def upload_video(video_file_path, logger, remote_path=None) -> Dict:
+async def upload_video(video_file_path, logger, autodelete=False) -> Dict:
     """args :remote_path -> the path where the file should be stored. the filename will be pulled from video_file_path"""
     with open(video_file_path, 'rb') as f:
         file_data = f.read()
@@ -87,7 +87,7 @@ async def upload_video(video_file_path, logger, remote_path=None) -> Dict:
             chunk_size=MAX_CLYPPYIO_UPLOAD_SIZE,
             total_size=total_size,
             file_data=file_data,
-            remote_path=remote_path
+            autodelete=autodelete
         )
 
     with open(video_file_path, 'rb') as f:
@@ -97,7 +97,7 @@ async def upload_video(video_file_path, logger, remote_path=None) -> Dict:
         'chunked': False,
         'file': file_data,
         'filename': os.path.basename(video_file_path),
-        'remote_path': remote_path
+        'autodelete': autodelete
     }
 
     async with get_aiohttp_session() as session:

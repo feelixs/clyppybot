@@ -192,7 +192,7 @@ class AutoEmbedder:
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
-                    remote_path=the_file
+                    autodelete=True  # the server will auto delete it after some time
                 )
                 await respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}")
                 return
