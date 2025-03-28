@@ -5,7 +5,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK, CLYPPYBOT_ID
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -35,7 +35,8 @@ class Base(Extension):
 
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
-        if event.message.author.id == CLYPPYBOT_ID:
+        if event.message.author.id == self.bot.user.id:
+            # don't respond to bot's own messages
             return
 
         # check for text commands
