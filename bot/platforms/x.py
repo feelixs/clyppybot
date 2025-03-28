@@ -73,7 +73,7 @@ class Xclip(BaseClip):
             can_send_files=can_send_files,
             cookies=cookies
         )
-        if local_file.can_be_uploaded:
+        if local_file.can_be_discord_uploaded:
             return DownloadResponse(
                 remote_url=None,
                 local_file_path=local_file.local_file_path,
@@ -82,7 +82,7 @@ class Xclip(BaseClip):
                 height=local_file.height,
                 filesize=local_file.filesize,
                 video_name=local_file.video_name,
-                can_be_uploaded=True
+                can_be_discord_uploaded=True
             )
         else:
             self.logger.info(f"({self.id}) hosting on clyppy.io...")

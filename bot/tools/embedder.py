@@ -192,11 +192,7 @@ class AutoEmbedder:
                 self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uplaoded to the server")
                 response = await self.bot.tools.dl.download_clip(
-                    clip=clip,
-                    guild_ctx=guild,
-                    always_download=True,
-                    overwrite_on_server=True,
-                    can_send_files=False
+                    clip=clip, can_send_files=False
                 )
                 await respond_to.reply(f"Success for {clip_link}")
                 return
@@ -208,9 +204,7 @@ class AutoEmbedder:
             # proceed normally
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
-                    clip=clip,
-                    guild_ctx=guild,
-                    can_send_files=will_send_files
+                    clip=clip, can_send_files=will_send_files
                 )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
@@ -225,7 +219,7 @@ class AutoEmbedder:
                     height=info['height'],
                     filesize=info['file_size'],
                     video_name=info['title'],
-                    can_be_uploaded=False
+                    can_be_discord_uploaded=False
                 )
 
         # send embed
@@ -278,7 +272,7 @@ class AutoEmbedder:
                 t = None
 
             thumb_url = None
-            uploading_to_discord = response.can_be_uploaded and has_file_perms
+            uploading_to_discord = response.can_be_discord_uploaded and has_file_perms
             if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError

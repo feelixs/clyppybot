@@ -94,7 +94,7 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             duration=clip.duration,
             local_file_path=file_path,
             video_name=None,
-            can_be_uploaded=is_discord_compatible(size)
+            can_be_discord_uploaded=is_discord_compatible(size)
         )
         #return {
         #    'width': clip.w,
@@ -223,7 +223,7 @@ class BaseClip(ABC):
                     width=format_info['width'],
                     height=format_info['height'],
                     video_name=title,
-                    can_be_uploaded=None
+                    can_be_discord_uploaded=None
                 )
             elif 'formats' in info and info['formats']:
                 # Get best MP4 format
@@ -260,7 +260,7 @@ class BaseClip(ABC):
                         width=format_info['width'],
                         height=format_info['height'],
                         video_name=title,
-                        can_be_uploaded=None
+                        can_be_discord_uploaded=None
                     )
 
             raise ValueError("No suitable URL found in video info")
@@ -284,7 +284,7 @@ class BaseClip(ABC):
                     height=local.height,
                     filesize=local.filesize,
                     video_name=local.video_name,
-                    can_be_uploaded=True
+                    can_be_discord_uploaded=True
                 )
         else:
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
@@ -338,7 +338,7 @@ class BaseClip(ABC):
                     height=local.height,
                     filesize=local.filesize,
                     video_name=local.video_name,
-                    can_be_uploaded=True
+                    can_be_discord_uploaded=True
                 )
 
         if upload_if_large:
@@ -384,7 +384,7 @@ class BaseClip(ABC):
                 d.video_name = extracted.video_name
                 if is_discord_compatible(d.filesize) and can_send_files:
                     self.logger.info(f"{self.id} can be uploaded to discord...")
-                    d.can_be_uploaded = True
+                    d.can_be_discord_uploaded = True
 
                 return d
 
@@ -427,7 +427,7 @@ class BaseClip(ABC):
                 height=local_file_info.height,
                 width=local_file_info.width,
                 video_name=local_file_info.video_name,
-                can_be_uploaded=None
+                can_be_discord_uploaded=None
             )
         else:
             self.logger.error(f"Failed to upload video: {remote_url}")
