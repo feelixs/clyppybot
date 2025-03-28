@@ -4,7 +4,7 @@ from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_inf
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import create_nexus_str, DL_SERVER_ID
-from bot.types import DownloadResponse, GuildType
+from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union
 from bot.io.upload import upload_video
 import traceback
@@ -188,7 +188,7 @@ class AutoEmbedder:
             if file_not_exists:
                 self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
-                response = await self.bot.tools.dl.download_clip(clip, can_send_files=False, skip_upload=True)
+                response: LocalFileInfo = await self.bot.tools.dl.download_clip(clip, can_send_files=False, skip_upload=True)
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
