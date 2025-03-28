@@ -6,6 +6,7 @@ from interactions.api.events import MessageCreate
 from bot.env import create_nexus_str, DL_SERVER_ID
 from bot.types import DownloadResponse, GuildType
 from typing import List, Union
+from bot.io.upload import upload_video
 import traceback
 import asyncio
 import time
@@ -186,13 +187,13 @@ class AutoEmbedder:
             the_file = f'https://cdn.clyppy.com/temp/{clip.service}_{clip.clyppy_id}.mp4'
             cdn_file_not_exists, _ = await is_404(the_file)
             if cdn_file_not_exists:
-                # we're assuming the StoredVideo object exists for this clip, and now we know that
-                # its file_url is pointing to another cdn (we don't have its file in our server to be downloaded)
-                # -> we need to dl the clip and upload, replacing the link of the StoredVideo with our dl
-                self.logger.info("YTDLP is manually downloading this clip to be uplaoded to the server")
-                await respond_to.reply("YTDLP is manually downloading this clip to be uplaoded to the server")
-                response = await self.bot.tools.dl.download_clip(
-                    clip=clip, can_send_files=False
+                self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
+                await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
+                response = await self.bot.tools.dl.download_clip(clip, can_send_files=False)
+                await upload_video(
+                    video_file_path=response.local_file_path,
+                    logger=self.logger,
+                    delete_soon=True
                 )
                 await respond_to.reply(f"Success for {clip_link}")
                 return
@@ -203,9 +204,7 @@ class AutoEmbedder:
         else:
             # proceed normally
             if video_doesnt_exist:
-                response: DownloadResponse = await self.bot.tools.dl.download_clip(
-                    clip=clip, can_send_files=will_send_files
-                )
+                response: DownloadResponse = await self.bot.tools.dl.download_clip(clip, can_send_files=will_send_files)
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 info = await get_clip_info(clip.clyppy_id)
