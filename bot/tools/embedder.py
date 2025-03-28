@@ -193,7 +193,7 @@ class AutoEmbedder:
                     video_file_path=response.local_file_path,
                     logger=self.logger,
                     remote_path=the_file
-                )  # delete this https://clyppy.io/media/clips/youtube_4w6gk3iz.mp4
+                )
                 await respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}")
                 return
             else:
