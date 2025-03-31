@@ -614,7 +614,7 @@ class BaseMisc(ABC):
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
             d = file.duration
 
-        return await author_has_enough_tokens(basemsg, d)
+        return await author_has_enough_tokens(basemsg, d, url)
 
 
 class BaseAutoEmbed:

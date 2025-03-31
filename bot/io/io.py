@@ -78,13 +78,19 @@ async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
                 raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
 
 
-async def subtract_tokens(user, amt):
+async def subtract_tokens(user, amt, clip_url: str):
     url = 'https://clyppy.io/api/tokens/subtract/'
     headers = {
         'X-API-Key': getenv('clyppy_post_key'),
         'Content-Type': 'application/json'
     }
-    j = {'userid': user.id, 'username': user.username, 'amount': amt}
+    j = {
+        'userid': user.id,
+        'username': user.username,
+        'amount': amt,
+        'reason': f'Clyppy Embed',
+        'original_url': clip_url
+    }
     async with get_aiohttp_session() as session:
         async with session.post(url, json=j, headers=headers) as response:
             if response.status == 200:
@@ -98,7 +104,7 @@ async def author_has_premium(user):
     return str(user.id) == '164115540426752001'
 
 
-async def author_has_enough_tokens(msg, video_dur):
+async def author_has_enough_tokens(msg, video_dur, url: str):
     def is_dl_server(guild):
         if guild is None:
             return False
@@ -115,7 +121,11 @@ async def author_has_enough_tokens(msg, video_dur):
         if is_dl_server(msg.guild):
             return True
 
-        sub = await subtract_tokens(user, EMBED_TOKEN_COST)
+        sub = await subtract_tokens(
+            user=user,
+            amt=EMBED_TOKEN_COST,
+            clip_url=url
+        )
         if sub['success']:
             if sub['user_success']:  # the user had enough tokens to subtract successfully
                 return True
