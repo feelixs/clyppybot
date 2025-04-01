@@ -7,7 +7,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
 from bot.env import SUPPORT_SERVER_URL, create_nexus_str
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
-from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by
+from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
@@ -296,6 +296,26 @@ class Base(Extension):
         self.bot.guild_settings.set_embed_enabled(int(guild_id), value)
         return await ctx.send("OK!")
 
+    @slash_command(name="change_tokens", scopes=[759798762171662399], options=[
+        SlashCommandOption(name="user_id", type=OptionType.STRING, required=True),
+        SlashCommandOption(name="value", type=OptionType.INTEGER, required=True),
+        SlashCommandOption(name="add", type=OptionType.BOOLEAN, required=False)
+    ])
+    async def change_tokens(self, ctx, user_id: int, value: int, add=True):
+        try:
+            u = await self.bot.fetch_user(user_id)
+        except Exception as e:
+            await ctx.send(f"Error while fetching user {user_id}: {e}")
+            return
+        
+        if add:
+            value *= -1  # because the api endpoint is for subtraction
+        try:
+            s = await subtract_tokens(u, value, reason='Token Adjustment')
+            await ctx.send(f"The change returned {s}")
+        except Exception as e:
+            await ctx.send(str(e))
+
     @slash_command(name="save", description="Save Clyppy DB", scopes=[759798762171662399])
     async def save(self, ctx: SlashContext):
         await ctx.defer()
@@ -317,8 +337,7 @@ class Base(Extension):
                                                description="The YouTube, Twitch, etc. link to embed",
                                                required=True,
                                                type=OptionType.STRING)
-                            ]
-                   )
+                            ])
     async def embed(self, ctx: SlashContext, url: str):
         # trim off extra characters at start or beginning
         while url.startswith('*') or url.startswith('['):
