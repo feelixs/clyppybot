@@ -307,7 +307,7 @@ class Base(Extension):
         except Exception as e:
             await ctx.send(f"Error while fetching user {user_id}: {e}")
             return
-        
+
         if add:
             value *= -1  # because the api endpoint is for subtraction
         try:
