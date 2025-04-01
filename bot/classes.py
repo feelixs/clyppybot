@@ -600,7 +600,7 @@ class BaseMisc(ABC):
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
         if await author_has_premium(basemsg.author):
-            return True
+            return await author_has_enough_tokens(basemsg, d, url)
 
         try:
             d = await self.get_len(url, cookies)
