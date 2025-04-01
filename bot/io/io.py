@@ -79,6 +79,7 @@ async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
 
 
 async def subtract_tokens(user, amt, clip_url: str):
+    # TODO -> refund tokens if the embed fails
     url = 'https://clyppy.io/api/tokens/subtract/'
     headers = {
         'X-API-Key': getenv('clyppy_post_key'),
@@ -112,11 +113,10 @@ async def author_has_enough_tokens(msg, video_dur, url: str):
             return True
         return False
 
+    user = msg.author
     if video_dur <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
         return True
-    elif video_dur <= EMBED_W_TOKEN_MAX_LEN:  # use the tokens (the video will embed if they're deducted successfully)
-        user = msg.author
-
+    elif video_dur <= EMBED_W_TOKEN_MAX_LEN or author_has_premium(user):  # use the tokens (the video will embed if they're deducted successfully)
         # if we're in dl server, automatically return true without needing any tokens
         if is_dl_server(msg.guild):
             return True
