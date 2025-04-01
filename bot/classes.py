@@ -599,9 +599,6 @@ class BaseMisc(ABC):
         return False
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
-        if await author_has_premium(basemsg.author):
-            return True
-
         try:
             d = await self.get_len(url, cookies)
         except NoDuration:
