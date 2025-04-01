@@ -116,7 +116,7 @@ async def author_has_enough_tokens(msg, video_dur, url: str):
     user = msg.author
     if video_dur <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
         return True
-    elif video_dur <= EMBED_W_TOKEN_MAX_LEN or author_has_premium(user):  # use the tokens (the video will embed if they're deducted successfully)
+    elif video_dur <= EMBED_W_TOKEN_MAX_LEN or await author_has_premium(user):  # use the tokens (the video will embed if they're deducted successfully)
         # if we're in dl server, automatically return true without needing any tokens
         if is_dl_server(msg.guild):
             return True
