@@ -13,7 +13,10 @@ class DownloadManager:
         self._semaphore = asyncio.Semaphore(int(max_concurrent))
 
     async def download_clip(self, clip: BaseClip, can_send_files=False, skip_upload=False) -> Union[DownloadResponse, LocalFileInfo]:
-        desired_filename = f'{clip.service}_{clip.clyppy_id}.mp4' if clip.service != 'base' else f'{clip.clyppy_id}.mp4'
+        desired_filename = f'{clip.service}_{clip.clyppy_id}' if clip.service != 'base' else f'{clip.clyppy_id}'
+        if len(desired_filename) > 200:
+            desired_filename = desired_filename[:200]
+        desired_filename += ".mp4"
         async with self._semaphore:
             if not isinstance(clip, BaseClip):
                 raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")
