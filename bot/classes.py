@@ -80,12 +80,8 @@ async def send_webhook(logger, content: Optional[str] = None, title: Optional[st
             return None
 
 
-import logging # Add this import at the top if not already present
-
-# ... other code ...
-
 def get_video_details(file_path) -> 'LocalFileInfo':
-    clip = None # Initialize clip to None
+    clip = None
     try:
         # Try initializing without audio processing first
         clip = VideoFileClip(file_path, audio=False)
