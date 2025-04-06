@@ -170,6 +170,14 @@ class BaseClip(ABC):
         Helper method to extract URL, duration, file size and dimension information using yt-dlp.
         Runs in thread pool to avoid blocking the event loop.
         """
+        # Add options to prevent ffmpeg extraction issues
+        ydl_opts.update({
+            'skip_download': True,  # Explicit skip download
+            'postprocessors': [],   # No post-processing
+            'extract_flat': True,   # Only extract metadata
+            'youtube_include_dash_manifest': False  # Skip DASH manifest parsing which can trigger ffmpeg
+        })
+        
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(self.url, download=False)
             if not info:
