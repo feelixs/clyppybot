@@ -446,7 +446,6 @@ class BaseClip(ABC):
             FileNotFoundError: If the video file doesn't exist
             Exception: If there's an error processing the video
         """
-        clip = None # Initialize clip to None
         try:
             if not os.path.exists(video_path):
                 raise FileNotFoundError(f"Video file not found: {video_path}")
@@ -473,9 +472,7 @@ class BaseClip(ABC):
                 self.logger.info(f"Successfully created webp thumbnail: {output_path}")
                 return output_path
             finally:
-                # Ensure the clip is closed to free resources if it was created
-                if clip is not None:
-                    clip.close()
+                clip.close()
 
         except Exception as e:
             self.logger.error(f"Error creating webp thumbnail for {video_path}: {str(e)}")
