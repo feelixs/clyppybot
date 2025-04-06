@@ -80,9 +80,15 @@ async def send_webhook(logger, content: Optional[str] = None, title: Optional[st
             return None
 
 
+import logging # Add this import at the top if not already present
+
+# ... other code ...
+
 def get_video_details(file_path) -> 'LocalFileInfo':
+    clip = None # Initialize clip to None
     try:
-        clip = VideoFileClip(file_path)
+        # Try initializing without audio processing first
+        clip = VideoFileClip(file_path, audio=False)
         try:
             size = os.path.getsize(file_path)
         except OSError:
@@ -96,18 +102,13 @@ def get_video_details(file_path) -> 'LocalFileInfo':
             video_name=None,
             can_be_discord_uploaded=is_discord_compatible(size)
         )
-        #return {
-        #    'width': clip.w,
-        #    'height': clip.h,
-        #    'url': url,
-        #    'filesize': os.path.getsize(file_path),
-        #    'duration': clip.duration
-        #}
     except Exception as e:
+        # Log the specific error before re-raising
+        logging.getLogger(__name__).error(f"Error getting video details for {file_path}: {e}")
         raise
     finally:
-        # Make sure we close the clip to free resources
-        if 'clip' in locals():
+        # Make sure we close the clip to free resources if it was created
+        if clip is not None:
             clip.close()
 
 
