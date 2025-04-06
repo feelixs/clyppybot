@@ -106,4 +106,6 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise InvalidFileType
     elif 'label empty or too long' in err:
         raise UrlUnparsable
+    elif 'Error passing `ffmpeg -i` command output:' in err or 'At least one output file must be specified' in err:
+        raise InvalidFileType
     raise
