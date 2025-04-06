@@ -226,12 +226,12 @@ class BaseClip(ABC):
                     
                     if video_formats:
                         # Sort by quality - prefer higher resolution and filesize
-                        best_format = max(video_formats, 
-                            key=lambda f: (
-                                f.get('width', 0),
-                                f.get('height', 0), 
-                                f.get('filesize', 0)
-                            ))
+                        best_format = max(video_formats,
+                                          key=lambda f: (
+                                              f.get('width', 0),
+                                              f.get('height', 0),
+                                              f.get('filesize', 0)
+                                          ))
                         
                         format_info = extract_format_info(best_format)
                         self.logger.info(f"Selected format: {best_format.get('format_id')}")
