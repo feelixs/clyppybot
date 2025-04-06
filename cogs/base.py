@@ -617,7 +617,7 @@ class Base(Extension):
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
-        
+
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
