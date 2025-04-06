@@ -221,8 +221,7 @@ class BaseClip(ABC):
                 # Fall back to formats list if direct URL not available
                 if 'formats' in info and info['formats']:
                     # Get all video formats (not just mp4)
-                    video_formats = [f for f in info['formats'] 
-                                   if f.get('vcodec') != 'none' and f.get('url')]
+                    video_formats = [f for f in info['formats'] if f.get('vcodec') != 'none' and f.get('url')]
                     
                     if video_formats:
                         # Sort by quality - prefer higher resolution and filesize
