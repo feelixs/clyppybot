@@ -441,26 +441,27 @@ class BaseClip(ABC):
         
         Returns:
             Path to the generated webp file
-        
+
         Raises:
             FileNotFoundError: If the video file doesn't exist
             Exception: If there's an error processing the video
         """
+        clip = None # Initialize clip to None
         try:
             if not os.path.exists(video_path):
                 raise FileNotFoundError(f"Video file not found: {video_path}")
-                
+
             if output_path is None:
                 # Replace .mp4 extension with .webp
                 base_path = os.path.splitext(video_path)[0]
                 output_path = f"{base_path}.webp"
             
-            # Use MoviePy to get the first frame
+            # Use MoviePy to get the first frame, disable audio processing and set target resolution
             self.logger.info(f"Extracting first frame from {video_path}")
-            clip = VideoFileClip(video_path)
-            
+            clip = VideoFileClip(video_path, audio=False, target_resolution=(None, 1080))
+
             try:
-                # Get the first frame at t=0
+                # Get the first frame at t=0 (or slightly after to avoid potential issues with t=0)
                 frame = clip.get_frame(0)
                 
                 # Convert the numpy array to a PIL Image
@@ -472,11 +473,12 @@ class BaseClip(ABC):
                 self.logger.info(f"Successfully created webp thumbnail: {output_path}")
                 return output_path
             finally:
-                # Ensure the clip is closed to free resources
-                clip.close()
-                
+                # Ensure the clip is closed to free resources if it was created
+                if clip is not None:
+                    clip.close()
+
         except Exception as e:
-            self.logger.error(f"Error creating webp thumbnail: {str(e)}")
+            self.logger.error(f"Error creating webp thumbnail for {video_path}: {str(e)}")
             raise
     
     @staticmethod
