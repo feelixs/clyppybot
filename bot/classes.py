@@ -175,100 +175,85 @@ class BaseClip(ABC):
             'skip_download': True,  # Explicit skip download
             'postprocessors': [],   # No post-processing
             'extract_flat': True,   # Only extract metadata
-            'youtube_include_dash_manifest': False  # Skip DASH manifest parsing which can trigger ffmpeg
+            'youtube_include_dash_manifest': False,  # Skip DASH manifest parsing
+            'ignoreerrors': True    # Continue on errors
         })
         
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(self.url, download=False)
-            if not info:
-                raise ValueError("Could not extract video information")
+            try:
+                info = ydl.extract_info(self.url, download=False)
+                if not info:
+                    raise ValueError("Could not extract video information")
 
-            # Get duration
-            duration = info.get('duration', 0)
+                # Get duration with fallback
+                duration = info.get('duration', 0)
+                if duration <= 0:
+                    self.logger.warning(f"Got invalid duration {duration} for {self.url}")
 
-            def extract_format_info(fmt, h=None, w=None):
-                """Helper to extract format details"""
-                a = {
-                    'url': fmt.get('url'),
-                    'width': fmt.get('width', 0),
-                    'height': fmt.get('height', 0),
-                }
-                if h is not None:
-                    a['height'] = h
-                if w is not None:
-                    a['width'] = w
-                return a
+                def extract_format_info(fmt, h=None, w=None):
+                    """Helper to extract format details with safe defaults"""
+                    return {
+                        'url': fmt.get('url', ''),
+                        'width': fmt.get('width', w or 1280),
+                        'height': fmt.get('height', h or 720),
+                    }
 
-            # Get direct URL and format info
-            if 'url' in info:
-                # Direct URL available in info
-                if "production.assets.clips.twitchcdn.net" in info['url']:
-                    # if its a twitch or kick clip, we can use a default height/width (kick class already handles this)
-                    self.logger.info("Using default dimensions of 1280x720 for twitch clip")
-                    format_info = extract_format_info(fmt=info, h=720, w=1280)
-                else:
-                    format_info = extract_format_info(info)
-                if not format_info['width']:
-                    self.logger.info("Width was 0, using default")
-                    format_info['width'] = 1280
-                    format_info['height'] = 720
-
-                if info.get('title') is not None:
-                    title = info['title']
-                    self.title = title
-                else:
-                    title = None
-
-                self.logger.info(f"Found [best] direct URL")
-                return DownloadResponse(
-                    remote_url=format_info['url'],
-                    local_file_path=None,
-                    duration=duration,
-                    filesize=info.get('filesize', 0),
-                    width=format_info['width'],
-                    height=format_info['height'],
-                    video_name=title,
-                    can_be_discord_uploaded=None
-                )
-            elif 'formats' in info and info['formats']:
-                # Get best MP4 format
-                mp4_formats = [f for f in info['formats'] if f.get('ext') == 'mp4']
-                if mp4_formats:
-                    # Sort by quality with safe default values
-                    def get_sort_key(fmt):
-                        # Use 0 as default for both filesize and tbr
-                        filesize = fmt.get('filesize', 0) or 0
-                        tbr = fmt.get('tbr', 0) or 0
-                        return filesize or tbr  # Return filesize if present, otherwise tbr
-
-                    best_format = sorted(
-                        mp4_formats,
-                        key=get_sort_key,
-                        reverse=True
-                    )[0]
-                    format_info = extract_format_info(best_format)
-                    self.logger.info(f"Found direct URL: {format_info['url']}")
-                    if info.get('title') is not None:
-                        title = info['title']
-                        self.title = title
+                # Try to get direct URL first
+                if 'url' in info and info['url']:
+                    # Handle special cases for known platforms
+                    if "production.assets.clips.twitchcdn.net" in info['url']:
+                        self.logger.info("Using default dimensions for Twitch clip")
+                        format_info = extract_format_info(info, h=720, w=1280)
                     else:
-                        title = None
-                    if not format_info['width']:
-                        self.logger.info("in 'get best mp4 format' the width was 0, so we're gonna use the default 1280x720")
-                        format_info['height'] = 720
-                        format_info['width'] = 1280
+                        format_info = extract_format_info(info)
+
                     return DownloadResponse(
                         remote_url=format_info['url'],
                         local_file_path=None,
                         duration=duration,
-                        filesize=best_format.get('filesize', 0),
+                        filesize=info.get('filesize', 0),
                         width=format_info['width'],
                         height=format_info['height'],
-                        video_name=title,
+                        video_name=info.get('title'),
                         can_be_discord_uploaded=None
                     )
 
-            raise ValueError("No suitable URL found in video info")
+                # Fall back to formats list if direct URL not available
+                if 'formats' in info and info['formats']:
+                    # Get all video formats (not just mp4)
+                    video_formats = [f for f in info['formats'] 
+                                   if f.get('vcodec') != 'none' and f.get('url')]
+                    
+                    if video_formats:
+                        # Sort by quality - prefer higher resolution and filesize
+                        best_format = max(video_formats, 
+                            key=lambda f: (
+                                f.get('width', 0),
+                                f.get('height', 0), 
+                                f.get('filesize', 0)
+                            ))
+                        
+                        format_info = extract_format_info(best_format)
+                        self.logger.info(f"Selected format: {best_format.get('format_id')}")
+
+                        return DownloadResponse(
+                            remote_url=format_info['url'],
+                            local_file_path=None,
+                            duration=duration,
+                            filesize=best_format.get('filesize', 0),
+                            width=format_info['width'],
+                            height=format_info['height'],
+                            video_name=info.get('title'),
+                            can_be_discord_uploaded=None
+                        )
+
+                # If we get here, no suitable format was found
+                self.logger.error(f"No suitable format found in info: {info.keys()}")
+                raise ValueError("No playable formats found")
+
+            except Exception as e:
+                self.logger.error(f"Error extracting info for {self.url}: {str(e)}")
+                raise
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         resp = await self._fetch_external_url(dlp_format, cookies)
