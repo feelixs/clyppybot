@@ -724,6 +724,7 @@ class BaseAutoEmbed:
                         f"** - [InfinityBots]({INFINITY_VOTE_LINK})**\n"
                         f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
                         # f"** - [BotList.me]({BOTLISTME_VOTE_LINK})**"
+                        f"\n\nYou can also purchase VIP tokens directly from the [Clyppy store](https://clyppy.io/profile/tokens/)\n\n"
                         f"{create_nexus_str()}"
         ))
         await send_webhook(
