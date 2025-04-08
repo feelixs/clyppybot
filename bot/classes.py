@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions
+from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
@@ -698,9 +698,10 @@ class BaseAutoEmbed:
             pre = '.'
 
         tokens = await self.bot.base_embedder.fetch_tokens(ctx.user)
-        await ctx.send(f"You have `{tokens}` VIP tokens!\n"
-                       f"You can gain more by **voting** with `{pre}vote`\n\n"
-                       f"Use your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)")
+        await ctx.send(
+            content=f"You have `{tokens}` VIP tokens!\nYou can gain more by **voting** with `{pre}vote`\n\nUse your VIP tokens to embed longer videos with Clyppy (up to {EMBED_W_TOKEN_MAX_LEN // 60} minutes!)",
+            components=[Button(style=ButtonStyle.LINK, label="View VIP Token History", url="https://clyppy.io/profile/tokens/history/")]
+        )
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - {pre}tokens called',
             load=f"response - {tokens} tokens",
