@@ -43,6 +43,7 @@ class NoDuration(Exception):
 
 
 class DefinitelyNoDuration(Exception):
+    # we know for a fact that it's not a video - and won't download it to manually check
     pass
 
 
