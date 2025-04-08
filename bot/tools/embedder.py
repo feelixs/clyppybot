@@ -180,8 +180,9 @@ class AutoEmbedder:
             )
         except Exception as e:
             # this is where we refund the tokens
+            self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.user.username} <{respond_to.user.id}>")
             raise e
-        
+
     async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
