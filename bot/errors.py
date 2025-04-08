@@ -99,14 +99,14 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise DefinitelyNoDuration
     elif 'HTTP Error 404: Not Found' in err:
         raise VideoSaidUnavailable
-    elif 'Your IP address is blocked from accessing this post' in err:
-        raise IPBlockedError
-    elif 'You don\'t have permission' in err or "unable to view this" in err:
-        raise NoPermsToView
     elif 'This clip is no longer available' in err:
         raise VideoSaidUnavailable
     elif 'Video unavailable' in err:
         raise VideoSaidUnavailable
+    elif 'Your IP address is blocked from accessing this post' in err:
+        raise IPBlockedError
+    elif 'You don\'t have permission' in err or "unable to view this" in err:
+        raise NoPermsToView
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:
         raise UnsupportedError
     elif 'Unable to download webpage: HTTP Error 403: Forbidden' in err:
