@@ -103,6 +103,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise IPBlockedError
     elif 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
+    elif 'This clip is no longer available' in err:
+        raise VideoSaidUnavailable
     elif 'Video unavailable' in err:
         raise VideoSaidUnavailable
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:
