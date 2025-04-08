@@ -565,7 +565,7 @@ class BaseMisc(ABC):
                                 return get_video_details(download_info['_filename'])
 
                         # If we can't find the file path, log the info structure
-                        self.logger.error(f"Could not find filepath in info: {info.keys()}")
+                        self.logger.info(f"Could not find filepath in info: {info.keys()}")
                         raise NoDuration
                     else:
                         return info.get('duration', 0)
