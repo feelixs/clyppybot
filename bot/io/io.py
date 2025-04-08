@@ -81,7 +81,6 @@ async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
 
 
 async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None):
-    # TODO -> refund tokens if the embed fails
     if reason is None:
         reason = 'Clyppy Embed'
 

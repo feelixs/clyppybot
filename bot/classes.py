@@ -600,6 +600,7 @@ class BaseMisc(ABC):
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
             d = file.duration
 
+        # TODO -> refund tokens if the embed fails
         can_embed, tokens_used = await author_has_enough_tokens(basemsg, d, url)
         return can_embed
 
