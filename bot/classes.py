@@ -587,7 +587,11 @@ class BaseMisc(ABC):
         return False
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
-        d = await self.get_len(url, cookies)
+        try:
+            d = await self.get_len(url, cookies)
+        except NoDuration:
+            d = None
+
         if d is None or d == 0:
             # yt-dlp unable to fetch duration directly, need to download the file to verify manually
             self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
