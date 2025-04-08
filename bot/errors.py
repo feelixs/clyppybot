@@ -14,6 +14,12 @@ class InvalidClipType(Exception):
 
 
 class VideoTooLong(Exception):
+    """Raised when a video is longer than max allowed length when not using VIP tokens"""
+    pass
+
+
+class VideoLongerThanMaxLength(Exception):
+    """Raised when even using VIP tokens, a video is longer than the complete max length"""
     pass
 
 
@@ -38,12 +44,12 @@ class VideoSaidUnavailable(Exception):
 
 
 class NoDuration(Exception):
-    # possibly no duration
+    """Raised when the url might not be a video, but we don't know for sure"""
     pass
 
 
 class DefinitelyNoDuration(Exception):
-    # we know for a fact that it's not a video - and won't download it to manually check
+    """Raised when we know for a fact that it's not a video - and won't download it to manually check"""
     pass
 
 
