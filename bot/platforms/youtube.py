@@ -34,7 +34,7 @@ class YtMisc(BaseMisc):
             raise InvalidClipType
         if "&list=" in url:
             url = url.split("&list=")[0]
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

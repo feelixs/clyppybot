@@ -43,7 +43,7 @@ class XvidMisc(BaseMisc):
         second = self.get_vid_id(url)
         title = self.get_title(url)
 
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

@@ -69,7 +69,7 @@ class TikTokMisc(BaseMisc):
                 raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

@@ -23,7 +23,7 @@ class YoupoMisc(BaseMisc):
             self.logger.info(f"Invalid URL: {url}")
             raise NoDuration
 
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

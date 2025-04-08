@@ -586,7 +586,7 @@ class BaseMisc(ABC):
             return True
         return False
 
-    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> bool:
+    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> tuple[bool, int]:
         try:
             d = await self.get_len(url, cookies)
         except NoDuration:
@@ -601,8 +601,7 @@ class BaseMisc(ABC):
             d = file.duration
 
         # TODO -> refund tokens if the embed fails
-        can_embed, tokens_used = await author_has_enough_tokens(basemsg, d, url)
-        return can_embed
+        return await author_has_enough_tokens(basemsg, d, url)
 
 
 class BaseAutoEmbed:

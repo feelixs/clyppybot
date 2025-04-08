@@ -41,7 +41,7 @@ class DailymotionMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length (you might want to adjust this for Dailymotion's limits)
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

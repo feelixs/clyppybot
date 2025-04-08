@@ -31,7 +31,7 @@ class DiscordMisc(BaseMisc):
             self.logger.info(f"Invalid Discord URL: {url}")
             raise NoDuration
 
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             # todo check if file is video file
             url=url,
             basemsg=basemsg,

@@ -143,7 +143,7 @@ class RedditMisc(BaseMisc):
             except:
                 raise NoDuration
 
-        valid = await self.is_shortform(url, basemsg)
+        valid, tokens_used = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong

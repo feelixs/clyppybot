@@ -31,6 +31,7 @@ class MedalMisc(BaseMisc):
         return None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'MedalClip':
+        # todo run is_shortform here
         slug = self.parse_clip_url(url)
         return MedalClip(slug, self.cdn_client)
 

@@ -24,7 +24,7 @@ class BlueSkyMisc(BaseMisc):
         slug = self.parse_clip_url(url)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies

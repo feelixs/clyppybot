@@ -36,7 +36,7 @@ class ClyppyioMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length
-        valid = await self.is_shortform(
+        valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             info=clip_info
