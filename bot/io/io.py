@@ -1,6 +1,6 @@
-from interactions import Message
-from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOKEN_COST, DL_SERVER_ID
+from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH, EMBED_TOKEN_COST, DL_SERVER_ID
 from typing import Tuple
+from math import ceil
 from os import getenv
 import aiohttp
 
@@ -119,14 +119,16 @@ async def author_has_enough_tokens(msg, video_dur, url: str):
     user = msg.author
     if video_dur <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
         return True
-    elif video_dur <= EMBED_W_TOKEN_MAX_LEN or await author_has_premium(user):  # use the tokens (the video will embed if they're deducted successfully)
-        # if we're in dl server, automatically return true without needing any tokens
+    elif video_dur < EMBED_TOTAL_MAX_LENGTH:
+        # if we're in dl server, automatically return true without needing any tokens (only for videos under 30min)
         if is_dl_server(msg.guild):
-            return True
+            return video_dur <= EMBED_W_TOKEN_MAX_LEN
+
+        cost = EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
 
         sub = await subtract_tokens(
             user=user,
-            amt=EMBED_TOKEN_COST,
+            amt=cost,
             clip_url=url
         )
         if sub['success']:
