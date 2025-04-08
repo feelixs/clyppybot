@@ -29,24 +29,24 @@ class InstagramMisc(BaseMisc):
             self.logger.info(f"Invalid Instagram URL: {url}")
             raise NoDuration
 
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return InstagramClip(shortcode, self.cdn_client, tokens_used)
+        return InstagramClip(shortcode, self.cdn_client, tokens_used, duration)
 
 
 class InstagramClip(BaseClip):
-    def __init__(self, shortcode, cdn_client, tokens_used: int):
+    def __init__(self, shortcode, cdn_client, tokens_used: int, duration: int):
         self._service = "instagram"
         self._shortcode = shortcode
-        super().__init__(shortcode, cdn_client, tokens_used)
+        super().__init__(shortcode, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

@@ -41,24 +41,24 @@ class GoogleDriveMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return GoogleDriveClip(file_id, self.cdn_client, tokens_used)
+        return GoogleDriveClip(file_id, self.cdn_client, tokens_used, duration)
 
 
 class GoogleDriveClip(BaseClip):
-    def __init__(self, file_id, cdn_client, tokens_used: int):
+    def __init__(self, file_id, cdn_client, tokens_used: int, duration: int):
         self._service = "drive"
         self._file_id = file_id
-        super().__init__(file_id, cdn_client, tokens_used)
+        super().__init__(file_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

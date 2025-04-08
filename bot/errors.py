@@ -15,12 +15,16 @@ class InvalidClipType(Exception):
 
 class VideoTooLong(Exception):
     """Raised when a video is longer than max allowed length when not using VIP tokens"""
-    pass
+    def __init__(self, video_dur):
+        self.video_dur = video_dur
+        super().__init__(f"Video duration ({video_dur} seconds) exceeds maximum allowed length")
 
 
 class VideoLongerThanMaxLength(Exception):
     """Raised when even using VIP tokens, a video is longer than the complete max length"""
-    pass
+    def __init__(self, video_dur):
+        self.video_dur = video_dur
+        super().__init__(f"Video duration ({video_dur} seconds) exceeds maximum allowed length")
 
 
 class YtDlpForbiddenError(Exception):

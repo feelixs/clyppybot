@@ -33,28 +33,28 @@ class Xmisc(BaseMisc):
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
         # Extract user from URL
         user_match = re.search(r'(?:(?:fx)?twitter\.com|(?:fixup)?x\.com)/(\w+)/status/', url)
         user = user_match.group(1) if user_match else None
 
-        return Xclip(slug, user, self.cdn_client, tokens_used)
+        return Xclip(slug, user, self.cdn_client, tokens_used, duration)
 
 
 class Xclip(BaseClip):
-    def __init__(self, slug, user, cdn_client, tokens_used: int):
+    def __init__(self, slug, user, cdn_client, tokens_used: int, duration: int):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
-        super().__init__(slug, cdn_client, tokens_used)
+        super().__init__(slug, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

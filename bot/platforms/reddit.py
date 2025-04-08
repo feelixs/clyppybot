@@ -143,22 +143,22 @@ class RedditMisc(BaseMisc):
             except:
                 raise NoDuration
 
-        valid, tokens_used = await self.is_shortform(url, basemsg)
+        valid, tokens_used, duration = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return RedditClip(slug, ext_info, self.bot, tokens_used)
+        return RedditClip(slug, ext_info, self.bot, tokens_used, duration)
 
 
 class RedditClip(BaseClip):
-    def __init__(self, slug, ext, bot, tokens_used: int):
+    def __init__(self, slug, ext, bot, tokens_used: int, duration: int):
         self._service = "reddit"
         self._url = f"https://redd.it/{slug}"
         self.external_link = ext
         self.bot = bot
-        super().__init__(slug, bot.cdn_client, tokens_used)
+        super().__init__(slug, bot.cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

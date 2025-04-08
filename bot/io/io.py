@@ -112,11 +112,11 @@ async def author_has_premium(user):
 def get_token_cost(video_dur):
     """Raises VideoLongerThanMaxLength if video is too long"""
     if video_dur >= EMBED_TOTAL_MAX_LENGTH:
-        raise VideoLongerThanMaxLength
+        raise VideoLongerThanMaxLength(video_dur)
     return EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
 
 
-async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int]:
+async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int, int]:
     """Returns: bool->can embed video, int->number of tokens used"""
     def is_dl_server(guild):
         if guild is None:
@@ -127,11 +127,11 @@ async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int]
 
     user = msg.author
     if video_dur <= MAX_VIDEO_LEN_SEC:  # no tokens need to be used
-        return True, 0
+        return True, 0, video_dur
     elif video_dur < EMBED_TOTAL_MAX_LENGTH:
         # if we're in dl server, automatically return true without needing any tokens (only for videos under 30min)
         if is_dl_server(msg.guild):
-            return video_dur <= EMBED_W_TOKEN_MAX_LEN, 0
+            return video_dur <= EMBED_W_TOKEN_MAX_LEN, 0, video_dur
 
         cost = get_token_cost(video_dur)
         sub = await subtract_tokens(
@@ -141,6 +141,6 @@ async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int]
         )
         if sub['success']:
             if sub['user_success']:  # the user had enough tokens to subtract successfully
-                return True, cost
+                return True, cost, video_dur
 
-    return False, 0
+    return False, 0, video_dur

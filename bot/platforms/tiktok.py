@@ -69,25 +69,25 @@ class TikTokMisc(BaseMisc):
                 raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return TikTokClip(video_id, user, self.cdn_client, tokens_used)
+        return TikTokClip(video_id, user, self.cdn_client, tokens_used, duration)
 
 
 class TikTokClip(BaseClip):
-    def __init__(self, video_id, user, cdn_client, tokens_used: int):
+    def __init__(self, video_id, user, cdn_client, tokens_used: int, duration: int):
         self._service = "tiktok"
         self._user = user
         self._video_id = video_id
-        super().__init__(video_id, cdn_client, tokens_used)
+        super().__init__(video_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

@@ -23,24 +23,24 @@ class YoupoMisc(BaseMisc):
             self.logger.info(f"Invalid URL: {url}")
             raise NoDuration
 
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return YoupoClip(shortcode, self.cdn_client, tokens_used)
+        return YoupoClip(shortcode, self.cdn_client, tokens_used, duration)
 
 
 class YoupoClip(BaseClip):
-    def __init__(self, shortcode, cdn_client, tokens_used: int):
+    def __init__(self, shortcode, cdn_client, tokens_used: int, duration: int):
         self._service = "youporn"
         self._id = shortcode
-        super().__init__(shortcode, cdn_client, tokens_used)
+        super().__init__(shortcode, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

@@ -41,24 +41,24 @@ class DailymotionMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length (you might want to adjust this for Dailymotion's limits)
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return DailymotionClip(video_id, self.cdn_client, tokens_used)
+        return DailymotionClip(video_id, self.cdn_client, tokens_used, duration)
 
 
 class DailymotionClip(BaseClip):
-    def __init__(self, video_id, cdn_client, tokens_used: int):
+    def __init__(self, video_id, cdn_client, tokens_used: int, duration: int):
         self._service = "dailymotion"
         self._video_id = video_id
-        super().__init__(video_id, cdn_client, tokens_used)
+        super().__init__(video_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

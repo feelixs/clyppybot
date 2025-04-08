@@ -43,21 +43,21 @@ class XvidMisc(BaseMisc):
         second = self.get_vid_id(url)
         title = self.get_title(url)
 
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return XvidClip(first, second, title, self.cdn_client, tokens_used)
+        return XvidClip(first, second, title, self.cdn_client, tokens_used, duration)
 
 
 class XvidClip(BaseClip):
-    def __init__(self, first, second=None, title=None, cdn_client=None, tokens_used: int = 0):
+    def __init__(self, first, second=None, title=None, cdn_client=None, tokens_used: int = 0, duration: int = 0):
         self._service = "xvideos"
         self._first = first
         self._second = second
@@ -65,7 +65,7 @@ class XvidClip(BaseClip):
 
         # For internal ID tracking
         self._id = first if second is None or second == "0" else f"{first}/{second}"
-        super().__init__(self._id, cdn_client, tokens_used)
+        super().__init__(self._id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

@@ -16,16 +16,16 @@ class BASIC_MISC(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
         cookies = any(domain in url for domain in COOKIES_PLATFORMS)
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
-        return BASIC_CLIP(url, self.cdn_client, tokens_used)
+        return BASIC_CLIP(url, self.cdn_client, tokens_used, duration)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
         if 'http' not in url:
@@ -45,10 +45,10 @@ class BASIC_MISC(BaseMisc):
 
 
 class BASIC_CLIP(BaseClip):
-    def __init__(self, url: str, cdn_client, tokens_used: int):
+    def __init__(self, url: str, cdn_client, tokens_used: int, duration: int):
         self._service = 'base'
         self._url = url
-        super().__init__(url, cdn_client, tokens_used)
+        super().__init__(url, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

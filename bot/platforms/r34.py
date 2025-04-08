@@ -21,24 +21,24 @@ class R34Misc(BaseMisc):
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid, tokens_used = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return R34clip(slug, self.cdn_client, tokens_used)
+        return R34clip(slug, self.cdn_client, tokens_used, duration)
 
 
 class R34clip(BaseClip):
-    def __init__(self, slug, cdn_client, tokens_used: int):
+    def __init__(self, slug, cdn_client, tokens_used: int, duration: int):
         self._service = "rule34"
         self._url = f"https://rule34video.co/watch/{slug}/"
-        super().__init__(slug, cdn_client, tokens_used)
+        super().__init__(slug, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
