@@ -969,7 +969,8 @@ class BaseAutoEmbed:
         except NoPermsToView:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
             success, response = False, "No permissions"
-        except (VideoTooLong, VideoLongerThanMaxLength):
+        except (VideoTooLong, VideoLongerThanMaxLength) as e:
+            dur = e.video_dur
             if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:  # the user has tokens available, but the embed still reported too long
                 await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"You can embed longer videos with Clyppy VIP Tokens: {EMBED_TOKEN_COST} token grants {MAX_VIDEO_LEN_SEC / 60} minutes of video time (maximum {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total)")
