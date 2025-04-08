@@ -90,7 +90,7 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
     if 'Duration: N/A, bitrate: N/A' in err:
         raise NoDuration
     elif 'No video could be found in this tweet' in err:
-        return DefinitelyNoDuration
+        raise DefinitelyNoDuration
     elif 'HTTP Error 404: Not Found' in err:
         raise VideoSaidUnavailable
     elif 'Your IP address is blocked from accessing this post' in err:
