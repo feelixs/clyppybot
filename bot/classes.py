@@ -601,6 +601,7 @@ class BaseMisc(ABC):
             d = file.duration
 
         # TODO -> refund tokens if the embed fails
+        # you can do this by maybe passing the tokens_used from get_clip into the Clip() init?
         return await author_has_enough_tokens(basemsg, d, url)
 
 
