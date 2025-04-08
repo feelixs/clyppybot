@@ -10,7 +10,7 @@ from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
-from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
+from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_TOTAL_MAX_LENGTH,
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK, YT_DLP_MAX_FILESIZE)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, IPBlockedError, VideoUnavailable, \
@@ -968,9 +968,9 @@ class BaseAutoEmbed:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
             success, response = False, "No permissions"
         except VideoTooLong:
-            if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:
+            if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:  # the user has tokens available, but the embed still reported too long
                 await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"It's also longer than {EMBED_W_TOKEN_MAX_LEN // 60} minutes, so using your VIP tokens wouldn't work either...")
+                               f"You can embed longer videos with Clyppy VIP Tokens: {EMBED_TOKEN_COST} token grants {MAX_VIDEO_LEN_SEC / 60} minutes of video time (maximum {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total)")
             else:
                 await ctx.send(f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"Voting with `/vote` will increase it to {EMBED_W_TOKEN_MAX_LEN // 60} minutes! {create_nexus_str()}")
