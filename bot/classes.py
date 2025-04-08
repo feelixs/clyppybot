@@ -931,7 +931,7 @@ class BaseAutoEmbed:
                 # for logging response times - it hasn't been set up for slash commands yet
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
-            await self.embedder._process_this_clip_link(
+            await self.embedder.process_clip_link(
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
