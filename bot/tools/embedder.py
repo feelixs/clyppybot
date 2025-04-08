@@ -1,5 +1,5 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
-from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError
+from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, DefinitelyNoDuration
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
@@ -143,7 +143,7 @@ class AutoEmbedder:
             )
         except VideoTooLong:
             self.logger.info(f"VideoTooLong was reported for {clip_link}")
-        except NoDuration:
+        except (NoDuration, DefinitelyNoDuration):
             self.logger.info(f"NoDuration was reported for {clip_link}")
         except ClipFailure:
             self.logger.info(f"ClipFailure was reported for {clip_link}")
