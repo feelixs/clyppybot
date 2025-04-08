@@ -566,7 +566,7 @@ class BaseMisc(ABC):
 
                         # If we can't find the file path, log the info structure
                         self.logger.error(f"Could not find filepath in info: {info.keys()}")
-                        raise NoDuration
+                        raise DefinitelyNoDuration
                     else:
                         return info.get('duration', 0)
 
