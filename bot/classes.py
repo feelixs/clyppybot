@@ -14,7 +14,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK, YT_DLP_MAX_FILESIZE)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, IPBlockedError, \
-    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, handle_yt_dlp_err
+    InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration, handle_yt_dlp_err
 from PIL import Image
 import hashlib
 import aiohttp
@@ -527,7 +527,7 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
-    async def get_len(self, url: str, cookies=False, download=False) -> Union[float, LocalFileInfo]:
+    async def get_len(self, url: str, cookies=False, download=False) -> Optional[Union[float, LocalFileInfo]]:
         """
             Uses yt-dlp to check video length of the provided url
         """
@@ -547,7 +547,7 @@ class BaseMisc(ABC):
 
         try:
             # Run yt-dlp in an executor to avoid blocking
-            def get_duration():
+            def get_duration() -> Optional[Union[float, LocalFileInfo]]:
                 with YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=download)
                     if download:
@@ -590,6 +590,7 @@ class BaseMisc(ABC):
         try:
             d = await self.get_len(url, cookies)
         except NoDuration:
+            # DefinitelyNoDuration will raise out of this - won't manually check
             d = None
 
         if d is None or d == 0:
@@ -952,7 +953,7 @@ class BaseAutoEmbed:
         except UnsupportedError:
             await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
             success, response = False, "Incompatible"
-        except NoDuration:
+        except (NoDuration, DefinitelyNoDuration):
             await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
             success, response = False, "No duration"
         except InvalidFileType:
