@@ -12,7 +12,7 @@ from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
-                     INFINITY_VOTE_LINK, DLIST_VOTE_LINK)
+                     INFINITY_VOTE_LINK, DLIST_VOTE_LINK, YT_DLP_MAX_FILESIZE)
 from bot.errors import NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, ClipFailure, IPBlockedError, \
     InvalidFileType, UnsupportedError, YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, handle_yt_dlp_err
 from PIL import Image
@@ -543,7 +543,7 @@ class BaseMisc(ABC):
 
         if download:
             # Add max filesize option when downloading
-            ydl_opts['max_filesize'] = 1610612736  # 1.5GB in bytes (1.5 * 1024 * 1024 * 1024) should handle most 45 min videos
+            ydl_opts['max_filesize'] = YT_DLP_MAX_FILESIZE
 
         try:
             # Run yt-dlp in an executor to avoid blocking
