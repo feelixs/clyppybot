@@ -40,6 +40,11 @@ class NoPermsToView(Exception):
 
 
 class VideoSaidUnavailable(Exception):
+    """Video said unavailable (not certain that it's deleted/removed"""
+    pass
+
+
+class VideoUnavailable(Exception):
     pass
 
 
