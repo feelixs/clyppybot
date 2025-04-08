@@ -5,6 +5,9 @@ from bot.errors import VideoTooLong
 from urllib.parse import urlparse
 
 
+COOKIES_PLATFORMS = ['facebook']
+
+
 class BASIC_MISC(BaseMisc):
     """Raw implementation for usage in BaseAutoEmbed (bot.base)"""
     def __init__(self, bot):
@@ -12,6 +15,7 @@ class BASIC_MISC(BaseMisc):
         self.platform_name = "base"
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+        cookies = any(domain in url for domain in COOKIES_PLATFORMS)
         valid, tokens_used = await self.is_shortform(
             url=url,
             basemsg=basemsg,
@@ -55,6 +59,7 @@ class BASIC_CLIP(BaseClip):
         return self._url
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+        cookies = any(domain in self.url for domain in COOKIES_PLATFORMS)
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
