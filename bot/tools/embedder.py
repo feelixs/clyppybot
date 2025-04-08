@@ -169,6 +169,20 @@ class AutoEmbedder:
 
     async def process_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
         clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
+        # get_clip will have used the VIP tokens if they were needed for this clip
+        try:
+            await self._process_clip(
+                clip=clip,
+                clip_link=clip_link,
+                respond_to=respond_to,
+                guild=guild,
+                try_send_files=try_send_files
+            )
+        except Exception as e:
+            # this is where we refund the tokens
+            raise e
+        
+    async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
         else:
@@ -213,7 +227,7 @@ class AutoEmbedder:
                 info = await get_clip_info(clip.clyppy_id)
                 #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
                 #    raise VideoTooLong
-                response = DownloadResponse(
+                response: DownloadResponse = DownloadResponse(
                     remote_url=info['url'],
                     local_file_path=None,
                     duration=info['duration'],
