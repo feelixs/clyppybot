@@ -5,7 +5,7 @@ def create_nexus_str():
     return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
 
 
-YT_DLP_MAX_FILESIZE = 1610612736  # 1.5GB in bytes (1.5 * 1024 * 1024 * 1024) should handle most 45 min videos
+YT_DLP_MAX_FILESIZE = 1610612736 * 4 # 6GB in bytes (1.5 * 1024 * 1024 * 1024 * 4) should handle most 3 hour videos
 
 YT_DLP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0"
 
