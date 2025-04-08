@@ -227,7 +227,7 @@ class AutoEmbedder:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 info = await get_clip_info(clip.clyppy_id)
                 #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
-                #    raise VideoTooLong
+                #    raise VideoTooLong(...duration)
                 response: DownloadResponse = DownloadResponse(
                     remote_url=info['url'],
                     local_file_path=None,
