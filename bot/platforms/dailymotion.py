@@ -51,14 +51,14 @@ class DailymotionMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return DailymotionClip(video_id, self.cdn_client)
+        return DailymotionClip(video_id, self.cdn_client, tokens_used)
 
 
 class DailymotionClip(BaseClip):
-    def __init__(self, video_id, cdn_client):
+    def __init__(self, video_id, cdn_client, tokens_used: int):
         self._service = "dailymotion"
         self._video_id = video_id
-        super().__init__(video_id, cdn_client)
+        super().__init__(video_id, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

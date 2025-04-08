@@ -40,15 +40,15 @@ class KickMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'KickClip':
         slug, user = self.parse_clip_url(url), self.get_clip_user(url)
-        return KickClip(slug, user, self.cdn_client)
+        return KickClip(slug, user, self.cdn_client, 0)
 
 
 class KickClip(BaseClip):
-    def __init__(self, slug, user, cdn_client: CdnSpacesClient):
+    def __init__(self, slug, user, cdn_client: CdnSpacesClient, tokens_used: int):
         self._service = "kick"
         self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

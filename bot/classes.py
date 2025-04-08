@@ -132,9 +132,10 @@ class BaseClip(ABC):
     """Base class for all clip types"""
 
     @abstractmethod
-    def __init__(self, slug: str, cdn_client: CdnSpacesClient):
+    def __init__(self, slug: str, cdn_client: CdnSpacesClient, tokens_used: int):
         self.cdn_client = cdn_client
         self.id = slug
+        self.tokens_used = tokens_used
         self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self.service}, {slug}")

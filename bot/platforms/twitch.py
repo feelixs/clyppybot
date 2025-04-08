@@ -34,14 +34,14 @@ class TwitchMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TwitchClip':
         slug = self.parse_clip_url(url)
-        return TwitchClip(slug, self.cdn_client)
+        return TwitchClip(slug, self.cdn_client, 0)
 
 
 class TwitchClip(BaseClip):
-    def __init__(self, slug, cdn_client):
+    def __init__(self, slug, cdn_client, tokens_used: int):
         self._service = "twitch"
         self._url = f"https://clips.twitch.tv/{slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
         self._thumbnail_url = None
 
     @property

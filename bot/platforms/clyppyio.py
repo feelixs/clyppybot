@@ -48,15 +48,15 @@ class ClyppyioMisc(BaseMisc):
 
         service = clip_info['service']
         self.platform_name = service
-        return ClyppyioClip(clip_info, self.cdn_client, service.lower())
+        return ClyppyioClip(clip_info, self.cdn_client, service.lower(), tokens_used)
 
 
 class ClyppyioClip(BaseClip):
-    def __init__(self, data, cdn_client, service):
+    def __init__(self, data, cdn_client, service, tokens_used):
         self._service = service
         self.data = data
         self.clip_id = data['clip_id']
-        super().__init__(self.clip_id, cdn_client)
+        super().__init__(self.clip_id, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

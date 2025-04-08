@@ -47,14 +47,14 @@ class Xmisc(BaseMisc):
         user_match = re.search(r'(?:(?:fx)?twitter\.com|(?:fixup)?x\.com)/(\w+)/status/', url)
         user = user_match.group(1) if user_match else None
 
-        return Xclip(slug, user, self.cdn_client)
+        return Xclip(slug, user, self.cdn_client, tokens_used)
 
 
 class Xclip(BaseClip):
-    def __init__(self, slug, user, cdn_client):
+    def __init__(self, slug, user, cdn_client, tokens_used: int):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

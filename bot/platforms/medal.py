@@ -33,14 +33,14 @@ class MedalMisc(BaseMisc):
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'MedalClip':
         # todo run is_shortform here
         slug = self.parse_clip_url(url)
-        return MedalClip(slug, self.cdn_client)
+        return MedalClip(slug, self.cdn_client, 0)
 
 
 class MedalClip(BaseClip):
-    def __init__(self, slug, cdn_client):
+    def __init__(self, slug, cdn_client, tokens_used: int):
         self._service = "medal"
         self._url = f"https://medal.tv/clips/{slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

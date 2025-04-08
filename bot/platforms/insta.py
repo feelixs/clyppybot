@@ -39,14 +39,14 @@ class InstagramMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return InstagramClip(shortcode, self.cdn_client)
+        return InstagramClip(shortcode, self.cdn_client, tokens_used)
 
 
 class InstagramClip(BaseClip):
-    def __init__(self, shortcode, cdn_client):
+    def __init__(self, shortcode, cdn_client, tokens_used: int):
         self._service = "instagram"
         self._shortcode = shortcode
-        super().__init__(shortcode, cdn_client)
+        super().__init__(shortcode, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

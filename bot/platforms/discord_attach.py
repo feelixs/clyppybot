@@ -44,6 +44,7 @@ class DiscordMisc(BaseMisc):
 
         attrs['message_id'] = basemsg.id
         attrs['cdn_client'] = self.cdn_client
+        attrs['tokens_used'] = tokens_used
         return DiscordAttachment(attrs)
 
 
@@ -56,7 +57,7 @@ class DiscordAttachment(BaseClip):
         self._channel = attrs.get('channel')
         self._filename = attrs.get('filename')
         self._url_params = attrs.get('url_params')
-        super().__init__(self._message_id, self.cdn_client)
+        super().__init__(self._message_id, self.cdn_client, attrs.get('tokens_used'))
 
     @property
     def service(self) -> str:

@@ -40,14 +40,14 @@ class BlueSkyMisc(BaseMisc):
         if user is None:
             raise InvalidClipType
 
-        return BlueSkyClip(slug, user, self.cdn_client)
+        return BlueSkyClip(slug, user, self.cdn_client, tokens_used)
 
 
 class BlueSkyClip(BaseClip):
-    def __init__(self, slug, user, cdn_client):
+    def __init__(self, slug, user, cdn_client, tokens_used: int):
         self._service = "bluesky"
         self._url = f"https://bsky.app/profile/{user}/post/{slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

@@ -149,16 +149,16 @@ class RedditMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return RedditClip(slug, ext_info, self.bot)
+        return RedditClip(slug, ext_info, self.bot, tokens_used)
 
 
 class RedditClip(BaseClip):
-    def __init__(self, slug, ext, bot):
+    def __init__(self, slug, ext, bot, tokens_used: int):
         self._service = "reddit"
         self._url = f"https://redd.it/{slug}"
         self.external_link = ext
         self.bot = bot
-        super().__init__(slug, bot.cdn_client)
+        super().__init__(slug, bot.cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

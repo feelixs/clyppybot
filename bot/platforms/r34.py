@@ -31,14 +31,14 @@ class R34Misc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return R34clip(slug, self.cdn_client)
+        return R34clip(slug, self.cdn_client, tokens_used)
 
 
 class R34clip(BaseClip):
-    def __init__(self, slug, cdn_client):
+    def __init__(self, slug, cdn_client, tokens_used: int):
         self._service = "rule34"
         self._url = f"https://rule34video.co/watch/{slug}/"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

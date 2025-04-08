@@ -43,17 +43,17 @@ class YtMisc(BaseMisc):
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
-        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client)
+        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client, tokens_used)
 
 
 class YtClip(BaseClip):
-    def __init__(self, slug, short, cdn_client):
+    def __init__(self, slug, short, cdn_client, tokens_used: int):
         self._service = "youtube"
         if short:
             self._url = f"https://youtube.com/shorts/{slug}"
         else:
             self._url = f"https://youtube.com/watch/?v={slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

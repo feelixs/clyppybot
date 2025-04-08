@@ -25,7 +25,7 @@ class BASIC_MISC(BaseMisc):
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
-        return BASIC_CLIP(url, self.cdn_client)
+        return BASIC_CLIP(url, self.cdn_client, tokens_used)
 
     def parse_clip_url(self, url: str, extended_url_formats=False):
         if 'http' not in url:
@@ -45,10 +45,10 @@ class BASIC_MISC(BaseMisc):
 
 
 class BASIC_CLIP(BaseClip):
-    def __init__(self, url: str, cdn_client):
+    def __init__(self, url: str, cdn_client, tokens_used: int):
         self._service = 'base'
         self._url = url
-        super().__init__(url, cdn_client)
+        super().__init__(url, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

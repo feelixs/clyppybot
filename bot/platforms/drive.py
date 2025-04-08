@@ -51,14 +51,14 @@ class GoogleDriveMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return GoogleDriveClip(file_id, self.cdn_client)
+        return GoogleDriveClip(file_id, self.cdn_client, tokens_used)
 
 
 class GoogleDriveClip(BaseClip):
-    def __init__(self, file_id, cdn_client):
+    def __init__(self, file_id, cdn_client, tokens_used: int):
         self._service = "drive"
         self._file_id = file_id
-        super().__init__(file_id, cdn_client)
+        super().__init__(file_id, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

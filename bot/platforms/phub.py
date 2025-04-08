@@ -33,14 +33,14 @@ class PhubMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return PhubClip(shortcode, self.cdn_client)
+        return PhubClip(shortcode, self.cdn_client, tokens_used)
 
 
 class PhubClip(BaseClip):
-    def __init__(self, shortcode, cdn_client):
+    def __init__(self, shortcode, cdn_client, tokens_used: int):
         self._service = "pornhub"
         self._shortcode = shortcode
-        super().__init__(shortcode, cdn_client)
+        super().__init__(shortcode, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:

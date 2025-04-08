@@ -61,11 +61,11 @@ class VimeoMisc(BaseMisc):
             raise VideoTooLong
         self.logger.info(f"{url} is_shortform=True")
 
-        return VimeoClip(video_id, video_hash, self.cdn_client)
+        return VimeoClip(video_id, video_hash, self.cdn_client, tokens_used)
 
 
 class VimeoClip(BaseClip):
-    def __init__(self, video_id, video_hash=None, cdn_client=None):
+    def __init__(self, video_id, video_hash=None, cdn_client=None, tokens_used: int = 0):
         self._service = "vimeo"
         if video_hash:
             self._video_id = f'{video_id}/{video_hash}'
@@ -73,7 +73,7 @@ class VimeoClip(BaseClip):
         else:
             self._video_id = video_id
             self._url = f"https://vimeo.com/{self._video_id}"
-        super().__init__(self._video_id, cdn_client)
+        super().__init__(self._video_id, cdn_client, tokens_used)
 
     @property
     def service(self) -> str:
