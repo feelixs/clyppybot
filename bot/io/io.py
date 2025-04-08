@@ -132,7 +132,7 @@ async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int]
     elif video_dur < EMBED_TOTAL_MAX_LENGTH:
         # if we're in dl server, automatically return true without needing any tokens (only for videos under 30min)
         if is_dl_server(msg.guild):
-            return video_dur <= EMBED_W_TOKEN_MAX_LEN
+            return video_dur <= EMBED_W_TOKEN_MAX_LEN, 0
 
         cost = get_token_cost(video_dur)
         sub = await subtract_tokens(
