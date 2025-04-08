@@ -4,6 +4,8 @@ from math import ceil
 from os import getenv
 import aiohttp
 
+from bot.errors import VideoLongerThanMaxLength
+
 
 def get_aiohttp_session():
     """Create an aiohttp ClientSession with the ClyppyBot user agent."""
@@ -109,6 +111,9 @@ async def author_has_premium(user):
 
 
 def get_token_cost(video_dur):
+    """Raises VideoLongerThanMaxLength if video is too long"""
+    if video_dur >= EMBED_TOTAL_MAX_LENGTH:
+        raise VideoLongerThanMaxLength
     return EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
 
 
