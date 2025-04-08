@@ -114,7 +114,7 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise NoPermsToView
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:
         raise UnsupportedError
-    elif 'Unable to download webpage: HTTP Error 403: Forbidden' in err:
+    elif 'HTTP Error 403: Forbidden' in err:
         raise YtDlpForbiddenError
     elif 'Temporary failure in name resolution' in err or 'Name or service not known' in err:
         raise UrlUnparsable
