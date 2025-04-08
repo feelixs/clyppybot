@@ -673,8 +673,7 @@ class BaseAutoEmbed:
 
         about = "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n" + cmds
         about += (
-            f"Use `/settings quickembed=True` and I will automatically respond to Twitch and Kick clips, and all other compatible platforms are only accessibly through `{pre}embed`\n\n"
-            "**UPDATE Dec 3rd 2024** Clyppy is back online after a break. We are working on improving the service and adding new features. Stay tuned!\n\n"
+            f"Use `/settings quickembed=True` and I will automatically respond to Twitch clips. Many other platforms are easily accessibly through the `{pre}embed` command\n\n"
             f"---------------------------------\n"
             f"Join my [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
