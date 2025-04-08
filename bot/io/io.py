@@ -108,6 +108,10 @@ async def author_has_premium(user):
     return str(user.id) == '164115540426752001'
 
 
+def get_token_cost(video_dur):
+    return EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
+
+
 async def author_has_enough_tokens(msg, video_dur, url: str):
     def is_dl_server(guild):
         if guild is None:
@@ -124,11 +128,9 @@ async def author_has_enough_tokens(msg, video_dur, url: str):
         if is_dl_server(msg.guild):
             return video_dur <= EMBED_W_TOKEN_MAX_LEN
 
-        cost = EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
-
         sub = await subtract_tokens(
             user=user,
-            amt=cost,
+            amt=get_token_cost(video_dur),
             clip_url=url
         )
         if sub['success']:
