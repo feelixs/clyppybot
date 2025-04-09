@@ -113,7 +113,10 @@ def get_token_cost(video_dur):
     """Raises VideoLongerThanMaxLength if video is too long"""
     if video_dur >= EMBED_TOTAL_MAX_LENGTH:
         raise VideoLongerThanMaxLength(video_dur)
-    return EMBED_TOKEN_COST * ceil(video_dur / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes
+
+    # Calculate tokens only for the portion exceeding the free limit
+    extra_duration = video_dur - MAX_VIDEO_LEN_SEC
+    return EMBED_TOKEN_COST * ceil(extra_duration / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes of additional time
 
 
 async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int, int]:
