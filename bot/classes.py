@@ -14,7 +14,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EM
                      EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
                      INFINITY_VOTE_LINK, DLIST_VOTE_LINK, YT_DLP_MAX_FILESIZE)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
-                        ClipFailure, IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError,
+                        ClipFailure, IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration, handle_yt_dlp_err)
 from PIL import Image
 import hashlib
@@ -950,6 +950,9 @@ class BaseAutoEmbed:
         except VideoSaidUnavailable:
             await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()} {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
+        except RemoteTimeoutError:
+            await ctx.send(f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()} {create_nexus_str()}")
+            success, response = False, "RemoteTimeout"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
             success, response = False, "UrlParseError"
