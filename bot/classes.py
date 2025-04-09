@@ -977,10 +977,10 @@ class BaseAutoEmbed:
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
                 await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
-                               f"You can normally use {pre}embed on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
+                               f"You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
                                f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
-                               f"You have `{user_tokens}` tokens available, but this video would cost `{video_cost}`, "
-                               f"since it's {dur / 60} minutes long.")
+                               f"You have `{user_tokens}` tokens available.\n"
+                               f"Since it's {dur / 60:.1f} minutes long, it will cost `{video_cost}` VIP tokens.")
             else:
                 await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
