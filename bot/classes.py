@@ -722,7 +722,8 @@ class BaseAutoEmbed:
             pre = '.'
 
         msg = (f"**Vote for Clyppy!**\n"
-               f"Give Clyppy your support by voting in popular bot sites! By voting, receive the following benefits:\n\n"
+               f"Give Clyppy your support by voting in popular bot sites!\n"
+               f"By voting, receive the following benefits:\n\n"
                f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
                f"- (2) VIP tokens per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n"
