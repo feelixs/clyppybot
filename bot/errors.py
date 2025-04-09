@@ -49,6 +49,7 @@ class VideoSaidUnavailable(Exception):
 
 
 class VideoUnavailable(Exception):
+    """Video definitely unavailable"""
     pass
 
 
@@ -106,9 +107,11 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise NoDuration
     elif 'No video could be found in this tweet' in err:
         raise DefinitelyNoDuration
-    elif 'HTTP Error 404: Not Found' in err:
-        raise VideoSaidUnavailable
+    elif 'Incomplete YouTube ID' in err:
+        raise VideoUnavailable
     elif 'This clip is no longer available' in err:
+        raise VideoUnavailable
+    elif 'HTTP Error 404: Not Found' in err:
         raise VideoSaidUnavailable
     elif 'Video unavailable' in err:
         raise VideoSaidUnavailable
