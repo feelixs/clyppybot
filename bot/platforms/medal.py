@@ -40,7 +40,8 @@ class MedalClip(BaseClip):
     def __init__(self, slug, cdn_client, tokens_used: int):
         self._service = "medal"
         self._url = f"https://medal.tv/clips/{slug}"
-        super().__init__(slug, cdn_client, tokens_used)
+        # pass dummy duration because we haven't added is_valid (is_shortform) for medal links
+        super().__init__(slug, cdn_client, tokens_used, 0)
 
     @property
     def service(self) -> str:

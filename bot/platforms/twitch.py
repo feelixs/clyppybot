@@ -41,7 +41,8 @@ class TwitchClip(BaseClip):
     def __init__(self, slug, cdn_client, tokens_used: int):
         self._service = "twitch"
         self._url = f"https://clips.twitch.tv/{slug}"
-        super().__init__(slug, cdn_client, tokens_used)
+        # pass dummy duration because we know twitch clips will never need to use vip tokens
+        super().__init__(slug, cdn_client, tokens_used, 0)
         self._thumbnail_url = None
 
     @property

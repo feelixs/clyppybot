@@ -48,7 +48,8 @@ class KickClip(BaseClip):
         self._service = "kick"
         self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
-        super().__init__(slug, cdn_client, tokens_used)
+        # pass dummy duration because we know kick clips will never need to use vip tokens
+        super().__init__(slug, cdn_client, tokens_used, 0)
 
     @property
     def service(self) -> str:
