@@ -950,7 +950,7 @@ class BaseAutoEmbed:
             success, response = False, "VideoUnavailable"
         except VideoSaidUnavailable:
             await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
-            success, response = False, "VideoUnavailable"
+            success, response = False, "VideoSaidUnavailable"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
             success, response = False, "UrlParseError"
