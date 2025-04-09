@@ -726,12 +726,13 @@ class BaseAutoEmbed:
                f"following benefits:\n\n"
                f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
                f"- (2) VIP tokens per vote!\n"
-               f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n\n"
-               f"** - [Top.gg]({TOPGG_VOTE_LINK})**\n"
-               f"** - [DiscordBotList]({DLIST_VOTE_LINK})**\n"
-               f"\n\nYou can also purchase VIP tokens directly from the [Clyppy store](https://clyppy.io/profile/tokens/)\n\n"
+               f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n"
+               f"You can get some free tokens by voting below, or purchasing them in bulk from our store (づ๑•ᴗ•๑)づ♡"
                f"{create_nexus_str()}")
-        await ctx.send(content=msg)
+        await ctx.send(content=msg, components=[
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url="https://clyppy.io/vote/"),
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy in Bulk", url="https://clyppy.io/profile/tokens/"),
+        ])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
