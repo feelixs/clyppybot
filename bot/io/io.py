@@ -80,7 +80,7 @@ async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
                 raise Exception(f"Failed to get clip info: (Server returned code: {response.status})")
 
 
-async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None):
+async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, description: str=None):
     if reason is None:
         reason = 'Clyppy Embed'
 
@@ -94,7 +94,8 @@ async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None):
         'username': user.username,
         'amount': amt,
         'reason': reason,
-        'original_url': clip_url
+        'original_url': clip_url,
+        'description': description,
     }
     async with get_aiohttp_session() as session:
         async with session.post(url, json=j, headers=headers) as response:
