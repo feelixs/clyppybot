@@ -9,7 +9,6 @@ class DailymotionMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "Dailymotion"
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """

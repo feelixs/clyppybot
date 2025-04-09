@@ -10,7 +10,6 @@ class XvidMisc(BaseMisc):
         super().__init__(bot)
         self.platform_name = "Xvideos"
         self.is_nsfw = True
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         # Pattern to match xvideos URLs like:

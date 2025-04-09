@@ -10,7 +10,6 @@ class PhubMisc(BaseMisc):
         super().__init__(bot)
         self.platform_name = "PornHub"
         self.is_nsfw = True
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         pattern = r'(?:https?://)?(?:www\.)?pornhub\.com/view_video\.php\?viewkey=([a-zA-Z0-9_-]+)'
