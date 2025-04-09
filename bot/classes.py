@@ -7,7 +7,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session
+from bot.io import get_aiohttp_session, get_token_cost
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_TOTAL_MAX_LENGTH,
@@ -970,10 +970,17 @@ class BaseAutoEmbed:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
             success, response = False, "No permissions"
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
+            user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
-            if await self.fetch_tokens(ctx.user) >= EMBED_TOKEN_COST:  # the user has tokens available, but the embed still reported too long
-                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"You can embed longer videos with VIP Tokens: {EMBED_TOKEN_COST} token grants {MAX_VIDEO_LEN_SEC / 60} minutes of video time (maximum {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total)")
+            video_cost = get_token_cost(dur)
+            if dur >= EMBED_TOTAL_MAX_LENGTH:
+                await ctx.send(f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens.")
+            elif 0 < user_tokens < video_cost:  # the user has tokens available, but the embed still reported too long
+                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
+                               f"You can normally use {pre}embed on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
+                               f"every {EMBED_TOKEN_COST} token can add {MAX_VIDEO_LEN_SEC / 60} minutes of video time.\n"
+                               f"You have `{user_tokens}` tokens available, but this video would cost `{video_cost}`, "
+                               f"since it's {dur / 60} minutes long.")
             else:
                 await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
                                f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
