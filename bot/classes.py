@@ -987,6 +987,7 @@ class BaseAutoEmbed:
                                    f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
                 success, response = False, "Video too long"
             except Exception as e:
+                import traceback
                 self.logger.error(traceback.format_exc())
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
