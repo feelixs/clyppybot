@@ -1,6 +1,6 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, DefinitelyNoDuration
-from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info
+from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import create_nexus_str, DL_SERVER_ID
@@ -181,6 +181,13 @@ class AutoEmbedder:
         except Exception as e:
             # this is where we refund the tokens
             self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.user.username} <{respond_to.user.id}>")
+            await subtract_tokens(
+                user=respond_to.user,
+                amt=-1 * clip.tokens_used,
+                clip_url=clip.url,
+                reason="Token Refund",
+                description=f"The embed failed for {clip.url}"
+            )
             raise e
 
     async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True):
