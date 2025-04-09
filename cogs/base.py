@@ -332,6 +332,10 @@ class Base(Extension):
         await ctx.defer()
         await self.bot.base_embedder.tokens_cmd(ctx)
 
+    # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
+    # i'll have to fetch its duration/download it to check duration
+    #@slash_command(name=)
+
     @slash_command(name="embed", description="Embed a video link in this chat",
                    options=[SlashCommandOption(name="url",
                                                description="The YouTube, Twitch, etc. link to embed",
