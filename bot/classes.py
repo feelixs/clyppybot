@@ -978,7 +978,7 @@ class BaseAutoEmbed:
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
                 await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
                                f"You can normally use {pre}embed on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
-                               f"every {EMBED_TOKEN_COST} token can add {MAX_VIDEO_LEN_SEC / 60} minutes of video time.\n"
+                               f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
                                f"You have `{user_tokens}` tokens available, but this video would cost `{video_cost}`, "
                                f"since it's {dur / 60} minutes long.")
             else:
