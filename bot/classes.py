@@ -35,7 +35,7 @@ def tryremove(f):
 
 
 def get_random_face():
-    faces = ['`(⌯˃̶᷄ ﹏ ˂̶᷄⌯)`', '`ヽ(゜～゜o)ノ`', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ']
+    faces = ['`(⌯˃̶᷄ ﹏ ˂̶᷄⌯)`', '`ヽ(゜～゜o)ノ`', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ', '¯\_(ツ)_/¯']
     return f'{random.choice(faces)}'
 
 def is_discord_compatible(filesize: float):
@@ -724,13 +724,14 @@ class BaseAutoEmbed:
         msg = (f"**Vote for Clyppy!**\n"
                f"Give Clyppy your support by voting in popular bot sites!\n"
                f"By voting, receive the following benefits:\n\n"
-               f"- Exclusive role in [our Discord]({SUPPORT_SERVER_URL})\n"
+               f"- Exclusive role in our Discord\n"
                f"- (2) VIP tokens per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n"
                f"You can get some free tokens by voting below, or purchase them in bulk from our store `(づ๑•ᴗ•๑)づ♡`")
         await ctx.send(content=msg, components=[
             Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url="https://clyppy.io/vote/"),
             Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy in Bulk", url="https://clyppy.io/profile/tokens/"),
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Discord Server", url=SUPPORT_SERVER_URL),
         ])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
