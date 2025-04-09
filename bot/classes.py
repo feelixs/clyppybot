@@ -970,21 +970,24 @@ class BaseAutoEmbed:
             await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
             success, response = False, "No permissions"
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
-            user_tokens = await self.fetch_tokens(ctx.user)
-            dur = e.video_dur
-            video_cost = get_token_cost(dur)
-            if dur >= EMBED_TOTAL_MAX_LENGTH:
-                await ctx.send(f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens.")
-            elif 0 < user_tokens < video_cost:  # the user has tokens available, but the embed still reported too long
-                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
-                               f"You can normally use {pre}embed on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
-                               f"every {EMBED_TOKEN_COST} token can add {MAX_VIDEO_LEN_SEC / 60} minutes of video time.\n"
-                               f"You have `{user_tokens}` tokens available, but this video would cost `{video_cost}`, "
-                               f"since it's {dur / 60} minutes long.")
-            else:
-                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
-            success, response = False, "Video too long"
+            try:
+                user_tokens = await self.fetch_tokens(ctx.user)
+                dur = e.video_dur
+                video_cost = get_token_cost(dur)
+                if dur >= EMBED_TOTAL_MAX_LENGTH:
+                    await ctx.send(f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens.")
+                elif 0 < user_tokens < video_cost:  # the user has tokens available, but the embed still reported too long
+                    await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
+                                   f"You can normally use {pre}embed on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
+                                   f"every {EMBED_TOKEN_COST} token can add {MAX_VIDEO_LEN_SEC / 60} minutes of video time.\n"
+                                   f"You have `{user_tokens}` tokens available, but this video would cost `{video_cost}`, "
+                                   f"since it's {dur / 60} minutes long.")
+                else:
+                    await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                                   f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
+                success, response = False, "Video too long"
+            except Exception as e:
+                self.logger.error(traceback.format_exc())
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
             success, response = False, "Clip failure"
