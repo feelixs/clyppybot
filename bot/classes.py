@@ -35,7 +35,7 @@ def tryremove(f):
 
 
 def get_random_face():
-    faces = ['`(⌯˃̶᷄ ﹏ ˂̶᷄⌯)`', 'ヽ(゜～゜o)ノ', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ']
+    faces = ['`(⌯˃̶᷄ ﹏ ˂̶᷄⌯)`', '`ヽ(゜～゜o)ノ`', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ']
     return f'{random.choice(faces)}'
 
 def is_discord_compatible(filesize: float):
