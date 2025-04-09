@@ -946,10 +946,10 @@ class BaseAutoEmbed:
             await ctx.send(f"{get_random_face()} The platform said my IP was blocked from viewing that link {create_nexus_str()}")
             success, response = False, "IPBlocked"
         except VideoUnavailable:
-            await ctx.send(f"That video is not available {create_nexus_str()}")
+            await ctx.send(f"That video is not available anymore {get_random_face()} {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
         except VideoSaidUnavailable:
-            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region `'(ᗒᗣᗕ)՞` {create_nexus_str()}")
+            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()} {create_nexus_str()}")
             success, response = False, "VideoUnavailable"
         except UrlUnparsable:
             await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
