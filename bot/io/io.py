@@ -114,6 +114,10 @@ def get_token_cost(video_dur):
     if video_dur >= EMBED_TOTAL_MAX_LENGTH:
         raise VideoLongerThanMaxLength(video_dur)
 
+    # Free embed up to MAX_VIDEO_LEN_SEC
+    if video_dur <= MAX_VIDEO_LEN_SEC:
+        return 0
+
     # Calculate tokens only for the portion exceeding the free limit
     extra_duration = video_dur - MAX_VIDEO_LEN_SEC
     return EMBED_TOKEN_COST * ceil(extra_duration / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes of additional time
