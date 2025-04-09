@@ -972,18 +972,24 @@ class BaseAutoEmbed:
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
             user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
+            comp = [
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url="https://clyppy.io/vote/"),
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url="https://clyppy.io/profile/tokens/")
+            ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
                 await ctx.send(f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens.")
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
-                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
+                await ctx.send(content=f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
                                f"You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
                                f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
                                f"You have `{user_tokens}` tokens available.\n"
-                               f"Since it's {dur / 60:.1f} minutes long, it will cost `{video_cost}` VIP tokens.")
+                               f"Since it's {dur / 60:.1f} minutes long, it will cost `{video_cost}` VIP tokens.",
+                               components=comp)
             else:
-                await ctx.send(f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
+                await ctx.send(content=f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                               f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}",
+                               components=comp)
             success, response = False, "Video too long"
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
