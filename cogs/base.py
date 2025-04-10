@@ -541,7 +541,6 @@ class Base(Extension):
             self.logger.info("Bot not ready, skipping database save task")
             return
 
-        await self.post_servers(len(self.bot.guilds))
         self.logger.info("Saving database to the server...")
         await self.bot.guild_settings.save()
 
