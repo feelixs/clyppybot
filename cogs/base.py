@@ -621,14 +621,13 @@ class Base(Extension):
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
-
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                     await resp.text()
-            except:
-                self.logger.info(f"Failed to post servers to top.gg: code {resp.status}")
+        except:
+            self.logger.info(f"Failed to post servers to top.gg")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
@@ -637,7 +636,7 @@ class Base(Extension):
                                         headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
                     await resp.json()
         except:
-            self.logger.info(f"Failed to post servers to botlist.me: {await resp.text()}")
+            self.logger.info(f"Failed to post servers to botlist.me")
 
     @staticmethod
     def _format_log(string):
