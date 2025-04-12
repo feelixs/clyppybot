@@ -1,8 +1,17 @@
+from interactions import Button, ButtonStyle
 import os
 
 
 def create_nexus_str():
-    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({TOPGG_VOTE_LINK})**"
+    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({CLYPPY_VOTE_URL})**"
+
+
+def create_nexus_comps():
+    return [
+        Button(style=ButtonStyle.LINK, url=INVITE_LINK, label='Invite Clyppy'),
+        Button(style=ButtonStyle.LINK, url=SUPPORT_SERVER_URL, label='Support Server'),
+        Button(style=ButtonStyle.LINK, url=CLYPPY_VOTE_URL, label='Vote for me!'),
+    ]
 
 
 YT_DLP_MAX_FILESIZE = 1610612736 * 4 # 6GB in bytes (1.5 * 1024 * 1024 * 1024 * 4) should handle most 3 hour videos
@@ -44,6 +53,7 @@ TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 INFINITY_VOTE_LINK = "https://infinitybots.gg/bot/1111723928604381314/vote"
 DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
 BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
+CLYPPY_VOTE_URL = "https://clyppy.io/vote/"
 
 
 NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']

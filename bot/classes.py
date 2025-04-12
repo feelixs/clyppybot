@@ -10,9 +10,8 @@ from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session, get_token_cost
 from bot.tools.embedder import AutoEmbedder
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
-from bot.env import (EMBED_TXT_COMMAND, create_nexus_str, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_TOTAL_MAX_LENGTH,
-                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, TOPGG_VOTE_LINK, DL_SERVER_ID,
-                     INFINITY_VOTE_LINK, DLIST_VOTE_LINK, YT_DLP_MAX_FILESIZE)
+from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_TOTAL_MAX_LENGTH,
+                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         ClipFailure, IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration, handle_yt_dlp_err)
@@ -645,7 +644,10 @@ class BaseAutoEmbed:
         await asyncio.sleep(amt)
 
         # will be cancelled early if main execution finished before the sleep
-        await ctx.send(f"The timeout of {amt // 60}m was reached when trying to download `{url}`, please try again later... {create_nexus_str()}")
+        await ctx.send(
+            content=f"The timeout of {amt // 60}m was reached when trying to download `{url}`, please try again later...",
+            components=create_nexus_comps()
+        )
 
     @staticmethod
     async def fetch_tokens(user):
@@ -677,9 +679,12 @@ class BaseAutoEmbed:
             f"---------------------------------\n"
             f"Join my [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
-        help_embed.description += create_nexus_str()
         help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send(content="Clyppy is a social bot that makes sharing videos easier!", embed=help_embed)
+        await ctx.send(
+            content="Clyppy is a social bot that makes sharing videos easier!",
+            embed=help_embed,
+            components=create_nexus_comps()
+        )
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {pre}help called',
             load=f"response - success",
@@ -700,7 +705,7 @@ class BaseAutoEmbed:
             content=f"**You have `{tokens}` VIP tokens**\nUse your VIP tokens to embed longer videos!\n\n"
                     f"You can gain more by **voting** with `{pre}vote`",
             components=[
-                Button(style=ButtonStyle.LINK, label="Vote!", url="https://clyppy.io/vote/"),
+                Button(style=ButtonStyle.LINK, label="Vote!", url=CLYPPY_VOTE_URL),
                 Button(style=ButtonStyle.LINK, label="View VIP Token History", url="https://clyppy.io/profile/tokens/history/")
             ]
         )
@@ -726,7 +731,7 @@ class BaseAutoEmbed:
                f"- (2) VIP tokens per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n\n"
                f"You can get some free tokens by voting below, or purchasing them in bulk from our store `(づ๑•ᴗ•๑)づ♡`")
-        await ctx.send(content=msg, components=[Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url="https://clyppy.io/vote/")])
+        await ctx.send(content=msg, components=[Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL)])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
@@ -759,9 +764,15 @@ class BaseAutoEmbed:
             if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
                 return 1
             elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
-                return await ctx.send(f"I don't have the permission `Read Message History` in this channel, which is required for text commands {create_nexus_str()}")
+                return await ctx.send(
+                    content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
+                    components=create_nexus_comps()
+                )
             elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
-                return await ctx.send(f"I don't have permission to embed links in this channel {create_nexus_str()}")
+                return await ctx.send(
+                    content=f"I don't have permission to embed links in this channel",
+                    components=create_nexus_comps()
+                )
             if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
                 if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
                     return 1
@@ -782,7 +793,8 @@ class BaseAutoEmbed:
 
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
-                await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+                await ctx.send(content=f"Couldn't embed that url (invalid/incompatible)",
+                               components=create_nexus_comps())
                 await send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
@@ -840,7 +852,8 @@ class BaseAutoEmbed:
                 self.bot.currently_downloading.append(slug)
         except Exception as e:
             self.logger.info(f"Exception in /embed preparation: {str(e)}")
-            await ctx.send(f"Unexpected error while trying to embed this url {create_nexus_str()}")
+            await ctx.send(f"Unexpected error while trying to embed this url",
+                           components=create_nexus_comps())
             await send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
@@ -935,43 +948,54 @@ class BaseAutoEmbed:
             )
             success, response = True, "Success"
         except FileNotFoundError:  # ytdlp failed to download the file, but the output wasn't captured
-            await ctx.send(f"The file could not be downloaded. Does the url points to a video? {create_nexus_str()}")
+            await ctx.send(f"The file could not be downloaded. Does the url points to a video?",
+                           components=create_nexus_comps())
             success, response = False, "FileNotFound"
         except IPBlockedError:
-            await ctx.send(f"{get_random_face()} The platform said my IP was blocked from viewing that link {create_nexus_str()}")
+            await ctx.send(f"{get_random_face()} The platform said my IP was blocked from viewing that link",
+                           components=create_nexus_comps())
             success, response = False, "IPBlocked"
         except VideoUnavailable:
-            await ctx.send(f"That video is not available anymore {get_random_face()} {create_nexus_str()}")
+            await ctx.send(f"That video is not available anymore {get_random_face()}",
+                           components=create_nexus_comps())
             success, response = False, "VideoUnavailable"
         except VideoSaidUnavailable:
-            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()} {create_nexus_str()}")
+            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}",
+                           components=create_nexus_comps())
             success, response = False, "VideoUnavailable"
         except RemoteTimeoutError:
-            await ctx.send(f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()} {create_nexus_str()}")
+            await ctx.send(f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}",
+                           components=create_nexus_comps())
             success, response = False, "RemoteTimeout"
         except UrlUnparsable:
-            await ctx.send(f"I couldn't parse that url. Did you enter it correctly? {create_nexus_str()}")
+            await ctx.send(f"I couldn't parse that url. Did you enter it correctly?",
+                           components=create_nexus_comps())
             success, response = False, "UrlParseError"
         except YtDlpForbiddenError:
-            await ctx.send(f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website? {create_nexus_str()}")
+            await ctx.send(f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website?",
+                           components=create_nexus_comps())
             success, response = False, "403 Forbidden"
         except UnsupportedError:
-            await ctx.send(f"Couldn't embed that url (invalid/incompatible) {create_nexus_str()}")
+            await ctx.send(f"Couldn't embed that url (invalid/incompatible)",
+                           components=create_nexus_comps())
             success, response = False, "Incompatible"
         except (NoDuration, DefinitelyNoDuration):
-            await ctx.send(f"Couldn't embed that url (not a video post) {create_nexus_str()}")
+            await ctx.send(f"Couldn't embed that url (not a video post)",
+                           components=create_nexus_comps())
             success, response = False, "No duration"
         except InvalidFileType:
-            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file) {create_nexus_str()}")
+            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file)",
+                           components=create_nexus_comps())
             success, response = False, "Invalid file type"
         except NoPermsToView:
-            await ctx.send(f"Couldn't embed that url (no permissions to view) {create_nexus_str()}")
+            await ctx.send(f"Couldn't embed that url (no permissions to view)",
+                           components=create_nexus_comps())
             success, response = False, "No permissions"
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
             user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
             comp = [
-                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url="https://clyppy.io/vote/"),
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
                 Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url="https://clyppy.io/profile/tokens/")
             ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
@@ -989,11 +1013,13 @@ class BaseAutoEmbed:
                                        f"Voting with `/vote` will increase it by {EMBED_TOTAL_MAX_LENGTH // 60} minutes per vote!")
             success, response = False, "Video too long"
         except ClipFailure:
-            await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
+            await ctx.send(f"Unexpected error while trying to download this clip",
+                           components=create_nexus_comps())
             success, response = False, "Clip failure"
         except Exception as e:
             self.logger.info(f'Unexpected error in /embed: {str(e)}')
-            await ctx.send(f"An unexpected error occurred with your input `{url}` {create_nexus_str()}")
+            await ctx.send(f"An unexpected error occurred with your input `{url}`",
+                           components=create_nexus_comps())
             success, response = False, "Unexpected error"
 
         finally:
