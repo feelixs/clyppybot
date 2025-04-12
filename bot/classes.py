@@ -1005,7 +1005,7 @@ class BaseAutoEmbed:
                                f"You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
                                f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
                                f"You have `{user_tokens}` tokens available.\n"
-                               f"Since it's {dur / 60:.1f} minutes long, it will cost `{video_cost}` VIP tokens.",
+                               f"Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens.",
                                components=comp)
             else:
                 await ctx.send(content=f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
