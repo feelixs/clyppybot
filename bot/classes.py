@@ -990,8 +990,7 @@ class BaseAutoEmbed:
                                components=comp)
             else:
                 await ctx.send(content=f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes, longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                               f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}",
-                               components=comp)
+                               f"You can embed longer videos with VIP Tokens. Get tokens by voting with `/vote`! {create_nexus_str()}")
             success, response = False, "Video too long"
         except ClipFailure:
             await ctx.send(f"Unexpected error while trying to download this clip {create_nexus_str()}")
