@@ -2,10 +2,6 @@ from interactions import Button, ButtonStyle
 import os
 
 
-def create_nexus_str():
-    return f"\n\n**[Invite Clyppy]({INVITE_LINK}) | [Report an Issue]({SUPPORT_SERVER_URL}) | [Vote for me!]({CLYPPY_VOTE_URL})**"
-
-
 def create_nexus_comps():
     return [
         Button(style=ButtonStyle.LINK, url=INVITE_LINK, label='Invite Clyppy'),

@@ -4,7 +4,7 @@ from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle)
-from bot.env import SUPPORT_SERVER_URL, create_nexus_str
+from bot.env import SUPPORT_SERVER_URL
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens
@@ -525,7 +525,7 @@ class Base(Extension):
         if prepend_admin:
             about = "**ONLY MEMBERS WITH THE ADMINISTRATOR PERMISSIONS CAN EDIT SETTINGS**\n\n" + about
 
-        tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about + create_nexus_str())
+        tutorial_embed = Embed(title="CLYPPY SETTINGS", description=about)
         await ctx.send(embed=tutorial_embed)
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - /settings called',

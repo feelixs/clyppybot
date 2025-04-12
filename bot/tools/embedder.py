@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, Defi
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import create_nexus_str, DL_SERVER_ID
+from bot.env import DL_SERVER_ID
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union
 from bot.io.upload import upload_video
@@ -430,7 +430,6 @@ class AutoEmbedder:
                         description=f"I messed up while trying to fetch this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, you should report this error to us!")
-            emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
                 ctx=respond_to,
                 msg_embed=emb,
@@ -446,7 +445,6 @@ class AutoEmbedder:
                         description=f"I messed up while trying to fetch this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, you should report this error to us!")
-            emb.description += create_nexus_str()
             await self.bot.tools.send_error_message(
                 ctx=respond_to,
                 msg_embed=emb,
