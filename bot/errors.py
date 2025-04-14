@@ -122,6 +122,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise VideoSaidUnavailable
     elif 'Your IP address is blocked from accessing this post' in err:
         raise IPBlockedError
+    elif 'https://www.facebook.com/checkpoint' in err:
+        raise IPBlockedError
     elif 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:
