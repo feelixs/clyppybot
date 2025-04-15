@@ -205,6 +205,7 @@ class AutoEmbedder:
 
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
+            # also checks against the 'download this' webhook id, so the 'video refresher' webhook will trigger the normal block (create/refresh StoredVideo clip)
             the_file = f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'
             file_not_exists, _ = await is_404(the_file)
             if file_not_exists:
