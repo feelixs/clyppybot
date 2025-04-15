@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, Defi
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import DL_SERVER_ID
+from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union
 from bot.io.upload import upload_video
@@ -203,7 +203,7 @@ class AutoEmbedder:
             # should silently fail
             return None
 
-        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message):
+        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             the_file = f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'
             file_not_exists, _ = await is_404(the_file)
