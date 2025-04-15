@@ -180,9 +180,9 @@ class AutoEmbedder:
             )
         except Exception as e:
             # this is where we refund the tokens
-            self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.user.username} <{respond_to.user.id}>")
+            self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
             await subtract_tokens(
-                user=respond_to.user,
+                user=respond_to.author,
                 amt=-1 * clip.tokens_used,
                 clip_url=clip.url,
                 reason="Token Refund",
