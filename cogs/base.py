@@ -7,7 +7,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
 from bot.env import SUPPORT_SERVER_URL
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
-from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens
+from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
 from re import compile
@@ -78,11 +78,25 @@ class Base(Extension):
             if contains_clip_link:
                 return await p.handle_message(event)
 
+    @component_callback(compile(r"ibtn-refresh-.*"))
+    async def refresh_button_response(self, ctx: ComponentContext):
+        await ctx.defer(ephemeral=True)
+
+        clip_ctx = ctx.custom_id.split("-")
+        clyppyid = clip_ctx[-1]
+        resp = await refresh_clip(clyppyid, ctx.author.id)
+        if resp['code'] == 200:
+            await ctx.send("Clip refreshed successfully. It may take a few hours before it's viewable again in Discord.")
+        elif resp['code'] == 402:
+            await ctx.send("Uh oh... it seems you don't have enough tokens to refresh this clip.\n"
+                           f"You have: `{resp['req_tokens']}`, while this clip requires: `{resp['tokens_needed']}`")
+        else:
+            await ctx.send("Uh oh... an error occurred while refreshing the clip.\n"
+                           f"Error code: `{resp['code']}`\n"
+                           f"Message: `{resp['error']}`")
+
     @component_callback(compile(r"ibtn-.*"))
     async def info_button_response(self, ctx: ComponentContext):
-        """
-        This function gets called whenever a user clicks an info button.
-        """
         await ctx.defer(ephemeral=True)
 
         clip_ctx = ctx.custom_id.split("-")
@@ -144,6 +158,8 @@ class Base(Extension):
                             exp_str = "Expires"
                         else:
                             exp_str = "Expired"
+                            buttons.pop(-1)  # remove the "View your clips" button
+                            buttons.append(Button(style=ButtonStyle.BLURPLE, label="File Expired - Refresh?", custom_id=f"ibtn-refresh-{clyppyid}"))
                         embed.add_field(name=exp_str, value=f"{clip_info['expiry_ts_str']}")
                     elif clyppy_cdn and deleted:
                         embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")

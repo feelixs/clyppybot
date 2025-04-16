@@ -106,6 +106,18 @@ async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, descr
                 raise Exception(f"Failed to subtract user's VIP tokens: {error_data.get('error', 'Unknown error')}")
 
 
+async def refresh_clip(clip_id: str, user_id: int):
+    url = f"https://clyppy.io/api/clips/refresh/{clip_id}"
+    head = {
+        'X-Discord-User-Id': user_id,
+        'Not-Encoded': True,
+        'Ignore-User-Check': True
+    }
+    async with get_aiohttp_session() as session:
+        async with session.post(url, header=head) as response:
+            return await response.json()
+
+
 async def author_has_premium(user):
     return str(user.id) == '164115540426752001'
 
