@@ -110,8 +110,8 @@ async def refresh_clip(clip_id: str, user_id: int):
     url = f"https://clyppy.io/api/clips/refresh/{clip_id}"
     head = {
         'X-Discord-User-Id': str(user_id),
-        'Not-Encoded': True,
-        'Ignore-User-Check': True
+        'Not-Encoded': 'true',
+        'Ignore-User-Check': 'true'
     }
     async with get_aiohttp_session() as session:
         async with session.post(url, headers=head) as response:
