@@ -78,7 +78,7 @@ class Base(Extension):
             if contains_clip_link:
                 return await p.handle_message(event)
 
-    @component_callback(compile(r"ibtn-refresh-.*"))
+    @component_callback(compile(r"rbtn-.*"))
     async def refresh_button_response(self, ctx: ComponentContext):
         await ctx.defer(ephemeral=True)
 
@@ -159,7 +159,7 @@ class Base(Extension):
                         else:
                             exp_str = "Expired"
                             buttons.pop(-1)  # remove the "View your clips" button
-                            buttons.append(Button(style=ButtonStyle.BLURPLE, label="File Expired - Refresh?", custom_id=f"ibtn-refresh-{clyppyid}"))
+                            buttons.append(Button(style=ButtonStyle.BLURPLE, label="File Expired - Refresh?", custom_id=f"rbtn-{clyppyid}"))
                         embed.add_field(name=exp_str, value=f"{clip_info['expiry_ts_str']}")
                     elif clyppy_cdn and deleted:
                         embed.add_field(name="Deleted", value=dstr if dstr is not None else "True")
