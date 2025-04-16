@@ -114,7 +114,7 @@ async def refresh_clip(clip_id: str, user_id: int):
         'Ignore-User-Check': True
     }
     async with get_aiohttp_session() as session:
-        async with session.post(url, header=head) as response:
+        async with session.post(url, headers=head) as response:
             return await response.json()
 
 
