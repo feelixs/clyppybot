@@ -90,6 +90,9 @@ class Base(Extension):
         elif resp['code'] == 402:
             await ctx.send("Uh oh... it seems you don't have enough tokens to refresh this clip.\n"
                            f"You have: `{resp['req_tokens']}`, while this clip requires: `{resp['tokens_needed']}`")
+        elif resp['code'] == 202:
+            # todo -> see if we can't provide a 'no-cache' header to discord?
+            await ctx.send("Uh oh... it seems the clip has already been refreshed. Please check back in a few hours.\n")
         else:
             await ctx.send("Uh oh... an error occurred while refreshing the clip.\n"
                            f"Error code: `{resp['code']}`\n"
