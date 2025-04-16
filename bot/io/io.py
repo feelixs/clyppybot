@@ -109,7 +109,7 @@ async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, descr
 async def refresh_clip(clip_id: str, user_id: int):
     url = f"https://clyppy.io/api/clips/refresh/{clip_id}"
     head = {
-        'X-Discord-User-Id': user_id,
+        'X-Discord-User-Id': str(user_id),
         'Not-Encoded': True,
         'Ignore-User-Check': True
     }
