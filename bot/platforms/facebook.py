@@ -14,7 +14,7 @@ class FacebookMisc(BaseMisc):
         pattern = r'(?:https?://)?(?:www\.)?facebook\.com/([a-zA-Z0-9_-]+)(?:/|$|\?)'
         match = re.match(pattern, url)
         #return match.group(1) if match else None
-
+        
         # incompatible because facebook easily detects bot behavior -> limits this IP -> could lead to other issues with other platforms?
         return None
 
