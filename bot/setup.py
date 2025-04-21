@@ -1,4 +1,3 @@
-from interactions import Client
 from bot.platforms.dailymotion import DailymotionMisc
 from bot.platforms.drive import GoogleDriveMisc
 from bot.platforms.insta import InstagramMisc
@@ -21,6 +20,8 @@ from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
 from bot.tools.misc import Tools
 from bot.classes import BaseAutoEmbed
+
+from interactions import Client
 import logging
 
 
