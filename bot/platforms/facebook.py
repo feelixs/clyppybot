@@ -15,7 +15,7 @@ class FacebookMisc(BaseMisc):
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
-    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'FacebookClip':
+    async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> Optional['FacebookClip']:
         return None  # incompatible because facebook easily detects bot behavior -> limits this IP -> could lead to other issues with other platforms?
         #shortcode = self.parse_clip_url(url)
         #if not shortcode:
