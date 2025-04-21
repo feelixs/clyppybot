@@ -1,5 +1,5 @@
 import re
-from bot.errors import VideoTooLong, NoDuration
+from bot.errors import VideoTooLong, NoDuration, UnsupportedError
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
 from typing import Optional
@@ -16,7 +16,7 @@ class FacebookMisc(BaseMisc):
         return match.group(1) if match else None
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> Optional['FacebookClip']:
-        return None  # incompatible because facebook easily detects bot behavior -> limits this IP -> could lead to other issues with other platforms?
+        raise UnsupportedError  # incompatible because facebook easily detects bot behavior -> limits this IP -> could lead to other issues with other platforms?
         #shortcode = self.parse_clip_url(url)
         #if not shortcode:
         #    self.logger.info(f"Invalid Facebook URL: {url}")
