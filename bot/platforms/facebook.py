@@ -11,7 +11,7 @@ class FacebookMisc(BaseMisc):
         self.platform_name = "Facebook"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
-        pattern = r'(?:https?://)?facebook\.com/([a-zA-Z0-9_-]+)(?:/|$|\?)'
+        pattern = r'(?:https?://)?(?:www\.)?facebook\.com/([a-zA-Z0-9_-]+)(?:/|$|\?)'
         match = re.match(pattern, url)
         return match.group(1) if match else None
 
