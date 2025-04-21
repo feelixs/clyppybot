@@ -974,7 +974,7 @@ class BaseAutoEmbed:
                            components=create_nexus_comps())
             success, response = False, "403 Forbidden"
         except UnsupportedError:
-            await ctx.send(f"Couldn't embed that url (invalid/incompatible)",
+            await ctx.send(f"Couldn't embed that url. That platform is not supported {get_random_face()}",
                            components=create_nexus_comps())
             success, response = False, "Incompatible"
         except (NoDuration, DefinitelyNoDuration):
