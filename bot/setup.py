@@ -15,6 +15,7 @@ from bot.platforms.kick import KickMisc
 from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
+from bot.platforms.facebook import FacebookMisc
 from bot.platforms.base import BASIC_MISC
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
@@ -47,6 +48,7 @@ def init_misc(bot: Client) -> Client:
     bot.youp = YoupoMisc(bot=bot)
     bot.x = Xmisc(bot=bot)
     bot.xvid = XvidMisc(bot=bot)
+    bot.facebook = FacebookMisc(bot=bot)
     bot.r34 = R34Misc(bot=bot)
     bot.bsky = BlueSkyMisc(bot=bot)
     bot.bili = BiliMisc(bot=bot)
@@ -67,6 +69,7 @@ def init_misc(bot: Client) -> Client:
         bot.insta,
         bot.medal,
         bot.reddit,
+        bot.facebook,
         bot.yt,
         bot.x,
         bot.bsky,
