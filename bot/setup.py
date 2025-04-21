@@ -15,9 +15,10 @@ from bot.platforms.phub import PhubMisc
 from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
 from bot.platforms.facebook import FacebookMisc
-from bot.platforms.base import BASIC_MISC
 from bot.platforms.discord_attach import DiscordMisc
 from bot.platforms.x import Xmisc
+
+from bot.platforms.base import BASIC_MISC
 from bot.tools.misc import Tools
 from bot.classes import BaseAutoEmbed
 
