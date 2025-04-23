@@ -124,6 +124,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise IPBlockedError
     elif 'https://www.facebook.com/checkpoint' in err:
         raise IPBlockedError
+    elif "Explicit content cannot be sent to the desired recipient" in err:
+        raise NoPermsToView
     elif 'You don\'t have permission' in err or "unable to view this" in err:
         raise NoPermsToView
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:

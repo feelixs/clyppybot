@@ -966,28 +966,23 @@ class BaseAutoEmbed:
                            components=create_nexus_comps())
             success, response = False, "RemoteTimeout"
         except UrlUnparsable:
-            await ctx.send(f"I couldn't parse that url. Did you enter it correctly?",
-                           components=create_nexus_comps())
+            await ctx.send(f"I couldn't parse that url. Did you enter it correctly?", components=create_nexus_comps())
             success, response = False, "UrlParseError"
         except YtDlpForbiddenError:
             await ctx.send(f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website?",
                            components=create_nexus_comps())
             success, response = False, "403 Forbidden"
         except UnsupportedError:
-            await ctx.send(f"Couldn't embed that url. That platform is not supported {get_random_face()}",
-                           components=create_nexus_comps())
+            await ctx.send(f"Couldn't embed that url. That platform is not supported {get_random_face()}", components=create_nexus_comps())
             success, response = False, "Incompatible"
         except (NoDuration, DefinitelyNoDuration):
-            await ctx.send(f"Couldn't embed that url (not a video post)",
-                           components=create_nexus_comps())
+            await ctx.send(f"Couldn't embed that url (not a video post)", components=create_nexus_comps())
             success, response = False, "No duration"
         except InvalidFileType:
-            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file)",
-                           components=create_nexus_comps())
+            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file)", components=create_nexus_comps())
             success, response = False, "Invalid file type"
         except NoPermsToView:
-            await ctx.send(f"Couldn't embed that url (no permissions to view)",
-                           components=create_nexus_comps())
+            await ctx.send(f"Couldn't embed that url (no permissions to view)", components=create_nexus_comps())
             success, response = False, "No permissions"
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
             user_tokens = await self.fetch_tokens(ctx.user)
