@@ -465,18 +465,14 @@ class AutoEmbedder:
                 )
 
             if not has_sent_discord_msg:
-                video = {
-                    'id': clip.clyppy_id,
-                    'url': clip_link,
-                    'platform': clip.service,
-                }
                 exception = {
                     'name': err_name,
                     'msg': str(e),
                 }
                 await push_interaction_error(
+                    clip=clip,
                     parent_msg=respond_to,
-                    video_info=video,
+                    clip_url=clip_link,
                     error_info=exception,
                     handled=False
                 )
