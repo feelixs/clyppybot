@@ -362,6 +362,7 @@ class Base(Extension):
                                                type=OptionType.STRING)
                             ])
     async def embed(self, ctx: SlashContext, url: str):
+        self.logger.info(f"@slash_command for /embed - {ctx.author.id} - {url}")
         # trim off extra characters at start or beginning
         while url.startswith('*') or url.startswith('['):
             url = url[1:]
