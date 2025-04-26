@@ -1045,6 +1045,7 @@ class BaseAutoEmbed:
                 }
                 await push_interaction_error(
                     parent_msg=ctx,
+                    platform_name=platform_name,
                     clip=clip,
                     clip_url=url,
                     error_info=exception,
