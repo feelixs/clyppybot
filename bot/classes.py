@@ -962,7 +962,7 @@ class BaseAutoEmbed:
                            components=create_nexus_comps())
             success, response = False, "VideoUnavailable"
         except RemoteTimeoutError:
-            await ctx.send(f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}",
+            await ctx.send(f"The url returned 'Timeout Error'. Maybe there's an issue with the site at the moment... {get_random_face()}",
                            components=create_nexus_comps())
             success, response = False, "RemoteTimeout"
         except UrlUnparsable:
