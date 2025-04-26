@@ -49,7 +49,7 @@ async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_
             'video_platform': video_platform,
             'username': parent_msg.author.username,
             'user_id': parent_msg.author.id,
-            'was_unexpected': not handled,
+            'handled': handled,
         }, headers=headers) as response:
             if response.status != 201:
                 raise Exception(f"Failed to push interaction error: {await response.text()}")
