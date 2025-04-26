@@ -34,7 +34,7 @@ async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_
 
     video_id = None
     if clip is not None:
-        video_id = clip.id
+        video_id = clip.clyppy_id
 
     video_platform = platform_name.lower()
     video_url = clip_url
