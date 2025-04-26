@@ -47,7 +47,7 @@ async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_
             'error_message': error_msg,
             'video_url': video_url,
             'video_platform': video_platform,
-            'username': parent_msg.author,
+            'username': parent_msg.author.username,
             'user_id': parent_msg.author.id,
             'was_unexpected': not handled,
         }, headers=headers) as response:
