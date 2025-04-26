@@ -641,7 +641,7 @@ class Base(Extension):
             return
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': num},
+                async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                     await resp.text()
         except:
@@ -649,8 +649,8 @@ class Base(Extension):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
-                                        json={'server_count': num,
-                                              'shard_count': 1},
+                                        json={'server_count': str(num),
+                                              'shard_count': "1"},
                                         headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
                     await resp.json()
         except:
