@@ -351,7 +351,10 @@ class BaseClip(ABC):
             'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
-            'user_agent': YT_DLP_USER_AGENT
+            'user_agent': YT_DLP_USER_AGENT,
+            'headers': {
+                'x-client-transaction-id': 'H/HJB3naILIqzncBBvY50XFL36IYeol67HU4ZlUe8wYvWdn9q7KJf7k2UBKOMwliRmCnohzCodsUCuvWOl9t0Z/wVY3QHA'
+            }
         }
 
         if cookies:
@@ -539,7 +542,10 @@ class BaseMisc(ABC):
             'no_warnings': True,
             'verbose': False,
             'extract_flat': not download,  # only extract metadata, (it won't download if this is true)
-            'user_agent': YT_DLP_USER_AGENT
+            'user_agent': YT_DLP_USER_AGENT,
+            'headers': {
+                'x-client-transaction-id': 'H/HJB3naILIqzncBBvY50XFL36IYeol67HU4ZlUe8wYvWdn9q7KJf7k2UBKOMwliRmCnohzCodsUCuvWOl9t0Z/wVY3QHA'
+            }
         }
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
