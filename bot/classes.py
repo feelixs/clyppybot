@@ -942,13 +942,13 @@ class BaseAutoEmbed:
 
         clip = None
         try:
-            clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
-
             if isinstance(ctx, SlashContext):
                 self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
             elif isinstance(ctx, Message):
                 # for logging response times - it hasn't been set up for slash commands yet
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
+
+            clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
             await self.embedder.process_clip_link(
                 clip=clip,
                 clip_link=url,
