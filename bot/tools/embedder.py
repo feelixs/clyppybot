@@ -191,7 +191,8 @@ class AutoEmbedder:
             )
             raise e
 
-    async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True):
+    async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType,
+                            try_send_files=True):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
         else:
@@ -204,7 +205,8 @@ class AutoEmbedder:
             # should silently fail
             return None
 
-        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
+        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to,
+                                                             Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             # also checks against the 'download this' webhook id, so the 'video refresher' webhook will trigger the normal block (create/refresh StoredVideo clip)
             # TODO: decrement the tokens used for this clip by parsing the <@user_id> from the message
@@ -213,7 +215,8 @@ class AutoEmbedder:
             if file_not_exists:
                 self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
-                response: LocalFileInfo = await self.bot.tools.dl.download_clip(clip, can_send_files=False, skip_upload=True)
+                response: LocalFileInfo = await self.bot.tools.dl.download_clip(clip, can_send_files=False,
+                                                                                skip_upload=True)
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
@@ -236,7 +239,7 @@ class AutoEmbedder:
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 info = await get_clip_info(clip.clyppy_id)
-                #if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
+                # if not await author_has_enough_tokens(respond_to, ...):  # todo if i ever care
                 #    raise VideoTooLong(...duration)
                 response: DownloadResponse = DownloadResponse(
                     remote_url=info['url'],
@@ -248,8 +251,6 @@ class AutoEmbedder:
                     video_name=info['title'],
                     can_be_discord_uploaded=False
                 )
-
-        has_sent_discord_msg = False
 
         # send embed
         try:
@@ -364,7 +365,8 @@ class AutoEmbedder:
                     if result['video_page_id']:
                         new_id = result["video_page_id"]
                         if new_id != clip.clyppy_id:
-                            self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
+                            self.logger.info(
+                                f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
                             clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
@@ -408,14 +410,14 @@ class AutoEmbedder:
                                 content=f'<@{respond_to.author.id}>, {clip.clyppy_url}',
                                 components=comp
                             )
-                has_sent_discord_msg = True
 
                 my_response_time = 0
                 if isinstance(respond_to, Message):
                     # don't publish response_time on /embeds, we could but we need a way to pull timestamp from SlashContext
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
-                    self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
+                    self.logger.info(
+                        f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                 if result['success']:
                     await publish_interaction(
                         interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
@@ -423,58 +425,41 @@ class AutoEmbedder:
                         edit_id=result['id'],
                         edit_type='response_time'
                     )
-
-                    return 1  # success!
                 else:
-                    self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
-                    return 0
+                    self.logger.info(
+                        f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
                 raise
 
-        except Exception as e:
-            err_name = e.__class__.__name__
-            if err_name == "HTTPException":
-                self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
-                emb = Embed(title="**Oops...**",
-                            description=f"I messed up while trying to fetch this clip:\n{clip_link} "
-                                        f"\n\nPlease try linking it again.\n"
-                                        "If the issue keeps on happening, you should report this error to us!")
-                await self.bot.tools.send_error_message(
-                    ctx=respond_to,
-                    msg_embed=emb,
-                    dm_content=f"Failed to fetch clip {clip_link}",
-                    guild=guild,
-                    bot=self.bot,
-                    delete_after_on_reply=60
-                )
-            else:
-                self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
-                emb = Embed(title="**Oops...**",
-                            description=f"I messed up while trying to fetch this clip:\n{clip_link} "
-                                        f"\n\nPlease try linking it again.\n"
-                                        "If the issue keeps on happening, you should report this error to us!")
-                await self.bot.tools.send_error_message(
-                    ctx=respond_to,
-                    msg_embed=emb,
-                    dm_content=f"Failed to fetch clip {clip_link}",
-                    guild=guild,
-                    bot=self.bot,
-                    delete_after_on_reply=60
-                )
-
-            if not has_sent_discord_msg:
-                exception = {
-                    'name': err_name,
-                    'msg': str(e),
-                }
-                await push_interaction_error(
-                    clip=clip,
-                    parent_msg=respond_to,
-                    clip_url=clip_link,
-                    error_info=exception,
-                    handled=False
-                )
-
+        except errors.HTTPException as e:
+            self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
+            emb = Embed(title="**Oops...**",
+                        description=f"I messed up while trying to fetch this clip:\n{clip_link} "
+                                    f"\n\nPlease try linking it again.\n"
+                                    "If the issue keeps on happening, you should report this error to us!")
+            await self.bot.tools.send_error_message(
+                ctx=respond_to,
+                msg_embed=emb,
+                dm_content=f"Failed to fetch clip {clip_link}",
+                guild=guild,
+                bot=self.bot,
+                delete_after_on_reply=60
+            )
+            raise
+        except Exception:
+            self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
+            emb = Embed(title="**Oops...**",
+                        description=f"I messed up while trying to fetch this clip:\n{clip_link} "
+                                    f"\n\nPlease try linking it again.\n"
+                                    "If the issue keeps on happening, you should report this error to us!")
+            await self.bot.tools.send_error_message(
+                ctx=respond_to,
+                msg_embed=emb,
+                dm_content=f"Failed to fetch clip {clip_link}",
+                guild=guild,
+                bot=self.bot,
+                delete_after_on_reply=60
+            )
             raise
