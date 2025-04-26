@@ -1038,19 +1038,15 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
-            if not success and clip is not None:
-                video = {
-                    'id': clip.clyppy_id,
-                    'url': url,
-                    'platform': clip.service
-                }
+            if not success:
                 exception = {
                     'name': response,
                     'msg': response_msg
                 }
                 await push_interaction_error(
                     parent_msg=ctx,
-                    video_info=video,
+                    clip=clip,
+                    clip_url=url,
                     error_info=exception,
                     handled=err_handled
                 )
