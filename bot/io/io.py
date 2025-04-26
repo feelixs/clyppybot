@@ -1,5 +1,7 @@
+from interactions import SlashContext, Message
+
 from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH, EMBED_TOKEN_COST, DL_SERVER_ID
-from typing import Tuple
+from typing import Tuple, Union
 from math import ceil
 from os import getenv
 import aiohttp
@@ -21,6 +23,35 @@ async def fetch_video_status(clip_id: str):
     async with get_aiohttp_session() as session:
         async with session.get(url, json={'clip_id': clip_id}, headers=headers) as response:
             return await response.json()
+
+
+async def push_interaction_error(parent_msg: Union[Message, SlashContext], video_info: dict, error_info: dict, handled: bool):
+    url = 'https://clyppy.io/api/clips/interaction-error/'
+    headers = {
+        'auth': getenv('clyppy_post_key'),
+        'Content-Type': 'application/json'
+    }
+    video_id = video_info['id']
+    video_url = video_info['url']
+    video_platform = video_info['platform']
+
+    error_name = error_info['name']
+    error_msg = error_info['msg']
+    async with get_aiohttp_session() as session:
+        async with session.post(url, json={
+            'clyppy_id_ctx': video_id,
+            'error_type': error_name,
+            'error_message': error_msg,
+            'video_url': video_url,
+            'video_platform': video_platform,
+            'username': parent_msg.author,
+            'user_id': parent_msg.author.id,
+            'was_unexpected': not handled,
+        }, headers=headers) as response:
+            if response.status != 201:
+                raise Exception(f"Failed to push interaction error: {await response.text()}")
+            else:
+                return await response.json()
 
 
 async def is_404(url: str, logger=None) -> Tuple[bool, int]:

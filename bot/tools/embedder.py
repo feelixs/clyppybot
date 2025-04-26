@@ -1,6 +1,7 @@
-from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
+from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow
 from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, DefinitelyNoDuration
-from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens
+from bot.classes import BaseClip
+from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID
@@ -135,7 +136,9 @@ class AutoEmbedder:
         else:
             self.bot.currently_embedding.append(parsed_id)
         try:
+            clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
             await self.process_clip_link(
+                clip=clip,
                 clip_link=clip_link,
                 respond_to=respond_to,
                 guild=guild,
@@ -167,8 +170,7 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def process_clip_link(self, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
-        clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
+    async def process_clip_link(self, clip: BaseClip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
         # get_clip will have used the VIP tokens if they were needed for this clip
         try:
             await self._process_clip(
@@ -247,6 +249,8 @@ class AutoEmbedder:
                     video_name=info['title'],
                     can_be_discord_uploaded=False
                 )
+
+        has_sent_discord_msg = False
 
         # send embed
         try:
@@ -405,6 +409,7 @@ class AutoEmbedder:
                                 content=f'<@{respond_to.author.id}>, {clip.clyppy_url}',
                                 components=comp
                             )
+                has_sent_discord_msg = True
 
                 my_response_time = 0
                 if isinstance(respond_to, Message):
@@ -419,40 +424,62 @@ class AutoEmbedder:
                         edit_id=result['id'],
                         edit_type='response_time'
                     )
+
+                    return 1  # success!
                 else:
                     self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
+                    return 0
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
                 raise
 
-        except errors.HTTPException as e:
-            self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
-            emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to fetch this clip:\n{clip_link} "
-                                    f"\n\nPlease try linking it again.\n"
-                                    "If the issue keeps on happening, you should report this error to us!")
-            await self.bot.tools.send_error_message(
-                ctx=respond_to,
-                msg_embed=emb,
-                dm_content=f"Failed to fetch clip {clip_link}",
-                guild=guild,
-                bot=self.bot,
-                delete_after_on_reply=60
-            )
-            raise
-        except Exception:
-            self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
-            emb = Embed(title="**Oops...**",
-                        description=f"I messed up while trying to fetch this clip:\n{clip_link} "
-                                    f"\n\nPlease try linking it again.\n"
-                                    "If the issue keeps on happening, you should report this error to us!")
-            await self.bot.tools.send_error_message(
-                ctx=respond_to,
-                msg_embed=emb,
-                dm_content=f"Failed to fetch clip {clip_link}",
-                guild=guild,
-                bot=self.bot,
-                delete_after_on_reply=60
-            )
+        except Exception as e:
+            err_name = e.__class__.__name__
+            if err_name == "HTTPException":
+                self.logger.info(f"Unknown HTTPException in _process_this_clip_link: {traceback.format_exc()}")
+                emb = Embed(title="**Oops...**",
+                            description=f"I messed up while trying to fetch this clip:\n{clip_link} "
+                                        f"\n\nPlease try linking it again.\n"
+                                        "If the issue keeps on happening, you should report this error to us!")
+                await self.bot.tools.send_error_message(
+                    ctx=respond_to,
+                    msg_embed=emb,
+                    dm_content=f"Failed to fetch clip {clip_link}",
+                    guild=guild,
+                    bot=self.bot,
+                    delete_after_on_reply=60
+                )
+            else:
+                self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
+                emb = Embed(title="**Oops...**",
+                            description=f"I messed up while trying to fetch this clip:\n{clip_link} "
+                                        f"\n\nPlease try linking it again.\n"
+                                        "If the issue keeps on happening, you should report this error to us!")
+                await self.bot.tools.send_error_message(
+                    ctx=respond_to,
+                    msg_embed=emb,
+                    dm_content=f"Failed to fetch clip {clip_link}",
+                    guild=guild,
+                    bot=self.bot,
+                    delete_after_on_reply=60
+                )
+
+            if not has_sent_discord_msg:
+                video = {
+                    'id': clip.clyppy_id,
+                    'url': clip_link,
+                    'platform': clip.service,
+                }
+                exception = {
+                    'name': err_name,
+                    'msg': str(e),
+                }
+                await push_interaction_error(
+                    parent_msg=respond_to,
+                    video_info=video,
+                    error_info=exception,
+                    handled=False
+                )
+
             raise

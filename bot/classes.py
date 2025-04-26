@@ -1,27 +1,28 @@
-from bot.env import MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT
-from bot.io import author_has_enough_tokens, author_has_premium
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
+from PIL import Image
+from time import time
+from datetime import datetime
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
 from interactions.api.events import MessageCreate
-from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session, get_token_cost
+
 from bot.tools.embedder import AutoEmbedder
+from bot.io.cdn import CdnSpacesClient
+from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
-from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC, EMBED_TOTAL_MAX_LENGTH,
-                     EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION, CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE)
+from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
+                     EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
+                     CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         ClipFailure, IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration, handle_yt_dlp_err)
-from PIL import Image
+
 import hashlib
 import aiohttp
-from datetime import datetime
 import logging
 import asyncio
-from time import time
 import random
 import os
 
@@ -850,7 +851,7 @@ class BaseAutoEmbed:
                 self.bot.currently_downloading.append(slug)
         except Exception as e:
             self.logger.info(f"Exception in /embed preparation: {str(e)}")
-            await ctx.send(f"Unexpected error while trying to embed this url",
+            await ctx.send(content=f"Unexpected error while trying to embed this url",
                            components=create_nexus_comps())
             await send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
@@ -930,15 +931,18 @@ class BaseAutoEmbed:
         if isinstance(ctx, Message):
             pre = '.'
 
-        success, response = False, "Timeout reached"
+        response_msg = ""
+        success, response, err_handled = False, "Timeout reached", False
+
+        clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
         try:
             if isinstance(ctx, SlashContext):
                 self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
             elif isinstance(ctx, Message):
                 # for logging response times - it hasn't been set up for slash commands yet
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
-
             await self.embedder.process_clip_link(
+                clip=clip,
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
@@ -946,44 +950,49 @@ class BaseAutoEmbed:
             )
             success, response = True, "Success"
         except FileNotFoundError:  # ytdlp failed to download the file, but the output wasn't captured
-            await ctx.send(f"The file could not be downloaded. Does the url points to a video?",
-                           components=create_nexus_comps())
-            success, response = False, "FileNotFound"
+            response_msg = f"The file could not be downloaded. Does the url points to a video?"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "FileNotFound", True
         except IPBlockedError:
-            await ctx.send(f"{get_random_face()} The platform said my IP was blocked from viewing that link",
-                           components=create_nexus_comps())
-            success, response = False, "IPBlocked"
+            response_msg = f"{get_random_face()} The platform said my IP was blocked from viewing that link"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "IPBlocked", True
         except VideoUnavailable:
-            await ctx.send(f"That video is not available anymore {get_random_face()}",
-                           components=create_nexus_comps())
-            success, response = False, "VideoUnavailable"
+            response_msg = f"That video is not available anymore {get_random_face()}"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "VideoUnavailable", True
         except VideoSaidUnavailable:
-            await ctx.send(f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}",
-                           components=create_nexus_comps())
-            success, response = False, "VideoUnavailable"
+            response_msg = f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "VideoUnavailable", True
         except RemoteTimeoutError:
-            await ctx.send(f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}",
-                           components=create_nexus_comps())
-            success, response = False, "RemoteTimeout"
+            response_msg = f"The url returned 'Timeout Error'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "RemoteTimeout", True
         except UrlUnparsable:
-            await ctx.send(f"I couldn't parse that url. Did you enter it correctly?", components=create_nexus_comps())
-            success, response = False, "UrlParseError"
+            response_msg = f"I couldn't parse that url. Did you enter it correctly?"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "UrlParseError", True
         except YtDlpForbiddenError:
-            await ctx.send(f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website?",
-                           components=create_nexus_comps())
-            success, response = False, "403 Forbidden"
+            response_msg = f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website?"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "403 Forbidden", True
         except UnsupportedError:
-            await ctx.send(f"Couldn't embed that url. That platform is not supported {get_random_face()}", components=create_nexus_comps())
-            success, response = False, "Incompatible"
+            response_msg = f"Couldn't embed that url. That platform is not supported {get_random_face()}"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "Incompatible", True
         except (NoDuration, DefinitelyNoDuration):
-            await ctx.send(f"Couldn't embed that url (not a video post)", components=create_nexus_comps())
-            success, response = False, "No duration"
+            response_msg = f"Couldn't embed that url (not a video post)"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "No duration", True
         except InvalidFileType:
-            await ctx.send(f"Couldn't embed that url (invalid type/corrupted video file)", components=create_nexus_comps())
-            success, response = False, "Invalid file type"
+            response_msg = f"Couldn't embed that url (invalid type/corrupted video file)"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "Invalid file type", True
         except NoPermsToView:
-            await ctx.send(f"Couldn't embed that url (no permissions to view)", components=create_nexus_comps())
-            success, response = False, "No permissions"
+            response_msg = f"Couldn't embed that url (no permissions to view)"
+            await ctx.send(response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "No permissions", True
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
             user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
@@ -993,28 +1002,27 @@ class BaseAutoEmbed:
                 # and we don't want to appear too desparate
             ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
-                await ctx.send(f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens.")
+                response_msg = f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens."
+                await ctx.send(response_msg, components=create_nexus_comps())
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
-                await ctx.send(content=f"{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
-                               f"You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
-                               f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
-                               f"You have `{user_tokens}` tokens available.\n"
-                               f"Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens.",
-                               components=comp)
+                response_msg = f"""{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
+                                f"You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
+                                f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
+                                f"You have `{user_tokens}` tokens available.\n"
+                                f"Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
+                await ctx.send(response_msg, components=comp)
             else:
-                await ctx.send(content=f"{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                                       f"Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!")
-            success, response = False, "Video too long"
-        except ClipFailure:
-            await ctx.send(f"Unexpected error while trying to download this clip",
-                           components=create_nexus_comps())
-            success, response = False, "Clip failure"
+                response_msg = f"""{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
+                                "Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!"""
+                await ctx.send(content=response_msg, components=create_nexus_comps())
+            success, response, err_handled = False, "Video too long", True
         except Exception as e:
+            response_msg = str(e)
             self.logger.info(f'Unexpected error in /embed: {str(e)}')
             await ctx.send(f"An unexpected error occurred with your input `{url}`",
                            components=create_nexus_comps())
-            success, response = False, "Unexpected error"
+            success, response, err_handled = False, "Unexpected error", False
 
         finally:
             await send_webhook(
@@ -1028,3 +1036,19 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
+            if not success:
+                video = {
+                    'id': clip.clyppy_id,
+                    'url': url,
+                    'platform': clip.service
+                }
+                exception = {
+                    'name': response,
+                    'msg': response_msg
+                }
+                await push_interaction_error(
+                    parent_msg=ctx,
+                    video_info=video,
+                    error_info=exception,
+                    handled=err_handled
+                )
