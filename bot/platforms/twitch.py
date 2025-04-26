@@ -17,12 +17,12 @@ class TwitchMisc(BaseMisc):
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
-            Extracts the video ID from a YouTube URL if present.
+            Extracts the video ID from a Twitch URL if present.
             Works with all supported URL formats.
         """
         patterns = [
-            r'^(?:https?://)?(?:www\.|m\.)?clips\.twitch\.tv/([a-zA-Z0-9_-]+)/?$',
-            r'^(?:https?://)?(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([a-zA-Z0-9_-]+)/?$',
+            r'^(?:https?://)?(?:www\.|m\.)?clips\.twitch\.tv/([a-zA-Z0-9_-]+)(?:\?.*)?$',
+            r'^(?:https?://)?(?:www\.|m\.)?twitch\.tv/(?:[a-zA-Z0-9_-]+/)?clip/([a-zA-Z0-9_-]+)(?:\?.*)?$'
             r'^(?:https?://)?(?:www\.)?clyppy\.com/?clips/([a-zA-Z0-9_-]+)',
             r'^(?:https?://)?(?:www\.)?clyppy\.io/?clips/([a-zA-Z0-9_-]+)'
         ]
