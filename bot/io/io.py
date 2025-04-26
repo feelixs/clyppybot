@@ -25,16 +25,20 @@ async def fetch_video_status(clip_id: str):
             return await response.json()
 
 
-async def push_interaction_error(parent_msg: Union[Message, SlashContext], video_info: dict, error_info: dict, handled: bool):
+async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_url, error_info: dict, handled: bool, clip=None):
     url = 'https://clyppy.io/api/clips/interaction-error/'
     headers = {
         'auth': getenv('clyppy_post_key'),
         'Content-Type': 'application/json'
     }
-    video_id = video_info['id']
-    video_url = video_info['url']
-    video_platform = video_info['platform']
 
+    video_id = None
+    video_platform = None
+    if clip is not None:
+        video_id = clip.id
+        video_platform = clip.platform
+
+    video_url = clip_url
     error_name = error_info['name']
     error_msg = error_info['msg']
     async with get_aiohttp_session() as session:
