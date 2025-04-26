@@ -934,8 +934,10 @@ class BaseAutoEmbed:
         response_msg = ""
         success, response, err_handled = False, "Timeout reached", False
 
-        clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
+        clip = None
         try:
+            clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
+
             if isinstance(ctx, SlashContext):
                 self.embedder.platform_tools = platform  # if called from /embed, the self.embedder is 'base'
             elif isinstance(ctx, Message):
@@ -1036,7 +1038,7 @@ class BaseAutoEmbed:
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             )
-            if not success:
+            if not success and clip is not None:
                 video = {
                     'id': clip.clyppy_id,
                     'url': url,
