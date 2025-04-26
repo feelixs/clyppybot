@@ -72,10 +72,6 @@ class InvalidFileType(Exception):
     pass
 
 
-class ClipFailure(Exception):
-    pass
-
-
 class DriverDownloadFailed(Exception):
     pass
 

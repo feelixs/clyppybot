@@ -1,5 +1,5 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
-from bot.errors import VideoTooLong, NoDuration, ClipFailure, UnknownError, DefinitelyNoDuration
+from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDuration
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
@@ -134,6 +134,11 @@ class AutoEmbedder:
             await self._wait_for_download(parsed_id)
         else:
             self.bot.currently_embedding.append(parsed_id)
+
+        clip = None
+        handled = False
+        err_msg = "Unknown error in quickembed"
+        exc_name = "None"
         try:
             clip = await self.platform_tools.get_clip(clip_link, extended_url_formats=True, basemsg=respond_to)
             await self.process_clip_link(
@@ -145,11 +150,17 @@ class AutoEmbedder:
             )
         except VideoTooLong:
             self.logger.info(f"VideoTooLong was reported for {clip_link}")
-        except (NoDuration, DefinitelyNoDuration):
+            err_msg = "Video was too long"
+            handled = True
+            exc_name = "VideoTooLong"
+        except (NoDuration, DefinitelyNoDuration) as e:
             self.logger.info(f"NoDuration was reported for {clip_link}")
-        except ClipFailure:
-            self.logger.info(f"ClipFailure was reported for {clip_link}")
+            err_msg = "No duration found for this clip"
+            handled = True
+            exc_name = type(e).__name__
         except Exception as e:
+            err_msg = str(e)
+            exc_name = type(e).__name__
             self.logger.info(f"Error in processing this clip link one at a time: {clip_link} - {e}")
         finally:
             try:
@@ -161,6 +172,19 @@ class AutoEmbedder:
                 del self.clip_id_msg_timestamps[respond_to.id]
             except:
                 pass
+
+            exception = {
+                'name': exc_name,
+                'msg': err_msg
+            }
+            await push_interaction_error(
+                parent_msg=respond_to,
+                clip=clip,
+                platform_name=self.platform_tools.platform_name,
+                clip_url=clip_link,
+                error_info=exception,
+                handled=handled
+            )
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):
         start_time = time.time()
