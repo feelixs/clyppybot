@@ -28,7 +28,7 @@ async def fetch_video_status(clip_id: str):
 async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_url, platform_name: str, error_info: dict, handled: bool, clip=None):
     url = 'https://clyppy.io/api/clips/publish/error/'
     headers = {
-        'auth': getenv('clyppy_post_key'),
+        'X-API-Key': getenv('clyppy_post_key'),
         'Content-Type': 'application/json'
     }
 
