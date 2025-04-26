@@ -126,6 +126,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise NoPermsToView
     elif 'ERROR: Unsupported URL' in err or 'is not a valid URL' in err:
         raise UnsupportedError
+    elif 'JSONDecodeError("Expecting value in '': line 1 column 1 (char 0)"));' in err:  # yt-dlp not supporting twitter right now
+        raise RemoteTimeoutError
     elif 'Read timed out.' in err:
         raise RemoteTimeoutError
     elif 'HTTP Error 403: Forbidden' in err or 'Use --cookies,' in err:
