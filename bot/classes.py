@@ -1020,8 +1020,8 @@ class BaseAutoEmbed:
                 await ctx.send(content=response_msg, components=create_nexus_comps())
             success, response, err_handled = False, "Video too long", True
         except Exception as e:
-            response_msg = str(e)
-            self.logger.info(f'Unexpected error in /embed: {str(e)}')
+            response_msg = type(e).__name__ + ": " + str(e)
+            self.logger.info(f'Unexpected error in /embed: {response_msg}')
             await ctx.send(f"An unexpected error occurred with your input `{url}`",
                            components=create_nexus_comps())
             success, response, err_handled = False, "Unexpected error", False
