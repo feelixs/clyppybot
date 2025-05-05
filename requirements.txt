@@ -1,4 +1,4 @@
-git+https://github.com/interactions-py/interactions.py.git@unstable
+git+https://github.com/interactions-py/interactions.py.git
 git+https://github.com/yt-dlp/yt-dlp.git
 aiohappyeyeballs==2.4.4
 aiohttp==3.11.9
