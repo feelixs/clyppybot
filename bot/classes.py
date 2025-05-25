@@ -1015,8 +1015,8 @@ class BaseAutoEmbed:
                                 f"Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
                 await ctx.send(response_msg, components=comp)
             else:
-                response_msg = f"""{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n"
-                                "Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!"""
+                response_msg = f"""{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n
+                                Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!"""
                 await ctx.send(content=response_msg, components=create_nexus_comps())
             success, response, err_handled = False, "Video too long", True
         except Exception as e:
