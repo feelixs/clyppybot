@@ -45,10 +45,8 @@ async def load_from_server():
                     logger.info("Database loaded from server")
                 else:
                     logger.error(f"Failed to get database from server: {response.status}")
-                    exit(1)
         except Exception as e:
             logger.error(f"Failed to get database from server: {e}")
-            exit(1)
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
