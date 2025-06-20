@@ -15,6 +15,7 @@ class BASIC_MISC(BaseMisc):
         self.platform_name = "base"
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
+        # enable cookies without needing to make a new file for a site
         cookies = any(domain in url for domain in COOKIES_PLATFORMS)
         valid, tokens_used, duration = await self.is_shortform(
             url=url,
