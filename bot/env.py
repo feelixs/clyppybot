@@ -10,7 +10,7 @@ def create_nexus_comps():
     ]
 
 
-YT_DLP_MAX_FILESIZE = 1610612736 * 4 # 6GB in bytes (1.5 * 1024 * 1024 * 1024 * 4) should handle most 3 hour videos
+YT_DLP_MAX_FILESIZE = 1610612736 * 4  # 6GB in bytes (1.5 * 1024 * 1024 * 1024 * 4) should handle most 3 hour videos
 
 YT_DLP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0"
 
@@ -18,7 +18,6 @@ EMBED_TXT_COMMAND = ".embed"
 
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
-IN_WEBHOOK = 'https://discord.com/api/webhooks/1351921631148118037/axFlWfgbMPZUpyogPNtUnxpMNi0X5M_fmnCr9nPT56JwF1vSsdF6B61y936GKJBFkahF'
 
 VERSION = "2.1.1"
 CLYPPYIO_USER_AGENT = f"ClyppyBot/{VERSION}"

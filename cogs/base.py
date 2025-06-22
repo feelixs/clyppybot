@@ -5,7 +5,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle)
 from bot.env import SUPPORT_SERVER_URL
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, IN_WEBHOOK
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -602,15 +602,15 @@ class Base(Extension):
             )
             await self.post_servers(len(self.bot.guilds))
 
-    @listen(InviteCreate)
-    async def on_invite_create(self, event: InviteCreate):
-        if self.ready:
-            self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
-            await send_webhook(
-                content=f"here - https://discord.gg/{event.invite.code}",
-                url=IN_WEBHOOK,
-                logger=self.logger
-            )
+    #@listen(InviteCreate)
+    #async def on_invite_create(self, event: InviteCreate):
+    #    if self.ready:
+    #        self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
+    #        await send_webhook(
+    #            content=f"here - https://discord.gg/{event.invite.code}",
+    #            url=IN_WEBHOOK,
+    #            logger=self.logger
+    #        )
 
     @listen()
     async def on_ready(self):
