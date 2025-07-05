@@ -111,14 +111,16 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 def fetch_cookies(opts, logger):
     try:
+        firefox_dir = os.path.expanduser(os.getenv("COOKIE_DIR"))
         profile_dir = None
-        for item in os.listdir('/firefox-profiles'):
+        
+        for item in os.listdir(firefox_dir):
             if item.endswith('.default-release'):
                 profile_dir = item
                 break
 
         if profile_dir:
-            profile_path = f"/firefox-profiles/{profile_dir}"
+            profile_path = os.path.join(firefox_dir, profile_dir)
             logger.info(f"Using Firefox profile: {profile_path}")
             cookies_string = ('firefox', profile_path, None, None)
             opts['cookiesfrombrowser'] = cookies_string
