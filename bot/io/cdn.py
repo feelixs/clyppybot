@@ -38,6 +38,25 @@ class CdnSpacesClient:
             self.logger.error(f"Error uploading video {file_path}: {str(e)}")
             return False, str(e)
 
+    async def upload_webp(self, file_path: str):
+        filename = file_path.split("/")[-1]
+        cdn_patj = f"img/{filename}"
+        self.logger.info(f"Uploading {filename} to {cdn_patj}")
+        with open(file_path, 'rb') as file:
+            img_data = file.read()
+        try:
+            self.client.put_object(
+                Bucket='clyppy',
+                Key=cdn_patj,
+                Body=img_data,
+                ACL='public-read',
+                ContentType='image/webp'
+            )
+            return True, f"https://cdn.clyppy.io/{cdn_patj}"
+        except Exception as e:
+            self.logger.info(f"Error uploading {filename}: {str(e)}")
+            return False, str(e)
+
     def put_video(self, video_data, filename, storage_type="temp") -> tuple[bool, str]:
         object_key = f"{storage_type}/{filename}"
         cdn_file_url = f"https://cdn.clyppy.io/{object_key}"

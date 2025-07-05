@@ -36,27 +36,27 @@ class ClyppyioMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             info=clip_info
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
         service = clip_info['service']
         self.platform_name = service
-        return ClyppyioClip(clip_info, self.cdn_client, service.lower())
+        return ClyppyioClip(clip_info, self.cdn_client, service.lower(), tokens_used, duration)
 
 
 class ClyppyioClip(BaseClip):
-    def __init__(self, data, cdn_client, service):
+    def __init__(self, data, cdn_client, service, tokens_used: int, duration: int):
         self._service = service
         self.data = data
         self.clip_id = data['clip_id']
-        super().__init__(self.clip_id, cdn_client)
+        super().__init__(self.clip_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
@@ -75,5 +75,5 @@ class ClyppyioClip(BaseClip):
             height=self.data['height'],
             filesize=self.data['filesize'],
             video_name=self.data['video_name'],
-            can_be_uploaded=is_discord_compatible(self.data['filesize']) and can_send_files
+            can_be_discord_uploaded=is_discord_compatible(self.data['filesize']) and can_send_files
         )

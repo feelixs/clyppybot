@@ -31,7 +31,7 @@ class DiscordMisc(BaseMisc):
             self.logger.info(f"Invalid Discord URL: {url}")
             raise NoDuration
 
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             # todo check if file is video file
             url=url,
             basemsg=basemsg,
@@ -39,11 +39,13 @@ class DiscordMisc(BaseMisc):
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
+        attrs['duration'] = duration
         attrs['message_id'] = basemsg.id
         attrs['cdn_client'] = self.cdn_client
+        attrs['tokens_used'] = tokens_used
         return DiscordAttachment(attrs)
 
 
@@ -56,7 +58,7 @@ class DiscordAttachment(BaseClip):
         self._channel = attrs.get('channel')
         self._filename = attrs.get('filename')
         self._url_params = attrs.get('url_params')
-        super().__init__(self._message_id, self.cdn_client)
+        super().__init__(self._message_id, self.cdn_client, attrs.get('tokens_used'), attrs.get('duration'))
 
     @property
     def service(self) -> str:

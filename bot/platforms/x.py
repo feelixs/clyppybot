@@ -33,28 +33,28 @@ class Xmisc(BaseMisc):
         slug = self.parse_clip_url(url, extended_url_formats)
         if slug is None:
             raise InvalidClipType
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
         # Extract user from URL
         user_match = re.search(r'(?:(?:fx)?twitter\.com|(?:fixup)?x\.com)/(\w+)/status/', url)
         user = user_match.group(1) if user_match else None
 
-        return Xclip(slug, user, self.cdn_client)
+        return Xclip(slug, user, self.cdn_client, tokens_used, duration)
 
 
 class Xclip(BaseClip):
-    def __init__(self, slug, user, cdn_client):
+    def __init__(self, slug, user, cdn_client, tokens_used: int, duration: int):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
@@ -73,7 +73,7 @@ class Xclip(BaseClip):
             can_send_files=can_send_files,
             cookies=cookies
         )
-        if local_file.can_be_uploaded:
+        if local_file.can_be_discord_uploaded:
             return DownloadResponse(
                 remote_url=None,
                 local_file_path=local_file.local_file_path,
@@ -82,7 +82,7 @@ class Xclip(BaseClip):
                 height=local_file.height,
                 filesize=local_file.filesize,
                 video_name=local_file.video_name,
-                can_be_uploaded=True
+                can_be_discord_uploaded=True
             )
         else:
             self.logger.info(f"({self.id}) hosting on clyppy.io...")

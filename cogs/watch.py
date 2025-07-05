@@ -1,12 +1,9 @@
+from bot.env import CLYPPY_SUPPORT_SERVER_ID, CLYPPY_CMD_WEBHOOK_ID, CLYPPY_CMD_WEBHOOK_CHANNEL, CLYPPY_VOTE_ROLE, VOTE_WEBHOOK_USERID, CLYPPYBOT_ID
 from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 import logging
+import asyncio
 import re
-
-
-CLYPPY_SUPPORT_SERVER_ID = 1117149574730104872
-CLYPPY_VOTE_ROLE = 1337067081941647472
-VOTE_WEBHOOK_USERID = 1337076281040179240
 
 
 class Watch(Extension):
@@ -56,15 +53,15 @@ class Watch(Extension):
         if event.message.guild is None:
             return  # in dms it won't work
 
-        if event.message.author.id in [1111723928604381314, 1305624117818560664]:
-            # clyppy or test clyppy sent msg
+        if event.message.author.id == self.bot.user.id:
+            # the bot sent the message
             return
 
-        if "clyppy" in event.message.content or '1111723928604381314' in event.message.content:
+        if "clyppy" in event.message.content or str(CLYPPYBOT_ID) in event.message.content:
             self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
                              f"@{event.message.author.username} - \"{event.message.content}\"")
 
-            if event.message.author.id == VOTE_WEBHOOK_USERID:
+            if event.message.author.id == VOTE_WEBHOOK_USERID:  # vote webhook sent a new vote registered
                 pattern = r"<@(\d+)> just gave \((\d+)\) vote\(s\) for <@\d+> on \[[^\]]+\]\([^)]+\) and earned \d+ VIP tokens, they now have (\d+) votes in total"
                 match = re.match(pattern, event.message.content)
                 if match:
@@ -74,3 +71,45 @@ class Watch(Extension):
                     await self.give_votes_roles(userid, vote_total)
                 else:
                     self.logger.info(f"Couldn't match pattern")
+
+            elif event.message.author.id == CLYPPY_CMD_WEBHOOK_ID:  # cmd webhook sent a command to clyppy (delete a msg, etc)
+                # should only work in this channel (unneeded validation)
+                if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
+                    return
+
+                pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(.*?)\]"
+                match = re.search(pattern, event.message.content)
+                
+                delete_tasks = []
+                if match:
+                    # Get the list of IDs from the third group
+                    id_list_str = match.group(3)
+                    # Extract individual IDs (handling both quoted and unquoted formats with 'd' prefix)
+                    message_ids = re.findall(r"'([d\d-]+)'|\"([d\d-]+)\"|([d\d-]+)", id_list_str)
+                    
+                    for match_groups in message_ids:
+                        # Each match is a tuple with 3 possible groups - find the non-empty one
+                        fullstr = next((group for group in match_groups if group), None)
+                        if fullstr:
+                            parts = fullstr.split('-')
+                            if len(parts) == 2:
+                                chnid, msgid = parts[0], parts[1]
+                                try:
+                                    if chnid.startswith('d'):
+                                        # Handle DM channel case
+                                        userid = chnid[1:]  # Remove the 'd' prefix to get the user ID
+                                        self.logger.info(f"Fetching user {userid}")
+                                        user = await self.bot.fetch_user(userid)
+                                        self.logger.info(f"Fetching dm with user {user.username}")
+                                        dm_channel = await user.fetch_dm(force=False)
+                                        msg = await dm_channel.fetch_message(msgid)
+                                    else:
+                                        chn = await self.bot.fetch_channel(chnid)
+                                        msg = await chn.fetch_message(msgid)
+                                    delete_tasks.append(asyncio.create_task(msg.delete()))
+                                except Exception as e:
+                                    self.logger.error(f"Error fetching message {msgid} in channel: {chnid}: {e}")
+                else:
+                    self.logger.info(f"No match found for delete command in: {event.message.content}")
+
+                await asyncio.gather(*delete_tasks)

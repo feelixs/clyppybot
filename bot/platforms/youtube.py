@@ -9,7 +9,6 @@ class YtMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "YouTube"
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
@@ -34,26 +33,26 @@ class YtMisc(BaseMisc):
             raise InvalidClipType
         if "&list=" in url:
             url = url.split("&list=")[0]
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
-        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client)
+        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client, tokens_used, duration)
 
 
 class YtClip(BaseClip):
-    def __init__(self, slug, short, cdn_client):
+    def __init__(self, slug, short, cdn_client, tokens_used: int, duration: int):
         self._service = "youtube"
         if short:
             self._url = f"https://youtube.com/shorts/{slug}"
         else:
             self._url = f"https://youtube.com/watch/?v={slug}"
-        super().__init__(slug, cdn_client)
+        super().__init__(slug, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

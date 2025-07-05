@@ -10,7 +10,6 @@ class XvidMisc(BaseMisc):
         super().__init__(bot)
         self.platform_name = "Xvideos"
         self.is_nsfw = True
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         # Pattern to match xvideos URLs like:
@@ -43,21 +42,21 @@ class XvidMisc(BaseMisc):
         second = self.get_vid_id(url)
         title = self.get_title(url)
 
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return XvidClip(first, second, title, self.cdn_client)
+        return XvidClip(first, second, title, self.cdn_client, tokens_used, duration)
 
 
 class XvidClip(BaseClip):
-    def __init__(self, first, second=None, title=None, cdn_client=None):
+    def __init__(self, first, second=None, title=None, cdn_client=None, tokens_used: int = 0, duration: int = 0):
         self._service = "xvideos"
         self._first = first
         self._second = second
@@ -65,7 +64,7 @@ class XvidClip(BaseClip):
 
         # For internal ID tracking
         self._id = first if second is None or second == "0" else f"{first}/{second}"
-        super().__init__(self._id, cdn_client)
+        super().__init__(self._id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
@@ -85,8 +84,7 @@ class XvidClip(BaseClip):
             else:
                 return f"https://xvideos.com/video.{self._first}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False,
-                       cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,

@@ -26,7 +26,7 @@ class DownloadResponse:
     height: int
     filesize: float
     video_name: Optional[str]
-    can_be_uploaded: Optional[bool]
+    can_be_discord_uploaded: Optional[bool]
 
 
 @dataclass
@@ -37,4 +37,4 @@ class LocalFileInfo:
     height: int
     filesize: float
     video_name: Optional[str]
-    can_be_uploaded: Optional[bool]
+    can_be_discord_uploaded: Optional[bool]

@@ -5,7 +5,7 @@ from typing import Optional
 from bot.platforms.kick import KickMisc
 from bot.platforms.medal import MedalMisc
 from bot.types import DownloadResponse
-from bot.errors import VideoTooLong, NoDuration
+from bot.errors import VideoTooLong, NoDuration, UnsupportedError
 from bot.classes import BaseClip, BaseMisc
 
 
@@ -50,6 +50,7 @@ class RedditMisc(BaseMisc):
             r'(?:https?://)?(?:www\.)?redd\.it/([a-zA-Z0-9]+)',  # Short links
             r'(?:https?://)?(?:www\.)?reddit\.com/gallery/([a-zA-Z0-9]+)',  # Gallery links
             r'(?:https?://)?(?:www\.)?reddit\.com/user/[^/]+/comments/([a-zA-Z0-9]+)',  # User posts
+            r'(?:https?://)?(?:www\.)?reddit\.com/u/[^/]+/s/([a-zA-Z0-9]+)',  # User share posts
             r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/duplicates/([a-zA-Z0-9]+)',  # Crossposts
             r'(?:https?://)?(?:www\.)?reddit\.com/r/[^/]+/s/([a-zA-Z0-9]+)',  # Share links
             r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)'  # Video links
@@ -133,30 +134,31 @@ class RedditMisc(BaseMisc):
             raise NoDuration
         self.logger.info(f"{url} is_video=True")
 
-        if re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url) or \
-                re.match(r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)', url):  # retrieve the actual slug from a share link
+        if (re.match(r'https?://(?:www\.)?reddit\.com/r/[a-zA-Z0-9_-]+/s/[a-zA-Z0-9]+', url) or
+                re.match(r'(?:https?://)?v\.redd\.it/([a-zA-Z0-9]+)', url) or
+                re.match(r'(?:https?://)?(?:www\.)?reddit\.com/u/[^/]+/s/([a-zA-Z0-9]+)', url)):  # retrieve the actual slug from a share link
             try:
                 slug = await self._get_actual_slug(url)
                 self.logger.info(f"Retrieving actual slug from shared url {url}")
             except:
                 raise NoDuration
 
-        valid = await self.is_shortform(url, basemsg)
+        valid, tokens_used, duration = await self.is_shortform(url, basemsg)
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return RedditClip(slug, ext_info, self.bot)
+        return RedditClip(slug, ext_info, self.bot, tokens_used, duration)
 
 
 class RedditClip(BaseClip):
-    def __init__(self, slug, ext, bot):
+    def __init__(self, slug, ext, bot, tokens_used: int, duration: int):
         self._service = "reddit"
         self._url = f"https://redd.it/{slug}"
         self.external_link = ext
         self.bot = bot
-        super().__init__(slug, bot.cdn_client)
+        super().__init__(slug, bot.cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:

@@ -3,7 +3,7 @@ from aiohttp import ClientSession
 from bot.types import DownloadResponse
 from bot.errors import VideoTooLong, NoDuration
 from bot.classes import BaseClip, BaseMisc
-from typing import Optional
+from typing import Optional, Tuple
 
 
 class TikTokMisc(BaseMisc):
@@ -31,6 +31,22 @@ class TikTokMisc(BaseMisc):
                 return match.group(1)
         return None
 
+    async def _resolve_url(self, shorturl) -> Tuple[str, str, str]:
+        # retrieve actual url
+        self.logger.info(f'Retrieving actual url from shortened url {shorturl}')
+        async with ClientSession() as session:
+            async with session.get(shorturl) as response:
+                v = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
+                txt = await response.text()
+                match = re.search(v, txt)
+                if match is None:
+                    self.logger.info(f"(video) Invalid TikTok URL: {shorturl} (match was None)")
+                    raise NoDuration
+                else:
+                    user = match.group(1)
+                    video_id = match.group(2)
+                    return f"https://www.tiktok.com/@{user}/video/{video_id}", video_id, user
+
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'TikTokClip':
         video_id = self.parse_clip_url(url)
         if not video_id:
@@ -43,22 +59,7 @@ class TikTokMisc(BaseMisc):
         ]
 
         if any(re.match(pattern, url) for pattern in short_url_patterns):
-            # retrieve actual url
-            self.logger.info(f'Retrieving actual url from shortened url {url}')
-            async with ClientSession() as session:
-                async with session.get(url) as response:
-                    p = r'"canonical":"https:\\u002F\\u002Fwww\.tiktok\.com\\u002F@([\w.]+)\\u002Fvideo\\u002F(\d+)"'
-                    txt = await response.text()
-                    video_id, user = re.search(p, txt).group(2), re.search(p, txt).group(1)
-                    if user is None:
-                        self.logger.info(f"Invalid TikTok URL: {url} (user was None)")
-                        raise NoDuration
-                    elif video_id is None:
-                        self.logger.info(f"Invalid TikTok URL: {url} (video_id was None)")
-                        raise NoDuration
-
-                    url = f"https://www.tiktok.com/@{user}/video/{video_id}"
-                    self.logger.info(f'Got actual url: {url}')
+            url, video_id, user = await self._resolve_url(url)
         else:
             # Extract username if available
             user_match = re.search(r'tiktok\.com/@([^/]+)/', url)
@@ -68,25 +69,25 @@ class TikTokMisc(BaseMisc):
                 raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return TikTokClip(video_id, user, self.cdn_client)
+        return TikTokClip(video_id, user, self.cdn_client, tokens_used, duration)
 
 
 class TikTokClip(BaseClip):
-    def __init__(self, video_id, user, cdn_client):
+    def __init__(self, video_id, user, cdn_client, tokens_used: int, duration: int):
         self._service = "tiktok"
         self._user = user
         self._video_id = video_id
-        super().__init__(video_id, cdn_client)
+        super().__init__(video_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
@@ -107,7 +108,7 @@ class TikTokClip(BaseClip):
             can_send_files=can_send_files,
             cookies=cookies
         )
-        if local_file.can_be_uploaded:
+        if local_file.can_be_discord_uploaded:
             return DownloadResponse(
                 remote_url=None,
                 local_file_path=local_file.local_file_path,
@@ -116,7 +117,7 @@ class TikTokClip(BaseClip):
                 height=local_file.height,
                 filesize=local_file.filesize,
                 video_name=local_file.video_name,
-                can_be_uploaded=True
+                can_be_discord_uploaded=True
             )
         else:
             self.logger.info(f"({self.id}) hosting on clyppy.io...")

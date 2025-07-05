@@ -2,3 +2,5 @@
 .idea
 *.pyc
 logs/
+CLAUDE.md
+.aider*

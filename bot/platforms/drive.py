@@ -9,7 +9,6 @@ class GoogleDriveMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "Google Drive"
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
@@ -41,24 +40,24 @@ class GoogleDriveMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return GoogleDriveClip(file_id, self.cdn_client)
+        return GoogleDriveClip(file_id, self.cdn_client, tokens_used, duration)
 
 
 class GoogleDriveClip(BaseClip):
-    def __init__(self, file_id, cdn_client):
+    def __init__(self, file_id, cdn_client, tokens_used: int, duration: int):
         self._service = "drive"
         self._file_id = file_id
-        super().__init__(file_id, cdn_client)
+        super().__init__(file_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
@@ -68,8 +67,7 @@ class GoogleDriveClip(BaseClip):
     def url(self) -> str:
         return f"https://drive.google.com/file/d/{self._file_id}/view"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False,
-                       cookies=True) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size()...")
         dl = await super().dl_check_size(
             filename=filename,

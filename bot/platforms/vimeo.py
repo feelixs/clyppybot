@@ -9,7 +9,6 @@ class VimeoMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "Vimeo"
-        self.dl_timeout_secs = 120
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
@@ -51,21 +50,21 @@ class VimeoMisc(BaseMisc):
             raise NoDuration
 
         # Verify video length
-        valid = await self.is_shortform(
+        valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
             cookies=cookies
         )
         if not valid:
             self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong
+            raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return VimeoClip(video_id, video_hash, self.cdn_client)
+        return VimeoClip(video_id, video_hash, self.cdn_client, tokens_used, duration)
 
 
 class VimeoClip(BaseClip):
-    def __init__(self, video_id, video_hash=None, cdn_client=None):
+    def __init__(self, video_id, video_hash=None, cdn_client=None, tokens_used: int = 0, duration: int = 0):
         self._service = "vimeo"
         if video_hash:
             self._video_id = f'{video_id}/{video_hash}'
@@ -73,7 +72,7 @@ class VimeoClip(BaseClip):
         else:
             self._video_id = video_id
             self._url = f"https://vimeo.com/{self._video_id}"
-        super().__init__(self._video_id, cdn_client)
+        super().__init__(self._video_id, cdn_client, tokens_used, duration)
 
     @property
     def service(self) -> str:
