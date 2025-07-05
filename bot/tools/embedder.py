@@ -408,8 +408,7 @@ class AutoEmbedder:
                         custom_id=f"ibtn-{dctx}{clip.clyppy_id}"
                     )
                     comp = [info_button] + comp
-
-                comp = ActionRow(*comp)
+                    comp = ActionRow(*comp)
 
                 # send message
                 if isinstance(respond_to, SlashContext):
