@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDurat
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID
+from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union
 from bot.io.upload import upload_video
@@ -229,8 +229,7 @@ class AutoEmbedder:
             # should silently fail
             return None
 
-        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to,
-                                                             Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
+        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             # also checks against the 'download this' webhook id, so the 'video refresher' webhook will trigger the normal block (create/refresh StoredVideo clip)
             # TODO: decrement the tokens used for this clip by parsing the <@user_id> from the message
@@ -396,16 +395,20 @@ class AutoEmbedder:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return
 
-                dctx = ""
-                if uploading_to_discord:
-                    dctx = "d-"
+                btns_is_none = self.bot.guild_settings.get_embed_buttons(guild.id)
+                btns_is_none = POSSIBLE_EMBED_BUTTONS[btns_is_none] == "none"
+                if not btns_is_none:
+                    dctx = ""
+                    if uploading_to_discord:
+                        dctx = "d-"
 
-                info_button = Button(
-                    style=ButtonStyle.SECONDARY,
-                    label="ⓘ Info",
-                    custom_id=f"ibtn-{dctx}{clip.clyppy_id}"
-                )
-                comp = [info_button] + comp
+                    info_button = Button(
+                        style=ButtonStyle.SECONDARY,
+                        label="ⓘ Info",
+                        custom_id=f"ibtn-{dctx}{clip.clyppy_id}"
+                    )
+                    comp = [info_button] + comp
+
                 comp = ActionRow(*comp)
 
                 # send message

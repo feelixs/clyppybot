@@ -4,7 +4,6 @@ from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
 from bot.io.cdn import CdnSpacesClient
-from sys import exit
 import logging
 import asyncio
 import os
