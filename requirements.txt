@@ -1,7 +1,7 @@
 git+https://github.com/interactions-py/interactions.py.git@unstable
 git+https://github.com/yt-dlp/yt-dlp.git
 aiohappyeyeballs==2.4.4
-aiohttp==3.11.9
+aiohttp==3.12.14
 aiosignal==1.3.1
 attrs==24.2.0
 certifi==2024.8.30
