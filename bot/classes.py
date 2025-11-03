@@ -763,7 +763,7 @@ class BaseAutoEmbed:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
             if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
-                return 1
+                return None
             elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
                 return await ctx.send(
                     content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
@@ -776,7 +776,7 @@ class BaseAutoEmbed:
                 )
             if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
                 if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
-                    return 1
+                    return None
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
@@ -784,7 +784,6 @@ class BaseAutoEmbed:
         p = platform.platform_name if platform is not None else None
         try:
             self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
-
             if guild.is_dm:
                 nsfw_enabed = True
             elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
@@ -794,8 +793,10 @@ class BaseAutoEmbed:
 
             if platform is None:
                 self.logger.info(f"return incompatible for /embed {url}")
-                await ctx.send(content=f"Couldn't embed that url (invalid/incompatible)",
-                               components=create_nexus_comps())
+                await ctx.send(
+                    content=f"Couldn't embed that url (invalid/incompatible)",
+                    components=create_nexus_comps()
+                )
                 await send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
@@ -807,12 +808,14 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
-                               f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
-                               f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
-                               f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
+                await ctx.send(
+                    f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
+                    f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
+                    f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
+                    f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n"
+                )
                 await send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                     load=f"user - {ctx.user.username}\n"
@@ -824,7 +827,7 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
 
             if self.bot.currently_embedding_users.count(ctx.user.id) >= 2:
                 await ctx.send(f"You're already embedding 2 videos. Please wait for one to finish before trying again.")
@@ -839,7 +842,7 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
             else:
                 self.bot.currently_embedding_users.append(ctx.user.id)
 
@@ -853,8 +856,10 @@ class BaseAutoEmbed:
                 self.bot.currently_downloading.append(slug)
         except Exception as e:
             self.logger.info(f"Exception in /embed preparation: {str(e)}")
-            await ctx.send(content=f"Unexpected error while trying to embed this url",
-                           components=create_nexus_comps())
+            await ctx.send(
+                content=f"Unexpected error while trying to embed this url",
+                components=create_nexus_comps()
+            )
             await send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
                 load=f"user - {ctx.user.username}\n"
@@ -881,14 +886,13 @@ class BaseAutoEmbed:
                     del self.embedder.clip_id_msg_timestamps[ctx.id]
             except KeyError:
                 pass
-            return
+            return None
 
         timeout_task = asyncio.create_task(self._handle_timeout(
             ctx=ctx,
             url=url,
             amt=platform.dl_timeout_secs
         ))
-
         main_task = asyncio.create_task(self._main_embed_task(
             ctx=ctx,
             url=url,
@@ -897,7 +901,6 @@ class BaseAutoEmbed:
             platform_name=p,
             guild=guild
         ))
-
         done, pending = await asyncio.wait(
             [main_task, timeout_task],
             return_when=asyncio.FIRST_COMPLETED
@@ -935,7 +938,6 @@ class BaseAutoEmbed:
 
         response_msg = "Unknown error in /embed"
         success, response, err_handled = False, "Timeout reached", False
-
         clip = None
         try:
             if isinstance(ctx, SlashContext):
