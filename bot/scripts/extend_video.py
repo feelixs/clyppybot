@@ -20,6 +20,7 @@ from google import genai
 from PIL import Image
 import mimetypes
 import argparse
+import uuid
 import os
 import sys
 import base64
@@ -359,12 +360,13 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         temp_clip_path = None
         uploaded_file = None
 
+        fp = f"temp_gemini_analysis_clip_{uuid.uuid4()}.mp4"
         try:
             # Step 1: Extract last N seconds
             temp_clip_path = await self.extract_last_clip(
                 video_path,
                 duration=duration_to_analyze,
-                output_path="temp_gemini_analysis_clip.mp4"
+                output_path=fp,
             )
 
             # Step 2: Upload video file
