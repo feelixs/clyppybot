@@ -1,12 +1,13 @@
 from bot.types import DownloadResponse, LocalFileInfo
 from bot.errors import UnknownError, VideoTooLongForExtend, VideoTooShortForExtend, VideoExtensionFailed
-from bot.classes import BaseClip
+from bot.classes import BaseClip, is_discord_compatible, tryremove
 from pathlib import Path
 from typing import Union
 from moviepy import VideoFileClip
 import asyncio
 import os
 import re
+import uuid
 
 
 class DownloadManager:
@@ -30,26 +31,45 @@ class DownloadManager:
             if not isinstance(clip, BaseClip):
                 raise TypeError(f"Invalid clip object passed to download_clip of type {type(clip)}")
             self._parent.logger.info("Run clip.download()")
-        if skip_upload:
+
+        if skip_upload or extend_with_ai:
             # force manual override of auto-upload (download() may upload, but dl_download() doesn't)
             r: LocalFileInfo = await clip.dl_download(filename=desired_filename, can_send_files=can_send_files)
         else:
             r: DownloadResponse = await clip.download(filename=desired_filename, can_send_files=can_send_files)
 
         if extend_with_ai:
-            new_duration = await self._extend_video_with_ai(r.local_file_path)
+            # Create unique filename with _extended suffix (don't overwrite original)
+            original_file = r.local_file_path
+            file_base = original_file.rsplit('.', 1)[0]  # Remove .mp4 extension
+            unique_suffix = str(uuid.uuid4())[:8]  # Use first 8 chars of UUID
+            extended_file = f"{file_base}_extended_{unique_suffix}.mp4"
+            clip.clyppy_id = f"{clip.clyppy_id}_extended_{unique_suffix}"
+            self._parent.logger.info(f"Extended video will use new clyppy_id: {clip.clyppy_id}")
+
+            new_duration = await self._extend_video_with_ai(original_file, extended_file)
+            r.local_file_path = extended_file
             r.duration = new_duration
+            r.filesize = os.path.getsize(extended_file)
+            r.can_be_discord_uploaded = is_discord_compatible(r.filesize)
+            self._parent.logger.info(f"Extended video: {r.filesize} bytes, can_be_discord_uploaded={r.can_be_discord_uploaded}")
+            tryremove(original_file)
+
+            if not (r.can_be_discord_uploaded and can_send_files):
+                self._parent.logger.info(f"Uploading extended video to clyppy.io...")
+                return await clip.upload_to_clyppyio(r)
 
         if r is None:
             raise UnknownError
         return r
 
-    async def _extend_video_with_ai(self, input_file: str) -> float:
+    async def _extend_video_with_ai(self, input_file: str, output_file: str) -> float:
         """
         Extend a video using AI models with Sora->Veo fallback
 
         Args:
-            input_file: Path to the video file to extend (will be overwritten)
+            input_file: Path to the original video file (will be preserved)
+            output_file: Path where the extended video will be saved
 
         Returns:
             New video duration in seconds
@@ -71,9 +91,9 @@ class DownloadManager:
 
                 # Run the extend_video.py script as a subprocess
                 process = await asyncio.create_subprocess_exec(
-                    'python', (Path(__file__).parent.parent / 'scripts/extend_video.py'),
+                    'python', str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
                     input_file,
-                    '--output', input_file,  # Overwrite the original file
+                    '--output', output_file,  # Save to new file (don't overwrite original)
                     '--model', model,
                     '--duration', '8',
                     stdout=asyncio.subprocess.PIPE,
@@ -115,8 +135,8 @@ class DownloadManager:
                 # Success!
                 self._parent.logger.info(f"Video extension successful with {model}")
 
-                # Get the new duration
-                video = VideoFileClip(input_file)
+                # Get the new duration from the output file
+                video = VideoFileClip(output_file)
                 new_duration = video.duration
                 video.close()
 

@@ -264,9 +264,14 @@ class AutoEmbedder:
                 return
         else:
             # proceed normally
-            # retrieve clip video url
-            status = await fetch_video_status(clip.clyppy_id)
-            video_doesnt_exist = not status['exists']
+
+            if extend_with_ai:
+                # these should always be re-generated - even for duplicate video ids
+                video_doesnt_exist = True
+            else:
+                status = await fetch_video_status(clip.clyppy_id)
+                video_doesnt_exist = not status['exists']
+
             if video_doesnt_exist:
                 response: DownloadResponse = await self.bot.tools.dl.download_clip(
                     clip=clip,

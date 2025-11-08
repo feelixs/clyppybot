@@ -28,7 +28,6 @@ import asyncio
 import random
 import os
 
-
 def tryremove(f):
     try:
         os.remove(f)
@@ -39,6 +38,7 @@ def tryremove(f):
 def get_random_face():
     faces = ['(⌯˃̶᷄ ﹏ ˂̶᷄⌯)', '`ヽ(゜～゜o)ノ`', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ', r'¯\_(ツ)_/¯']
     return f'{random.choice(faces)}'
+
 
 def is_discord_compatible(filesize: float):
     if filesize is None:
@@ -312,8 +312,7 @@ class BaseClip(ABC):
 
     async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
         local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies)
-        if local_file is None:
-            raise UnknownError
+        if local_file is None: raise UnknownError
         return local_file
 
     async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
@@ -338,8 +337,7 @@ class BaseClip(ABC):
                 )
 
         if upload_if_large:
-            if local is None:
-                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            if local is None: local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
             self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
             return await self.upload_to_clyppyio(local)
 
@@ -358,9 +356,7 @@ class BaseClip(ABC):
             'user_agent': YT_DLP_USER_AGENT
         }
 
-        if cookies:
-            fetch_cookies(ydl_opts, self.logger)
-
+        if cookies: fetch_cookies(ydl_opts, self.logger)
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 # Run download in a thread pool to avoid blocking
@@ -375,7 +371,6 @@ class BaseClip(ABC):
                     self._extract_info,
                     ydl_opts
                 )
-
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
                 if is_discord_compatible(d.filesize) and can_send_files:
