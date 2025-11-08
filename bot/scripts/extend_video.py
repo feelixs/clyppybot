@@ -967,13 +967,31 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         try:
             clip1 = VideoFileClip(original_video)
             clip2 = VideoFileClip(generated_video)
+
+            # Validate clips loaded successfully
+            if clip1 is None or clip2 is None:
+                raise ValueError("Failed to load one or both video clips")
+
+            print(f"   Original: {clip1.size} @ {clip1.fps}fps, duration: {clip1.duration:.2f}s")
+            print(f"   Generated: {clip2.size} @ {clip2.fps}fps, duration: {clip2.duration:.2f}s")
+
+            # Resize if needed (preserves aspect ratio by resizing)
             if clip1.size != clip2.size:
                 print(f"   Resizing generated video from {clip2.size} to {clip1.size}")
                 clip2 = vfx.Resize(new_size=clip1.size).apply(clip2)
+
+            # NOTE: We do NOT adjust FPS here to avoid A/V desync issues
+            # The concatenate_videoclips with method="chain" will handle FPS differences
+            # by re-encoding both clips to a common FPS automatically
             if clip1.fps != clip2.fps:
-                print(f"   Adjusting fps from {clip2.fps} to {clip1.fps}")
-                clip2 = clip2.with_fps(clip1.fps)
-            final_clip = concatenate_videoclips([clip1, clip2], method="compose")
+                print(f"   WARNING: FPS mismatch ({clip1.fps} vs {clip2.fps}), concatenation will re-encode to match")
+
+            # Use "chain" method instead of "compose" for more reliable concatenation
+            # "chain" is simpler and less prone to creating black frames or corrupted transitions
+            print(f"   Concatenating clips...")
+            final_clip = concatenate_videoclips([clip1, clip2], method="chain")
+
+            print(f"   Writing final video...")
             final_clip.write_videofile(
                 output_path,
                 codec='libx264',
