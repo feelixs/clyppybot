@@ -176,7 +176,9 @@ async def author_has_enough_tokens_for_ai_extend(msg, url: str):
     sub = await subtract_tokens(
         user=user,
         amt=10,
-        clip_url=url
+        clip_url=url,
+        reason="AI Video Extend",
+        description=f"User requested an AI extended video for {url}."
     )
     if sub['success']:
         if sub['user_success']:  # the user had enough tokens to subtract successfully
