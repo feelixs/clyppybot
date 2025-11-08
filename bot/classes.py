@@ -1081,9 +1081,11 @@ class BaseAutoEmbed:
         except VideoTooLongForExtend:
             response_msg = f"{get_random_face()} I can't extend videos longer than {MAX_VIDEO_LEN_FOR_EXTEND} seconds."
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+            success, response, err_handled = False, "VideoTooLongForExtend", True
         except VideoTooShortForExtend:
             response_msg = f"{get_random_face()} I can't extend videos shorter than {MIN_VIDEO_LEN_FOR_EXTEND} seconds."
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+            success, response, err_handled = False, "VideoTooShortForExtend", True
         except VideoExtensionFailed as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')

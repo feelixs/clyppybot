@@ -1088,9 +1088,9 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         video_duration = video.duration
         video.close()
 
-        if video_duration > 60:
+        if video_duration > 61:
             raise ValueError(f"Input video is too long: {video_duration:.2f}s (maximum: 60s)")
-        if video_duration < 6:
+        if video_duration < 7:
             raise ValueError(f"Input video is too short: {video_duration:.2f}s (minimum: 6s)")
 
         print(f"✓ Video duration validated: {video_duration:.2f}s")
