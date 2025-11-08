@@ -10,7 +10,7 @@ from interactions.api.events import MessageCreate
 
 from bot.tools.embedder import AutoEmbedder
 from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium
+from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium, fetch_video_status
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
@@ -148,8 +148,28 @@ class BaseClip(ABC):
         self.title = None
 
     async def compute_clyppy_id(self):
-        self.clyppy_id = self._generate_clyppy_id(self._clyppy_id_input)  # replace with new logic
-        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self._clyppy_id_input}")
+        # Generate new format (base62, 10-char) ID
+        new_id = self._generate_clyppy_id(self._clyppy_id_input, low_collision=True)
+
+        # Check if new format exists
+        status = await fetch_video_status(new_id)
+        if status['exists']:
+            self.clyppy_id = new_id
+            self.logger.info(f"Found existing video with new ID format: {self.clyppy_id}")
+            return
+
+        # Fallback: check old format (base36, 8-char) for backward compatibility
+        old_id = self._generate_clyppy_id(self._clyppy_id_input, low_collision=False)
+        self.logger.info(f"Checking existance of old id: {old_id}")
+        status = await fetch_video_status(old_id)
+        if status['exists']:
+            self.clyppy_id = old_id
+            self.logger.info(f"Found existing video with old ID format: {self.clyppy_id}")
+            return
+
+        # No existing video found, use new format for new videos
+        self.clyppy_id = new_id
+        self.logger.info(f"Generated new clyppy ID (base62): {self.clyppy_id} for {self._clyppy_id_input}")
 
     @property
     @abstractmethod

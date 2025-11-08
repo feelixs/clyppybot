@@ -44,7 +44,7 @@ class DownloadManager:
             file_base = original_file.rsplit('.', 1)[0]  # Remove .mp4 extension
             unique_suffix = str(uuid.uuid4())[:8]  # Use first 8 chars of UUID
             extended_file = f"{file_base}_extended_{unique_suffix}.mp4"
-            clip.clyppy_id = clip._generate_clyppy_id(f"{clip.clyppy_id}_extended_{unique_suffix}")
+            clip.clyppy_id = clip._generate_clyppy_id(f"{clip.clyppy_id}_extended_{unique_suffix}", low_collision=True)
             self._parent.logger.info(f"Extended video clyppy_id: {clip.clyppy_id}")
 
             new_duration = await self._extend_video_with_ai(original_file, extended_file)

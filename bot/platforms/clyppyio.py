@@ -13,7 +13,7 @@ class ClyppyioMisc(BaseMisc):
         self.platform_name = None
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
-        pattern = r'(?:https?://)?(?:www\.)?clyppy\.(io|com)/([a-z0-9]{8})'
+        pattern = r'(?:https?://)?(?:www\.)?clyppy\.(io|com)/([a-zA-Z0-9]{8,10})'
         match = re.match(pattern, url)
         return match.group(2) if match else None
 
