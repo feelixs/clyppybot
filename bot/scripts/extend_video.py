@@ -200,7 +200,6 @@ class SmartVideoExtender:
                 output_path,
                 codec='libx264',
                 audio_codec='aac',
-                verbose=False,
                 logger=None
             )
 
