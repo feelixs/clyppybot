@@ -28,38 +28,57 @@ import aiohttp
 import ssl
 import certifi
 import time
+import json
 
 
-# Gemini video analysis prompt for continuation prediction
-GEMINI_VIDEO_ANALYSIS_PROMPT = """You are analyzing the LAST FEW SECONDS of a video to predict what should happen NEXT.
+# Gemini video analysis prompt for continuation prediction with frame selection
+GEMINI_VIDEO_ANALYSIS_PROMPT = """You are analyzing the LAST 5 SECONDS of a video to accomplish two goals:
+1. Select the BEST FRAME for starting video generation
+2. Predict what happens NEXT after that frame
 
-Analyze both VISUAL and AUDIO elements:
+PART 1 - SELECT BEST FRAME TIMESTAMP (0-5 seconds):
 
-VISUAL CUES:
-- Track object/person movement patterns and trajectories
-- Note camera movement (pan, tilt, zoom, static)
-- Identify motion speed and direction
-- Observe what's entering/exiting the frame
+AVOID frames that are:
+- Black, faded, or in transition
+- Blurry or mid-fast-motion
+- At scene cuts or shot changes
+- Showing ending cues (fadeouts, people leaving)
 
-AUDIO CUES:
-- Listen for sound patterns (music, speech, ambient noise)
-- Note audio fade-ins, fade-outs, or crescendos
-- Identify any dialogue or narrative direction
-- Detect emotional tone (laughter, tension, excitement)
+PREFER frames that:
+- Are clear, stable, and well-lit
+- Show continuous action that can be extended
+- Are mid-action (not at start or end points)
+- Have good visual content and composition
+
+PART 2 - ANALYZE FOR CONTINUATION:
+
+Consider VISUAL cues:
+- Object/person movement patterns and trajectories
+- Camera movement (pan, tilt, zoom, static)
+- Motion speed and direction
+
+Consider AUDIO cues:
+- Sound patterns (music, speech, ambient noise)
+- Audio dynamics (fade-ins, crescendos, etc.)
+- Dialogue or narrative direction
+- Emotional tone
 
 TEMPORAL ANALYSIS:
 - How are things changing over time?
-- What motion is accelerating or decelerating?
-- What patterns suggest continuation vs. conclusion?
-- Are there audio-visual correlations (footsteps + person walking, music + action)?
+- What motion patterns suggest natural continuation?
+- Audio-visual correlations (footsteps + walking, music + action)
 
-Based on these visual and audio patterns, write a SHORT prompt (1-2 sentences max) describing what happens NEXT in the continuation.
+OUTPUT FORMAT (JSON only):
+{
+  "timestamp_sec": <number 0-5>,
+  "prompt": "<1-2 sentences describing what happens NEXT>"
+}
 
-Focus on the IMMEDIATE next action, not long-term outcomes.
-
-Example: "Person continues walking right and exits frame as background music fades out."
-
-Your response should ONLY be the continuation prompt itself, nothing else."""
+Example:
+{
+  "timestamp_sec": 3.5,
+  "prompt": "Camera continues panning left as person walks toward the building entrance"
+}"""
 
 
 def get_ssl_context():
@@ -313,19 +332,19 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
     async def analyze_video_with_gemini(
         self,
         video_path: str,
-        duration_to_analyze: int = 10,
+        duration_to_analyze: int = 5,
         model: str = "gemini-2.0-flash-exp"
-    ) -> str:
+    ) -> dict:
         """
-        Analyze video with Gemini for video+audio understanding
+        Analyze video with Gemini for video+audio understanding and frame selection
 
         Args:
             video_path: Path to video file (or clip)
-            duration_to_analyze: Seconds to extract from end (default: 10)
+            duration_to_analyze: Seconds to extract from end (default: 5)
             model: Gemini model to use (default: gemini-2.0-flash-exp)
 
         Returns:
-            AI-generated prompt for video continuation
+            dict: {"prompt": str, "timestamp_sec": float}
         """
         print(f"\nAnalyzing video with {model} (video+audio)...")
 
@@ -366,23 +385,44 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             if uploaded_file.state.name != "ACTIVE":
                 raise TimeoutError("Video processing did not complete in time")
 
-            # Step 4: Analyze with Gemini
-            print("   Generating continuation prompt...")
+            # Step 4: Analyze with Gemini using structured JSON output
+            print("   Generating continuation prompt and frame selection...")
+
+            # Configure structured JSON output
+            config = types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_json_schema={
+                    "type": "object",
+                    "properties": {
+                        "timestamp_sec": {
+                            "type": "number",
+                            "description": "Timestamp in seconds (0-5) of best frame"
+                        },
+                        "prompt": {
+                            "type": "string",
+                            "description": "1-2 sentence description of what happens next"
+                        }
+                    },
+                    "required": ["timestamp_sec", "prompt"]
+                }
+            )
 
             response = self.veo_client.models.generate_content(
                 model=model,
                 contents=[
                     uploaded_file,
                     GEMINI_VIDEO_ANALYSIS_PROMPT
-                ]
+                ],
+                config=config
             )
 
-            generated_prompt = response.text.strip()
+            result = json.loads(response.text)
 
-            print(f"\n✓ Gemini-Generated Prompt (from video+audio):")
-            print(f"  \"{generated_prompt}\"\n")
+            print(f"\n✓ Gemini Analysis Result:")
+            print(f"  Best frame at: {result['timestamp_sec']:.2f}s")
+            print(f"  Prompt: \"{result['prompt']}\"\n")
 
-            return generated_prompt
+            return result
 
         except Exception as e:
             print(f"Error analyzing video with Gemini: {e}")
@@ -461,6 +501,52 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
         except Exception as e:
             print(f"Error extracting frame: {e}")
+            raise
+
+    @staticmethod
+    async def extract_frame_at_timestamp(
+        video_path: str,
+        timestamp_sec: float,
+        output_path: str = "temp_selected_frame.png",
+        target_size: tuple[int, int] = None
+    ) -> str:
+        """
+        Extract frame at specific timestamp from video
+
+        Args:
+            video_path: Path to input video
+            timestamp_sec: Timestamp in seconds (e.g., 3.5)
+            output_path: Where to save the extracted frame
+            target_size: Optional (width, height) to resize frame to
+
+        Returns:
+            Path to saved frame image
+        """
+        print(f"Extracting frame at timestamp {timestamp_sec:.2f}s...")
+        try:
+            video = VideoFileClip(video_path)
+
+            # Clamp timestamp to valid range
+            timestamp_sec = max(0, min(timestamp_sec, video.duration - 0.01))
+            print(f"   Using timestamp: {timestamp_sec:.2f}s (video duration: {video.duration:.2f}s)")
+
+            # Extract frame at timestamp
+            frame = video.get_frame(timestamp_sec)
+            img = Image.fromarray(frame.astype('uint8'))
+            print(f"   Frame shape: {frame.shape}")
+            print(f"   Image size before resize: {img.size}")
+
+            if target_size:
+                print(f"   Resizing frame from {img.size} to {target_size}")
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
+
+            img.save(output_path)
+            video.close()
+            print(f"Frame extracted to {output_path}")
+            return output_path
+
+        except Exception as e:
+            print(f"Error extracting frame at timestamp: {e}")
             raise
 
     async def generate_video_with_sora(
@@ -940,7 +1026,9 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         generation_frame_path = "temp_last_frame_smart.png"
         generated_video_path = "temp_generated_video_smart.mp4"
         try:
-            # Step 1: Generate continuation prompt (manual, Gemini video, or frame-based)
+            # Step 1: Generate continuation prompt + select best frame (manual, Gemini video, or frame-based)
+            selected_timestamp = None  # Will be set by Gemini analysis
+
             if manual_prompt:
                 print(f"Using manual prompt: \"{manual_prompt}\"")
                 prompt = manual_prompt
@@ -949,10 +1037,22 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 if hasattr(self, 'veo_client'):
                     try:
                         print("Attempting Gemini video+audio analysis...")
-                        prompt = await self.analyze_video_with_gemini(
+                        result = await self.analyze_video_with_gemini(
                             input_video,
-                            duration_to_analyze=10
+                            duration_to_analyze=5
                         )
+                        prompt = result["prompt"]
+                        relative_timestamp = result.get("timestamp_sec", 2.5)  # Default to middle
+
+                        # Validate timestamp range
+                        if not (0 <= relative_timestamp <= 5):
+                            print(f"⚠ Invalid timestamp {relative_timestamp:.2f}s, using 2.5s")
+                            relative_timestamp = 2.5
+
+                        # Calculate actual timestamp in video: (video_duration - 5) + relative_timestamp
+                        selected_timestamp = (video_duration - 5) + relative_timestamp
+                        print(f"✓ Selected frame at {selected_timestamp:.2f}s in original video")
+
                     except Exception as e:
                         print(f"⚠ Gemini analysis failed: {e}")
                         print("→ Falling back to frame-based analysis...")
@@ -974,10 +1074,21 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                     )
                     prompt = await self.analyze_frames_with_vision(analysis_frame_paths)
 
-            # Step 3: Extract last frame for video generation
+            # Step 2: Extract frame for video generation
             # Use 1024x576 for Replicate/SVD, 1280x720 for Sora
             target_size = (1024, 576) if self.model == "replicate" else (1280, 720)
-            await self.extract_last_frame(input_video, generation_frame_path, target_size=target_size)
+
+            if selected_timestamp is not None:
+                # Use Gemini-selected timestamp
+                await self.extract_frame_at_timestamp(
+                    input_video,
+                    timestamp_sec=selected_timestamp,
+                    output_path=generation_frame_path,
+                    target_size=target_size
+                )
+            else:
+                # Fallback to last frame
+                await self.extract_last_frame(input_video, generation_frame_path, target_size=target_size)
 
             # Step 4: Generate video from frame using AI prompt
             video_result, is_local_file = await self.generate_video_from_image(
