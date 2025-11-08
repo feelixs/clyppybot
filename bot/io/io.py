@@ -1,6 +1,6 @@
 from interactions import SlashContext, Message
 
-from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH, EMBED_TOKEN_COST, DL_SERVER_ID
+from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH, EMBED_TOKEN_COST, DL_SERVER_ID, AI_EXTEND_TOKENS_COST
 from typing import Tuple, Union
 from math import ceil
 from os import getenv
@@ -175,14 +175,14 @@ async def author_has_enough_tokens_for_ai_extend(msg, url: str):
     user = msg.author
     sub = await subtract_tokens(
         user=user,
-        amt=10,
+        amt=AI_EXTEND_TOKENS_COST,
         clip_url=url,
         reason="AI Video Extend",
         description=f"User requested an AI extended video for {url}."
     )
     if sub['success']:
         if sub['user_success']:  # the user had enough tokens to subtract successfully
-            return True, 10, sub['tokens']
+            return True, AI_EXTEND_TOKENS_COST, sub['tokens']
 
     return False, 0, None
 

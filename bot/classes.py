@@ -16,7 +16,7 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
                      CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
-                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL)
+                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
@@ -997,7 +997,7 @@ class BaseAutoEmbed:
                         Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
                     ]
                     if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
-                    response_msg = f"{get_random_face()} You don't have enough tokens for that! You need at least 10, but have {user_tokens}."
+                    response_msg = f"{get_random_face()} You don't have enough tokens for that! You need at least {AI_EXTEND_TOKENS_COST}, but have {user_tokens}."
                     asyncio.create_task(ctx.send(response_msg, components=comp))
                     success, response, err_handled = False, "InsufficientTokens", True
                     raise ExceptionHandled
