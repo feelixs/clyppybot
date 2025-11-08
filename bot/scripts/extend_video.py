@@ -87,6 +87,17 @@ class SmartVideoExtender:
             raise ValueError("OpenAI API key not found. Set MY_OWN_OPENAI_API_KEY environment variable.")
 
         self.model = model.lower()
+
+        # Always initialize Google Gemini client for video analysis (regardless of generation model)
+        google_key = google_api_key or os.getenv('GOOGLE_API_KEY')
+        if google_key:
+            self.veo_client = genai.Client(api_key=google_key)
+            print(f"Gemini client initialized for video analysis")
+        else:
+            self.veo_client = None
+            print("Warning: No GOOGLE_API_KEY found. Will fall back to frame-based analysis.")
+
+        # Initialize video generation model clients
         if self.model == "replicate":
             self.replicate_api_key = replicate_api_key or os.getenv('REPLICATE_API_TOKEN')
             if not self.replicate_api_key:
@@ -99,11 +110,8 @@ class SmartVideoExtender:
                 os.environ['RUNWAYML_API_SECRET'] = runway_key
             self.runway_client = RunwayML()
         elif self.model == "veo":
-            google_key = google_api_key or os.getenv('GOOGLE_API_KEY')
             if not google_key:
-                raise ValueError("Google API key not found. Set GOOGLE_API_KEY environment variable.")
-            # Pass API key explicitly to the client
-            self.veo_client = genai.Client(api_key=google_key)
+                raise ValueError("Google API key not found. Set GOOGLE_API_KEY environment variable for Veo generation.")
 
         self.openai_api_base = "https://api.openai.com/v1"
         self.openai_headers = {
