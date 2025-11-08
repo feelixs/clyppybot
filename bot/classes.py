@@ -8,16 +8,20 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 
+from bot.io.io import author_has_enough_tokens_for_ai_extend
 from bot.tools.embedder import AutoEmbedder
 from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium
+from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium, fetch_video_status
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
-                     CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT)
+                     CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
+                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
-                        YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration, handle_yt_dlp_err)
+                        YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
+                        handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed,
+                        ExceptionHandled)
 
 import hashlib
 import aiohttp
@@ -25,7 +29,6 @@ import logging
 import asyncio
 import random
 import os
-
 
 def tryremove(f):
     try:
@@ -37,6 +40,7 @@ def tryremove(f):
 def get_random_face():
     faces = ['(⌯˃̶᷄ ﹏ ˂̶᷄⌯)', '`ヽ(゜～゜o)ノ`', '( ͡ಠ ͜ʖ ͡ಠ)', '(╯°□°)╯︵ ┻━┻', '乁( ⁰͡ Ĺ̯ ⁰͡ ) ㄏ', r'¯\_(ツ)_/¯']
     return f'{random.choice(faces)}'
+
 
 def is_discord_compatible(filesize: float):
     if filesize is None:
@@ -111,7 +115,12 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 def fetch_cookies(opts, logger):
     try:
-        firefox_dir = os.path.expanduser(os.getenv("COOKIE_DIR"))
+        cookie_dir = os.getenv("COOKIE_DIR")
+        if cookie_dir is None:
+            logger.info("COOKIE_DIR environment variable not set, skipping cookie fetching")
+            return
+
+        firefox_dir = os.path.expanduser(cookie_dir)
         profile_dir = None
         
         for item in os.listdir(firefox_dir):
@@ -138,12 +147,36 @@ class BaseClip(ABC):
     def __init__(self, slug: str, cdn_client: CdnSpacesClient, tokens_used: int, duration: int):
         self.cdn_client = cdn_client
         self.id = slug
+        self._clyppy_id_input = f"{self.service}{slug}"
         self.duration = duration
         self.tokens_used = tokens_used
-        self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
+        self.clyppy_id = None
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self.service}, {slug}")
         self.title = None
+
+    async def compute_clyppy_id(self):
+        # Generate new format (base62, 10-char) ID
+        new_id = self._generate_clyppy_id(self._clyppy_id_input, low_collision=True)
+
+        # Check if new format exists
+        status = await fetch_video_status(new_id)
+        if status['exists']:
+            self.clyppy_id = new_id
+            self.logger.info(f"Found existing video with new ID format: {self.clyppy_id}")
+            return
+
+        # Fallback: check old format (base36, 8-char) for backward compatibility
+        old_id = self._generate_clyppy_id(self._clyppy_id_input, low_collision=False)
+        self.logger.info(f"Checking existance of old id: {old_id}")
+        status = await fetch_video_status(old_id)
+        if status['exists']:
+            self.clyppy_id = old_id
+            self.logger.info(f"Found existing video with old ID format: {self.clyppy_id}")
+            return
+
+        # No existing video found, use new format for new videos
+        self.clyppy_id = new_id
+        self.logger.info(f"Generated new clyppy ID (base62): {self.clyppy_id} for {self._clyppy_id_input}")
 
     @property
     @abstractmethod
@@ -310,8 +343,7 @@ class BaseClip(ABC):
 
     async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
         local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies)
-        if local_file is None:
-            raise UnknownError
+        if local_file is None: raise UnknownError
         return local_file
 
     async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
@@ -336,8 +368,7 @@ class BaseClip(ABC):
                 )
 
         if upload_if_large:
-            if local is None:
-                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            if local is None: local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
             self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
             return await self.upload_to_clyppyio(local)
 
@@ -356,9 +387,7 @@ class BaseClip(ABC):
             'user_agent': YT_DLP_USER_AGENT
         }
 
-        if cookies:
-            fetch_cookies(ydl_opts, self.logger)
-
+        if cookies: fetch_cookies(ydl_opts, self.logger)
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 # Run download in a thread pool to avoid blocking
@@ -373,7 +402,6 @@ class BaseClip(ABC):
                     self._extract_info,
                     ydl_opts
                 )
-
                 d = get_video_details(filename)
                 d.video_name = extracted.video_name
                 if is_discord_compatible(d.filesize) and can_send_files:
@@ -476,7 +504,7 @@ class BaseClip(ABC):
             raise
     
     @staticmethod
-    def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
+    def _generate_clyppy_id(input_str: str, length: int = None, low_collision=True) -> str:
         """
         Generates a fixed-length lowercase ID from any input string.
         Will always return the same ID for the same input.
@@ -492,17 +520,22 @@ class BaseClip(ABC):
         hash_object = hashlib.sha256(input_str.encode())
         hash_hex = hash_object.hexdigest()
 
-        # Convert to base36 (lowercase letters + numbers)
+        # Convert to base36/62 (lowercase letters + numbers)
         # First convert hex to int, then to base36
         hash_int = int(hash_hex, 16)
-        base36 = '0123456789abcdefghijklmnopqrstuvwxyz'
-        base36_str = ''
+        if low_collision:
+            base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            if length is None: length = 10
+        else:
+            base = '0123456789abcdefghijklmnopqrstuvwxyz'
+            if length is None: length = 8
+        base_str = ''
 
         while hash_int:
-            hash_int, remainder = divmod(hash_int, 36)
-            base36_str = base36[remainder] + base36_str
+            hash_int, remainder = divmod(hash_int, 62 if low_collision else 36)
+            base_str = base[remainder] + base_str
         # Take first 'length' characters, pad with 'a' if too short
-        result = base36_str[:length]
+        result = base_str[:length]
         if len(result) < length:
             result = result + 'a' * (length - len(result))
         return result
@@ -743,7 +776,7 @@ class BaseAutoEmbed:
             logger=self.logger
         )
 
-    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug):
+    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time()
             while clip_id in self.bot.currently_downloading:
@@ -763,7 +796,7 @@ class BaseAutoEmbed:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
             if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
-                return 1
+                return None
             elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
                 return await ctx.send(
                     content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
@@ -776,15 +809,14 @@ class BaseAutoEmbed:
                 )
             if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
                 if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
-                    return 1
+                    return None
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
 
         p = platform.platform_name if platform is not None else None
         try:
-            self.logger.info(f"/embed in {guild.name} {url} -> {p}, {slug}")
-
+            self.logger.info(f"/{'extend' if extend_with_ai else 'embed'} in {guild.name} {url} -> {p}, {slug}")
             if guild.is_dm:
                 nsfw_enabed = True
             elif isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
@@ -793,13 +825,15 @@ class BaseAutoEmbed:
                 nsfw_enabed = ctx.channel.nsfw
 
             if platform is None:
-                self.logger.info(f"return incompatible for /embed {url}")
-                await ctx.send(content=f"Couldn't embed that url (invalid/incompatible)",
-                               components=create_nexus_comps())
+                self.logger.info(f"return incompatible for /{'extend' if extend_with_ai else 'embed'} {url}")
+                await ctx.send(
+                    content=f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (invalid/incompatible)",
+                    components=create_nexus_comps()
+                )
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - {pre}embed url:{url}\n"
+                         f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Incompatible",
@@ -807,16 +841,18 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
-                               f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
-                               f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
-                               f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n")
+                await ctx.send(
+                    f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
+                    f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
+                    f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
+                    f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n"
+                )
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - {pre}embed url:{url}\n"
+                         f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - NSFW disabled",
@@ -824,14 +860,14 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
 
             if self.bot.currently_embedding_users.count(ctx.user.id) >= 2:
                 await ctx.send(f"You're already embedding 2 videos. Please wait for one to finish before trying again.")
                 await send_webhook(
-                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
+                    title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
                     load=f"user - {ctx.user.username}\n"
-                         f"cmd - {pre}embed url:{url}\n"
+                         f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
                          f"response - Already embedding",
@@ -839,7 +875,7 @@ class BaseAutoEmbed:
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
                 )
-                return
+                return None
             else:
                 self.bot.currently_embedding_users.append(ctx.user.id)
 
@@ -852,13 +888,15 @@ class BaseAutoEmbed:
             else:
                 self.bot.currently_downloading.append(slug)
         except Exception as e:
-            self.logger.info(f"Exception in /embed preparation: {str(e)}")
-            await ctx.send(content=f"Unexpected error while trying to embed this url",
-                           components=create_nexus_comps())
+            self.logger.info(f"Exception in /{'extend' if extend_with_ai else 'embed'} preparation: {str(e)}")
+            await ctx.send(
+                content=f"Unexpected error while trying to {'extend' if extend_with_ai else 'embed'} this url",
+                components=create_nexus_comps()
+            )
             await send_webhook(
-                title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - Failure',
+                title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - {pre}embed url:{url}\n"
+                     f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
                      f"response - Unexpected error",
@@ -881,23 +919,22 @@ class BaseAutoEmbed:
                     del self.embedder.clip_id_msg_timestamps[ctx.id]
             except KeyError:
                 pass
-            return
+            return None
 
         timeout_task = asyncio.create_task(self._handle_timeout(
             ctx=ctx,
             url=url,
             amt=platform.dl_timeout_secs
         ))
-
         main_task = asyncio.create_task(self._main_embed_task(
             ctx=ctx,
             url=url,
             platform=platform,
             slug=slug,
             platform_name=p,
-            guild=guild
+            guild=guild,
+            extend_with_ai=extend_with_ai
         ))
-
         done, pending = await asyncio.wait(
             [main_task, timeout_task],
             return_when=asyncio.FIRST_COMPLETED
@@ -910,7 +947,7 @@ class BaseAutoEmbed:
                 await task
         except Exception as e:
             # Log any unexpected exceptions not handled in the tasks themselves
-            self.logger.info(f"/embed Task exception: {str(e)}")
+            self.logger.info(f"/{'extend' if extend_with_ai else 'embed'} Task exception: {str(e)}")
         finally:
             try:
                 while slug in self.bot.currently_downloading:
@@ -928,14 +965,20 @@ class BaseAutoEmbed:
             except KeyError:
                 pass
 
-    async def _main_embed_task(self, ctx: Union[Message, SlashContext], url: str, slug: str, platform: BaseMisc, platform_name: str, guild: GuildType):
+    async def _main_embed_task(
+            self,
+            ctx: Union[Message, SlashContext],
+            url: str, slug: str, platform: BaseMisc,
+            platform_name: str, guild: GuildType,
+            extend_with_ai: bool = False
+    ):
+        user_tokens = None
         pre = "/"
         if isinstance(ctx, Message):
             pre = '.'
 
-        response_msg = "Unknown error in /embed"
+        response_msg = f"Unknown error in /{'extend' if extend_with_ai else 'embed'}"
         success, response, err_handled = False, "Timeout reached", False
-
         clip = None
         try:
             if isinstance(ctx, SlashContext):
@@ -945,69 +988,83 @@ class BaseAutoEmbed:
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
             clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
+
+            if extend_with_ai:
+                can_extend, tokens_used, user_tokens = await author_has_enough_tokens_for_ai_extend(ctx, clip.url)
+                if not can_extend:
+                    comp = [
+                        Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
+                        Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
+                    ]
+                    if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
+                    response_msg = f"{get_random_face()} You don't have enough tokens for that! You need at least 10, but have {user_tokens}."
+                    asyncio.create_task(ctx.send(response_msg, components=comp))
+                    success, response, err_handled = False, "InsufficientTokens", True
+                    raise ExceptionHandled
+
             await self.embedder.process_clip_link(
                 clip=clip,
                 clip_link=url,
                 respond_to=ctx,
                 guild=guild,
-                try_send_files=True
+                try_send_files=True,
+                extend_with_ai=extend_with_ai
             )
             success, response = True, "Success"
         except FileNotFoundError:  # ytdlp failed to download the file, but the output wasn't captured
             response_msg = f"The file could not be downloaded. Does the url points to a video?"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "FileNotFound", True
         except IPBlockedError:
             response_msg = f"{get_random_face()} The platform said my IP was blocked from viewing that link"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "IPBlocked", True
         except VideoUnavailable:
             response_msg = f"That video is not available anymore {get_random_face()}"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "VideoUnavailable", True
         except VideoSaidUnavailable:
             response_msg = f"The url returned 'Video Unavailable'. It could be the wrong url, or maybe it's just not available in my region {get_random_face()}"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "VideoUnavailable", True
         except RemoteTimeoutError:
             response_msg = f"The url returned 'Timeout Error'. Maybe there's an issue with the site at the moment... {get_random_face()}"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "RemoteTimeout", True
         except UrlUnparsable:
             response_msg = f"I couldn't parse that url. Did you enter it correctly?"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "UrlParseError", True
         except YtDlpForbiddenError:
             response_msg = f"I couldn't download that video file (Error 403 Forbidden). Maybe try again later, or use a different hosting website?"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "403 Forbidden", True
         except UnsupportedError:
-            response_msg = f"Couldn't embed that url. That platform is not supported {get_random_face()}"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url. That platform is not supported {get_random_face()}"
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "Incompatible", True
         except (NoDuration, DefinitelyNoDuration):
-            response_msg = f"Couldn't embed that url (not a video post)"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (not a video post)"
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "No duration", True
         except InvalidFileType:
-            response_msg = f"Couldn't embed that url (invalid type/corrupted video file)"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (invalid type/corrupted video file)"
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "Invalid file type", True
         except NoPermsToView:
-            response_msg = f"Couldn't embed that url (no permissions to view)"
-            await ctx.send(response_msg, components=create_nexus_comps())
+            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (no permissions to view)"
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "No permissions", True
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
-            user_tokens = await self.fetch_tokens(ctx.user)
+            if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
             comp = [
-                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL)
-                # don't display 'buy tokens' link -> when they click free tokens it will display the button on the website
-                # and we don't want to appear too desparate
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
             ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
                 response_msg = f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens."
-                await ctx.send(response_msg, components=create_nexus_comps())
+                asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
                 response_msg = f"""{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
@@ -1015,41 +1072,56 @@ class BaseAutoEmbed:
                                 f"every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
                                 f"You have `{user_tokens}` tokens available.\n"
                                 f"Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
-                await ctx.send(response_msg, components=comp)
+                asyncio.create_task(ctx.send(response_msg, components=comp))
             else:
                 response_msg = f"""{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n
                                 Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!"""
-                await ctx.send(content=response_msg, components=create_nexus_comps())
+                asyncio.create_task(ctx.send(content=response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "Video too long", True
+        except VideoTooLongForExtend:
+            response_msg = f"{get_random_face()} I can't extend videos longer than {MAX_VIDEO_LEN_FOR_EXTEND} seconds."
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+        except VideoTooShortForExtend:
+            response_msg = f"{get_random_face()} I can't extend videos shorter than {MIN_VIDEO_LEN_FOR_EXTEND} seconds."
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+        except VideoExtensionFailed as e:
+            response_msg = type(e).__name__ + ": " + str(e)
+            self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
+            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: `{str(e)}`",
+                                         components=create_nexus_comps()))
+            success, response, err_handled = False, "VideoExtensionFailed", True
+        except ExceptionHandled:
+            # just used as a goto
+            pass
         except Exception as e:
             response_msg = type(e).__name__ + ": " + str(e)
-            self.logger.info(f'Unexpected error in /embed: {response_msg}')
-            await ctx.send(f"An unexpected error occurred with your input `{url}`",
-                           components=create_nexus_comps())
+            self.logger.info(f'Unexpected error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
+            asyncio.create_task(ctx.send(f"An unexpected error occurred with your input `{url}`",
+                           components=create_nexus_comps()))
             success, response, err_handled = False, "Unexpected error", False
 
         finally:
-            await send_webhook(
-                title=f'{"DM" if guild.is_dm else guild.name} - {pre}embed called - {"Success" if success else "Failure"}',
+            asyncio.create_task(send_webhook(
+                title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - {pre}embed url:{url}\n"
+                     f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                      f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
                      f"response - {response}",
                 color=COLOR_GREEN if success else COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
-            )
+            ))
             if not success:
                 exception = {
                     'name': response,
                     'msg': response_msg
                 }
-                await push_interaction_error(
+                asyncio.create_task(push_interaction_error(
                     parent_msg=ctx,
                     platform_name=platform_name,
                     clip=clip,
                     clip_url=url,
                     error_info=exception,
                     handled=err_handled
-                )
+                ))

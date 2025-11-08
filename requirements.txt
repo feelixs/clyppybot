@@ -38,3 +38,6 @@ webdriver-manager
 boto3
 pillow
 botocore
+replicate
+runwayml
+google-genai

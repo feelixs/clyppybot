@@ -19,13 +19,16 @@ EMBED_TXT_COMMAND = ".embed"
 LOGGER_WEBHOOK = os.getenv('LOG_WEBHOOK')
 APPUSE_LOG_WEBHOOK = os.getenv('APPUSE_WEBHOOK')
 
-VERSION = "2.1.1"
+VERSION = "2.1.2"
 CLYPPYIO_USER_AGENT = f"ClyppyBot/{VERSION}"
 
 EMBED_TOKEN_COST = 1
 EMBED_W_TOKEN_MAX_LEN = 30 * 60  # 30 minutes
 EMBED_TOTAL_MAX_LENGTH = 4 * 60 * 60  # 4 hours
 MAX_VIDEO_LEN_SEC = 60 * 5
+
+MIN_VIDEO_LEN_FOR_EXTEND = 6
+MAX_VIDEO_LEN_FOR_EXTEND = 60
 
 MAX_FILE_SIZE_FOR_DISCORD = 8 * 1024 * 1024
 DL_SERVER_ID = os.getenv("DL_SERVER_ID")
@@ -52,6 +55,7 @@ DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
 BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
 CLYPPY_VOTE_URL = "https://clyppy.io/vote/"
 
+BUY_TOKENS_URL = "https://clyppy.io/profile/tokens"
 
 NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']
 EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [

@@ -170,6 +170,23 @@ def get_token_cost(video_dur):
     return EMBED_TOKEN_COST * ceil(extra_duration / EMBED_W_TOKEN_MAX_LEN)  # 1 token per 30 minutes of additional time
 
 
+async def author_has_enough_tokens_for_ai_extend(msg, url: str):
+    # -> bool-> can extend video, int-> number of tokens used, int->current tokens after embed
+    user = msg.author
+    sub = await subtract_tokens(
+        user=user,
+        amt=10,
+        clip_url=url,
+        reason="AI Video Extend",
+        description=f"User requested an AI extended video for {url}."
+    )
+    if sub['success']:
+        if sub['user_success']:  # the user had enough tokens to subtract successfully
+            return True, 10, sub['tokens']
+
+    return False, 0, None
+
+
 async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int, int]:
     """Returns: bool->can embed video, int->number of tokens used"""
     def is_dl_server(guild):
