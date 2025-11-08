@@ -44,15 +44,15 @@ class SmartVideoExtender:
         Initialize the smart video extender
 
         Args:
-            openai_api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+            openai_api_key: OpenAI API key (defaults to MY_OWN_OPENAI_API_KEY env var)
             replicate_api_key: Replicate API key (defaults to REPLICATE_API_TOKEN env var, only needed if model="replicate")
             runway_api_key: Runway API key (defaults to RUNWAYML_API_SECRET env var, only needed if model="runway")
             google_api_key: Google API key (defaults to GOOGLE_API_KEY env var, only needed if model="veo")
             model: Which model to use for video generation ("replicate", "sora", "runway", or "veo")
         """
-        self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
+        self.openai_api_key = openai_api_key or os.getenv('MY_OWN_OPENAI_API_KEY')
         if not self.openai_api_key:
-            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
+            raise ValueError("OpenAI API key not found. Set MY_OWN_OPENAI_API_KEY environment variable.")
 
         self.model = model.lower()
         if self.model == "replicate":
@@ -741,6 +741,19 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         print(f"Using model: {self.model}")
         print(f"{'='*60}\n")
 
+        # Validate input video duration
+        print("Validating input video duration...")
+        video = VideoFileClip(input_video)
+        video_duration = video.duration
+        video.close()
+
+        if video_duration > 60:
+            raise ValueError(f"Input video is too long: {video_duration:.2f}s (maximum: 60s)")
+        if video_duration < 6:
+            raise ValueError(f"Input video is too short: {video_duration:.2f}s (minimum: 6s)")
+
+        print(f"✓ Video duration validated: {video_duration:.2f}s")
+
         # Temporary file paths
         analysis_frame_paths = []
         generation_frame_path = "temp_last_frame_smart.png"
@@ -881,7 +894,7 @@ Examples:
         '--openai-api-key',
         type=str,
         default=None,
-        help='OpenAI API key (defaults to OPENAI_API_KEY env var)'
+        help='OpenAI API key (defaults to MY_OWN_OPENAI_API_KEY env var)'
     )
     parser.add_argument(
         '--replicate-api-key',

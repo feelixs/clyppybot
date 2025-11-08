@@ -18,11 +18,11 @@ class SoraVideoExtender:
         Initialize the Sora video extender
 
         Args:
-            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+            api_key: OpenAI API key (defaults to MY_OWN_OPENAI_API_KEY env var)
         """
-        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        self.api_key = api_key or os.getenv('MY_OWN_OPENAI_API_KEY')
         if not self.api_key:
-            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
+            raise ValueError("OpenAI API key not found. Set MY_OWN_OPENAI_API_KEY environment variable.")
 
         self.api_base = "https://api.openai.com/v1"
         self.headers = {

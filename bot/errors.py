@@ -27,6 +27,22 @@ class VideoLongerThanMaxLength(Exception):
         super().__init__(f"Video duration ({video_dur} seconds) exceeds maximum allowed length")
 
 
+class VideoTooLongForExtend(Exception):
+    def __init__(self, video_dur):
+        self.video_dur = video_dur
+        super().__init__(f"Video duration ({video_dur} seconds) exceeds maximum allowed length")
+
+
+class VideoTooShortForExtend(Exception):
+    def __init__(self, video_dur):
+        self.video_dur = video_dur
+        super().__init__(f"Video duration ({video_dur} seconds) is shorter than minimum needed length")
+
+
+class VideoExtensionFailed(Exception):
+    pass
+
+
 class YtDlpForbiddenError(Exception):
     pass
 

@@ -54,7 +54,7 @@ Examples:
         '--api-key',
         type=str,
         default=None,
-        help='OpenAI API key (defaults to OPENAI_API_KEY env var)'
+        help='OpenAI API key (defaults to MY_OWN_OPENAI_API_KEY env var)'
     )
 
     args = parser.parse_args()

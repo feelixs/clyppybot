@@ -193,7 +193,12 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
-    async def process_clip_link(self, clip: 'BaseClip', clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType, try_send_files=True) -> None:
+    async def process_clip_link(
+            self, clip: 'BaseClip',
+            clip_link: str, respond_to: Union[Message, SlashContext],
+            guild: GuildType, try_send_files = True,
+            extend_with_ai = False
+    ) -> None:
         # get_clip will have used the VIP tokens if they were needed for this clip
         try:
             await self._process_clip(
@@ -201,35 +206,38 @@ class AutoEmbedder:
                 clip_link=clip_link,
                 respond_to=respond_to,
                 guild=guild,
-                try_send_files=try_send_files
+                try_send_files=try_send_files,
+                extend_with_ai=extend_with_ai
             )
         except Exception as e:
             # this is where we refund the tokens
             self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
-            await subtract_tokens(
+            asyncio.create_task(subtract_tokens(
                 user=respond_to.author,
                 amt=-1 * clip.tokens_used,
                 clip_url=clip.url,
                 reason="Token Refund",
                 description=f"The embed failed for {clip.url}"
-            )
+            ))
             raise e
 
-    async def _process_clip(self, clip, clip_link: str, respond_to: Union[Message, SlashContext], guild: GuildType,
-                            try_send_files=True):
+    async def _process_clip(
+            self,
+            clip: 'BaseClip', clip_link: str,
+            respond_to: Union[Message, SlashContext], guild: GuildType,
+            try_send_files=True, extend_with_ai=False):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
         else:
             has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
 
         will_send_files = has_file_perms and try_send_files
-
         if clip is None:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
             return None
 
-        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and respond_to.author == DOWNLOAD_THIS_WEBHOOK_ID:
+        if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and int(respond_to.author) == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
             # also checks against the 'download this' webhook id, so the 'video refresher' webhook will trigger the normal block (create/refresh StoredVideo clip)
             # TODO: decrement the tokens used for this clip by parsing the <@user_id> from the message
@@ -238,27 +246,33 @@ class AutoEmbedder:
             if file_not_exists:
                 self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
                 await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
-                response: LocalFileInfo = await self.bot.tools.dl.download_clip(clip, can_send_files=False,
-                                                                                skip_upload=True)
+                response: LocalFileInfo = await self.bot.tools.dl.download_clip(
+                    clip=clip,
+                    can_send_files=False,
+                    skip_upload=True
+                )
                 await upload_video(
                     video_file_path=response.local_file_path,
                     logger=self.logger,
                     autodelete=True  # the server will auto delete it after some time
                 )
-                await respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}")
+                asyncio.create_task(respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}"))
                 return
             else:
                 self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
-                await respond_to.reply("Video file already exists on the server!")
+                asyncio.create_task(respond_to.reply("Video file already exists on the server!"))
                 return
         else:
             # proceed normally
-
             # retrieve clip video url
             status = await fetch_video_status(clip.clyppy_id)
             video_doesnt_exist = not status['exists']
             if video_doesnt_exist:
-                response: DownloadResponse = await self.bot.tools.dl.download_clip(clip, can_send_files=will_send_files)
+                response: DownloadResponse = await self.bot.tools.dl.download_clip(
+                    clip=clip,
+                    can_send_files=will_send_files,
+                    extend_with_ai=extend_with_ai
+                )
             else:
                 self.logger.info(f" {clip.clyppy_url} - Video already exists!")
                 info = await get_clip_info(clip.clyppy_id)
@@ -371,7 +385,8 @@ class AutoEmbedder:
                 'video_file_size': response.filesize,
                 'uploaded_to_discord': uploading_to_discord,
                 'video_file_dur': response.duration,
-                'expires_at_timestamp': expires_at
+                'expires_at_timestamp': expires_at,
+                'is_extended': extend_with_ai
             }
 
             try:
@@ -388,8 +403,7 @@ class AutoEmbedder:
                     if result['video_page_id']:
                         new_id = result["video_page_id"]
                         if new_id != clip.clyppy_id:
-                            self.logger.info(
-                                f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
+                            self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
                             clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
@@ -442,8 +456,7 @@ class AutoEmbedder:
                     # don't publish response_time on /embeds, we could but we need a way to pull timestamp from SlashContext
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
-                    self.logger.info(
-                        f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
+                    self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                 if result['success']:
                     await publish_interaction(
                         interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
@@ -452,8 +465,7 @@ class AutoEmbedder:
                         edit_type='response_time'
                     )
                 else:
-                    self.logger.info(
-                        f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
+                    self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")
             except Exception as e:
                 # Handle error
                 self.logger.info(f"Could not send interaction: {e}")
@@ -465,14 +477,14 @@ class AutoEmbedder:
                         description=f"I messed up while trying to fetch this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, you should report this error to us!")
-            await self.bot.tools.send_error_message(
+            asyncio.create_task(self.bot.tools.send_error_message(
                 ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"Failed to fetch clip {clip_link}",
                 guild=guild,
                 bot=self.bot,
                 delete_after_on_reply=60
-            )
+            ))
             raise
         except Exception:
             self.logger.info(f"Unknown Exception in _process_this_clip_link: {traceback.format_exc()}")
@@ -480,12 +492,12 @@ class AutoEmbedder:
                         description=f"I messed up while trying to fetch this clip:\n{clip_link} "
                                     f"\n\nPlease try linking it again.\n"
                                     "If the issue keeps on happening, you should report this error to us!")
-            await self.bot.tools.send_error_message(
+            asyncio.create_task(self.bot.tools.send_error_message(
                 ctx=respond_to,
                 msg_embed=emb,
                 dm_content=f"Failed to fetch clip {clip_link}",
                 guild=guild,
                 bot=self.bot,
                 delete_after_on_reply=60
-            )
+            ))
             raise
