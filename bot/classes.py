@@ -8,6 +8,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
 from interactions.api.events import MessageCreate
 
+from bot.io.io import author_has_enough_tokens_for_ai_extend
 from bot.tools.embedder import AutoEmbedder
 from bot.io.cdn import CdnSpacesClient
 from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium, fetch_video_status
@@ -15,11 +16,12 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
                      CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
-                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND)
+                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
-                        handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed)
+                        handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed,
+                        ExceptionHandled)
 
 import hashlib
 import aiohttp
@@ -970,6 +972,7 @@ class BaseAutoEmbed:
             platform_name: str, guild: GuildType,
             extend_with_ai: bool = False
     ):
+        user_tokens = None
         pre = "/"
         if isinstance(ctx, Message):
             pre = '.'
@@ -985,6 +988,19 @@ class BaseAutoEmbed:
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
             clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
+
+            if extend_with_ai:
+                can_extend, tokens_used, user_tokens = await author_has_enough_tokens_for_ai_extend(ctx, clip.url)
+                if not can_extend:
+                    comp = [
+                        Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
+                        Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
+                    ]
+                    response_msg = f"{get_random_face()} You don't have enough tokens for that! You need at least 10, but have {user_tokens}."
+                    asyncio.create_task(ctx.send(response_msg, components=comp))
+                    success, response, err_handled = False, "InsufficientTokens", True
+                    raise ExceptionHandled
+
             await self.embedder.process_clip_link(
                 clip=clip,
                 clip_link=url,
@@ -1039,7 +1055,7 @@ class BaseAutoEmbed:
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "No permissions", True
         except (VideoTooLong, VideoLongerThanMaxLength) as e:
-            user_tokens = await self.fetch_tokens(ctx.user)
+            if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
             comp = [
                 Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL)
@@ -1074,6 +1090,9 @@ class BaseAutoEmbed:
             asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: `{str(e)}`",
                                          components=create_nexus_comps()))
             success, response, err_handled = False, "VideoExtensionFailed", True
+        except ExceptionHandled:
+            # just used as a goto
+            pass
         except Exception as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'Unexpected error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')

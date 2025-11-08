@@ -55,6 +55,7 @@ DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
 BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
 CLYPPY_VOTE_URL = "https://clyppy.io/vote/"
 
+BUY_TOKENS_URL = "https://clyppy.io/profile/tokens"
 
 NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']
 EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [

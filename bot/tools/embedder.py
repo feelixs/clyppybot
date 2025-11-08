@@ -211,14 +211,26 @@ class AutoEmbedder:
             )
         except Exception as e:
             # this is where we refund the tokens
-            self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
-            asyncio.create_task(subtract_tokens(
-                user=respond_to.author,
-                amt=-1 * clip.tokens_used,
-                clip_url=clip.url,
-                reason="Token Refund",
-                description=f"The embed failed for {clip.url}"
-            ))
+            if extend_with_ai:
+                # video extension -> always 10 tokens cost
+                self.logger.info(f"The AI extend failed, so we should refund 10 VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
+                asyncio.create_task(subtract_tokens(
+                    user=respond_to.author,
+                    amt=-10,
+                    clip_url=clip.url,
+                    reason="Token Refund",
+                    description=f"The AI extend failed for {clip.url}"
+                ))
+            else:
+                # normal embed
+                self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
+                asyncio.create_task(subtract_tokens(
+                    user=respond_to.author,
+                    amt=-1 * clip.tokens_used,
+                    clip_url=clip.url,
+                    reason="Token Refund",
+                    description=f"The embed failed for {clip.url}"
+                ))
             raise e
 
     async def _process_clip(

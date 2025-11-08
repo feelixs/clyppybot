@@ -39,6 +39,10 @@ class VideoTooShortForExtend(Exception):
         super().__init__(f"Video duration ({video_dur} seconds) is shorter than minimum needed length")
 
 
+class ExceptionHandled(Exception):
+    pass
+
+
 class VideoExtensionFailed(Exception):
     pass
 
