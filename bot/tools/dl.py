@@ -1,6 +1,7 @@
 from bot.types import DownloadResponse, LocalFileInfo
 from bot.errors import UnknownError, VideoTooLongForExtend, VideoTooShortForExtend, VideoExtensionFailed
 from bot.classes import BaseClip
+from pathlib import Path
 from typing import Union
 from moviepy import VideoFileClip
 import asyncio
@@ -70,7 +71,7 @@ class DownloadManager:
 
                 # Run the extend_video.py script as a subprocess
                 process = await asyncio.create_subprocess_exec(
-                    'python', 'bot/scripts/extend_video.py',
+                    'python', (Path(__file__).parent / 'scripts/extend_video.py'),
                     input_file,
                     '--output', input_file,  # Overwrite the original file
                     '--model', model,
