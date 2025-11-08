@@ -32,14 +32,16 @@ import json
 
 
 # Gemini video analysis prompt for continuation prediction with frame selection
-GEMINI_VIDEO_ANALYSIS_PROMPT = """You are analyzing the LAST 5 SECONDS of a video to accomplish two goals:
+def get_gemini_video_analysis_prompt(duration: float) -> str:
+    """Generate the Gemini video analysis prompt for a specific duration."""
+    return f"""You are analyzing the LAST {duration} SECONDS of a video to accomplish two goals:
 1. Select the BEST FRAME for starting video generation
 2. Predict what happens NEXT after that frame
 
-PART 1 - SELECT BEST FRAME TIMESTAMP (0-5 seconds):
+PART 1 - SELECT BEST FRAME TIMESTAMP (0-{duration} seconds):
 
 FRAME SELECTION PRIORITY:
-- Use the LAST frame (closest to 5 seconds) if it has clear visual content and context
+- Use the LAST frame (closest to {duration} seconds) if it has clear visual content and context
 - If the last frame is blank, blurry, or lacks content, select the frame CLOSEST to the end that has good visual content
 - Prefer frames as late as possible in the timeline while ensuring quality
 
@@ -52,7 +54,7 @@ AVOID frames that are:
 
 PREFER frames that are:
 - Clear, stable, and well-lit
-- As close to the end (5 seconds) as possible
+- As close to the end ({duration} seconds) as possible
 - Show continuous action that can be extended
 - Have good visual content and composition
 
@@ -75,16 +77,16 @@ TEMPORAL ANALYSIS:
 - Audio-visual correlations (footsteps + walking, music + action)
 
 OUTPUT FORMAT (JSON only):
-{
-  "timestamp_sec": <number 0-5>,
+{{
+  "timestamp_sec": <number 0-{duration}>,
   "prompt": "<1-2 sentences describing what happens NEXT>"
-}
+}}
 
 Example:
-{
-  "timestamp_sec": 4.8,
+{{
+  "timestamp_sec": {duration * 0.96},
   "prompt": "Camera continues panning left as person walks toward the building entrance"
-}"""
+}}"""
 
 
 def get_ssl_context():
@@ -402,7 +404,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                     "properties": {
                         "timestamp_sec": {
                             "type": "number",
-                            "description": "Timestamp in seconds (0-5) of best frame"
+                            "description": f"Timestamp in seconds (0-{duration_to_analyze}) of best frame"
                         },
                         "prompt": {
                             "type": "string",
@@ -417,7 +419,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 model=model,
                 contents=[
                     uploaded_file,
-                    GEMINI_VIDEO_ANALYSIS_PROMPT
+                    get_gemini_video_analysis_prompt(duration_to_analyze)
                 ],
                 config=config
             )
@@ -1109,22 +1111,31 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             else:
                 # Try Gemini video+audio analysis first (if veo_client available)
                 if hasattr(self, 'veo_client'):
+                    # Determine optimal analysis duration based on video length
+                    if video_duration >= 17:
+                        duration_to_analyze = 10
+                    elif video_duration >= 12:
+                        duration_to_analyze = 5
+                    else:
+                        duration_to_analyze = 2.5
+
                     try:
-                        print("Attempting Gemini video+audio analysis...")
+                        print(f"Attempting Gemini video+audio analysis (last {duration_to_analyze}s)...")
                         result = await self.analyze_video_with_gemini(
                             input_video,
-                            duration_to_analyze=5
+                            duration_to_analyze=duration_to_analyze
                         )
                         prompt = result["prompt"]
-                        relative_timestamp = result.get("timestamp_sec", 2.5)  # Default to middle
+                        default_timestamp = duration_to_analyze / 2  # Default to middle
+                        relative_timestamp = result.get("timestamp_sec", default_timestamp)
 
                         # Validate timestamp range
-                        if not (0 <= relative_timestamp <= 5):
-                            print(f"⚠ Invalid timestamp {relative_timestamp:.2f}s, using 2.5s")
-                            relative_timestamp = 2.5
+                        if not (0 <= relative_timestamp <= duration_to_analyze):
+                            print(f"⚠ Invalid timestamp {relative_timestamp:.2f}s, using {default_timestamp}s")
+                            relative_timestamp = default_timestamp
 
-                        # Calculate actual timestamp in video: (video_duration - 5) + relative_timestamp
-                        selected_timestamp = (video_duration - 5) + relative_timestamp
+                        # Calculate actual timestamp in video: (video_duration - duration) + relative_timestamp
+                        selected_timestamp = (video_duration - duration_to_analyze) + relative_timestamp
                         print(f"✓ Selected frame at {selected_timestamp:.2f}s in original video")
 
                     except Exception as e:

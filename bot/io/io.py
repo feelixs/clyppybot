@@ -178,7 +178,7 @@ async def author_has_enough_tokens_for_ai_extend(msg, url: str):
         amt=AI_EXTEND_TOKENS_COST,
         clip_url=url,
         reason="AI Video Extend",
-        description=f"User requested an AI extended video for {url}."
+        description=f"User requested an AI extended video for {url}"
     )
     if sub['success']:
         if sub['user_success']:  # the user had enough tokens to subtract successfully
