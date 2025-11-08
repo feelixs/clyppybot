@@ -153,4 +153,4 @@ class DownloadManager:
         # Both models failed
         error_msg = f"Video extension failed with all models. Last error: {last_error}"
         self._parent.logger.error(f"VIDEO EXTENSION FAILED: {error_msg}")
-        raise VideoExtensionFailed()
+        raise VideoExtensionFailed(error_msg)

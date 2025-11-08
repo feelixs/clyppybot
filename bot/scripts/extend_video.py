@@ -38,16 +38,22 @@ GEMINI_VIDEO_ANALYSIS_PROMPT = """You are analyzing the LAST 5 SECONDS of a vide
 
 PART 1 - SELECT BEST FRAME TIMESTAMP (0-5 seconds):
 
+FRAME SELECTION PRIORITY:
+- Use the LAST frame (closest to 5 seconds) if it has clear visual content and context
+- If the last frame is blank, blurry, or lacks content, select the frame CLOSEST to the end that has good visual content
+- Prefer frames as late as possible in the timeline while ensuring quality
+
 AVOID frames that are:
 - Black, faded, or in transition
 - Blurry or mid-fast-motion
 - At scene cuts or shot changes
 - Showing ending cues (fadeouts, people leaving)
+- Blank or lacking visual information
 
-PREFER frames that:
-- Are clear, stable, and well-lit
+PREFER frames that are:
+- Clear, stable, and well-lit
+- As close to the end (5 seconds) as possible
 - Show continuous action that can be extended
-- Are mid-action (not at start or end points)
 - Have good visual content and composition
 
 PART 2 - ANALYZE FOR CONTINUATION:
@@ -76,7 +82,7 @@ OUTPUT FORMAT (JSON only):
 
 Example:
 {
-  "timestamp_sec": 3.5,
+  "timestamp_sec": 4.8,
   "prompt": "Camera continues panning left as person walks toward the building entrance"
 }"""
 

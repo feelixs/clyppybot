@@ -19,7 +19,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, 
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
-                        handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend)
+                        handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed)
 
 import hashlib
 import aiohttp
@@ -1068,6 +1068,12 @@ class BaseAutoEmbed:
         except VideoTooShortForExtend:
             response_msg = f"{get_random_face()} I can't extend videos shorter than {MIN_VIDEO_LEN_FOR_EXTEND} seconds."
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+        except VideoExtensionFailed as e:
+            response_msg = type(e).__name__ + ": " + str(e)
+            self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
+            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: `{str(e)}`",
+                                         components=create_nexus_comps()))
+            success, response, err_handled = False, "VideoExtensionFailed", True
         except Exception as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'Unexpected error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
