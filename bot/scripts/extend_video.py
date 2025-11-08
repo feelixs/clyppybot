@@ -544,7 +544,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
             # Create config with personGeneration parameter
             config = types.GenerateVideosConfig(
-                person_generation="allow_all"  # Allow generation of people for image-to-video
+                person_generation="allow_adult"  # Allow generation of people for image-to-video
             )
             operation = self.veo_client.models.generate_videos(
                 model=model,
