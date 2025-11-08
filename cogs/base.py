@@ -388,7 +388,7 @@ class Base(Extension):
         await ctx.send("An unexpected error occurred.")
         raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
 
-    @slash_command(name="extend", description="Extend a video by 10 seconds",
+    @slash_command(name="extend", description="Extend a video with AI!",
                    options=[SlashCommandOption(
                        name="url",
                        description="The YouTube, Twitch, etc. link to extend",
