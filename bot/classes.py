@@ -1059,9 +1059,8 @@ class BaseAutoEmbed:
             if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
             dur = e.video_dur
             comp = [
-                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL)
-                # don't display 'buy tokens' link -> when they click free tokens it will display the button on the website
-                # and we don't want to appear too desparate
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
             ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
                 response_msg = f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens."
