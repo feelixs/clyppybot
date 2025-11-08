@@ -30,6 +30,38 @@ import certifi
 import time
 
 
+# Gemini video analysis prompt for continuation prediction
+GEMINI_VIDEO_ANALYSIS_PROMPT = """You are analyzing the LAST FEW SECONDS of a video to predict what should happen NEXT.
+
+Analyze both VISUAL and AUDIO elements:
+
+VISUAL CUES:
+- Track object/person movement patterns and trajectories
+- Note camera movement (pan, tilt, zoom, static)
+- Identify motion speed and direction
+- Observe what's entering/exiting the frame
+
+AUDIO CUES:
+- Listen for sound patterns (music, speech, ambient noise)
+- Note audio fade-ins, fade-outs, or crescendos
+- Identify any dialogue or narrative direction
+- Detect emotional tone (laughter, tension, excitement)
+
+TEMPORAL ANALYSIS:
+- How are things changing over time?
+- What motion is accelerating or decelerating?
+- What patterns suggest continuation vs. conclusion?
+- Are there audio-visual correlations (footsteps + person walking, music + action)?
+
+Based on these visual and audio patterns, write a SHORT prompt (1-2 sentences max) describing what happens NEXT in the continuation.
+
+Focus on the IMMEDIATE next action, not long-term outcomes.
+
+Example: "Person continues walking right and exits frame as background music fades out."
+
+Your response should ONLY be the continuation prompt itself, nothing else."""
+
+
 def get_ssl_context():
     """Create SSL context using certifi certificates"""
     ssl_context = ssl.create_default_context(cafile=certifi.where())
@@ -128,6 +160,53 @@ class SmartVideoExtender:
             raise
 
     @staticmethod
+    async def extract_last_clip(
+        video_path: str,
+        duration: int = 10,
+        output_path: str = "temp_last_clip.mp4"
+    ) -> str:
+        """
+        Extract the last N seconds of video as a separate clip (preserves audio)
+
+        Args:
+            video_path: Path to input video
+            duration: Seconds to extract from end (default: 10)
+            output_path: Where to save the clip
+
+        Returns:
+            Path to extracted clip
+        """
+        print(f"Extracting last {duration} seconds of video for analysis...")
+        try:
+            video = VideoFileClip(video_path)
+            video_duration = video.duration
+
+            # Calculate start time (at least 0)
+            start_time = max(0, video_duration - duration)
+
+            # Extract subclip with audio
+            clip = video.subclipped(start_time, video_duration)
+
+            # Save with audio preserved
+            clip.write_videofile(
+                output_path,
+                codec='libx264',
+                audio_codec='aac',
+                verbose=False,
+                logger=None
+            )
+
+            video.close()
+            clip.close()
+
+            print(f"Extracted {duration}s clip to {output_path}")
+            return output_path
+
+        except Exception as e:
+            print(f"Error extracting clip: {e}")
+            raise
+
+    @staticmethod
     async def encode_image_to_base64(image_path: str) -> str:
         """
         Encode an image file to base64 data URL
@@ -223,6 +302,101 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         except Exception as e:
             print(f"Error analyzing frames: {e}")
             raise
+
+    async def analyze_video_with_gemini(
+        self,
+        video_path: str,
+        duration_to_analyze: int = 10,
+        model: str = "gemini-2.0-flash-exp"
+    ) -> str:
+        """
+        Analyze video with Gemini for video+audio understanding
+
+        Args:
+            video_path: Path to video file (or clip)
+            duration_to_analyze: Seconds to extract from end (default: 10)
+            model: Gemini model to use (default: gemini-2.0-flash-exp)
+
+        Returns:
+            AI-generated prompt for video continuation
+        """
+        print(f"\nAnalyzing video with {model} (video+audio)...")
+
+        temp_clip_path = None
+        uploaded_file = None
+
+        try:
+            # Step 1: Extract last N seconds
+            temp_clip_path = await self.extract_last_clip(
+                video_path,
+                duration=duration_to_analyze,
+                output_path="temp_gemini_analysis_clip.mp4"
+            )
+
+            # Step 2: Upload video file
+            print("   Uploading video to Gemini...")
+            uploaded_file = self.veo_client.files.upload(file=temp_clip_path)
+            print(f"   File uploaded: {uploaded_file.name}")
+
+            # Step 3: Wait for processing
+            print("   Waiting for video processing...")
+            max_wait = 60  # 1 minute max for short clips
+            elapsed = 0
+
+            while elapsed < max_wait:
+                uploaded_file = self.veo_client.files.get(name=uploaded_file.name)
+
+                if uploaded_file.state.name == "ACTIVE":
+                    print("   Video ready for analysis!")
+                    break
+                elif uploaded_file.state.name == "FAILED":
+                    raise Exception(f"Video processing failed: {uploaded_file.state}")
+
+                print(f"   Processing... ({elapsed}s)")
+                await asyncio.sleep(5)
+                elapsed += 5
+
+            if uploaded_file.state.name != "ACTIVE":
+                raise TimeoutError("Video processing did not complete in time")
+
+            # Step 4: Analyze with Gemini
+            print("   Generating continuation prompt...")
+
+            response = self.veo_client.models.generate_content(
+                model=model,
+                contents=[
+                    uploaded_file,
+                    GEMINI_VIDEO_ANALYSIS_PROMPT
+                ]
+            )
+
+            generated_prompt = response.text.strip()
+
+            print(f"\n✓ Gemini-Generated Prompt (from video+audio):")
+            print(f"  \"{generated_prompt}\"\n")
+
+            return generated_prompt
+
+        except Exception as e:
+            print(f"Error analyzing video with Gemini: {e}")
+            raise
+
+        finally:
+            # Cleanup: Delete uploaded file
+            if uploaded_file:
+                try:
+                    self.veo_client.files.delete(name=uploaded_file.name)
+                    print(f"   Cleaned up uploaded file: {uploaded_file.name}")
+                except Exception as e:
+                    print(f"   Warning: Could not delete file: {e}")
+
+            # Cleanup: Remove temporary clip
+            if temp_clip_path and os.path.exists(temp_clip_path):
+                try:
+                    os.remove(temp_clip_path)
+                    print(f"   Cleaned up temp clip: {temp_clip_path}")
+                except Exception as e:
+                    print(f"   Warning: Could not remove temp clip: {e}")
 
     @staticmethod
     async def extract_last_frame(
@@ -759,19 +933,39 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         generation_frame_path = "temp_last_frame_smart.png"
         generated_video_path = "temp_generated_video_smart.mp4"
         try:
-            # Step 1: Extract 5 frames for analysis (unless manual prompt provided)
+            # Step 1: Generate continuation prompt (manual, Gemini video, or frame-based)
             if manual_prompt:
                 print(f"Using manual prompt: \"{manual_prompt}\"")
                 prompt = manual_prompt
             else:
-                analysis_frame_paths = await self.extract_multiple_frames(
-                    input_video,
-                    num_frames=5,
-                    target_size=(512, 512)
-                )
+                # Try Gemini video+audio analysis first (if veo_client available)
+                if hasattr(self, 'veo_client'):
+                    try:
+                        print("Attempting Gemini video+audio analysis...")
+                        prompt = await self.analyze_video_with_gemini(
+                            input_video,
+                            duration_to_analyze=10
+                        )
+                    except Exception as e:
+                        print(f"⚠ Gemini analysis failed: {e}")
+                        print("→ Falling back to frame-based analysis...")
 
-                # Step 2: Analyze frames with Vision API
-                prompt = await self.analyze_frames_with_vision(analysis_frame_paths)
+                        # Fallback: Extract frames and use GPT-4o Vision
+                        analysis_frame_paths = await self.extract_multiple_frames(
+                            input_video,
+                            num_frames=5,
+                            target_size=(512, 512)
+                        )
+                        prompt = await self.analyze_frames_with_vision(analysis_frame_paths)
+                else:
+                    # No Google client, use frame-based analysis
+                    print("Using frame-based analysis (no Gemini client)...")
+                    analysis_frame_paths = await self.extract_multiple_frames(
+                        input_video,
+                        num_frames=5,
+                        target_size=(512, 512)
+                    )
+                    prompt = await self.analyze_frames_with_vision(analysis_frame_paths)
 
             # Step 3: Extract last frame for video generation
             # Use 1024x576 for Replicate/SVD, 1280x720 for Sora

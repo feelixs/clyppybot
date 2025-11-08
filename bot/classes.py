@@ -113,7 +113,12 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 def fetch_cookies(opts, logger):
     try:
-        firefox_dir = os.path.expanduser(os.getenv("COOKIE_DIR"))
+        cookie_dir = os.getenv("COOKIE_DIR")
+        if cookie_dir is None:
+            logger.info("COOKIE_DIR environment variable not set, skipping cookie fetching")
+            return
+
+        firefox_dir = os.path.expanduser(cookie_dir)
         profile_dir = None
         
         for item in os.listdir(firefox_dir):
