@@ -71,7 +71,7 @@ class DownloadManager:
 
                 # Run the extend_video.py script as a subprocess
                 process = await asyncio.create_subprocess_exec(
-                    'python', (Path(__file__).parent / 'scripts/extend_video.py'),
+                    'python', (Path(__file__).parent.parent / 'scripts/extend_video.py'),
                     input_file,
                     '--output', input_file,  # Overwrite the original file
                     '--model', model,
