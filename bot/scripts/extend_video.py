@@ -865,11 +865,26 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             video_file = video.video
             downloaded_data = self.veo_client.files.download(file=video_file)
 
+            # Validate downloaded data is actually video, not error content
+            if not downloaded_data or len(downloaded_data) < 100:
+                raise ValueError(f"Downloaded data is too small ({len(downloaded_data)} bytes), likely not a valid video")
+
+            # Check for video file signature (magic bytes)
+            # MP4 files should contain 'ftyp' box near the beginning
+            if b'ftyp' not in downloaded_data[:200]:
+                # Check if it's an error message (HTML/JSON)
+                if b'<!DOCTYPE' in downloaded_data[:200] or b'<html' in downloaded_data[:200].lower():
+                    raise ValueError("Veo returned HTML instead of video - likely an error page")
+                if b'{' in downloaded_data[:10] and b'"error"' in downloaded_data[:500]:
+                    raise ValueError("Veo returned JSON error instead of video")
+                # Warn but continue if we can't identify the format
+                print(f"   WARNING: Downloaded data doesn't have expected MP4 signature")
+
             # Write to file
             with open(temp_video_path, 'wb') as f:
                 f.write(downloaded_data)
 
-            print(f"   Video downloaded successfully with audio!")
+            print(f"   Video downloaded successfully with audio! ({len(downloaded_data)} bytes)")
             return temp_video_path
 
         except Exception as e:
@@ -933,13 +948,48 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             async with aiohttp.ClientSession(connector=connector) as session:
                 async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=300)) as response:
                     response.raise_for_status()
+
+                    # Validate content-type to ensure we're downloading a video, not an error page
+                    content_type = response.headers.get('Content-Type', '').lower()
+                    print(f"   Content-Type: {content_type}")
+
+                    # Check for video content types
+                    valid_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'application/octet-stream']
+                    is_valid = any(vtype in content_type for vtype in valid_video_types)
+
+                    if not is_valid and content_type:
+                        # Check if it's HTML (error page)
+                        if 'text/html' in content_type or 'application/json' in content_type:
+                            raise ValueError(f"Server returned {content_type} instead of video. This is likely an error page.")
+                        # Warn but continue for unknown types
+                        print(f"   WARNING: Unexpected content-type '{content_type}', expected video format")
+
+                    # Download the content
+                    downloaded_bytes = b''
                     with open(output_path, 'wb') as out_file:
                         while True:
                             chunk = await response.content.read(8192)
                             if not chunk:
                                 break
                             out_file.write(chunk)
+                            downloaded_bytes += chunk
 
+                    # Validate the downloaded content (check magic bytes)
+                    if len(downloaded_bytes) > 12:
+                        # Check for common video file signatures (magic bytes)
+                        # MP4: starts with 0x00 0x00 0x00 [size] 0x66 0x74 0x79 0x70 (ftyp)
+                        # Or contains "ftyp" near the beginning
+                        header = downloaded_bytes[:12]
+                        if b'ftyp' not in downloaded_bytes[:100] and b'<!DOCTYPE' in downloaded_bytes[:100]:
+                            # It's HTML!
+                            os.remove(output_path)
+                            raise ValueError("Downloaded file appears to be HTML, not a video file")
+                        if b'<html' in downloaded_bytes[:100].lower():
+                            # It's HTML!
+                            os.remove(output_path)
+                            raise ValueError("Downloaded file appears to be HTML, not a video file")
+
+            print(f"   Downloaded {len(downloaded_bytes)} bytes")
             print(f"Video downloaded to {output_path}")
             return output_path
         except Exception as e:

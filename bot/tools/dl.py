@@ -132,15 +132,57 @@ class DownloadManager:
                     last_error = combined_output
                     continue
 
-                # Success!
+                # Success! Now validate the output is actually playable
                 self._parent.logger.info(f"Video extension successful with {model}")
 
-                # Get the new duration from the output file
-                video = VideoFileClip(output_file)
-                new_duration = video.duration
-                video.close()
+                # Validate the output file exists and has content
+                if not os.path.exists(output_file):
+                    self._parent.logger.error(f"Output file does not exist: {output_file}")
+                    last_error = "Output file not created"
+                    continue
 
-                return new_duration
+                file_size = os.path.getsize(output_file)
+                if file_size < 1000:  # Less than 1KB is definitely not a valid video
+                    self._parent.logger.error(f"Output file is too small: {file_size} bytes")
+                    last_error = f"Output file too small ({file_size} bytes)"
+                    continue
+
+                # Validate the video is actually playable by trying to load it and extract a frame
+                try:
+                    video = VideoFileClip(output_file)
+
+                    # Check basic properties
+                    if video.duration is None or video.duration <= 0:
+                        video.close()
+                        self._parent.logger.error(f"Video has invalid duration: {video.duration}")
+                        last_error = f"Invalid video duration: {video.duration}"
+                        continue
+
+                    # Try to extract a frame to verify the video is actually playable
+                    # If this fails, the video is corrupt even if it has valid metadata
+                    try:
+                        test_frame = video.get_frame(0)
+                        if test_frame is None or test_frame.size == 0:
+                            video.close()
+                            self._parent.logger.error("Video frame extraction returned empty frame")
+                            last_error = "Corrupt video: cannot extract frames"
+                            continue
+                    except Exception as frame_error:
+                        video.close()
+                        self._parent.logger.error(f"Cannot extract frame from video: {frame_error}")
+                        last_error = f"Corrupt video: {frame_error}"
+                        continue
+
+                    new_duration = video.duration
+                    video.close()
+
+                    self._parent.logger.info(f"Video validated: {file_size} bytes, {new_duration:.2f}s duration, playable")
+                    return new_duration
+
+                except Exception as validation_error:
+                    self._parent.logger.error(f"Video validation failed: {validation_error}")
+                    last_error = f"Video validation failed: {validation_error}"
+                    continue
 
             except (VideoTooLongForExtend, VideoTooShortForExtend):
                 # Re-raise these immediately, don't try other models
