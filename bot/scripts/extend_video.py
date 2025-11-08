@@ -491,7 +491,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         # Prepare multipart form data
         form = aiohttp.FormData()
         form.add_field('prompt', prompt)
-        form.add_field('model', 'sora-2-pro')
+        form.add_field('model', 'sora-2')
         form.add_field('size', size)
         form.add_field('seconds', str(duration))
 
@@ -681,16 +681,16 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         image_path: str,
         prompt: str,
         duration: int = 8,
-        model: str = 'veo-3.1-generate-preview'
+        model: str = 'veo-3.0-fast-generate-001'
     ) -> str:
         """
-        Generate a video from an image using Google Veo 3.1 (with native audio!)
+        Generate a video from an image using Google Veo 3 Fast (with native audio!)
 
         Args:
             image_path: Path to the image (last frame of video)
             prompt: AI-generated description of continuation
             duration: Length of generated video in seconds (default: 8)
-            model: Veo model to use (default: veo-3.1-generate-preview)
+            model: Veo model to use (default: veo-3.0-fast-generate-001, $0.15/sec)
 
         Returns:
             Path to downloaded video file
