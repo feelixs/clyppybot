@@ -140,12 +140,16 @@ class BaseClip(ABC):
     def __init__(self, slug: str, cdn_client: CdnSpacesClient, tokens_used: int, duration: int):
         self.cdn_client = cdn_client
         self.id = slug
+        self._clyppy_id_input = f"{self.service}{slug}"
         self.duration = duration
         self.tokens_used = tokens_used
-        self.clyppy_id = self._generate_clyppy_id(f"{self.service}{slug}")
+        self.clyppy_id = None
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self.service}, {slug}")
         self.title = None
+
+    async def compute_clyppy_id(self):
+        self.clyppy_id = self._generate_clyppy_id(self._clyppy_id_input)  # replace with new logic
+        self.logger.info(f"Generated clyppy ID: {self.clyppy_id} for {self._clyppy_id_input}")
 
     @property
     @abstractmethod
@@ -473,7 +477,7 @@ class BaseClip(ABC):
             raise
     
     @staticmethod
-    def _generate_clyppy_id(input_str: str, length: int = 8) -> str:
+    def _generate_clyppy_id(input_str: str, length: int = None, low_collision=True) -> str:
         """
         Generates a fixed-length lowercase ID from any input string.
         Will always return the same ID for the same input.
@@ -489,17 +493,22 @@ class BaseClip(ABC):
         hash_object = hashlib.sha256(input_str.encode())
         hash_hex = hash_object.hexdigest()
 
-        # Convert to base36 (lowercase letters + numbers)
+        # Convert to base36/62 (lowercase letters + numbers)
         # First convert hex to int, then to base36
         hash_int = int(hash_hex, 16)
-        base36 = '0123456789abcdefghijklmnopqrstuvwxyz'
-        base36_str = ''
+        if low_collision:
+            base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            if length is None: length = 10
+        else:
+            base = '0123456789abcdefghijklmnopqrstuvwxyz'
+            if length is None: length = 8
+        base_str = ''
 
         while hash_int:
-            hash_int, remainder = divmod(hash_int, 36)
-            base36_str = base36[remainder] + base36_str
+            hash_int, remainder = divmod(hash_int, 62 if low_collision else 36)
+            base_str = base[remainder] + base_str
         # Take first 'length' characters, pad with 'a' if too short
-        result = base36_str[:length]
+        result = base_str[:length]
         if len(result) < length:
             result = result + 'a' * (length - len(result))
         return result

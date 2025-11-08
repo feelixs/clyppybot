@@ -236,6 +236,8 @@ class AutoEmbedder:
             self.logger.info(f"Failed to fetch clip: **Invalid Clip Link** {clip_link}")
             # should silently fail
             return None
+        elif clip.clyppy_id is None:
+            await clip.compute_clyppy_id()
 
         if str(guild.id) == str(DL_SERVER_ID) and isinstance(respond_to, Message) and int(respond_to.author) == DOWNLOAD_THIS_WEBHOOK_ID:
             # if we're in video dl server -> StoredVideo obj for this clip probably already exists
