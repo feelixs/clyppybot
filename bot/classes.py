@@ -996,6 +996,7 @@ class BaseAutoEmbed:
                         Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
                         Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
                     ]
+                    if user_tokens is None: user_tokens = await self.fetch_tokens(ctx.user)
                     response_msg = f"{get_random_face()} You don't have enough tokens for that! You need at least 10, but have {user_tokens}."
                     asyncio.create_task(ctx.send(response_msg, components=comp))
                     success, response, err_handled = False, "InsufficientTokens", True
