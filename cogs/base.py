@@ -671,7 +671,8 @@ class Base(Extension):
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
-                    await resp.text()
+                    r = await resp.text()
+                    self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
         except:
             self.logger.info(f"Failed to post servers to top.gg")
         try:
@@ -680,7 +681,8 @@ class Base(Extension):
                                         json={'server_count': str(num),
                                               'shard_count': "1"},
                                         headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
-                    await resp.json()
+                    r = await resp.json()
+                    self.logger.info(f"Successfully posted servers to botlist.me - response: {r}")
         except:
             self.logger.info(f"Failed to post servers to botlist.me")
 
