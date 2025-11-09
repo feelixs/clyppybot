@@ -93,7 +93,8 @@ class DownloadManager:
 
                 # Build command with optional manual prompt from previous failure
                 cmd = [
-                    'python', str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
+                    'python', '-u',  # -u for unbuffered output (real-time streaming)
+                    str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
                     input_file,
                     '--output', output_file,  # Save to new file (don't overwrite original)
                     '--model', model,
