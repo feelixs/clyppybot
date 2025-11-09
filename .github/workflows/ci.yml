@@ -30,6 +30,9 @@ jobs:
           WORKDIR /app
           COPY . /app
 
+          ARG DISCORD_TOKEN
+          ENV CLYPP_TOKEN=${DISCORD_TOKEN}
+
           RUN apt-get -yq update && apt-get install -y git
           RUN pip3 install --no-cache-dir -r requirements.txt
           RUN apt-get install -yq ffmpeg
@@ -40,7 +43,7 @@ jobs:
       # just run the docker container to make sure it builds correctly, don't test the actual bot functionality
       - name: Build Docker image
         run: |
-          docker build -t test-container .
+          docker build --build-arg DISCORD_TOKEN="${{secrets.TEST_BOT_TOKEN}}" -t test-container .
 
       - name: Run Docker container
         run: |

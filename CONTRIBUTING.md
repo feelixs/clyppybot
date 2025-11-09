@@ -221,6 +221,7 @@ async def download_video(url: str, max_size: int = 25) -> str:
 
 - [ ] Bot starts without errors
 - [ ] Any new Commands respond correctly, or throw Exceptions without crashing the bot
+- [ ] When you push to your fork, the Build GitHub workflow completes without errors
 
 
 ## Commit Guidelines
