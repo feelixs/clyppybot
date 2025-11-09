@@ -124,6 +124,7 @@ def fetch_cookies(opts, logger):
         profile_dir = None
         
         for item in os.listdir(firefox_dir):
+            logger.info(f"[LISTDIR] {item}")
             if item.endswith('.default-release'):
                 profile_dir = item
                 break
