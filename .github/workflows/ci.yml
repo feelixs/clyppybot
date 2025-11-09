@@ -34,15 +34,13 @@ jobs:
         run: |
           cat > Dockerfile <<'EOF'
           FROM python:3.12.6-slim
-          LABEL version="1.0"
-          LABEL description="This is a custom Python image for my application."
           COPY . .
 
           RUN apt-get -yq update && apt-get install -y git
-          RUN pip3 install --no-cache-dir -r ./bots/clyppybot/requirements.txt
+          RUN pip3 install --no-cache-dir -r requirements.txt
           RUN apt-get install -yq ffmpeg
 
-          WORKDIR /bots
+          WORKDIR /
           RUN chmod +x run.sh
           CMD ["python3 main.py"]
           EOF
@@ -52,12 +50,24 @@ jobs:
         run: |
           docker build -t test-container .
 
-      - name: Verify build success
+      - name: Run Docker container
         run: |
-          if docker images test-container | grep -q test-container; then
-            echo "✓ Docker build successful"
-            docker images test-container
+          docker run -d --name test-bot test-container
+          sleep 5
+
+      - name: Check container status
+        run: |
+          if docker ps -a --filter "name=test-bot" --format "{{.Status}}" | grep -q "Up"; then
+            echo "✓ Container is running"
+            docker logs test-bot
           else
-            echo "✗ Docker build failed"
+            echo "✗ Container failed to start or exited"
+            docker logs test-bot
             exit 1
           fi
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker stop test-bot || true
+          docker rm test-bot || true
