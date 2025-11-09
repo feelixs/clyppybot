@@ -388,28 +388,28 @@ class Base(Extension):
         await ctx.send("An unexpected error occurred.")
         raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
 
-    #@slash_command(name="ai_extend", description="Extend a video with AI",
-    #               options=[SlashCommandOption(
-    #                   name="url",
-    #                   description="The YouTube, Twitch, etc. link to extend",
-    #                   required=True,
-    #                   type=OptionType.STRING)
-    #               ])
-    #async def ai_extend(self, ctx: SlashContext, url: str):
-    #    self.logger.info(f"@slash_command for /extend - {ctx.author.id} - {url}")
-    #    url = self._sanitize_url(url)
-    #    for p in self.bot.platform_embedders:
-    #        if slug := p.platform.parse_clip_url(url):
-    #            return await self.bot.base_embedder.command_embed(
-    #                ctx=ctx,
-    #                url=url,
-    #                platform=p.platform,
-    #                slug=slug,
-    #                extend_with_ai=True
-    #            )
-    #    # incompatible (should never get here, since bot.base is a catch-all)
-    #    await ctx.send("An unexpected error occurred.")
-    #    raise Exception(f"Error in /extend - bot.base did not catch url {url}, exited returning None")
+    @slash_command(name="ai_extend", description="Extend a video with AI",
+                   options=[SlashCommandOption(
+                       name="url",
+                       description="The YouTube, Twitch, etc. link to extend",
+                       required=True,
+                       type=OptionType.STRING)
+                   ])
+    async def ai_extend(self, ctx: SlashContext, url: str):
+        self.logger.info(f"@slash_command for /extend - {ctx.author.id} - {url}")
+        url = self._sanitize_url(url)
+        for p in self.bot.platform_embedders:
+            if slug := p.platform.parse_clip_url(url):
+                return await self.bot.base_embedder.command_embed(
+                    ctx=ctx,
+                    url=url,
+                    platform=p.platform,
+                    slug=slug,
+                    extend_with_ai=True
+                )
+        # incompatible (should never get here, since bot.base is a catch-all)
+        await ctx.send("An unexpected error occurred.")
+        raise Exception(f"Error in /extend - bot.base did not catch url {url}, exited returning None")
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):

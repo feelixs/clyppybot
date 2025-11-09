@@ -8,6 +8,7 @@ import asyncio
 import os
 import re
 import uuid
+import json
 
 
 class DownloadManager:
@@ -82,20 +83,31 @@ class DownloadManager:
         self._parent.logger.info("Extending video with AI...")
 
         # Try Sora first, then fallback to Veo
-        models_to_try = ['sora', 'veo']
+        models_to_try = ['sora', 'runway']
         last_error = None
+        saved_prompt = None  # Will store the prompt from a failed attempt
 
         for model in models_to_try:
             try:
                 self._parent.logger.info(f"Attempting video extension with model: {model}")
 
-                # Run the extend_video.py script as a subprocess
-                process = await asyncio.create_subprocess_exec(
+                # Build command with optional manual prompt from previous failure
+                cmd = [
                     'python', str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
                     input_file,
                     '--output', output_file,  # Save to new file (don't overwrite original)
                     '--model', model,
                     '--duration', '8',
+                ]
+
+                # If we have a saved prompt from a previous failed attempt, use it
+                if saved_prompt:
+                    self._parent.logger.info(f"Using saved prompt from previous attempt: {saved_prompt}")
+                    cmd.extend(['--manual-prompt', saved_prompt])
+
+                # Run the extend_video.py script as a subprocess
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
@@ -107,6 +119,20 @@ class DownloadManager:
                 # Check for errors in output
                 if process.returncode != 0:
                     combined_output = stdout_text + stderr_text
+
+                    # Try to extract saved_prompt from error message if it exists
+                    # Error format: {"error": "...", "saved_prompt": "..."}
+                    if 'saved_prompt' in combined_output and not saved_prompt:
+                        try:
+                            # Try to find JSON error in the output
+                            json_match = re.search(r'\{[^}]*"saved_prompt"[^}]*}', combined_output, re.DOTALL)
+                            if json_match:
+                                error_data = json.loads(json_match.group(0))
+                                saved_prompt = error_data.get('saved_prompt')
+                                if saved_prompt:
+                                    self._parent.logger.info(f"Extracted prompt from error: {saved_prompt}")
+                        except Exception as e:
+                            self._parent.logger.warning(f"Could not extract saved_prompt from error: {e}")
 
                     # Check for duration validation errors
                     if 'Input video is too long' in combined_output:
@@ -122,15 +148,15 @@ class DownloadManager:
                         raise VideoTooShortForExtend(video_dur)
 
                     # Check for moderation block (Sora-specific)
-                    if 'moderation_blocked' in combined_output or 'moderation system' in combined_output:
+                    if 'moderation_blocked' in combined_output or 'moderation system' in combined_output or 'content moderation' in combined_output:
                         self._parent.logger.warning(f"Video blocked by {model} moderation, trying next model...")
                         last_error = f"{model} moderation blocked"
-                        continue  # Try next model
+                        continue  # Try next model (will use saved_prompt if available)
 
                     # Other errors - try next model
                     self._parent.logger.warning(f"Video extension failed with {model}: {combined_output}")
                     last_error = combined_output
-                    continue
+                    continue  # Try next model (will use saved_prompt if available)
 
                 # Success! Now validate the output is actually playable
                 self._parent.logger.info(f"Video extension successful with {model}")
