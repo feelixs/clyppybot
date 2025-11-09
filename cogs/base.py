@@ -351,6 +351,7 @@ class Base(Extension):
         await ctx.defer()
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
+        await self.post_servers(len(self.bot.guilds))
         await ctx.send("You can now safely exit.")
 
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
