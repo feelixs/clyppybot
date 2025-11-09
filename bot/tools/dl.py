@@ -156,7 +156,14 @@ class DownloadManager:
                             brace_count = 0
 
                             for line in lines:
+                                # Remove logger prefix if present (e.g., "[sora]: ")
                                 stripped = line.strip()
+                                if ']: ' in stripped:
+                                    # Remove everything up to and including the first ']: '
+                                    stripped = stripped.split(']: ', 1)[1] if ']: ' in stripped else stripped
+
+                                stripped = stripped.strip()
+
                                 if stripped.startswith('{'):
                                     in_json = True
                                     json_lines = [stripped]
