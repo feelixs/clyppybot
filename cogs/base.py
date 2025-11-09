@@ -351,6 +351,7 @@ class Base(Extension):
         await ctx.defer()
         await ctx.send("Saving DB...")
         await self.bot.guild_settings.save()
+        await self.post_servers(len(self.bot.guilds))
         await ctx.send("You can now safely exit.")
 
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
@@ -608,6 +609,7 @@ class Base(Extension):
                 color=COLOR_GREEN,
                 logger=self.logger
             )
+            await self.post_servers(len(self.bot.guilds))
 
     @listen()
     async def on_guild_left(self, event: GuildLeft):
@@ -626,6 +628,17 @@ class Base(Extension):
                 color=COLOR_RED,
                 logger=self.logger
             )
+            await self.post_servers(len(self.bot.guilds))
+
+    #@listen(InviteCreate)
+    #async def on_invite_create(self, event: InviteCreate):
+    #    if self.ready:
+    #        self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
+    #        await send_webhook(
+    #            content=f"here - https://discord.gg/{event.invite.code}",
+    #            url=IN_WEBHOOK,
+    #            logger=self.logger
+    #        )
 
     @listen()
     async def on_ready(self):
@@ -645,6 +658,13 @@ class Base(Extension):
                 url="https://twitch.tv/hesmen"
             ))
 
+            #ss = {}
+            #for s in self.bot.guilds:
+            #    b = s.get_member(self.bot.user.id)
+            #    if b.has_permission(Permissions.MANAGE_GUILD):
+            #        ss[s.name] = s.joined_at.format()
+            #self.logger.info(f"MANAGE_SERVER guilds: {len(ss)}")
+
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
@@ -652,6 +672,10 @@ class Base(Extension):
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
+                    r = await resp.text()
+                    self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
+        except:
+            self.logger.info(f"Failed to post servers to top.gg")
                     r = await resp.text()
                     self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
         except Exception as e:
