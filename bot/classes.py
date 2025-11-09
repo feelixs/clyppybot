@@ -1089,10 +1089,26 @@ class BaseAutoEmbed:
         except VideoExtensionFailed as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
-            # Trim error message to 500 chars to avoid Discord's 2000 char limit
+
+            # Extract just the error message, not all the script output
             error_text = str(e)
+
+            # Try to parse JSON error format from the script
+            try:
+                import json
+                import re
+                # Look for JSON object in the error message (format: {"error": "...", ...})
+                json_match = re.search(r'\{[^{}]*"error"[^{}]*\}', error_text, re.DOTALL)
+                if json_match:
+                    error_data = json.loads(json_match.group(0))
+                    error_text = error_data.get('error', error_text)
+            except:
+                pass  # If JSON parsing fails, use the full error text
+
+            # Trim error message to 500 chars to avoid Discord's 2000 char limit
             if len(error_text) > 500:
                 error_text = error_text[:497] + "..."
+
             asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: \n\n```{error_text}```",
                                          components=create_nexus_comps()))
             success, response, err_handled = False, "VideoExtensionFailed", True
