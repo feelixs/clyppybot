@@ -482,6 +482,22 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                     if response.status == 200:
                         result = await response.json()
                         generated_prompt = result['choices'][0]['message']['content'].strip()
+
+                        # Check if GPT-4o refused to analyze due to NSFW content
+                        refusal_patterns = [
+                            "I'm sorry, I can't assist with that",
+                            "I cannot assist with",
+                            "I can't help with that",
+                            "I'm unable to assist",
+                            "inappropriate content",
+                            "explicit content"
+                        ]
+
+                        if any(pattern.lower() in generated_prompt.lower() for pattern in refusal_patterns):
+                            print(f"\n⚠ GPT-4o Vision refused to analyze:")
+                            print(f"  Response: \"{generated_prompt}\"\n")
+                            raise VideoContainsNSFWContent("GPT-4o Vision refused to analyze the content (likely NSFW)")
+
                         print(f"\n✓ AI-Generated Prompt:")
                         print(f"  \"{generated_prompt}\"\n")
                         return generated_prompt
@@ -1646,6 +1662,9 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                         selected_timestamp = (video_duration - duration_to_analyze) + relative_timestamp
                         print(f"✓ Selected frame at {selected_timestamp:.2f}s in original video")
 
+                    except VideoContainsNSFWContent:
+                        # Re-raise NSFW errors immediately - don't fallback
+                        raise
                     except Exception as e:
                         print(f"⚠ Gemini analysis failed: {e}")
                         print("→ Falling back to frame-based analysis...")
