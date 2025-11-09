@@ -557,6 +557,10 @@ class BaseMisc(ABC):
 
     @abstractmethod
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+        """
+        @param url: The url of the video
+        @param extended_url_formats: (deprecated) if True, will allow to parse non-platform urls (ie fixupx/<post_id> would work for x.com/<post_id>)
+        """
         ...
 
     def is_clip_link(self, url: str) -> bool:
