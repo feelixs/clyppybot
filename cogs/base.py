@@ -630,16 +630,6 @@ class Base(Extension):
             )
             await self.post_servers(len(self.bot.guilds))
 
-    #@listen(InviteCreate)
-    #async def on_invite_create(self, event: InviteCreate):
-    #    if self.ready:
-    #        self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
-    #        await send_webhook(
-    #            content=f"here - https://discord.gg/{event.invite.code}",
-    #            url=IN_WEBHOOK,
-    #            logger=self.logger
-    #        )
-
     @listen()
     async def on_ready(self):
         if not self.ready:
@@ -665,10 +655,6 @@ class Base(Extension):
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
-                    r = await resp.text()
-                    self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
-        except:
-            self.logger.info(f"Failed to post servers to top.gg")
                     r = await resp.text()
                     self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
         except Exception as e:
