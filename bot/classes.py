@@ -127,9 +127,6 @@ def fetch_cookies(opts, logger):
             logger.warning(f"[COOKIES] firefox directory does not exist: {cookie_dir}")
             return
 
-        all_items = [item.name for item in firefox_dir.iterdir()]
-        logger.info(f"[COOKIES] Directory contents: {all_items}")
-
         profile_dirs = list(firefox_dir.glob("*.default-release"))
         if profile_dirs:
             profile_path = str(profile_dirs[0])
