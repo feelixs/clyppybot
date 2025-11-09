@@ -1,0 +1,53 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+env:
+  DISCORD_TOKEN: ${{secrets.TEST_BOT_TOKEN}}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Backend setup and test ---
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Create venv & install Python dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write Dockerfile
+        run: |
+          cat > Dockerfile << 'EOF'
+FROM python:3.12.6-slim
+LABEL version="1.0"
+LABEL description="This is a custom Python image for my application."
+COPY . .
+
+RUN apt-get -yq update && apt-get install -y git
+RUN pip3 install --no-cache-dir -r ./bots/clyppybot/requirements.txt
+RUN apt-get install -yq ffmpeg
+
+WORKDIR /bots
+RUN chmod +x run.sh
+CMD ["python3 main.py"]
+EOF
+
+      # just run the docker container to make sure it builds correctly, don't test the actual bot functionality
+      - name: Run
+        run: |
+          docker build -t test-container .
