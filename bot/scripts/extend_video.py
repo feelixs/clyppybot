@@ -1330,9 +1330,20 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
             # Build the filter_complex based on audio availability
             if both_have_audio:
-                # Both videos have audio - standard concat
-                print(f"   Both videos have audio - using standard concat")
-                filter_complex = '[0:v:0][0:a:0][1:v:0][1:a:0]concat=n=2:v=1:a=1[outv][outa]'
+                # Both videos have audio - normalize FPS first, then concat
+                print(f"   Both videos have audio - normalizing FPS to match original, then concat")
+                # Get original FPS
+                orig_fps = original_info['fps']
+                # Convert FPS string like "60/1" to float
+                if '/' in orig_fps:
+                    num, den = orig_fps.split('/')
+                    target_fps = float(num) / float(den)
+                else:
+                    target_fps = float(orig_fps)
+
+                print(f"   Target FPS: {target_fps}")
+                # Set FPS on generated video to match original, then concat
+                filter_complex = f'[1:v:0]fps={target_fps}[v1];[0:v:0][0:a:0][v1][1:a:0]concat=n=2:v=1:a=1[outv][outa]'
                 audio_map = ['-map', '[outa]']
             elif original_has_audio and not generated_has_audio:
                 # Original has audio, generated doesn't - add silent audio to generated

@@ -1096,11 +1096,14 @@ class BaseAutoEmbed:
             # Try to parse JSON error format from the script
             try:
                 import json
-                import re
-                # Look for JSON object in the error message (format: {"error": "...", ...})
-                json_match = re.search(r'\{[^{}]*"error"[^{}]*\}', error_text, re.DOTALL)
-                if json_match:
-                    error_data = json.loads(json_match.group(0))
+                # Look for "Fatal error: {" and extract JSON from there
+                if "Fatal error: {" in error_text:
+                    # Find the start of the JSON (after "Fatal error: ")
+                    json_start = error_text.find("Fatal error: {") + len("Fatal error: ")
+                    json_text = error_text[json_start:]
+
+                    # Parse the JSON
+                    error_data = json.loads(json_text)
                     error_text = error_data.get('error', error_text)
             except:
                 pass  # If JSON parsing fails, use the full error text

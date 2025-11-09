@@ -9,6 +9,8 @@ import os
 import re
 import uuid
 import json
+import fcntl
+from contextlib import asynccontextmanager
 
 
 class DownloadManager:
@@ -48,7 +50,9 @@ class DownloadManager:
             clip.clyppy_id = clip._generate_clyppy_id(f"{clip.clyppy_id}_extended_{unique_suffix}", low_collision=True)
             self._parent.logger.info(f"Extended video clyppy_id: {clip.clyppy_id}")
 
-            new_duration = await self._extend_video_with_ai(original_file, extended_file)
+            async with self._get_ai_extend_lock():
+                new_duration = await self._extend_video_with_ai(original_file, extended_file)
+
             r.local_file_path = extended_file
             r.duration = new_duration
             r.filesize = os.path.getsize(extended_file)
@@ -63,6 +67,47 @@ class DownloadManager:
         if r is None:
             raise UnknownError
         return r
+
+    @asynccontextmanager
+    async def _get_ai_extend_lock(self):
+        """
+        Acquire a system-wide exclusive lock for AI video extension.
+        Uses a file-based lock that works across all bot instances in the Docker container.
+        Only one AI extend task can run at a time system-wide.
+        """
+        # Use /tmp for the lock file (shared across all containers in the same system)
+        lock_file_path = '/tmp/clyppybot_ai_extend.lock'
+        lock_file = None
+
+        try:
+            # Open/create the lock file
+            lock_file = open(lock_file_path, 'w')
+
+            self._parent.logger.info("Waiting to acquire AI extend lock...")
+
+            # Use run_in_executor to avoid blocking the async event loop
+            # fcntl.flock is blocking, so we run it in a thread pool
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                fcntl.flock,
+                lock_file.fileno(),
+                fcntl.LOCK_EX  # Exclusive lock
+            )
+
+            self._parent.logger.info("AI extend lock acquired")
+
+            # Yield control back to the caller while holding the lock
+            yield
+
+        finally:
+            # Release the lock and close the file
+            if lock_file:
+                try:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                    lock_file.close()
+                    self._parent.logger.info("AI extend lock released")
+                except Exception as e:
+                    self._parent.logger.warning(f"Error releasing AI extend lock: {e}")
 
     async def _extend_video_with_ai(self, input_file: str, output_file: str) -> float:
         """
