@@ -147,6 +147,7 @@ class DownloadManager:
                     # Try to extract saved_prompt from error message if it exists
                     # Error format: {"error": "...", "saved_prompt": "..."}
                     if 'saved_prompt' in combined_output and not saved_prompt:
+                        self._parent.logger.info(f"Attempting to extract saved_prompt from error output...")
                         try:
                             # Parse the output to find the JSON with saved_prompt
                             # Look for lines that form a JSON object
@@ -164,7 +165,11 @@ class DownloadManager:
 
                                 stripped = stripped.strip()
 
-                                if stripped.startswith('{'):
+                                # Check if line contains a JSON opening brace (handle "Fatal error: {" or just "{")
+                                if '{' in stripped and not in_json:
+                                    # Extract everything from the first '{' onwards
+                                    json_start = stripped.find('{')
+                                    stripped = stripped[json_start:]
                                     in_json = True
                                     json_lines = [stripped]
                                     brace_count = stripped.count('{') - stripped.count('}')

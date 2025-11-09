@@ -1089,7 +1089,11 @@ class BaseAutoEmbed:
         except VideoExtensionFailed as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
-            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: `{str(e)}`",
+            # Trim error message to 500 chars to avoid Discord's 2000 char limit
+            error_text = str(e)
+            if len(error_text) > 500:
+                error_text = error_text[:497] + "..."
+            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: \n\n```{error_text}```",
                                          components=create_nexus_comps()))
             success, response, err_handled = False, "VideoExtensionFailed", True
         except ExceptionHandled:
