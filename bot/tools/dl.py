@@ -116,18 +116,20 @@ class DownloadManager:
                 stdout_lines = []
                 stderr_lines = []
 
-                async def read_stream(stream, lines_list, prefix):
+                async def read_stream(stream, lines_list, prefix, log_level='info'):
                     async for line in stream:
                         decoded_line = line.decode('utf-8').rstrip()
-                        lines_list.append(decoded_line)
-                        print(f"{prefix}: {decoded_line}")
+                        if decoded_line:  # Only log non-empty lines
+                            lines_list.append(decoded_line)
+                            log_method = getattr(self._parent.logger, log_level)
+                            log_method(f"{prefix}: {decoded_line}")
 
                 # Start reading both streams in background tasks
                 stdout_task = asyncio.create_task(
-                    read_stream(process.stdout, stdout_lines, f"[{model}]")
+                    read_stream(process.stdout, stdout_lines, f"[{model}]", 'info')
                 )
                 stderr_task = asyncio.create_task(
-                    read_stream(process.stderr, stderr_lines, f"[{model} ERR]")
+                    read_stream(process.stderr, stderr_lines, f"[{model} ERR]", 'warning')
                 )
 
                 # Wait for process to complete and streams to finish
