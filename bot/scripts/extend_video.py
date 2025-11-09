@@ -32,12 +32,12 @@ import time
 import json
 
 
-# Gemini video analysis prompt for continuation prediction with frame selection
+# Gemini video analysis prompt for creative direction with frame selection
 def get_gemini_video_analysis_prompt(duration: float) -> str:
     """Generate the Gemini video analysis prompt for a specific duration."""
-    return f"""You are analyzing the LAST {duration} SECONDS of a video to accomplish two goals:
+    return f"""You are the CREATIVE DIRECTOR of this Instagram reel, analyzing the LAST {duration} SECONDS of the video to accomplish two goals:
 1. Select the BEST FRAME for starting video generation
-2. Predict what happens NEXT after that frame
+2. Provide creative direction for a BETTER ENDING (8 seconds long), which will be appended to the current video.
 
 PART 1 - SELECT BEST FRAME TIMESTAMP (0-{duration} seconds):
 
@@ -59,35 +59,85 @@ PREFER frames that are:
 - Show continuous action that can be extended
 - Have good visual content and composition
 
-PART 2 - ANALYZE FOR CONTINUATION:
+PART 2 - CREATIVE DIRECTION FOR THE NEW ENDING:
 
-Consider VISUAL cues:
-- Object/person movement patterns and trajectories
-- Camera movement (pan, tilt, zoom, static)
-- Motion speed and direction
+CRITICAL CONSTRAINTS:
+- The new 8-second ending will be generated from a SINGLE STARTING FRAME using AI
+- You have ONLY 8 SECONDS - be realistic about what can happen in this time
+- This means you CANNOT cut to different shots, angles, or scenes
+- You CANNOT show things that aren't already visible in the frame (like "show a close-up" or "cut to the crowd")
+- The camera perspective will remain CONTINUOUS from the selected frame
+- Think of it like ONE CONTINUOUS SHOT with no cuts, lasting exactly 8 seconds
 
-Consider AUDIO cues:
-- Sound patterns (music, speech, ambient noise)
-- Audio dynamics (fade-ins, crescendos, etc.)
-- Dialogue or narrative direction
-- Emotional tone
+TIME CONSTRAINT (8 SECONDS):
+- 8 seconds is VERY SHORT - about 2-3 simple actions maximum
+- Keep it simple: ONE main camera movement OR ONE main subject action, not both
+- Example of realistic 8s: "Camera slowly zooms in on subject's face"
+- Example of realistic 8s: "Person raises arms in celebration and freezes"
+- DO NOT describe multiple complex actions that would take 15-30 seconds
 
-TEMPORAL ANALYSIS:
-- How are things changing over time?
-- What motion patterns suggest natural continuation?
-- Audio-visual correlations (footsteps + walking, music + action)
+WHAT YOU CAN DO:
+- Describe ONE natural camera movement (zoom in/out, pan left/right, tilt up/down, dolly forward/backward)
+- Describe ONE simple motion/action that continues from what's visible in the frame
+- Describe effects or speed changes (slow motion, freeze-frame at end)
+- Keep it simple - this is only 8 seconds!
+
+WHAT YOU CANNOT DO:
+- ❌ "Show a close-up of X" (you can't cut to a different shot)
+- ❌ "Cut to the crowd celebrating" (no cuts allowed)
+- ❌ "Switch to a different angle" (single continuous perspective)
+- ❌ "Show what happens next in a different location" (must stay in same shot)
+- ❌ "Pan up to follow ball, then players chase it, then zoom in on goal" (too many actions for 8 seconds!)
+- ❌ Any sequence of multiple actions that would realistically take longer than 8 seconds
+
+As the creative director, analyze this {duration}-second clip and provide direction for a CONTINUOUS 8-second extension:
+
+Consider the VISUAL narrative:
+- What story is being told in this clip?
+- What is the mood and energy level?
+- What motion/action can CONTINUE from the current frame?
+- What camera movements would enhance this continuous shot?
+
+Consider the AUDIO narrative:
+- What is the music/sound telling us about the vibe?
+- What emotional tone is being conveyed?
+- How does the audio influence the pacing?
+
+YOUR CREATIVE DIRECTION (remember: one continuous shot from a single frame):
+- Describe how the camera moves (zoom, pan, tilt, etc.)
+- Describe how subjects/objects in the frame move or continue their action
+- Describe the energy progression (build up, slow down, freeze)
+- Focus on making the ending impactful within these constraints
 
 OUTPUT FORMAT (JSON only):
 {{
   "timestamp_sec": <number 0-{duration}>,
-  "prompt": "<1-2 sentences describing what happens NEXT>"
+  "prompt": "<1-2 sentences describing the CONTINUOUS camera and subject movement from the selected frame>"
 }}
 
-Example:
+Good Examples (simple, realistic for 8 seconds):
 {{
   "timestamp_sec": {duration * 0.96},
-  "prompt": "Camera continues panning left as person walks toward the building entrance"
-}}"""
+  "prompt": "Camera slowly zooms in on the subject's face as they smile, ending with a freeze-frame"
+}}
+
+{{
+  "timestamp_sec": {duration * 0.96},
+  "prompt": "The person raises their arms in celebration as the shot transitions to slow-motion"
+}}
+
+{{
+  "timestamp_sec": {duration * 0.96},
+  "prompt": "Camera pans left following the subject's movement, then gradually slows to a freeze-frame"
+}}
+
+Bad Examples (requiring cuts, too complex, or too long):
+❌ "Show a close-up of the ball going in the goal, then cut to slow-motion replay" (cuts not allowed)
+❌ "Switch to the crowd reaction, then back to the player celebrating" (cuts not allowed)
+❌ "Pan up to follow ball, then players chase it, then zoom in on goal" (too many actions for 8 seconds)
+❌ "Camera slowly pans up to follow the ball's trajectory as the players continue to chase after it, then slowly zooms in to show the final impact" (would take 20+ seconds)
+❌ "The person walks across the entire field, waves to the crowd, then does a backflip" (way too much for 8 seconds)
+"""
 
 
 def get_ssl_context():
@@ -146,6 +196,80 @@ class SmartVideoExtender:
             "Authorization": f"Bearer {self.openai_api_key}",
             "Content-Type": "application/json"
         }
+
+    @staticmethod
+    def get_video_aspect_ratio_and_size(video_path: str) -> tuple[str, tuple[int, int]]:
+        """
+        Detect video aspect ratio and return appropriate size for AI generation
+
+        Args:
+            video_path: Path to input video
+
+        Returns:
+            Tuple of (aspect_ratio_name, (width, height))
+
+        Common aspect ratios:
+            - "16:9" landscape (1280x720, 1920x1080)
+            - "9:16" portrait/mobile (720x1280, 1080x1920)
+            - "4:5" instagram portrait (1080x1350)
+            - "1:1" square (1080x1080)
+            - "4:3" traditional (1024x768)
+        """
+        video = VideoFileClip(video_path)
+        width, height = video.size
+        video.close()
+
+        # Calculate aspect ratio
+        aspect_ratio = width / height
+
+        print(f"   Detected video size: {width}x{height} (aspect ratio: {aspect_ratio:.2f})")
+
+        # Determine aspect ratio category and optimal generation size
+        if aspect_ratio > 1.7:  # 16:9 or wider (1.77+)
+            return "16:9", (1280, 720)
+        elif aspect_ratio > 1.2:  # 4:3 landscape (1.33)
+            return "4:3", (1024, 768)
+        elif aspect_ratio > 0.9:  # Square-ish (0.9-1.1)
+            return "1:1", (1024, 1024)
+        elif aspect_ratio > 0.7:  # 4:5 portrait (0.8)
+            return "4:5", (864, 1080)
+        else:  # 9:16 portrait (0.56)
+            return "9:16", (720, 1280)
+
+    @staticmethod
+    def convert_aspect_ratio_for_api(aspect_ratio: str, target_size: tuple[int, int], api: str) -> str:
+        """
+        Convert aspect ratio to the format required by different APIs
+
+        Args:
+            aspect_ratio: Aspect ratio string (e.g., "16:9", "9:16")
+            target_size: Target (width, height) tuple
+            api: API name ("sora", "runway", "veo")
+
+        Returns:
+            Formatted aspect ratio string for the specific API
+        """
+        if api == "sora":
+            # Sora uses "WIDTHxHEIGHT" format (e.g., "1280x720")
+            return f"{target_size[0]}x{target_size[1]}"
+        elif api == "runway":
+            # Runway uses "WIDTH:HEIGHT" format (e.g., "1280:720")
+            # Map to closest supported ratio
+            runway_ratios = {
+                "16:9": "1280:720",
+                "9:16": "720:1280",
+                "4:3": "1104:832",
+                "3:4": "832:1104",
+                "1:1": "960:960",
+                "21:9": "1584:672"
+            }
+            return runway_ratios.get(aspect_ratio, "1280:720")
+        elif api == "veo":
+            # Veo uses "WIDTH:HEIGHT" format (e.g., "16:9", "9:16")
+            # It accepts standard aspect ratios directly
+            return aspect_ratio
+        else:
+            return aspect_ratio
 
     @staticmethod
     async def extract_multiple_frames(
@@ -564,7 +688,8 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         image_path: str,
         prompt: str,
         duration: int = 8,
-        size: str = "1280x720"
+        size: str = "1280x720",
+        aspect_ratio: str = None
     ) -> str:
         """
         Generate a video from an image using OpenAI's Sora API
@@ -624,11 +749,13 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                         return video_id
                     else:
                         error_text = await response.text()
-                        raise Exception(f"Sora API Error ({response.status}): {error_text}")
+                        error_data = {"error": f"Sora API Error ({response.status}): {error_text}", "saved_prompt": prompt}
+                        raise Exception(json.dumps(error_data, indent=2))
 
     async def wait_for_sora_completion(
         self,
         video_id: str,
+        prompt: str,
         max_wait_seconds: int = 300,
         check_interval: int = 5
     ) -> str:
@@ -637,6 +764,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
         Args:
             video_id: ID returned from generation request
+            prompt: The prompt used for generation (for error reporting)
             max_wait_seconds: Maximum time to wait (default: 5 minutes)
             check_interval: Seconds between status checks
 
@@ -661,14 +789,16 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                         return video_id
                     elif status == 'failed':
                         error_msg = result.get('error', 'Unknown error')
-                        raise Exception(f"Video generation failed: {error_msg}")
+                        error_data = {"error": f"Video generation failed: {error_msg}", "saved_prompt": prompt}
+                        raise Exception(json.dumps(error_data, indent=2))
 
                     print(f"   Status: {status} (elapsed: {elapsed}s)")
 
             await asyncio.sleep(check_interval)
             elapsed += check_interval
 
-        raise TimeoutError(f"Video generation did not complete within {max_wait_seconds}s")
+        error_data = {"error": f"Video generation did not complete within {max_wait_seconds}s", "saved_prompt": prompt}
+        raise TimeoutError(json.dumps(error_data, indent=2))
 
     async def generate_video_with_replicate(
         self,
@@ -722,15 +852,17 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             return video_url
 
         except Exception as e:
+            error_data = {"error": f"Replicate error: {str(e)}", "saved_prompt": prompt}
             print(f"Error generating video: {e}")
-            raise
+            raise Exception(json.dumps(error_data, indent=2))
 
     async def generate_video_with_runway(
         self,
         image_path: str,
         prompt: str,
         duration: int = 10,
-        model: str = 'gen4_turbo'
+        model: str = 'veo3.1_fast',
+        ratio: str = "1280:720"
     ) -> str:
         """
         Generate a video from an image using Runway's Gen-4 Turbo
@@ -740,6 +872,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             prompt: AI-generated description of continuation
             duration: Length of generated video in seconds (max 10)
             model: Runway model to use (default: gen4_turbo)
+            ratio: Aspect ratio (e.g., "1280:720", "720:1280", "1104:832", "832:1104", "960:960", "1584:672")
 
         Returns:
             URL of generated video
@@ -747,6 +880,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         print(f"Generating video with Runway {model}...")
         print(f"   Using prompt: \"{prompt}\"")
         print(f"   Duration: {duration}s")
+        print(f"   Aspect ratio: {ratio}")
         try:
             # Upload the image and get a URL (Runway expects a URL)
             # For now, we'll use the file path directly if it's accessible
@@ -764,7 +898,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 prompt_image=image_url,
                 prompt_text=prompt,
                 duration=duration,
-                ratio="1280:720"  # Standard 16:9 widescreen
+                ratio=ratio
             ).wait_for_task_output()
             if task.status == "SUCCEEDED" and task.output:
                 video_url = task.output[0] if isinstance(task.output, list) else task.output
@@ -773,18 +907,24 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 return video_url
             else:
                 failure_reason = getattr(task, 'failure', 'Unknown error')
-                raise Exception(f"Runway task failed: {failure_reason}")
+                error_data = {"error": f"Runway task failed: {failure_reason}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
 
         except Exception as e:
-            print(f"Error generating video with Runway: {e}")
-            raise
+            # Check if error is already formatted with prompt
+            if "saved_prompt" not in str(e):
+                error_data = {"error": f"Runway error: {str(e)}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
+            else:
+                raise
 
     async def generate_video_with_veo(
         self,
         image_path: str,
         prompt: str,
         duration: int = 8,
-        model: str = 'veo-3.0-fast-generate-001'
+        model: str = 'veo-3.0-fast-generate-001',
+        aspect_ratio: str = "16:9"
     ) -> str:
         """
         Generate a video from an image using Google Veo 3 Fast (with native audio!)
@@ -794,6 +934,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             prompt: AI-generated description of continuation
             duration: Length of generated video in seconds (default: 8)
             model: Veo model to use (default: veo-3.0-fast-generate-001, $0.15/sec)
+            aspect_ratio: Aspect ratio (e.g., "16:9", "9:16", "1:1", "4:3", "3:4")
 
         Returns:
             Path to downloaded video file
@@ -801,6 +942,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         print(f"Generating video with Google {model}...")
         print(f"   Using prompt: \"{prompt}\"")
         print(f"   Duration: {duration}s")
+        print(f"   Aspect ratio: {aspect_ratio}")
         print(f"   Audio: Native audio generation enabled!")
         try:
             # Load the image bytes
@@ -819,9 +961,10 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             # Generate video with Veo 3.1
             print("   Submitting video generation request...")
 
-            # Create config with personGeneration parameter
+            # Create config with personGeneration and aspectRatio parameters
             config = types.GenerateVideosConfig(
-                person_generation="allow_adult"  # Allow generation of people for image-to-video
+                person_generation="allow_adult",  # Allow generation of people for image-to-video
+                aspect_ratio=aspect_ratio  # Set the aspect ratio
             )
             operation = self.veo_client.models.generate_videos(
                 model=model,
@@ -842,23 +985,27 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 operation = self.veo_client.operations.get(operation)
 
             if not operation.done:
-                raise TimeoutError(f"Video generation did not complete within {max_wait}s")
+                error_data = {"error": f"Video generation did not complete within {max_wait}s", "saved_prompt": prompt}
+                raise TimeoutError(json.dumps(error_data, indent=2))
 
             # Download the video
             print("   Video generation completed! Downloading...")
 
             # Check if response exists and handle moderation blocks
             if not operation.response or not hasattr(operation.response, 'generated_videos'):
-                raise Exception(f"No video in response: {operation.response}")
+                error_data = {"error": f"No video in response: {operation.response}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
 
             # Check for content moderation
             filtered_count = getattr(operation.response, 'rai_media_filtered_count', None)
             if filtered_count and filtered_count > 0:
                 reasons = operation.response.rai_media_filtered_reasons
-                raise Exception(f"Video blocked by content moderation: {reasons}")
+                error_data = {"error": f"Video blocked by content moderation: {reasons}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
 
             if not operation.response.generated_videos:
-                raise Exception(f"No videos generated. Response: {operation.response}")
+                error_data = {"error": f"No videos generated. Response: {operation.response}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
 
             video = operation.response.generated_videos[0]
 
@@ -871,16 +1018,19 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
             # Validate downloaded data is actually video, not error content
             if not downloaded_data or len(downloaded_data) < 100:
-                raise ValueError(f"Downloaded data is too small ({len(downloaded_data)} bytes), likely not a valid video")
+                error_data = {"error": f"Downloaded data is too small ({len(downloaded_data)} bytes), likely not a valid video", "saved_prompt": prompt}
+                raise ValueError(json.dumps(error_data, indent=2))
 
             # Check for video file signature (magic bytes)
             # MP4 files should contain 'ftyp' box near the beginning
             if b'ftyp' not in downloaded_data[:200]:
                 # Check if it's an error message (HTML/JSON)
                 if b'<!DOCTYPE' in downloaded_data[:200] or b'<html' in downloaded_data[:200].lower():
-                    raise ValueError("Veo returned HTML instead of video - likely an error page")
+                    error_data = {"error": "Veo returned HTML instead of video - likely an error page", "saved_prompt": prompt}
+                    raise ValueError(json.dumps(error_data, indent=2))
                 if b'{' in downloaded_data[:10] and b'"error"' in downloaded_data[:500]:
-                    raise ValueError("Veo returned JSON error instead of video")
+                    error_data = {"error": "Veo returned JSON error instead of video", "saved_prompt": prompt}
+                    raise ValueError(json.dumps(error_data, indent=2))
                 # Warn but continue if we can't identify the format
                 print(f"   WARNING: Downloaded data doesn't have expected MP4 signature")
 
@@ -892,15 +1042,21 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             return temp_video_path
 
         except Exception as e:
-            print(f"Error generating video with Veo: {e}")
-            raise
+            # Check if error is already formatted with prompt
+            if "saved_prompt" not in str(e):
+                error_data = {"error": f"Veo error: {str(e)}", "saved_prompt": prompt}
+                raise Exception(json.dumps(error_data, indent=2))
+            else:
+                raise
 
     async def generate_video_from_image(
         self,
         image_path: str,
         prompt: str,
         motion_bucket_id: int = 127,
-        duration: int = 8
+        duration: int = 8,
+        target_size: tuple[int, int] = None,
+        aspect_ratio: str = "16:9"
     ) -> tuple[str, bool]:
         """
         Generate a video from an image using the configured model
@@ -910,22 +1066,31 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             prompt: AI-generated description of continuation
             motion_bucket_id: Controls amount of motion for Replicate (1-255)
             duration: Duration in seconds
+            target_size: Target (width, height) for generation
+            aspect_ratio: Aspect ratio string (e.g., "16:9", "9:16")
 
         Returns:
             Tuple of (video_url_or_path, is_local_file)
         """
         if self.model == "sora":
-            video_id = await self.generate_video_with_sora(image_path, prompt, duration=duration)
-            completed_video_id = await self.wait_for_sora_completion(video_id)
+            # Convert aspect ratio for Sora (uses "WIDTHxHEIGHT" format)
+            size_str = self.convert_aspect_ratio_for_api(aspect_ratio, target_size, "sora")
+            video_id = await self.generate_video_with_sora(image_path, prompt, duration=duration, size=size_str, aspect_ratio=aspect_ratio)
+            completed_video_id = await self.wait_for_sora_completion(video_id, prompt)
             video_url = f"{self.openai_api_base}/videos/{completed_video_id}/content"
             return video_url, False
         elif self.model == "runway":
-            video_url = await self.generate_video_with_runway(image_path, prompt, duration=duration)
+            # Convert aspect ratio for Runway (uses "WIDTH:HEIGHT" format with specific supported ratios)
+            ratio_str = self.convert_aspect_ratio_for_api(aspect_ratio, target_size, "runway")
+            video_url = await self.generate_video_with_runway(image_path, prompt, duration=duration, ratio=ratio_str)
             return video_url, False
         elif self.model == "veo":
-            video_path = await self.generate_video_with_veo(image_path, prompt, duration=duration)
+            # Convert aspect ratio for Veo (uses standard "16:9" format)
+            aspect_str = self.convert_aspect_ratio_for_api(aspect_ratio, target_size, "veo")
+            video_path = await self.generate_video_with_veo(image_path, prompt, duration=duration, aspect_ratio=aspect_str)
             return video_path, True
         else:  # replicate
+            # Replicate doesn't support aspect ratio control, will be handled by scaling in stitch_videos
             video_url = await self.generate_video_with_replicate(image_path, prompt, motion_bucket_id=motion_bucket_id)
             return video_url, False
 
@@ -938,7 +1103,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         """
         Download the generated video from the provided URL
 
-        Args:
+        Args:the
             url: Download URL
             output_path: Where to save the downloaded video
             headers: Optional headers for the request
@@ -1004,7 +1169,8 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
     async def stitch_videos(
         original_video: str,
         generated_video: str,
-        output_path: str = "extended_video.mp4"
+        output_path: str = "extended_video.mp4",
+        use_ffmpeg_concat: bool = True
     ) -> str:
         """
         Combine original video with generated extension
@@ -1013,11 +1179,294 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             original_video: Path to original input video
             generated_video: Path to generated video from Replicate
             output_path: Where to save the combined video
+            use_ffmpeg_concat: If True, use ffmpeg concat filter (much faster). If False, use MoviePy (slower but more compatible)
 
         Returns:
             Path to stitched video
         """
         print(f"Stitching videos together...")
+
+        # Try fast ffmpeg concatenation first
+        if use_ffmpeg_concat:
+            try:
+                return await SmartVideoExtender._stitch_with_ffmpeg(
+                    original_video,
+                    generated_video,
+                    output_path
+                )
+            except Exception as e:
+                print(f"⚠ FFmpeg concat failed ({e}), falling back to MoviePy...")
+
+        # Fallback to MoviePy (slower but more compatible)
+        return await SmartVideoExtender._stitch_with_moviepy(
+            original_video,
+            generated_video,
+            output_path
+        )
+
+    @staticmethod
+    async def _stitch_with_ffmpeg(
+        original_video: str,
+        generated_video: str,
+        output_path: str
+    ) -> str:
+        """
+        Fast video concatenation using ffmpeg concat filter (5-10x faster than MoviePy)
+
+        This uses ffmpeg's concat demuxer which is nearly instant for compatible videos.
+        Handles aspect ratio mismatches by scaling the generated video to match the original.
+        """
+        print(f"   Using FFmpeg concat filter (fast method)...")
+
+        import subprocess
+
+        # First, check if videos have matching dimensions and audio streams
+        def get_video_info(video_path: str) -> dict:
+            """Get video dimensions, fps, and audio info using ffprobe"""
+            cmd = [
+                'ffprobe',
+                '-v', 'error',
+                '-show_entries', 'stream=codec_type,width,height,r_frame_rate',
+                '-of', 'json',
+                video_path
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            import json
+            data = json.loads(result.stdout)
+
+            # Find video and audio streams
+            video_stream = None
+            has_audio = False
+
+            for stream in data['streams']:
+                if stream['codec_type'] == 'video' and not video_stream:
+                    video_stream = stream
+                elif stream['codec_type'] == 'audio':
+                    has_audio = True
+
+            return {
+                'width': int(video_stream['width']),
+                'height': int(video_stream['height']),
+                'fps': video_stream['r_frame_rate'],
+                'has_audio': has_audio
+            }
+
+        needs_scaling = False
+        scaled_video_path = None
+
+        try:
+            original_info = get_video_info(original_video)
+            generated_info = get_video_info(generated_video)
+
+            print(f"   Original: {original_info['width']}x{original_info['height']}, audio: {original_info['has_audio']}")
+            print(f"   Generated: {generated_info['width']}x{generated_info['height']}, audio: {generated_info['has_audio']}")
+
+            needs_scaling = (
+                original_info['width'] != generated_info['width'] or
+                original_info['height'] != generated_info['height']
+            )
+
+            # Check if both have audio or if we need to add silent audio
+            both_have_audio = original_info['has_audio'] and generated_info['has_audio']
+            original_has_audio = original_info['has_audio']
+            generated_has_audio = generated_info['has_audio']
+
+            if needs_scaling:
+                print(f"   ⚠ Aspect ratio mismatch detected, will scale generated video to match original")
+                # Create a scaled version of the generated video
+                scaled_video_path = "temp_scaled_generated.mp4"
+
+                # Scale with padding to maintain aspect ratio (letterbox/pillarbox)
+                scale_filter = (
+                    f"scale={original_info['width']}:{original_info['height']}:"
+                    f"force_original_aspect_ratio=decrease,"
+                    f"pad={original_info['width']}:{original_info['height']}:"
+                    f"(ow-iw)/2:(oh-ih)/2:black"
+                )
+
+                scale_cmd = [
+                    'ffmpeg',
+                    '-i', generated_video,
+                    '-vf', scale_filter,
+                    '-c:v', 'libx264',
+                    '-preset', 'veryfast',
+                    '-crf', '23',
+                    '-c:a', 'aac',  # Re-encode audio to ensure compatibility
+                    '-b:a', '192k',
+                    '-y',
+                    scaled_video_path
+                ]
+
+                print(f"   Scaling generated video to {original_info['width']}x{original_info['height']}...")
+                scale_result = subprocess.run(scale_cmd, capture_output=True, text=True)
+
+                if scale_result.returncode != 0:
+                    print(f"   ⚠ FFmpeg scaling stderr: {scale_result.stderr}")
+                    raise subprocess.CalledProcessError(scale_result.returncode, scale_cmd, scale_result.stdout, scale_result.stderr)
+
+                # Verify scaled video was created
+                if not os.path.exists(scaled_video_path):
+                    raise Exception(f"Scaled video not created at {scaled_video_path}")
+
+                scaled_info = get_video_info(scaled_video_path)
+                print(f"   ✓ Scaled video: {scaled_info['width']}x{scaled_info['height']}")
+
+                # Use scaled video for concatenation
+                video_to_concat = scaled_video_path
+            else:
+                video_to_concat = generated_video
+
+            # Use ffmpeg concat filter (more reliable for videos with different properties)
+            # This method is more compatible than concat demuxer when videos have different
+            # codecs, frame rates, or encoding settings
+
+            # Get duration of generated video for silent audio generation
+            gen_duration_cmd = [
+                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1', video_to_concat
+            ]
+            gen_duration_str = subprocess.run(gen_duration_cmd, capture_output=True, text=True, check=True).stdout.strip()
+            gen_duration = float(gen_duration_str) if gen_duration_str else 8.0
+
+            # Build the filter_complex based on audio availability
+            if both_have_audio:
+                # Both videos have audio - normalize FPS first, then concat
+                print(f"   Both videos have audio - normalizing FPS to match original, then concat")
+                # Get original FPS
+                orig_fps = original_info['fps']
+                # Convert FPS string like "60/1" to float
+                if '/' in orig_fps:
+                    num, den = orig_fps.split('/')
+                    target_fps = float(num) / float(den)
+                else:
+                    target_fps = float(orig_fps)
+
+                print(f"   Target FPS: {target_fps}")
+                # Set FPS on generated video to match original, then concat
+                filter_complex = f'[1:v:0]fps={target_fps}[v1];[0:v:0][0:a:0][v1][1:a:0]concat=n=2:v=1:a=1[outv][outa]'
+                audio_map = ['-map', '[outa]']
+            elif original_has_audio and not generated_has_audio:
+                # Original has audio, generated doesn't - add silent audio to generated
+                print(f"   Original has audio, generated doesn't - adding {gen_duration:.2f}s of silence")
+                filter_complex = f'[0:v:0][1:v:0]concat=n=2:v=1:a=0[outv];anullsrc=channel_layout=stereo:sample_rate=48000:duration={gen_duration}[silent];[0:a:0][silent]concat=n=2:v=0:a=1[outa]'
+                audio_map = ['-map', '[outa]']
+            elif not original_has_audio and generated_has_audio:
+                # Generated has audio, original doesn't (rare case)
+                print(f"   Generated has audio, original doesn't - using generated audio only")
+                filter_complex = '[0:v:0][1:v:0]concat=n=2:v=1:a=0[outv]'
+                audio_map = ['-map', '1:a:0']  # Use generated audio only
+            else:
+                # Neither has audio - video only concat
+                print(f"   Neither video has audio - video-only concat")
+                filter_complex = '[0:v:0][1:v:0]concat=n=2:v=1:a=0[outv]'
+                audio_map = []
+
+            cmd = [
+                'ffmpeg',
+                '-i', original_video,
+                '-i', video_to_concat,
+                '-filter_complex', filter_complex,
+                '-map', '[outv]',
+            ] + audio_map + [
+                '-c:v', 'libx264',          # Video codec
+                '-preset', 'veryfast',       # Fast encoding preset (trade quality for speed)
+                '-crf', '23',                # Quality (18-28, lower = better)
+            ]
+
+            # Only add audio encoding params if we have audio
+            if audio_map:
+                cmd.extend([
+                    '-c:a', 'aac',           # Audio codec
+                    '-b:a', '192k',          # Audio bitrate
+                ])
+
+            cmd.extend([
+                '-movflags', '+faststart',   # Optimize for streaming
+                '-y',                        # Overwrite output
+                output_path
+            ])
+
+            print(f"   Concatenating videos...")
+
+            # Run ffmpeg and stream stderr output in real-time
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1  # Line buffered
+            )
+
+            # Stream stderr in real-time (ffmpeg writes progress to stderr)
+            stderr_output = []
+            for line in process.stderr:
+                print(f"   [ffmpeg] {line.rstrip()}")
+                stderr_output.append(line)
+
+            # Wait for completion
+            process.wait()
+            concat_result_stderr = ''.join(stderr_output)
+
+            if process.returncode != 0:
+                print(f"   ⚠ FFmpeg concat failed with return code {process.returncode}")
+                raise subprocess.CalledProcessError(process.returncode, cmd, '', concat_result_stderr)
+
+            if os.path.exists(output_path):
+                # Verify the output video
+                output_info = get_video_info(output_path)
+                file_size = os.path.getsize(output_path) / (1024 * 1024)  # MB
+
+                # Check that the duration is roughly correct (original + generated)
+                original_duration_cmd = [
+                    'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1', original_video
+                ]
+                generated_duration_cmd = [
+                    'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1', video_to_concat
+                ]
+                output_duration_cmd = [
+                    'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1', output_path
+                ]
+
+                orig_dur = float(subprocess.run(original_duration_cmd, capture_output=True, text=True, check=True).stdout.strip())
+                gen_dur = float(subprocess.run(generated_duration_cmd, capture_output=True, text=True, check=True).stdout.strip())
+                out_dur = float(subprocess.run(output_duration_cmd, capture_output=True, text=True, check=True).stdout.strip())
+
+                expected_duration = orig_dur + gen_dur
+                print(f"   Original duration: {orig_dur:.2f}s, Generated: {gen_dur:.2f}s, Output: {out_dur:.2f}s (expected: {expected_duration:.2f}s)")
+
+                if abs(out_dur - expected_duration) > 1.0:
+                    print(f"   ⚠ WARNING: Output duration mismatch! Expected ~{expected_duration:.2f}s but got {out_dur:.2f}s")
+
+                print(f"   ✓ FFmpeg concat completed! ({file_size:.2f} MB, {output_info['width']}x{output_info['height']})")
+                print(f"Stitched video saved to {output_path}")
+                return output_path
+            else:
+                raise Exception("FFmpeg did not create output file")
+
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else str(e)
+            raise Exception(f"FFmpeg error: {error_msg}")
+        except FileNotFoundError:
+            raise Exception("FFmpeg not found. Install with: brew install ffmpeg")
+        finally:
+            # Cleanup temporary files
+            if needs_scaling and scaled_video_path and os.path.exists(scaled_video_path):
+                os.remove(scaled_video_path)
+                print(f"   Cleaned up scaled video")
+
+    @staticmethod
+    async def _stitch_with_moviepy(
+        original_video: str,
+        generated_video: str,
+        output_path: str
+    ) -> str:
+        """
+        Slower but more compatible video concatenation using MoviePy
+        """
+        print(f"   Using MoviePy (slower but compatible method)...")
         try:
             clip1 = VideoFileClip(original_video)
             clip2 = VideoFileClip(generated_video)
@@ -1046,10 +1495,14 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             final_clip = concatenate_videoclips([clip1, clip2], method="chain")
 
             print(f"   Writing final video...")
+            # Optimize MoviePy settings for faster encoding
             final_clip.write_videofile(
                 output_path,
                 codec='libx264',
-                audio_codec='aac'
+                audio_codec='aac',
+                preset='veryfast',      # Fast encoding preset
+                threads=4,              # Use multiple threads
+                logger=None             # Disable verbose logging
             )
             clip1.close()
             clip2.close()
@@ -1086,10 +1539,11 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
         print(f"Using model: {self.model}")
         print(f"{'='*60}\n")
 
-        # Validate input video duration
-        print("Validating input video duration...")
+        # Validate input video duration and detect aspect ratio
+        print("Validating input video and detecting aspect ratio...")
         video = VideoFileClip(input_video)
         video_duration = video.duration
+        video_size = video.size
         video.close()
 
         if video_duration > 61:
@@ -1098,6 +1552,11 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             raise ValueError(f"Input video is too short: {video_duration:.2f}s (minimum: 6s)")
 
         print(f"✓ Video duration validated: {video_duration:.2f}s")
+
+        # Detect aspect ratio for AI generation
+        aspect_ratio_name, target_size = self.get_video_aspect_ratio_and_size(input_video)
+        print(f"✓ Detected aspect ratio: {aspect_ratio_name}")
+        print(f"✓ Target generation size: {target_size[0]}x{target_size[1]}")
 
         # Temporary file paths
         analysis_frame_paths = []
@@ -1161,10 +1620,7 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                     )
                     prompt = await self.analyze_frames_with_vision(analysis_frame_paths)
 
-            # Step 2: Extract frame for video generation
-            # Use 1024x576 for Replicate/SVD, 1280x720 for Sora
-            target_size = (1024, 576) if self.model == "replicate" else (1280, 720)
-
+            # Step 2: Extract frame for video generation using detected aspect ratio
             if selected_timestamp is not None:
                 # Use Gemini-selected timestamp
                 await self.extract_frame_at_timestamp(
@@ -1177,12 +1633,14 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
                 # Fallback to last frame
                 await self.extract_last_frame(input_video, generation_frame_path, target_size=target_size)
 
-            # Step 4: Generate video from frame using AI prompt
+            # Step 4: Generate video from frame using AI prompt with correct aspect ratio
             video_result, is_local_file = await self.generate_video_from_image(
                 generation_frame_path,
                 prompt=prompt,
                 motion_bucket_id=motion_bucket_id,
-                duration=duration
+                duration=duration,
+                target_size=target_size,
+                aspect_ratio=aspect_ratio_name
             )
 
             # Step 5: Download generated video (if it's a URL) or use local file

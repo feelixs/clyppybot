@@ -18,8 +18,11 @@ async def save_to_server():
             data.add_field('env', env)
             with open("guild_settings.db", "rb") as f:
                 data.add_field('file', f)
-                async with session.post('https://felixcreations.com/api/products/clyppy/save_db/',
-                                        data=data, headers=headers) as response:
+                async with session.post(
+                        url='https://felixcreations.com/api/products/clyppy/save_db/',
+                        data=data,
+                        headers=headers
+                ) as response:
                     if response.status == 200:
                         logger.info("Database saved to server")
                     else:
@@ -34,9 +37,11 @@ async def load_from_server():
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
             params = {'env': env}
-            async with session.get('https://felixcreations.com/api/products/clyppy/get_db/',
-                                   headers=headers,
-                                   params=params) as response:
+            async with session.get(
+                    url='https://felixcreations.com/api/products/clyppy/get_db/',
+                    headers=headers,
+                    params=params
+            ) as response:
                 if response.status == 200:
                     content = await response.read()
                     with open('guild_settings.db', 'wb') as f:

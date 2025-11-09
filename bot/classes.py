@@ -17,7 +17,8 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
                      CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
-                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST)
+                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST,
+                     GITHUB_URL)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
@@ -125,9 +126,6 @@ def fetch_cookies(opts, logger):
         if not firefox_dir.exists():
             logger.warning(f"[COOKIES] firefox directory does not exist: {cookie_dir}")
             return
-
-        all_items = [item.name for item in firefox_dir.iterdir()]
-        logger.info(f"[COOKIES] Directory contents: {all_items}")
 
         profile_dirs = list(firefox_dir.glob("*.default-release"))
         if profile_dirs:
@@ -559,6 +557,10 @@ class BaseMisc(ABC):
 
     @abstractmethod
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
+        """
+        @param url: The url of the video
+        @param extended_url_formats: (deprecated) if True, will allow to parse non-platform urls (ie fixupx/<post_id> would work for x.com/<post_id>)
+        """
         ...
 
     def is_clip_link(self, url: str) -> bool:
@@ -715,7 +717,8 @@ class BaseAutoEmbed:
         about += (
             f"Use `/settings quickembed=True` and I will automatically respond to Twitch clips. Many other platforms are easily accessibly through the `{pre}embed` command\n\n"
             f"---------------------------------\n"
-            f"Join my [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
+            f"- Join my [Discord server]({SUPPORT_SERVER_URL}) to be a part of the community!\n"
+            f"- Star me on [GitHub]({GITHUB_URL}) to stay updated :)")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(
@@ -766,10 +769,13 @@ class BaseAutoEmbed:
                f"Give Clyppy your support by voting in popular bot sites!\n"
                f"By voting, receive the following benefits:\n\n"
                f"- Exclusive role in our Discord\n"
-               f"- (2) VIP tokens per vote!\n"
+               f"- 1 free VIP token per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n\n"
                f"You can get some free tokens by voting below, or purchasing them in bulk from our store `(づ๑•ᴗ•๑)づ♡`")
-        await ctx.send(content=msg, components=[Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL)])
+        await ctx.send(content=msg, components=[
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL),
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy in Bulk", url=BUY_TOKENS_URL)
+        ])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
@@ -1091,7 +1097,30 @@ class BaseAutoEmbed:
         except VideoExtensionFailed as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'VideoExtensionFailed error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
-            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: `{str(e)}`",
+
+            # Extract just the error message, not all the script output
+            error_text = str(e)
+
+            # Try to parse JSON error format from the script
+            try:
+                import json
+                # Look for "Fatal error: {" and extract JSON from there
+                if "Fatal error: {" in error_text:
+                    # Find the start of the JSON (after "Fatal error: ")
+                    json_start = error_text.find("Fatal error: {") + len("Fatal error: ")
+                    json_text = error_text[json_start:]
+
+                    # Parse the JSON
+                    error_data = json.loads(json_text)
+                    error_text = error_data.get('error', error_text)
+            except:
+                pass  # If JSON parsing fails, use the full error text
+
+            # Trim error message to 500 chars to avoid Discord's 2000 char limit
+            if len(error_text) > 500:
+                error_text = error_text[:497] + "..."
+
+            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: \n\n```{error_text}```",
                                          components=create_nexus_comps()))
             success, response, err_handled = False, "VideoExtensionFailed", True
         except ExceptionHandled:

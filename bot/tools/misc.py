@@ -1,4 +1,4 @@
-from interactions import SlashContext
+from interactions import SlashContext, Member
 from bot.tools.dl import DownloadManager
 import logging
 
@@ -39,4 +39,6 @@ class Tools:
                                   f"You're receiving this message because that server has the 'dm' setting "
                                   f"enabled for one of its `/settings`")
         except Exception as e:
-            self.logger.info(f"Failed to send DM to {ctx.author.name} ({ctx.author.id}) {str(e)}")
+            if isinstance(ctx.author, Member):
+                ctx.author.username = ctx.author.nick
+            self.logger.info(f"Failed to send DM to {ctx.author.username} ({ctx.author.id}) {str(e)}")

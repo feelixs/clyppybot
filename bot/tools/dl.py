@@ -8,6 +8,9 @@ import asyncio
 import os
 import re
 import uuid
+import json
+import fcntl
+from contextlib import asynccontextmanager
 
 
 class DownloadManager:
@@ -47,7 +50,9 @@ class DownloadManager:
             clip.clyppy_id = clip._generate_clyppy_id(f"{clip.clyppy_id}_extended_{unique_suffix}", low_collision=True)
             self._parent.logger.info(f"Extended video clyppy_id: {clip.clyppy_id}")
 
-            new_duration = await self._extend_video_with_ai(original_file, extended_file)
+            async with self._get_ai_extend_lock():
+                new_duration = await self._extend_video_with_ai(original_file, extended_file)
+
             r.local_file_path = extended_file
             r.duration = new_duration
             r.filesize = os.path.getsize(extended_file)
@@ -62,6 +67,47 @@ class DownloadManager:
         if r is None:
             raise UnknownError
         return r
+
+    @asynccontextmanager
+    async def _get_ai_extend_lock(self):
+        """
+        Acquire a system-wide exclusive lock for AI video extension.
+        Uses a file-based lock that works across all bot instances in the Docker container.
+        Only one AI extend task can run at a time system-wide.
+        """
+        # Use /tmp for the lock file (shared across all containers in the same system)
+        lock_file_path = '/tmp/clyppybot_ai_extend.lock'
+        lock_file = None
+
+        try:
+            # Open/create the lock file
+            lock_file = open(lock_file_path, 'w')
+
+            self._parent.logger.info("Waiting to acquire AI extend lock...")
+
+            # Use run_in_executor to avoid blocking the async event loop
+            # fcntl.flock is blocking, so we run it in a thread pool
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                fcntl.flock,
+                lock_file.fileno(),
+                fcntl.LOCK_EX  # Exclusive lock
+            )
+
+            self._parent.logger.info("AI extend lock acquired")
+
+            # Yield control back to the caller while holding the lock
+            yield
+
+        finally:
+            # Release the lock and close the file
+            if lock_file:
+                try:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                    lock_file.close()
+                    self._parent.logger.info("AI extend lock released")
+                except Exception as e:
+                    self._parent.logger.warning(f"Error releasing AI extend lock: {e}")
 
     async def _extend_video_with_ai(self, input_file: str, output_file: str) -> float:
         """
@@ -82,31 +128,115 @@ class DownloadManager:
         self._parent.logger.info("Extending video with AI...")
 
         # Try Sora first, then fallback to Veo
-        models_to_try = ['sora', 'veo']
+        models_to_try = ['sora', 'runway']
         last_error = None
+        saved_prompt = None  # Will store the prompt from a failed attempt
 
         for model in models_to_try:
             try:
                 self._parent.logger.info(f"Attempting video extension with model: {model}")
 
-                # Run the extend_video.py script as a subprocess
-                process = await asyncio.create_subprocess_exec(
-                    'python', str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
+                # Build command with optional manual prompt from previous failure
+                cmd = [
+                    'python', '-u',  # -u for unbuffered output (real-time streaming)
+                    str(Path(__file__).parent.parent / 'scripts/extend_video.py'),
                     input_file,
                     '--output', output_file,  # Save to new file (don't overwrite original)
                     '--model', model,
                     '--duration', '8',
+                ]
+
+                # If we have a saved prompt from a previous failed attempt, use it
+                if saved_prompt:
+                    self._parent.logger.info(f"Using saved prompt from previous attempt: {saved_prompt}")
+                    cmd.extend(['--manual-prompt', saved_prompt])
+
+                # Run the extend_video.py script as a subprocess
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
 
-                stdout, stderr = await process.communicate()
-                stdout_text = stdout.decode('utf-8')
-                stderr_text = stderr.decode('utf-8')
+                # Read stdout and stderr asynchronously in background tasks
+                stdout_lines = []
+                stderr_lines = []
+
+                async def read_stream(stream, lines_list, prefix, log_level='info'):
+                    async for line in stream:
+                        decoded_line = line.decode('utf-8').rstrip()
+                        if decoded_line:  # Only log non-empty lines
+                            lines_list.append(decoded_line)
+                            log_method = getattr(self._parent.logger, log_level)
+                            log_method(f"{prefix}: {decoded_line}")
+
+                # Start reading both streams in background tasks
+                stdout_task = asyncio.create_task(
+                    read_stream(process.stdout, stdout_lines, f"[{model}]", 'info')
+                )
+                stderr_task = asyncio.create_task(
+                    read_stream(process.stderr, stderr_lines, f"[{model} ERR]", 'warning')
+                )
+
+                # Wait for process to complete and streams to finish
+                await process.wait()
+                await asyncio.gather(stdout_task, stderr_task)
+
+                stdout_text = '\n'.join(stdout_lines)
+                stderr_text = '\n'.join(stderr_lines)
 
                 # Check for errors in output
                 if process.returncode != 0:
                     combined_output = stdout_text + stderr_text
+
+                    # Try to extract saved_prompt from error message if it exists
+                    # Error format: {"error": "...", "saved_prompt": "..."}
+                    if 'saved_prompt' in combined_output and not saved_prompt:
+                        self._parent.logger.info(f"Attempting to extract saved_prompt from error output...")
+                        try:
+                            # Parse the output to find the JSON with saved_prompt
+                            # Look for lines that form a JSON object
+                            lines = combined_output.split('\n')
+                            json_lines = []
+                            in_json = False
+                            brace_count = 0
+
+                            for line in lines:
+                                # Remove logger prefix if present (e.g., "[sora]: ")
+                                stripped = line.strip()
+                                if ']: ' in stripped:
+                                    # Remove everything up to and including the first ']: '
+                                    stripped = stripped.split(']: ', 1)[1] if ']: ' in stripped else stripped
+
+                                stripped = stripped.strip()
+
+                                # Check if line contains a JSON opening brace (handle "Fatal error: {" or just "{")
+                                if '{' in stripped and not in_json:
+                                    # Extract everything from the first '{' onwards
+                                    json_start = stripped.find('{')
+                                    stripped = stripped[json_start:]
+                                    in_json = True
+                                    json_lines = [stripped]
+                                    brace_count = stripped.count('{') - stripped.count('}')
+                                elif in_json:
+                                    json_lines.append(stripped)
+                                    brace_count += stripped.count('{') - stripped.count('}')
+
+                                    if brace_count == 0:
+                                        # Complete JSON object found
+                                        json_str = '\n'.join(json_lines)
+                                        try:
+                                            error_data = json.loads(json_str)
+                                            if 'saved_prompt' in error_data:
+                                                saved_prompt = error_data['saved_prompt']
+                                                self._parent.logger.info(f"Extracted prompt from error: {saved_prompt}")
+                                                break
+                                        except json.JSONDecodeError:
+                                            pass
+                                        in_json = False
+                                        json_lines = []
+                        except Exception as e:
+                            self._parent.logger.warning(f"Could not extract saved_prompt from error: {e}")
 
                     # Check for duration validation errors
                     if 'Input video is too long' in combined_output:
@@ -122,15 +252,15 @@ class DownloadManager:
                         raise VideoTooShortForExtend(video_dur)
 
                     # Check for moderation block (Sora-specific)
-                    if 'moderation_blocked' in combined_output or 'moderation system' in combined_output:
+                    if 'moderation_blocked' in combined_output or 'moderation system' in combined_output or 'content moderation' in combined_output:
                         self._parent.logger.warning(f"Video blocked by {model} moderation, trying next model...")
                         last_error = f"{model} moderation blocked"
-                        continue  # Try next model
+                        continue  # Try next model (will use saved_prompt if available)
 
                     # Other errors - try next model
                     self._parent.logger.warning(f"Video extension failed with {model}: {combined_output}")
                     last_error = combined_output
-                    continue
+                    continue  # Try next model (will use saved_prompt if available)
 
                 # Success! Now validate the output is actually playable
                 self._parent.logger.info(f"Video extension successful with {model}")
