@@ -112,9 +112,30 @@ class DownloadManager:
                     stderr=asyncio.subprocess.PIPE
                 )
 
-                stdout, stderr = await process.communicate()
-                stdout_text = stdout.decode('utf-8')
-                stderr_text = stderr.decode('utf-8')
+                # Read stdout and stderr asynchronously in background tasks
+                stdout_lines = []
+                stderr_lines = []
+
+                async def read_stream(stream, lines_list, prefix):
+                    async for line in stream:
+                        decoded_line = line.decode('utf-8').rstrip()
+                        lines_list.append(decoded_line)
+                        print(f"{prefix}: {decoded_line}")
+
+                # Start reading both streams in background tasks
+                stdout_task = asyncio.create_task(
+                    read_stream(process.stdout, stdout_lines, f"[{model}]")
+                )
+                stderr_task = asyncio.create_task(
+                    read_stream(process.stderr, stderr_lines, f"[{model} ERR]")
+                )
+
+                # Wait for process to complete and streams to finish
+                await process.wait()
+                await asyncio.gather(stdout_task, stderr_task)
+
+                stdout_text = '\n'.join(stdout_lines)
+                stderr_text = '\n'.join(stderr_lines)
 
                 # Check for errors in output
                 if process.returncode != 0:
