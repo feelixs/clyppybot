@@ -653,18 +653,27 @@ class Base(Extension):
             return
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
-                                        headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
+                async with session.post(
+                        url="https://top.gg/api/bots/1111723928604381314/stats", json={
+                            'server_count': num,
+                            'shard_count': self.bot.total_shards
+                        },
+                        headers={'Authorization': os.getenv('GG_TOKEN')}
+                ) as resp:
                     r = await resp.text()
                     self.logger.info(f"Successfully posted servers to topp.gg - response: {r}")
         except Exception as e:
             self.logger.info(f"Failed to post servers to top.gg: {type(e).__name__}: {str(e)}")
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
-                                        json={'server_count': str(num),
-                                              'shard_count': "1"},
-                                        headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
+                async with session.post(
+                        url="https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
+                        json={
+                            'server_count': str(num),
+                            'shard_count': self.bot.total_shards
+                        },
+                        headers={'authorization': os.getenv('BOTLISTME_TOKEN')}
+                ) as resp:
                     r = await resp.json()
                     self.logger.info(f"Successfully posted servers to botlist.me - response: {r}")
         except Exception as e:
