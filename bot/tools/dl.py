@@ -1,5 +1,5 @@
 from bot.types import DownloadResponse, LocalFileInfo
-from bot.errors import UnknownError, VideoTooLongForExtend, VideoTooShortForExtend, VideoExtensionFailed
+from bot.errors import UnknownError, VideoTooLongForExtend, VideoTooShortForExtend, VideoExtensionFailed, VideoContainsNSFWContent
 from bot.classes import BaseClip, is_discord_compatible, tryremove
 from pathlib import Path
 from typing import Union
@@ -238,6 +238,14 @@ class DownloadManager:
                         except Exception as e:
                             self._parent.logger.warning(f"Could not extract saved_prompt from error: {e}")
 
+                    # Check for NSFW content detection
+                    if 'NSFW Content Detected' in combined_output or 'VideoContainsNSFWContent' in combined_output:
+                        # Extract reason from error message
+                        reason_match = re.search(r'Reason: (.+?)(?:\n|$)', combined_output)
+                        reason = reason_match.group(1).strip() if reason_match else "Content flagged as inappropriate"
+                        self._parent.logger.warning(f"NSFW content detected: {reason}")
+                        raise VideoContainsNSFWContent(reason)
+
                     # Check for duration validation errors
                     if 'Input video is too long' in combined_output:
                         # Extract duration from error message
@@ -314,8 +322,9 @@ class DownloadManager:
                     last_error = f"Video validation failed: {validation_error}"
                     continue
 
-            except (VideoTooLongForExtend, VideoTooShortForExtend):
+            except (VideoTooLongForExtend, VideoTooShortForExtend, VideoContainsNSFWContent):
                 # Re-raise these immediately, don't try other models
+                # These are validation/content errors that won't be fixed by trying a different model
                 raise
             except Exception as e:
                 self._parent.logger.error(f"Error extending video with {model}: {e}")

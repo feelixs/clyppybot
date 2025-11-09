@@ -32,10 +32,41 @@ import time
 import json
 
 
+# Custom exception for NSFW content detection
+class VideoContainsNSFWContent(Exception):
+    """Raised when video contains NSFW/inappropriate content detected by AI analysis"""
+    def __init__(self, reason: str = "Content flagged as NSFW"):
+        self.reason = reason
+        super().__init__(f"Video contains NSFW content: {reason}")
+
+
 # Gemini video analysis prompt for creative direction with frame selection
 def get_gemini_video_analysis_prompt(duration: float) -> str:
     """Generate the Gemini video analysis prompt for a specific duration."""
-    return f"""You are the CREATIVE DIRECTOR of this Instagram reel, analyzing the LAST {duration} SECONDS of the video to accomplish two goals:
+    return f"""You are the CREATIVE DIRECTOR of this Instagram reel, analyzing the LAST {duration} SECONDS of the video.
+
+FIRST - CHECK FOR INAPPROPRIATE CONTENT:
+Before analyzing the video for creative direction, check if the video contains content that would be REJECTED by AI video generators.
+
+ONLY flag the following as inappropriate:
+- EXPLICIT NUDITY (exposed genitalia, breasts, buttocks in sexual context)
+- EXPLICIT SEXUAL CONTENT (sexual acts, pornographic content)
+- EXTREME GRAPHIC VIOLENCE or GORE (severe injuries, dismemberment, blood and guts)
+
+DO NOT flag the following (these are acceptable):
+- Swimwear, bikinis, underwear (not explicit nudity)
+- Kissing, hugging, romantic content (not explicit sexual)
+- Action movie violence, fake blood, horror (not extreme gore)
+- Artistic nudity or medical content (not sexually explicit)
+- Mild violence, sports injuries, stunts
+
+If the video contains content that would be REJECTED by AI video generators (explicit nudity or extreme gore), immediately return:
+{{
+  "is_nsfw": true,
+  "reason": "<brief description of what inappropriate content was detected>"
+}}
+
+If the video is safe and appropriate, continue to analyze it for creative direction with two goals:
 1. Select the BEST FRAME for starting video generation
 2. Provide creative direction for a BETTER ENDING (8 seconds long), which will be appended to the current video.
 
@@ -522,22 +553,30 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
             # Step 4: Analyze with Gemini using structured JSON output
             print("   Generating continuation prompt and frame selection...")
 
-            # Configure structured JSON output
+            # Configure structured JSON output to support both NSFW detection and normal analysis
             config = types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_json_schema={
                     "type": "object",
                     "properties": {
+                        "is_nsfw": {
+                            "type": "boolean",
+                            "description": "True if video contains NSFW/inappropriate content"
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Brief description of what NSFW content was detected (only if is_nsfw is true)"
+                        },
                         "timestamp_sec": {
                             "type": "number",
-                            "description": f"Timestamp in seconds (0-{duration_to_analyze}) of best frame"
+                            "description": f"Timestamp in seconds (0-{duration_to_analyze}) of best frame (only if is_nsfw is false)"
                         },
                         "prompt": {
                             "type": "string",
-                            "description": "1-2 sentence description of what happens next"
+                            "description": "1-2 sentence description of what happens next (only if is_nsfw is false)"
                         }
-                    },
-                    "required": ["timestamp_sec", "prompt"]
+                    }
+                    # Note: No required fields since response type varies based on content
                 }
             )
 
@@ -552,6 +591,14 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
             result = json.loads(response.text)
 
+            # Check if video contains NSFW content
+            if result.get('is_nsfw', False):
+                reason = result.get('reason', 'Content flagged as inappropriate')
+                print(f"\n⚠ NSFW Content Detected:")
+                print(f"  Reason: {reason}\n")
+                raise VideoContainsNSFWContent(reason)
+
+            # Video is safe, proceed with normal analysis
             print(f"\n✓ Gemini Analysis Result:")
             print(f"  Best frame at: {result['timestamp_sec']:.2f}s")
             print(f"  Prompt: \"{result['prompt']}\"\n")
