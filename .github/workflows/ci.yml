@@ -23,13 +23,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create venv & install Python dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Write Dockerfile
         run: |
           cat > Dockerfile <<'EOF'
@@ -41,7 +34,6 @@ jobs:
           RUN apt-get install -yq ffmpeg
 
           WORKDIR /
-          RUN chmod +x run.sh
           CMD ["python3 main.py"]
           EOF
 
