@@ -608,7 +608,6 @@ class Base(Extension):
                 color=COLOR_GREEN,
                 logger=self.logger
             )
-            await self.post_servers(len(self.bot.guilds))
 
     @listen()
     async def on_guild_left(self, event: GuildLeft):
@@ -627,17 +626,6 @@ class Base(Extension):
                 color=COLOR_RED,
                 logger=self.logger
             )
-            await self.post_servers(len(self.bot.guilds))
-
-    #@listen(InviteCreate)
-    #async def on_invite_create(self, event: InviteCreate):
-    #    if self.ready:
-    #        self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
-    #        await send_webhook(
-    #            content=f"here - https://discord.gg/{event.invite.code}",
-    #            url=IN_WEBHOOK,
-    #            logger=self.logger
-    #        )
 
     @listen()
     async def on_ready(self):
@@ -657,13 +645,6 @@ class Base(Extension):
                 url="https://twitch.tv/hesmen"
             ))
 
-            #ss = {}
-            #for s in self.bot.guilds:
-            #    b = s.get_member(self.bot.user.id)
-            #    if b.has_permission(Permissions.MANAGE_GUILD):
-            #        ss[s.name] = s.joined_at.format()
-            #self.logger.info(f"MANAGE_SERVER guilds: {len(ss)}")
-
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
@@ -672,8 +653,8 @@ class Base(Extension):
                 async with session.post("https://top.gg/api/bots/1111723928604381314/stats", json={'server_count': str(num)},
                                         headers={'Authorization': os.getenv('GG_TOKEN')}) as resp:
                     await resp.text()
-        except:
-            self.logger.info(f"Failed to post servers to top.gg")
+        except Exception as e:
+            self.logger.info(f"Failed to post servers to top.gg: {type(e).__name__}: {str(e)}")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://api.botlist.me/api/v1/bots/1111723928604381314/stats",
@@ -681,62 +662,5 @@ class Base(Extension):
                                               'shard_count': "1"},
                                         headers={'authorization': os.getenv('BOTLISTME_TOKEN')}) as resp:
                     await resp.json()
-        except:
-            self.logger.info(f"Failed to post servers to botlist.me")
-
-    @staticmethod
-    def _format_log(string):
-        """
-        [2023-04-13 00:43:30]  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
-        [2023-04-13 00:43:30]  hesmen has been timed out for 30 seconds
-        [2023-04-13 00:49:33]  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
-        [2023-04-13 00:49:33]  hesmen has been timed out for 30 seconds
-        [2023-04-14 00:50:18]  hesmen: h
-        [2023-04-14 00:50:32]  hesmen: BBoomer RAVE Fire
-
-        becomes
-
-        [2023-04-13 ]
-        00:43:30 hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
-        00:43:30  hesmen has been timed out for 30 seconds
-        00:49:33  hesmen: BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST" BatChest "BATCHEST"
-        00:49:33 hesmen has been timed out for 30 seconds
-
-        [2023-04-13]
-        00:50:18 hesmen: h
-        00:50:32 hesmen: BBoomer RAVE Fire
-        """
-        formatted_logs = ""
-        eachdate = ""
-        for ind, line in enumerate(string.split("\n")):
-            if ind == 0:
-                continue
-            if line.strip():
-                tmst, txt = line.split(" ", 1)
-
-                if eachdate != tmst.split(" ")[0]:
-                    eachdate = tmst.split(" ")[0]
-                    formatted_logs += f"\n{eachdate}]\n"
-                actime, txt = txt.split(']', 1)
-                for c in range(len(txt)):
-                    if txt[c] == "#":
-                        while txt[c] != " ":
-                            c += 1
-                        txt = txt[:c] + "`" + txt[c:]
-                        break
-                formatted_logs += f"`{actime} {txt}\n"
-        return formatted_logs
-
-    @staticmethod
-    def _get_last_lines(string):
-        if len(string) > 2000:
-            string = string[-1980:]  # the last 1980 characters
-        string = string.split("\n")
-        fuldate = ""
-        for c in string[1]:  # this line guaranteed to not be messed up from the trim (the line[0] will be messed up)
-            fuldate += c
-            if c == "]":
-                break
-        string[0] = fuldate
-        string = "\n".join(string)
-        return string
+        except Exception as e:
+            self.logger.info(f"Failed to post servers to botlist.me: {type(e).__name__}: {str(e)}")

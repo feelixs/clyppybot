@@ -16,7 +16,8 @@ from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, C
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
                      CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
-                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST)
+                     MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST,
+                     GITHUB_URL)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
@@ -713,7 +714,8 @@ class BaseAutoEmbed:
         about += (
             f"Use `/settings quickembed=True` and I will automatically respond to Twitch clips. Many other platforms are easily accessibly through the `{pre}embed` command\n\n"
             f"---------------------------------\n"
-            f"Join my [Discord server]({SUPPORT_SERVER_URL}) for more info and to get updates!")
+            f"- Join my [Discord server]({SUPPORT_SERVER_URL}) to be a part of the community!\n"
+            f"- Star me on [GitHub]({GITHUB_URL}) to stay updated :)")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
         help_embed.footer = f"CLYPPY v{VERSION}"
         await ctx.send(
@@ -764,10 +766,13 @@ class BaseAutoEmbed:
                f"Give Clyppy your support by voting in popular bot sites!\n"
                f"By voting, receive the following benefits:\n\n"
                f"- Exclusive role in our Discord\n"
-               f"- (2) VIP tokens per vote!\n"
+               f"- 1 free VIP token per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n\n"
                f"You can get some free tokens by voting below, or purchasing them in bulk from our store `(づ๑•ᴗ•๑)づ♡`")
-        await ctx.send(content=msg, components=[Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL)])
+        await ctx.send(content=msg, components=[
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL),
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy in Bulk", url=BUY_TOKENS_URL)
+        ])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
