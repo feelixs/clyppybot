@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
+from pathlib import Path
 from PIL import Image
 from time import time
 from datetime import datetime
@@ -120,17 +121,17 @@ def fetch_cookies(opts, logger):
             logger.info("COOKIE_DIR environment variable not set, skipping cookie fetching")
             return
 
-        firefox_dir = os.path.expanduser(cookie_dir)
-        profile_dir = None
-        
-        for item in os.listdir(firefox_dir):
-            logger.info(f"[LISTDIR] {item}")
-            if item.endswith('.default-release'):
-                profile_dir = item
-                break
+        firefox_dir = Path(cookie_dir).expanduser()
+        if not firefox_dir.exists():
+            logger.warning(f"[COOKIES] firefox directory does not exist: {cookie_dir}")
+            return
 
-        if profile_dir:
-            profile_path = os.path.join(firefox_dir, profile_dir)
+        all_items = [item.name for item in firefox_dir.iterdir()]
+        logger.info(f"[COOKIES] Directory contents: {all_items}")
+
+        profile_dirs = list(firefox_dir.glob("*.default-release"))
+        if profile_dirs:
+            profile_path = str(profile_dirs[0])
             logger.info(f"Using Firefox profile: {profile_path}")
             cookies_string = ('firefox', profile_path, None, None)
             opts['cookiesfrombrowser'] = cookies_string
