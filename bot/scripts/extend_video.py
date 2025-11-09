@@ -1330,8 +1330,48 @@ Your response should ONLY be the continuation prompt itself, nothing else. Be co
 
             # Build the filter_complex based on audio availability
             if both_have_audio:
-                # Both videos have audio - standard concat
-                print(f"   Both videos have audio - using standard concat")
+                # Both videos have audio - use COPY instead of re-encoding for massive speedup
+                # First create a concat list file for demuxer (much faster than filter)
+                print(f"   Both videos have audio - using concat demuxer (fast, no re-encode)")
+                concat_list_path = "temp_concat_list.txt"
+                with open(concat_list_path, 'w') as f:
+                    f.write(f"file '{os.path.abspath(original_video)}'\n")
+                    f.write(f"file '{os.path.abspath(video_to_concat)}'\n")
+
+                # Use concat demuxer with stream copy (no re-encoding!)
+                cmd = [
+                    'ffmpeg',
+                    '-f', 'concat',
+                    '-safe', '0',
+                    '-i', concat_list_path,
+                    '-c', 'copy',  # COPY streams without re-encoding
+                    '-y',
+                    output_path
+                ]
+
+                print(f"   Concatenating videos with stream copy (no re-encode)...")
+                concat_result = subprocess.run(cmd, capture_output=True, text=True)
+
+                # Clean up concat list
+                if os.path.exists(concat_list_path):
+                    os.remove(concat_list_path)
+
+                if concat_result.returncode != 0:
+                    print(f"   ⚠ FFmpeg concat stderr: {concat_result.stderr}")
+                    raise subprocess.CalledProcessError(concat_result.returncode, cmd, concat_result.stdout, concat_result.stderr)
+
+                if os.path.exists(output_path):
+                    output_info = get_video_info(output_path)
+                    file_size = os.path.getsize(output_path) / (1024 * 1024)  # MB
+                    print(f"   ✓ FFmpeg concat completed! ({file_size:.2f} MB, {output_info['width']}x{output_info['height']})")
+                    print(f"Stitched video saved to {output_path}")
+                    return output_path
+                else:
+                    raise Exception("FFmpeg did not create output file")
+
+            # For cases where we need to add silent audio or process differently
+            if both_have_audio:
+                # This code won't be reached now, but kept for reference
                 filter_complex = '[0:v:0][0:a:0][1:v:0][1:a:0]concat=n=2:v=1:a=1[outv][outa]'
                 audio_map = ['-map', '[outa]']
             elif original_has_audio and not generated_has_audio:

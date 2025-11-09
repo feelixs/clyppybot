@@ -148,13 +148,36 @@ class DownloadManager:
                     # Error format: {"error": "...", "saved_prompt": "..."}
                     if 'saved_prompt' in combined_output and not saved_prompt:
                         try:
-                            # Try to find JSON error in the output
-                            json_match = re.search(r'\{[^}]*"saved_prompt"[^}]*}', combined_output, re.DOTALL)
-                            if json_match:
-                                error_data = json.loads(json_match.group(0))
-                                saved_prompt = error_data.get('saved_prompt')
-                                if saved_prompt:
-                                    self._parent.logger.info(f"Extracted prompt from error: {saved_prompt}")
+                            # Parse the output to find the JSON with saved_prompt
+                            # Look for lines that form a JSON object
+                            lines = combined_output.split('\n')
+                            json_lines = []
+                            in_json = False
+                            brace_count = 0
+
+                            for line in lines:
+                                stripped = line.strip()
+                                if stripped.startswith('{'):
+                                    in_json = True
+                                    json_lines = [stripped]
+                                    brace_count = stripped.count('{') - stripped.count('}')
+                                elif in_json:
+                                    json_lines.append(stripped)
+                                    brace_count += stripped.count('{') - stripped.count('}')
+
+                                    if brace_count == 0:
+                                        # Complete JSON object found
+                                        json_str = '\n'.join(json_lines)
+                                        try:
+                                            error_data = json.loads(json_str)
+                                            if 'saved_prompt' in error_data:
+                                                saved_prompt = error_data['saved_prompt']
+                                                self._parent.logger.info(f"Extracted prompt from error: {saved_prompt}")
+                                                break
+                                        except json.JSONDecodeError:
+                                            pass
+                                        in_json = False
+                                        json_lines = []
                         except Exception as e:
                             self._parent.logger.warning(f"Could not extract saved_prompt from error: {e}")
 
