@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-from scripts.regsetup import description
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from pathlib import Path
