@@ -70,7 +70,7 @@ async def send_webhook(logger, content: Optional[str] = None, title: Optional[st
                 "color": color,
             }]
     elif not embed:
-        content += f"\n\n**{title}**\n{description}"
+        content += f"\n\n**{title}**\n{load}"
 
     payload = {
         "content": content,
