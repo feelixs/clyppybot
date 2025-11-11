@@ -24,7 +24,7 @@ from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, V
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
                         handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed,
-                        ExceptionHandled)
+                        VideoContainsNSFWContent, ExceptionHandled)
 
 import hashlib
 import aiohttp
@@ -1089,6 +1089,11 @@ class BaseAutoEmbed:
                                 Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes per vote!"""
                 asyncio.create_task(ctx.send(content=response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "Video too long", True
+        except VideoContainsNSFWContent as e:
+            reason = e.reason if hasattr(e, 'reason') else "inappropriate content detected"
+            response_msg = f"{get_random_face()} I can't extend this video because it contains NSFW content.\n\nReason: {reason}"
+            asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
+            success, response, err_handled = False, "VideoContainsNSFWContent", True
         except VideoTooLongForExtend:
             response_msg = f"{get_random_face()} I can't extend videos longer than {MAX_VIDEO_LEN_FOR_EXTEND} seconds."
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))

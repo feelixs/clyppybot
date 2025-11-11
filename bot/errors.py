@@ -47,6 +47,13 @@ class VideoExtensionFailed(Exception):
     pass
 
 
+class VideoContainsNSFWContent(Exception):
+    """Raised when video contains NSFW/inappropriate content detected by AI analysis"""
+    def __init__(self, reason: str = "Content flagged as NSFW"):
+        self.reason = reason
+        super().__init__(f"Video contains NSFW content: {reason}")
+
+
 class YtDlpForbiddenError(Exception):
     pass
 
