@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+
+from scripts.regsetup import description
 from yt_dlp import YoutubeDL
 from typing import Optional, Union
 from pathlib import Path
@@ -50,7 +52,7 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
-async def send_webhook(logger, content: Optional[str] = None, title: Optional[str] = None, load: Optional[str] = None, url: Optional[str]=None, color=None, in_test=False):
+async def send_webhook(logger, content: Optional[str] = None, title: Optional[str] = None, load: Optional[str] = None, url: Optional[str]=None, color=None, in_test=False, embed=True):
     if not in_test and os.getenv("TEST"):
         return
 
@@ -62,12 +64,14 @@ async def send_webhook(logger, content: Optional[str] = None, title: Optional[st
         color = 5814783  # Blue color
 
     e = []
-    if title is not None and load is not None:
+    if title is not None and load is not None and embed:
         e = [{
                 "title": title,
                 "description": load,
                 "color": color,
             }]
+    elif not embed:
+        content += f"\n\n**{title}**\n{description}"
 
     payload = {
         "content": content,
@@ -1140,8 +1144,10 @@ class BaseAutoEmbed:
                      f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                      f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
+                     f"URL: {clip.clyppy_url}"
                      f"response - {response}",
                 color=COLOR_GREEN if success else COLOR_RED,
+                embed=False,
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
             ))
