@@ -409,6 +409,7 @@ class AutoEmbedder:
             }
 
             try:
+                clip.is_discord_attachment = uploading_to_discord
                 try:
                     result = await publish_interaction(interaction_data, apikey=self.api_key, logger=self.logger)
                 except Exception as e:

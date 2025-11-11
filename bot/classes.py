@@ -153,6 +153,7 @@ class BaseClip(ABC):
         self.cdn_client = cdn_client
         self.id = slug
         self._clyppy_id_input = f"{self.service}{slug}"
+        self.is_discord_attachment = False
         self.duration = duration
         self.tokens_used = tokens_used
         self.clyppy_id = None
@@ -1147,10 +1148,10 @@ class BaseAutoEmbed:
             asyncio.create_task(send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
-                     f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
+                     f"cmd - `{pre}{'extend' if extend_with_ai else 'embed'} url:{url}`\n"
                      f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
-                     f"URL: {clip.clyppy_url}"
+                     f"URL: {clip.clyppy_url if not clip.is_discord_attachment else "`discord upload`"}\n"
                      f"response - {response}",
                 color=COLOR_GREEN if success else COLOR_RED,
                 embed=False,
