@@ -350,12 +350,13 @@ class AutoEmbedder:
                 expires_at = expires_at.timestamp()
             else:
                 expires_at = None
+
             if clip.title is not None:
-                t = clip.title[:100]
+                title_str = clip.title[:100]
             elif response.video_name is not None:
-                t = response.video_name[:100]
+                title_str = response.video_name[:100]
             else:
-                t = None
+                title_str = None
 
             thumb_url = None
             uploading_to_discord = response.can_be_discord_uploaded and has_file_perms
@@ -387,7 +388,7 @@ class AutoEmbedder:
                 'server_name': guild.name,
                 'channel_name': chn,
                 'thumbnail': thumb_url,
-                'title': t,
+                'title': title_str,
                 'user_name': respond_to.author.username,
                 'server_id': str(guild.id),
                 'channel_id': str(chnid),
