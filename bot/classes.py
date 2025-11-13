@@ -246,8 +246,8 @@ class BaseClip(ABC):
                 if 'url' in info and info['url']:
                     # Handle special cases for known platforms
                     if "production.assets.clips.twitchcdn.net" in info['url']:
-                        self.logger.info("Using default dimensions for Twitch clip")
                         format_info = extract_format_info(info, h=720, w=1280)
+                        self.logger.info(f"Using default dimensions for Twitch clip {format_info['width']}x{format_info['height']}")
                     else:
                         format_info = extract_format_info(info)
 
