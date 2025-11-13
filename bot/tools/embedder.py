@@ -449,9 +449,9 @@ class AutoEmbedder:
                 # send message
                 if isinstance(respond_to, SlashContext):
                     if uploading_to_discord:
-                        bot_message = await respond_to.send(file=response.local_file_path, components=comp)
+                        bot_message = await respond_to.send(content=title_str, file=response.local_file_path, components=comp)
                     else:
-                        bot_message = await respond_to.send(clip.clyppy_url, components=comp)
+                        bot_message = await respond_to.send(f"{title_str}{clip.clyppy_url}", components=comp)
                 else:
                     try:
                         if uploading_to_discord:
