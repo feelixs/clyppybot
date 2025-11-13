@@ -53,11 +53,13 @@ def is_discord_compatible(filesize: float):
 
 def infer_video_dimensions(width: Optional[int], height: Optional[int]) -> tuple[int, int]:
     """
-    Intelligently infers missing video dimensions based on common aspect ratios.
+    Intelligently infers correct video dimensions based on common aspect ratios.
+    Fixes cases where only partial dimensions are available or dimensions don't match valid aspect ratios.
 
     Logic:
-    - If both dimensions provided, return as-is
-    - If only one dimension provided, check if it matches common mobile values
+    - If both dimensions provided with valid aspect ratio, return as-is
+    - If both provided but invalid ratio (like 1280x1080), infer correct dimensions
+    - If only one dimension provided, check if it matches common mobile/desktop values
     - Mobile (9:16): heights 1920/1280 or widths 1080/720
     - Desktop (16:9): fallback for all other cases
     - Default: 1280x720 if neither dimension provided
