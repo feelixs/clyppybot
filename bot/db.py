@@ -112,7 +112,7 @@ class GuildDatabase:
                     (guild_id,)
                 )
                 result = cursor.fetchone()
-                return result[0] if result else False
+                return result[0] if result else True
         except sqlite3.Error as e:
             logger.error(f"Database error when getting embed_enabled for guild {guild_id}: {e}")
             return False  # default = false
