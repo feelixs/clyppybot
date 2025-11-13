@@ -73,9 +73,42 @@ def infer_video_dimensions(width: Optional[int], height: Optional[int]) -> tuple
     MOBILE_HEIGHTS = {1920, 1280}
     MOBILE_WIDTHS = {1080, 720}
 
-    # If both are provided, return as-is
+    # If both are provided, check if they form a valid aspect ratio
     if width is not None and height is not None:
-        return (width, height)
+        # Calculate aspect ratio
+        aspect_ratio = width / height if height > 0 else 0
+
+        # Common valid aspect ratios (with some tolerance)
+        # 16:9 = 1.777, 9:16 = 0.5625, 4:3 = 1.333, 1:1 = 1.0, 4:5 = 0.8
+        valid_ratios = [
+            (16/9, 0.05),   # 16:9 landscape (±5% tolerance)
+            (9/16, 0.05),   # 9:16 portrait
+            (4/3, 0.05),    # 4:3 old standard
+            (1.0, 0.05),    # 1:1 square
+            (4/5, 0.05),    # 4:5 Instagram portrait
+        ]
+
+        # Check if aspect ratio is valid
+        for ratio, tolerance in valid_ratios:
+            if abs(aspect_ratio - ratio) <= tolerance:
+                # Valid aspect ratio, return as-is
+                return (width, height)
+
+        # Invalid aspect ratio detected (e.g., 1280x1080) - need to infer correct dimensions
+        # Use the larger dimension and apply proper aspect ratio
+        if height > width:
+            # Likely portrait, check if height matches mobile
+            if height in MOBILE_HEIGHTS:
+                corrected_width = int(height * 9 / 16)
+                return (corrected_width, height)
+            else:
+                # Unusual portrait, use 9:16 anyway
+                corrected_width = int(height * 9 / 16)
+                return (corrected_width, height)
+        else:
+            # Likely landscape - use 16:9
+            corrected_height = int(width * 9 / 16)
+            return (width, corrected_height)
 
     # If only height is provided
     if height is not None and width is None:
