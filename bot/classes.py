@@ -53,11 +53,13 @@ def is_discord_compatible(filesize: float):
 
 def infer_video_dimensions(width: Optional[int], height: Optional[int]) -> tuple[int, int]:
     """
-    Intelligently infers missing video dimensions based on common aspect ratios.
+    Intelligently infers correct video dimensions based on common aspect ratios.
+    Fixes cases where only partial dimensions are available or dimensions don't match valid aspect ratios.
 
     Logic:
-    - If both dimensions provided, return as-is
-    - If only one dimension provided, check if it matches common mobile values
+    - If both dimensions provided with valid aspect ratio, return as-is
+    - If both provided but invalid ratio (like 1280x1080), infer correct dimensions
+    - If only one dimension provided, check if it matches common mobile/desktop values
     - Mobile (9:16): heights 1920/1280 or widths 1080/720
     - Desktop (16:9): fallback for all other cases
     - Default: 1280x720 if neither dimension provided
@@ -73,9 +75,42 @@ def infer_video_dimensions(width: Optional[int], height: Optional[int]) -> tuple
     MOBILE_HEIGHTS = {1920, 1280}
     MOBILE_WIDTHS = {1080, 720}
 
-    # If both are provided, return as-is
+    # If both are provided, check if they form a valid aspect ratio
     if width is not None and height is not None:
-        return (width, height)
+        # Calculate aspect ratio
+        aspect_ratio = width / height if height > 0 else 0
+
+        # Common valid aspect ratios (with some tolerance)
+        # 16:9 = 1.777, 9:16 = 0.5625, 4:3 = 1.333, 1:1 = 1.0, 4:5 = 0.8
+        valid_ratios = [
+            (16/9, 0.05),   # 16:9 landscape (±5% tolerance)
+            (9/16, 0.05),   # 9:16 portrait
+            (4/3, 0.05),    # 4:3 old standard
+            (1.0, 0.05),    # 1:1 square
+            (4/5, 0.05),    # 4:5 Instagram portrait
+        ]
+
+        # Check if aspect ratio is valid
+        for ratio, tolerance in valid_ratios:
+            if abs(aspect_ratio - ratio) <= tolerance:
+                # Valid aspect ratio, return as-is
+                return (width, height)
+
+        # Invalid aspect ratio detected (e.g., 1280x1080) - need to infer correct dimensions
+        # Use the larger dimension and apply proper aspect ratio
+        if height > width:
+            # Likely portrait, check if height matches mobile
+            if height in MOBILE_HEIGHTS:
+                corrected_width = int(height * 9 / 16)
+                return (corrected_width, height)
+            else:
+                # Unusual portrait, use 9:16 anyway
+                corrected_width = int(height * 9 / 16)
+                return (corrected_width, height)
+        else:
+            # Likely landscape - use 16:9
+            corrected_height = int(width * 9 / 16)
+            return (width, corrected_height)
 
     # If only height is provided
     if height is not None and width is None:
@@ -311,8 +346,8 @@ class BaseClip(ABC):
                 if 'url' in info and info['url']:
                     # Handle special cases for known platforms
                     if "production.assets.clips.twitchcdn.net" in info['url']:
-                        self.logger.info("Using default dimensions for Twitch clip")
                         format_info = extract_format_info(info, h=720, w=1280)
+                        self.logger.info(f"Using default dimensions for Twitch clip {format_info['width']}x{format_info['height']}")
                     else:
                         format_info = extract_format_info(info)
 
