@@ -51,6 +51,58 @@ def is_discord_compatible(filesize: float):
     return MAX_FILE_SIZE_FOR_DISCORD > filesize > 0
 
 
+def infer_video_dimensions(width: Optional[int], height: Optional[int]) -> tuple[int, int]:
+    """
+    Intelligently infers missing video dimensions based on common aspect ratios.
+
+    Logic:
+    - If both dimensions provided, return as-is
+    - If only one dimension provided, check if it matches common mobile values
+    - Mobile (9:16): heights 1920/1280 or widths 1080/720
+    - Desktop (16:9): fallback for all other cases
+    - Default: 1280x720 if neither dimension provided
+
+    Args:
+        width: Video width in pixels (can be None)
+        height: Video height in pixels (can be None)
+
+    Returns:
+        Tuple of (width, height) with proper aspect ratio
+    """
+    # Common mobile heights/widths for 9:16 portrait videos
+    MOBILE_HEIGHTS = {1920, 1280}
+    MOBILE_WIDTHS = {1080, 720}
+
+    # If both are provided, return as-is
+    if width is not None and height is not None:
+        return (width, height)
+
+    # If only height is provided
+    if height is not None and width is None:
+        if height in MOBILE_HEIGHTS:
+            # Mobile aspect ratio 9:16
+            inferred_width = int(height * 9 / 16)
+            return (inferred_width, height)
+        else:
+            # Desktop aspect ratio 16:9
+            inferred_width = int(height * 16 / 9)
+            return (inferred_width, height)
+
+    # If only width is provided
+    if width is not None and height is None:
+        if width in MOBILE_WIDTHS:
+            # Mobile aspect ratio 9:16
+            inferred_height = int(width * 16 / 9)
+            return (width, inferred_height)
+        else:
+            # Desktop aspect ratio 16:9
+            inferred_height = int(width * 9 / 16)
+            return (width, inferred_height)
+
+    # Neither provided, return default desktop dimensions
+    return (1280, 720)
+
+
 async def send_webhook(logger, content: Optional[str] = None, title: Optional[str] = None, load: Optional[str] = None, url: Optional[str]=None, color=None, in_test=False, embed=True):
     if not in_test and os.getenv("TEST"):
         return
@@ -235,11 +287,24 @@ class BaseClip(ABC):
                     self.logger.warning(f"Got invalid duration {duration} for {self.url}")
 
                 def extract_format_info(fmt, h=None, w=None):
-                    """Helper to extract format details with safe defaults"""
+                    """Helper to extract format details with intelligent dimension inference"""
+                    # Get width and height from format, or use provided defaults
+                    raw_width = fmt.get('width', w)
+                    raw_height = fmt.get('height', h)
+
+                    # Use inference to ensure proper aspect ratio
+                    inferred_width, inferred_height = infer_video_dimensions(raw_width, raw_height)
+
+                    # Log if dimensions were inferred vs extracted
+                    if raw_width != inferred_width or raw_height != inferred_height:
+                        self.logger.info(
+                            f"Inferred dimensions: {raw_width}x{raw_height} -> {inferred_width}x{inferred_height}"
+                        )
+
                     return {
                         'url': fmt.get('url', ''),
-                        'width': fmt.get('width', w or 1280),
-                        'height': fmt.get('height', h or 720),
+                        'width': inferred_width,
+                        'height': inferred_height,
                     }
 
                 # Try to get direct URL first
