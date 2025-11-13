@@ -444,6 +444,8 @@ class AutoEmbedder:
                     comp = [info_button] + comp
                     comp = ActionRow(*comp)
 
+                title_str = f"{clip.title}\n" if clip and clip.title and clip.title != "Clyppy Video" else ""
+
                 # send message
                 if isinstance(respond_to, SlashContext):
                     if uploading_to_discord:
@@ -453,9 +455,9 @@ class AutoEmbedder:
                 else:
                     try:
                         if uploading_to_discord:
-                            bot_message = await respond_to.reply(file=response.local_file_path, components=comp)
+                            bot_message = await respond_to.reply(content=title_str, file=response.local_file_path, components=comp)
                         else:
-                            bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
+                            bot_message = await respond_to.reply(f"{title_str}{clip.clyppy_url}", components=comp)
                     except Exception as e:
                         self.logger.info(f"Error replying to message: {str(e)} - sending to channel instead")
                         # assume message to reply to was deleted
