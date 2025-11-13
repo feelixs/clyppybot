@@ -1245,13 +1245,17 @@ class BaseAutoEmbed:
             success, response, err_handled = False, "Unexpected error", False
 
         finally:
+            if clip is not None:
+                url_str = clip.clyppy_url if not clip.is_discord_attachment else "`discord upload`"
+            else:
+                url_str = "`error`"
             asyncio.create_task(send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - {"Success" if success else "Failure"}',
                 load=f"user - {ctx.user.username}\n"
                      f"cmd - `{pre}{'extend' if extend_with_ai else 'embed'} url:{url}`\n"
                      f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
-                     f"URL: {clip.clyppy_url if not clip.is_discord_attachment else "`discord upload`"}\n"
+                     f"URL: {url_str}\n"
                      f"response - {response}",
                 color=COLOR_GREEN if success else COLOR_RED,
                 embed=False,
