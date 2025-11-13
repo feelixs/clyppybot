@@ -445,6 +445,7 @@ class AutoEmbedder:
                     comp = ActionRow(*comp)
 
                 title_str = f"{clip.title}\n" if clip and clip.title and clip.title != "Clyppy Video" else ""
+                if title_str: self.logger.info(f"Found Title: {title_str}")
 
                 # send message
                 if isinstance(respond_to, SlashContext):
