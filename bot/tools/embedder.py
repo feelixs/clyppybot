@@ -450,13 +450,13 @@ class AutoEmbedder:
                     if uploading_to_discord:
                         bot_message = await respond_to.send(file=response.local_file_path, components=comp)
                     else:
-                        bot_message = await respond_to.send(components=comp)
+                        bot_message = await respond_to.send(clip.clyppy_url, components=comp)
                 else:
                     try:
                         if uploading_to_discord:
                             bot_message = await respond_to.reply(file=response.local_file_path, components=comp)
                         else:
-                            bot_message = await respond_to.reply(components=comp)
+                            bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
                     except Exception as e:
                         self.logger.info(f"Error replying to message: {str(e)} - sending to channel instead")
                         # assume message to reply to was deleted
