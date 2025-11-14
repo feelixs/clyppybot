@@ -490,7 +490,10 @@ class BaseClip(ABC):
             'outtmpl': filename,
             'quiet': True,
             'no_warnings': True,
-            'user_agent': YT_DLP_USER_AGENT
+            'user_agent': YT_DLP_USER_AGENT,
+            'postprocessor_args': {
+                'ffmpeg': ['-fflags', '+shortest', '-max_interleave_delta', '1G']
+            }
         }
 
         if cookies: fetch_cookies(ydl_opts, self.logger)
