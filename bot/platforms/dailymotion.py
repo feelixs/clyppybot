@@ -67,7 +67,7 @@ class DailymotionClip(BaseClip):
     def url(self) -> str:
         return f"https://www.dailymotion.com/video/{self._video_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
         return await super().dl_check_size(
             filename=filename,
