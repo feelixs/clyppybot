@@ -5,4 +5,6 @@
 logs/
 CLAUDE.md
 .aider*
+*.mp4
+*.png
 test/
