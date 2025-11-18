@@ -1195,10 +1195,10 @@ class BaseAutoEmbed:
                 asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
-                response_msg = f"""{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
-You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
-every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
-You have `{user_tokens}` tokens available.\n"
+                response_msg = f"""{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n
+You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but 
+every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n
+You have `{user_tokens}` tokens available.\n
 Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
                 asyncio.create_task(ctx.send(response_msg, components=comp))
             else:
