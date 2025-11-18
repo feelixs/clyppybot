@@ -44,6 +44,15 @@ class Base(Extension):
             url = "https://" + url
         return url
 
+    def _get_first_clip_link(self, message_content: str) -> Optional[str]:
+        """Extract the first valid clip link from a message"""
+        words = self.base_embedder.get_words(message_content)
+        for word in words:
+            for platform in self.bot.platform_embedders:
+                if platform.embedder.platform_tools.is_clip_link(word):
+                    return word
+        return None
+
     @listen(MessageCreate)
     async def on_message_create(self, event: MessageCreate):
         if event.message.author.id == self.bot.user.id:
@@ -54,10 +63,27 @@ class Base(Extension):
         msg = event.message.content
         split = msg.split(' ')
         if msg.startswith(EMBED_TXT_COMMAND):
+            # Check if it's ONLY ".embed" (reply-to mode)
+            if msg.strip() == EMBED_TXT_COMMAND:
+                # Fetch referenced message
+                ref_msg = await event.message.fetch_referenced_message()
+                if not ref_msg:
+                    return await event.message.reply("Please reply to a message containing a clip link or use `.embed <URL>`")
+
+                url = self._get_first_clip_link(event.message.content) or self._get_first_clip_link(ref_msg.content)
+                if not url:
+                    return await event.message.reply("No clip links found in either message")
+
+                # Update message content to simulate ".embed <URL>" command
+                # This allows the rest of the flow to work as normal
+                msg = f"{EMBED_TXT_COMMAND} {url}"
+                split = [EMBED_TXT_COMMAND, url]
+
+            # Original validation
             if len(split) <= 1:
                 return await event.message.reply("Please provide a URL to embed like `.embed https://example.com`")
             # handle .embed command
-            words = self.base_embedder.get_words(event.message.content)
+            words = self.base_embedder.get_words(msg)  # Use msg instead of event.message.content
             for p in self.bot.platform_embedders:
                 contains_clip_link, _ = p.embedder.get_next_clip_link_loc(
                     words=words,
