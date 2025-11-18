@@ -48,7 +48,6 @@ class Base(Extension):
         """Extract the first valid clip link from a message"""
         words = self.base_embedder.get_words(message_content)
         for word in words:
-            if word.startswith("url:"): word = word[len("url:"):]
             for platform in self.bot.platform_embedders:
                 if platform.embedder.platform_tools.is_clip_link(word):
                     return word
@@ -77,6 +76,7 @@ class Base(Extension):
 
                 # Update message content to simulate ".embed <URL>" command
                 # This allows the rest of the flow to work as normal
+                if url.startswith("url:"): url = url.replace("url:", "")
                 msg = f"{EMBED_TXT_COMMAND} {url}"
                 split = [EMBED_TXT_COMMAND, url]
 
