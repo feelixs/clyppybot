@@ -35,10 +35,14 @@ class Base(Extension):
 
     @staticmethod
     def _sanitize_url(url: str) -> str:
+        # Remove Discord's url: prefix if present
+        if url.startswith("url:"):
+            url = url[4:]
+
         # trim off extra characters at start or beginning
-        while url.startswith('*') or url.startswith('['):
+        while url.startswith('*') or url.startswith('[') or url.startswith('`'):
             url = url[1:]
-        while url.endswith('*') or url.endswith(']'):
+        while url.endswith('*') or url.endswith(']') or url.endswith('`'):
             url = url[:-1]
         if not url.startswith("https://"):
             url = "https://" + url
@@ -48,9 +52,12 @@ class Base(Extension):
         """Extract the first valid clip link from a message"""
         words = self.base_embedder.get_words(message_content)
         for word in words:
+            # Remove Discord's url: prefix if present
+            if word.startswith("url:"):
+                word = word[4:]
             for platform in self.bot.platform_embedders:
                 if platform.embedder.platform_tools.is_clip_link(word):
-                    return word
+                    return self._sanitize_url(word)  # Clean before returning
         return None
 
     @listen(MessageCreate)
@@ -74,10 +81,14 @@ class Base(Extension):
                 if not url:
                     return await event.message.reply("No clip links found in either message")
 
-                # Update message content to simulate ".embed <URL>" command
-                # This allows the rest of the flow to work as normal
-                msg = f"{EMBED_TXT_COMMAND} {url}"
-                split = [EMBED_TXT_COMMAND, url]
+                # Sanitize URL
+                url = self._sanitize_url(url)
+                for p in self.bot.platform_embedders:
+                    if p.embedder.platform_tools.is_clip_link(url):
+                        return await p.handle_message(event, skip_check=True, url=url)
+
+                # No platform matched
+                return await event.message.reply("Invalid or unsupported URL")
 
             # Original validation
             if len(split) <= 1:
