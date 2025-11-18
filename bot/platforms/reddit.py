@@ -178,7 +178,7 @@ class RedditClip(BaseClip):
         mclip = await m.get_clip(self.external_link)
         return await mclip.download(filename, dlp_format, can_send_files)
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
         if self.external_link is None:
             pass
         elif 'kick.com' in self.external_link:
