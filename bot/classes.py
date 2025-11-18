@@ -1187,7 +1187,8 @@ class BaseAutoEmbed:
             dur = e.video_dur
             comp = [
                 Button(style=ButtonStyle(ButtonStyle.LINK), label="Free Tokens", url=CLYPPY_VOTE_URL),
-                Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL)
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy Tokens", url=BUY_TOKENS_URL),
+                Button(style=ButtonStyle(ButtonStyle.LINK), label="Join our Discord for (4) Free Tokens", url=SUPPORT_SERVER_URL),
             ]
             if dur >= EMBED_TOTAL_MAX_LENGTH:
                 response_msg = f"{get_random_face()} I can't embed videos longer than {EMBED_TOTAL_MAX_LENGTH // (60 * 60)} hours total, even with Clyppy VIP Tokens."
@@ -1195,10 +1196,10 @@ class BaseAutoEmbed:
             elif 0 < user_tokens < (video_cost := get_token_cost(dur)):
                 # the user has tokens available & the video_dur says it can be embedded with tokens, but the embed still reported too long
                 response_msg = f"""{get_random_face()} This video was too long to embed ({dur / 60:.1f} minutes)\n\n"
-                                You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
-                                every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
-                                You have `{user_tokens}` tokens available.\n"
-                                Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
+You can normally use `{pre}embed` on videos under {MAX_VIDEO_LEN_SEC / 60} minutes, but "
+every {EMBED_TOKEN_COST} token can add {EMBED_W_TOKEN_MAX_LEN / 60} minutes of video time.\n"
+You have `{user_tokens}` tokens available.\n"
+Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens."""
                 asyncio.create_task(ctx.send(response_msg, components=comp))
             else:
                 response_msg = f"""{get_random_face()} This video was too long to embed (longer than {MAX_VIDEO_LEN_SEC / 60} minutes)\n
