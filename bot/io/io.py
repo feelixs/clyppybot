@@ -47,7 +47,7 @@ async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_
             'error_message': error_msg,
             'video_url': video_url,
             'video_platform': video_platform,
-            'username': parent_msg.author.username,
+            'username': parent_msg.author.username or f"User_{parent_msg.author.id}",
             'user_id': parent_msg.author.id,
             'handled': handled,
         }, headers=headers) as response:
@@ -125,7 +125,7 @@ async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, descr
     }
     j = {
         'userid': user.id,
-        'username': user.username,
+        'username': user.username or f"User_{user.id}",
         'amount': amt,
         'reason': reason,
         'original_url': clip_url,

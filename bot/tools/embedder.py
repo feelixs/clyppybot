@@ -211,9 +211,10 @@ class AutoEmbedder:
             )
         except Exception as e:
             # this is where we refund the tokens
+            username = respond_to.author.username or f"User_{respond_to.author.id}"
             if extend_with_ai:
                 # video extension -> always 10 tokens cost
-                self.logger.info(f"The AI extend failed, so we should refund 10 VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
+                self.logger.info(f"The AI extend failed, so we should refund 10 VIP tokens to {username} <{respond_to.author.id}>")
                 asyncio.create_task(subtract_tokens(
                     user=respond_to.author,
                     amt=-10,
@@ -223,7 +224,7 @@ class AutoEmbedder:
                 ))
             else:
                 # normal embed
-                self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {respond_to.author.username} <{respond_to.author.id}>")
+                self.logger.info(f"The clip failed to embed, so we should refund {clip.tokens_used} VIP tokens to {username} <{respond_to.author.id}>")
                 asyncio.create_task(subtract_tokens(
                     user=respond_to.author,
                     amt=-1 * clip.tokens_used,
@@ -389,7 +390,7 @@ class AutoEmbedder:
                 'channel_name': chn,
                 'thumbnail': thumb_url,
                 'title': title_str,
-                'user_name': respond_to.author.username,
+                'user_name': respond_to.author.username or f"User_{respond_to.author.id}",
                 'server_id': str(guild.id),
                 'channel_id': str(chnid),
                 'user_id': str(respond_to.author.id),
