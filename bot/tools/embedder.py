@@ -185,7 +185,8 @@ class AutoEmbedder:
                 platform_name=self.platform_tools.platform_name,
                 clip_url=clip_link,
                 error_info=exception,
-                handled=handled
+                handled=handled,
+                logger=self.logger
             )
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):

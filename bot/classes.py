@@ -1287,5 +1287,6 @@ Since it's {dur / 60:.1f} minutes long, it would cost `{video_cost}` VIP tokens.
                     clip=clip,
                     clip_url=url,
                     error_info=exception,
-                    handled=err_handled
+                    handled=err_handled,
+                    logger=self.logger
                 ))

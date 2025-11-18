@@ -25,7 +25,7 @@ async def fetch_video_status(clip_id: str):
             return await response.json()
 
 
-async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_url, platform_name: str, error_info: dict, handled: bool, clip=None):
+async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_url, platform_name: str, error_info: dict, handled: bool, clip=None, logger=None):
     url = 'https://clyppy.io/api/clips/publish/error/'
     headers = {
         'X-API-Key': getenv('clyppy_post_key'),
@@ -40,21 +40,48 @@ async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_
     video_url = clip_url
     error_name = error_info['name']
     error_msg = error_info['msg']
-    async with get_aiohttp_session() as session:
-        async with session.post(url, json={
-            'clyppy_id_ctx': video_id,
-            'error_type': error_name,
-            'error_message': error_msg,
-            'video_url': video_url,
-            'video_platform': video_platform,
-            'username': parent_msg.author.username or f"User_{parent_msg.author.id}",
-            'user_id': parent_msg.author.id,
-            'handled': handled,
-        }, headers=headers) as response:
-            if response.status != 201:
-                raise Exception(f"Failed to push interaction error: {await response.text()}")
-            else:
-                return await response.json()
+
+    try:
+        async with get_aiohttp_session() as session:
+            async with session.post(url, json={
+                'clyppy_id_ctx': video_id,
+                'error_type': error_name,
+                'error_message': error_msg,
+                'video_url': video_url,
+                'video_platform': video_platform,
+                'username': parent_msg.author.username or f"User_{parent_msg.author.id}",
+                'user_id': parent_msg.author.id,
+                'handled': handled,
+            }, headers=headers) as response:
+                response_text = await response.text()
+
+                # Check for Cloudflare errors (500, 502, 503, 504)
+                if response.status >= 500:
+                    if 'cloudflare' in response_text.lower():
+                        if logger:
+                            logger.warning(f"Cloudflare error when pushing interaction error (status {response.status}). API may be down. Error was: {error_name}")
+                        return None  # Silently fail - the main error was already logged
+                    else:
+                        if logger:
+                            logger.error(f"Server error {response.status} when pushing interaction error: {response_text[:200]}")
+                        return None
+
+                if response.status != 201:
+                    if logger:
+                        logger.warning(f"Failed to push interaction error (status {response.status}): {response_text[:200]}")
+                    return None
+                else:
+                    return await response.json()
+    except aiohttp.ClientError as e:
+        # Handle connection errors, timeouts, etc.
+        if logger:
+            logger.warning(f"Network error when pushing interaction error: {e}")
+        return None
+    except Exception as e:
+        # Catch any other unexpected errors
+        if logger:
+            logger.error(f"Unexpected error when pushing interaction error: {e}")
+        return None
 
 
 async def is_404(url: str, logger=None) -> Tuple[bool, int]:
