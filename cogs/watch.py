@@ -50,6 +50,7 @@ class Watch(Extension):
 
     @listen(MemberAdd)
     async def on_member_add(self, member: MemberAdd):
+        self.logger.info(f"NEW MEMBER ADD in ctx: {member.guild.name} -> {member.member.nick} ({member.member.id})")
         print(f"NEW MEMBER ADD in ctx: {member.guild.name} -> {member.member.nick} ({member.member.id})")
 
     @listen(MessageCreate)
