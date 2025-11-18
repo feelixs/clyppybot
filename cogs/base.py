@@ -76,7 +76,6 @@ class Base(Extension):
 
                 # Update message content to simulate ".embed <URL>" command
                 # This allows the rest of the flow to work as normal
-                if url.startswith("url:"): url = url.replace("url:", "")
                 msg = f"{EMBED_TXT_COMMAND} {url}"
                 split = [EMBED_TXT_COMMAND, url]
 
