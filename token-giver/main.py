@@ -5,10 +5,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from interactions import Client, Intents, listen
 from interactions.api.events import MemberAdd
 from bot.env import CLYPPY_SUPPORT_SERVER_ID
+from bot.io import get_aiohttp_session
 import logging
 import asyncio
 import sqlite3
 from datetime import datetime
+from os import getenv
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -18,7 +20,8 @@ logger = logging.getLogger(__name__)
 class TokenGiverBot:
     def __init__(self):
         self.bot = Client(intents=Intents.DEFAULT | Intents.GUILD_MEMBERS)
-        self.db_path = os.path.join(os.path.dirname(__file__), 'members.db')
+        # Use environment variable or default to data directory for persistence
+        self.db_path = os.getenv('DB_PATH', os.path.join(os.path.dirname(__file__), 'data', 'members.db'))
         self.setup_database()
         self.setup_listeners()
 
@@ -53,8 +56,8 @@ class TokenGiverBot:
                 return
 
             try:
-                # Call the token giving function (stub implementation)
-                await self.give_tokens_to_user(4)
+                # Call the token giving function
+                await self.give_tokens_to_user(event.member, 4)
 
                 # Record the successful token grant
                 self.record_token_grant(event.member.id)
@@ -85,18 +88,38 @@ class TokenGiverBot:
         conn.commit()
         conn.close()
 
-    async def give_tokens_to_user(self, amount: int):
+    async def give_tokens_to_user(self, member, amount: int):
         """
-        Stub implementation for giving tokens to users.
+        Give tokens to a user by calling the clyppy.io API.
 
         Args:
+            member: Discord Member object
             amount: Number of tokens to give
 
-        TODO: Implement actual token giving logic
+        Uses the subtract API with a negative amount to add tokens.
         """
-        logger.info(f"[STUB] Would give {amount} tokens to user")
-        # Actual implementation goes here
-        pass
+        url = 'https://clyppy.io/api/tokens/subtract/'
+        headers = {
+            'X-API-Key': getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'userid': member.id,
+            'username': member.username,
+            'amount': -amount,  # Negative to add tokens
+            'reason': 'New Member Bonus',
+            'description': f'Welcome bonus for joining CLYPPY CLUB',
+        }
+
+        async with get_aiohttp_session() as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    logger.info(f"Successfully gave {amount} tokens to {member.username}. API response: {result}")
+                    return result
+                else:
+                    error_data = await response.json()
+                    raise Exception(f"Failed to give VIP tokens: {error_data.get('error', 'Unknown error')}")
 
     async def start(self):
         """Start the bot"""
