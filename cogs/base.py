@@ -74,6 +74,7 @@ class Base(Extension):
                 if not url:
                     return await event.message.reply("No clip links found in either message")
 
+                self.logger.info(f"FOUDN URL {url}")
                 # Update message content to simulate ".embed <URL>" command
                 # This allows the rest of the flow to work as normal
                 msg = f"{EMBED_TXT_COMMAND} {url}"
