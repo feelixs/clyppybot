@@ -772,20 +772,30 @@ class BaseAutoEmbed:
             ".vote": self.vote_cmd
         }
 
-    async def handle_message(self, event: MessageCreate):
-        message_is_embed_command = (
-                event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
-                and self.platform.is_clip_link(event.message.content.split(" ")[1])
-        )
-        if message_is_embed_command:
+    async def handle_message(self, event: MessageCreate, skip_check: bool = False, url: str = None):
+        if skip_check and url:
+            # URL already extracted from reply-to mode, skip validation
             await self.command_embed(
                 ctx=event.message,
-                url=event.message.content.split(" ")[1],  # the second word is the url
+                url=url,
                 platform=self.platform,
-                slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
+                slug=self.platform.parse_clip_url(url)
             )
-        elif self.platform.is_dl_server(event.message.guild) or self.platform.always_embed:
-            await self.embedder.on_message_create(event)
+        else:
+            # Original logic - check if message is .embed command
+            message_is_embed_command = (
+                    event.message.content.startswith(f"{EMBED_TXT_COMMAND} ")  # support text command (!embed url)
+                    and self.platform.is_clip_link(event.message.content.split(" ")[1])
+            )
+            if message_is_embed_command:
+                await self.command_embed(
+                    ctx=event.message,
+                    url=event.message.content.split(" ")[1],  # the second word is the url
+                    platform=self.platform,
+                    slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
+                )
+            elif self.platform.is_dl_server(event.message.guild) or self.platform.always_embed:
+                await self.embedder.on_message_create(event)
 
     @staticmethod
     async def _handle_timeout(ctx: SlashContext, url: str, amt: int):

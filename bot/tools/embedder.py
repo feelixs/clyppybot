@@ -104,6 +104,8 @@ class AutoEmbedder:
 
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
+            elif event.message.author.id == 1341521799342588006:
+                return 1  # logger webhook
 
             if not self.bot.guild_settings.get_embed_enabled(guild.id):
                 # quickembeds not enabled

@@ -81,11 +81,14 @@ class Base(Extension):
                 if not url:
                     return await event.message.reply("No clip links found in either message")
 
-                self.logger.info(f"FOUDN URL {url}")
-                # Update message content to simulate ".embed <URL>" command
-                # This allows the rest of the flow to work as normal
-                msg = f"{EMBED_TXT_COMMAND} {url}"
-                split = [EMBED_TXT_COMMAND, url]
+                # Sanitize URL
+                url = self._sanitize_url(url)
+                for p in self.bot.platform_embedders:
+                    if p.embedder.platform_tools.is_clip_link(url):
+                        return await p.handle_message(event, skip_check=True, url=url)
+
+                # No platform matched
+                return await event.message.reply("Invalid or unsupported URL")
 
             # Original validation
             if len(split) <= 1:
