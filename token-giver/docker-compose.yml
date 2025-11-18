@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  token-giver:
+    build:
+      context: ..
+      dockerfile: token-giver/Dockerfile
+    container_name: token-giver-bot
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/token-giver/data
+    restart: unless-stopped

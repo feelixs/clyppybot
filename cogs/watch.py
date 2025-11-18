@@ -1,6 +1,6 @@
 from bot.env import CLYPPY_SUPPORT_SERVER_ID, CLYPPY_CMD_WEBHOOK_ID, CLYPPY_CMD_WEBHOOK_CHANNEL, CLYPPY_VOTE_ROLE, VOTE_WEBHOOK_USERID, CLYPPYBOT_ID
 from interactions import Extension, listen
-from interactions.api.events import MessageCreate
+from interactions.api.events import MessageCreate, MemberAdd
 import logging
 import asyncio
 import re
@@ -47,6 +47,11 @@ class Watch(Extension):
 
         await member.remove_roles(old_roles)
         await member.add_roles([voter_role, the_role])
+
+    @listen(MemberAdd)
+    async def on_member_add(self, event: MemberAdd):
+        self.logger.info(f"NEW MEMBER ADD in ctx: {event.guild.name} -> {event.member.nick} ({event.member.id})")
+        print(f"NEW MEMBER ADD in ctx: {event.guild.name} -> {event.member.nick} ({event.member.id})")
 
     @listen(MessageCreate)
     async def on_message_create(self, event):
