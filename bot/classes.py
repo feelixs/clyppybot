@@ -209,9 +209,17 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 def fetch_cookies(opts, logger):
     try:
+        # Try cookie file first (downloaded from server)
+        cookie_file = os.getenv("COOKIE_FILE")
+        if cookie_file and os.path.exists(cookie_file):
+            logger.info(f"Using cookie file: {cookie_file}")
+            opts['cookiefile'] = cookie_file
+            return
+
+        # Fallback to Firefox profile (original behavior)
         cookie_dir = os.getenv("COOKIE_DIR")
         if cookie_dir is None:
-            logger.info("COOKIE_DIR environment variable not set, skipping cookie fetching")
+            logger.info("No COOKIE_FILE or COOKIE_DIR set, skipping cookies")
             return
 
         firefox_dir = Path(cookie_dir).expanduser()

@@ -31,6 +31,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
+        self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60 * 24))  # refresh cookies every 24 hours
         self.base_embedder = self.bot.base_embedder.embedder
 
     @staticmethod
@@ -391,6 +392,28 @@ class Base(Extension):
         await self.post_servers(len(self.bot.guilds))
         await ctx.send("You can now safely exit.")
 
+    @slash_command(
+        name="refresh_cookies",
+        description="Manually refresh cookies from server",
+        scopes=[759798762171662399],
+        options=[
+            SlashCommandOption(
+                name="confirm",
+                description="Type 'yes' to confirm",
+                type=OptionType.STRING,
+                required=True
+            )
+        ]
+    )
+    async def refresh_cookies_cmd(self, ctx: SlashContext, confirm: str):
+        if confirm.lower() != 'yes':
+            await ctx.send("Cancelled.", ephemeral=True)
+            return
+
+        await ctx.defer(ephemeral=True)
+        await self.refresh_cookies_task()
+        await ctx.send("✅ Cookies refreshed from server!", ephemeral=True)
+
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
         await self.bot.base_embedder.vote_cmd(ctx)
@@ -426,28 +449,28 @@ class Base(Extension):
         await ctx.send("An unexpected error occurred.")
         raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
 
-    @slash_command(name="ai_extend", description="Extend a video with AI",
-                   options=[SlashCommandOption(
-                       name="url",
-                       description="The YouTube, Twitch, etc. link to extend",
-                       required=True,
-                       type=OptionType.STRING)
-                   ])
-    async def ai_extend(self, ctx: SlashContext, url: str):
-        self.logger.info(f"@slash_command for /extend - {ctx.author.id} - {url}")
-        url = self._sanitize_url(url)
-        for p in self.bot.platform_embedders:
-            if slug := p.platform.parse_clip_url(url):
-                return await self.bot.base_embedder.command_embed(
-                    ctx=ctx,
-                    url=url,
-                    platform=p.platform,
-                    slug=slug,
-                    extend_with_ai=True
-                )
-        # incompatible (should never get here, since bot.base is a catch-all)
-        await ctx.send("An unexpected error occurred.")
-        raise Exception(f"Error in /extend - bot.base did not catch url {url}, exited returning None")
+    #@slash_command(name="ai_extend", description="Extend a video with AI",
+    #               options=[SlashCommandOption(
+    #                   name="url",
+    #                   description="The YouTube, Twitch, etc. link to extend",
+    #                   required=True,
+    #                   type=OptionType.STRING)
+    #               ])
+    #async def ai_extend(self, ctx: SlashContext, url: str):
+    #    self.logger.info(f"@slash_command for /extend - {ctx.author.id} - {url}")
+    #    url = self._sanitize_url(url)
+    #    for p in self.bot.platform_embedders:
+    #        if slug := p.platform.parse_clip_url(url):
+    #            return await self.bot.base_embedder.command_embed(
+    #                ctx=ctx,
+    #                url=url,
+    #                platform=p.platform,
+    #                slug=slug,
+    #                extend_with_ai=True
+    #            )
+    #    # incompatible (should never get here, since bot.base is a catch-all)
+    #    await ctx.send("An unexpected error occurred.")
+    #    raise Exception(f"Error in /extend - bot.base did not catch url {url}, exited returning None")
 
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
@@ -629,6 +652,32 @@ class Base(Extension):
         self.logger.info("Saving database to the server...")
         await self.bot.guild_settings.save()
 
+    async def refresh_cookies_task(self):
+        """Download cookies from felixcreations.com every 24 hours"""
+        if not self.ready:
+            self.logger.info("Bot not ready, skipping cookie refresh task")
+            return
+
+        self.logger.info("Downloading cookies from server...")
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = "https://felixcreations.com/api/cookies/get"
+                headers = {'X-API-Key': os.getenv('clyppy_post_key')}
+
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        cookies_content = await response.text()
+                        cookie_file_path = os.getenv('COOKIE_FILE', '/tmp/cookies.txt')
+
+                        with open(cookie_file_path, 'w') as f:
+                            f.write(cookies_content)
+
+                        self.logger.info(f"Successfully updated cookies at {cookie_file_path}")
+                    else:
+                        self.logger.warning(f"Failed to download cookies: HTTP {response.status}")
+        except Exception as e:
+            self.logger.error(f"Error downloading cookies: {e}")
+
     @listen()
     async def on_guild_join(self, event: GuildJoin):
         if self.ready:
@@ -672,6 +721,9 @@ class Base(Extension):
         if not self.ready:
             self.ready = True
             self.save_task.start()
+            self.cookie_refresh_task.start()
+            # Download cookies immediately on startup
+            await self.refresh_cookies_task()
             self.logger.info(f"bot logged in as {self.bot.user.username}")
             self.logger.info(f"total shards: {len(self.bot.shards)}")
             self.logger.info(f"my guilds: {len(self.bot.guilds)}")
