@@ -1,4 +1,6 @@
 import re
+import asyncio
+import time
 from bot.classes import BaseClip, BaseMisc
 from bot.errors import VideoTooLong, NoDuration
 from bot.types import DownloadResponse
@@ -9,6 +11,8 @@ class InstagramMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "Instagram"
+        self.last_request_time = 0  # Track last Instagram request time
+        self.min_delay = 5  # Minimum 5 seconds between requests
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
         """
@@ -39,13 +43,14 @@ class InstagramMisc(BaseMisc):
             raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return InstagramClip(shortcode, self.cdn_client, tokens_used, duration)
+        return InstagramClip(shortcode, self.cdn_client, tokens_used, duration, self)
 
 
 class InstagramClip(BaseClip):
-    def __init__(self, shortcode, cdn_client, tokens_used: int, duration: int):
+    def __init__(self, shortcode, cdn_client, tokens_used: int, duration: int, misc: InstagramMisc):
         self._service = "instagram"
         self._shortcode = shortcode
+        self.misc = misc  # Reference to InstagramMisc for rate limiting
         super().__init__(shortcode, cdn_client, tokens_used, duration)
 
     @property
@@ -57,12 +62,41 @@ class InstagramClip(BaseClip):
         return f"https://www.instagram.com/reel/{self._shortcode}/"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
+        # Rate limiting: ensure minimum delay between Instagram requests
+        current_time = time.time()
+        time_since_last = current_time - self.misc.last_request_time
+
+        if time_since_last < self.misc.min_delay:
+            delay = self.misc.min_delay - time_since_last
+            self.logger.info(f"Rate limiting: waiting {delay:.1f}s before Instagram request")
+            await asyncio.sleep(delay)
+
+        self.misc.last_request_time = time.time()
         self.logger.info(f"({self.id}) run dl_check_size()...")
+
+        # Add Instagram-specific headers to avoid detection
+        extra_opts = {
+            'http_headers': {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'TE': 'trailers'
+            }
+        }
+
         dl = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
-            cookies=cookies
+            cookies=cookies,
+            extra_opts=extra_opts
         )
         if dl is not None:
             return dl
@@ -71,5 +105,6 @@ class InstagramClip(BaseClip):
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
-            cookies=cookies
+            cookies=cookies,
+            extra_opts=extra_opts
         )

@@ -406,8 +406,8 @@ class BaseClip(ABC):
                 self.logger.error(f"Error extracting info for {self.url}: {str(e)}")
                 raise
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        resp = await self._fetch_external_url(dlp_format, cookies)
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
+        resp = await self._fetch_external_url(dlp_format, cookies, extra_opts)
         self.logger.info(f"[download] Got filesize {resp.filesize} for {self.id}")
         if is_discord_compatible(resp.filesize) and can_send_files:
             self.logger.info(f"{self.id} can be uploaded to discord, run dl_download instead...")
@@ -415,7 +415,8 @@ class BaseClip(ABC):
                     filename=filename,
                     dlp_format=dlp_format,
                     can_send_files=can_send_files,
-                    cookies=cookies
+                    cookies=cookies,
+                    extra_opts=extra_opts
                 )
             return DownloadResponse(
                     remote_url=None,
@@ -431,7 +432,7 @@ class BaseClip(ABC):
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
             return resp
 
-    async def _fetch_external_url(self, dlp_format='best/bv*+ba', cookies=False) -> DownloadResponse:
+    async def _fetch_external_url(self, dlp_format='best/bv*+ba', cookies=False, extra_opts=None) -> DownloadResponse:
         """
         Gets direct media URL and duration from the clip URL without downloading.
         Returns tuple of (direct_url, duration_in_seconds) or None if extraction fails.
@@ -442,6 +443,11 @@ class BaseClip(ABC):
             'no_warnings': True,
             'user_agent': YT_DLP_USER_AGENT
         }
+
+        # Merge extra options (like custom headers for Instagram)
+        if extra_opts:
+            ydl_opts.update(extra_opts)
+
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
 
@@ -455,19 +461,19 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to get direct URL: {str(e)}")
             raise NoDuration
 
-    async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> LocalFileInfo:
-        local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies)
+    async def _fetch_file(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> LocalFileInfo:
+        local_file = await self.dl_download(filename, dlp_format, can_send_files, cookies, extra_opts)
         if local_file is None: raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, extra_opts=None) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
         """
         local = None
         if can_send_files:
-            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
             self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
@@ -482,13 +488,13 @@ class BaseClip(ABC):
                 )
 
         if upload_if_large:
-            if local is None: local = await self._fetch_file(filename, dlp_format, can_send_files, cookies)
+            if local is None: local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
             self.logger.info(f"{self.id} is too large to upload to discord, uploading to clyppy.io instead...")
             return await self.upload_to_clyppyio(local)
 
         return None
 
-    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> Optional[LocalFileInfo]:
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> Optional[LocalFileInfo]:
         if os.path.isfile(filename):
             self.logger.info("file already exists! returning...")
             return get_video_details(filename)
@@ -503,6 +509,10 @@ class BaseClip(ABC):
                 'ffmpeg': ['-fflags', '+shortest', '-max_interleave_delta', '1G']
             }
         }
+
+        # Merge extra options (like custom headers for Instagram)
+        if extra_opts:
+            ydl_opts.update(extra_opts)
 
         if cookies: fetch_cookies(ydl_opts, self.logger)
         try:
