@@ -68,6 +68,17 @@ class TwitchClip(BaseClip):
         Extract direct CDN URL and create a redirect-based embed.
         No video download needed - Discord follows the redirect to the CDN.
         """
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=False)...")
+        dl = await super().dl_check_size(
+            filename=filename,
+            dlp_format=dlp_format,
+            can_send_files=can_send_files,
+            cookies=cookies,
+            upload_if_large=False
+        )
+        if dl is not None and dl.can_be_discord_uploaded:
+            return dl
+
         # Ensure clyppy_id is set
         if self.clyppy_id is None:
             await self.compute_clyppy_id()
@@ -105,11 +116,11 @@ class TwitchClip(BaseClip):
                     raise Exception(f"Failed to create Twitch redirect: {error_text}")
 
         # Return DownloadResponse with the embed URL
-        embed_url = f"https://clyppy.io/embed/{self.clyppy_id}"
+        embed_url = f"https://clyppy.io/e/{self.clyppy_id}"
         self.logger.info(f"({self.id}) Returning embed URL: {embed_url} (permanent={is_permanent})")
 
         return DownloadResponse(
-            remote_url=embed_url,
+            remote_url=cdn_url,
             local_file_path=None,
             duration=info.get('duration') or 0,
             width=dict(info).get('width') or 0,
