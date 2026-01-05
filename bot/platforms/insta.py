@@ -1,6 +1,4 @@
 import re
-import asyncio
-import time
 import os
 from bot.classes import BaseClip, BaseMisc
 from bot.errors import VideoTooLong, NoDuration
