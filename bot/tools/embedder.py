@@ -327,11 +327,14 @@ class AutoEmbedder:
                     url=clip.url if clip.share_url is None else clip.share_url
                 ))
             if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
-                comp.append(Button(
-                    style=ButtonStyle.LINK,
-                    label="Download",
-                    url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
-                ))
+                if response.override_show_download_button is not None and not response.override_show_download_button:
+                    pass
+                else:
+                    comp.append(Button(
+                        style=ButtonStyle.LINK,
+                        label="Download",
+                        url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
+                    ))
 
             if guild.is_dm:
                 chn = "{dm}"

@@ -64,7 +64,7 @@ class InstagramClip(BaseClip):
     @property
     def clyppy_url(self) -> str:
         """Use /embed/ path for Instagram redirect-based embeds"""
-        return f"https://clyppy.io/embed/{self.clyppy_id}"
+        return f"https://clyppy.io/e/{self.clyppy_id}"
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=None) -> DownloadResponse:
         """
@@ -115,5 +115,6 @@ class InstagramClip(BaseClip):
             height=0,
             filesize=0,
             video_name=None,
-            can_be_discord_uploaded=False
+            can_be_discord_uploaded=False,
+            override_show_download_button=False
         )
