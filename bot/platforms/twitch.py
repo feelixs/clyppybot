@@ -1,12 +1,14 @@
 from bot.classes import BaseMisc
 from bot.types import DownloadResponse
 from bot.classes import BaseClip
-from bot.errors import InvalidClipType
+from bot.io import get_aiohttp_session
 from yt_dlp import YoutubeDL
 from bot.env import YT_DLP_USER_AGENT
 from typing import Optional
 import asyncio
 import re
+import os
+import time
 
 
 class TwitchMisc(BaseMisc):
@@ -53,65 +55,100 @@ class TwitchClip(BaseClip):
     def url(self) -> str:
         return self._url
 
+    @property
+    def clyppy_url(self) -> str:
+        """Use /embed/ path for Twitch redirect-based embeds"""
+        return f"https://clyppy.io/e/{self.clyppy_id}"
+
     async def get_thumbnail(self):
         return self._thumbnail_url
 
     async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False) -> DownloadResponse:
-        dl = await super().dl_check_size(
-            filename=filename,
-            dlp_format=dlp_format,
-            can_send_files=can_send_files,
-            cookies=cookies
+        """
+        Extract direct CDN URL and create a redirect-based embed.
+        No video download needed - Discord follows the redirect to the CDN.
+        """
+        # Ensure clyppy_id is set
+        if self.clyppy_id is None:
+            await self.compute_clyppy_id()
+
+        # Extract video info and determine URL type
+        is_permanent, cdn_url, info = await self._extract_cdn_url(dlp_format)
+
+        # Set expiry for temporary URLs (~10 hours from now)
+        expires_at = None
+        if not is_permanent:
+            expires_at = int(time.time()) + (10 * 60 * 60)  # 10 hours
+
+        # Call clyppy.io API to create the redirect entry
+        api_url = "https://clyppy.io/api/create/redirect/"
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'url': cdn_url,
+            'service': 'twitch',
+            'clip_id': self.clyppy_id,
+            'original_url': self.url,
+            'expires_at': expires_at
+        }
+
+        async with get_aiohttp_session() as session:
+            async with session.post(api_url, json=payload, headers=headers) as response:
+                if response.status in [200, 201]:
+                    result = await response.json()
+                    self.logger.info(f"Created Twitch redirect entry: {result}")
+                else:
+                    error_text = await response.text()
+                    self.logger.error(f"Failed to create Twitch redirect: {response.status} - {error_text}")
+                    raise Exception(f"Failed to create Twitch redirect: {error_text}")
+
+        # Return DownloadResponse with the embed URL
+        embed_url = f"https://clyppy.io/embed/{self.clyppy_id}"
+        self.logger.info(f"({self.id}) Returning embed URL: {embed_url} (permanent={is_permanent})")
+
+        return DownloadResponse(
+            remote_url=embed_url,
+            local_file_path=None,
+            duration=info.get('duration') or 0,
+            width=dict(info).get('width') or 0,
+            height=dict(info).get('height') or 0,
+            filesize=dict(info).get('filesize') or 0,
+            video_name=info.get('title'),
+            can_be_discord_uploaded=False
         )
-        if dl is not None:
-            return dl
 
-        try:
-            media_assets_url = self._get_direct_clip_url()
-            ydl_opts = {
-                'format': dlp_format,
-                'quiet': True,
-                'no_warnings': True,
-                'user_agent': YT_DLP_USER_AGENT
-            }
-            extracted = await asyncio.get_event_loop().run_in_executor(
-                None,
-                self._extract_info,
-                ydl_opts
-            )
-            extracted.remote_url = media_assets_url
-            return extracted
-        except InvalidClipType:
-            # fetch temporary v2 link (default)
-            return await super().download(
-                filename=filename,
-                dlp_format=dlp_format,
-                can_send_files=can_send_files,
-                cookies=cookies
-            )
-
-    def _get_direct_clip_url(self):
-        # only works for some twitch clip links
-        # for some reason only some twitch links are type media-assets2
-        # and others use https://static-cdn.jtvnw.net/twitch-clips-thumbnails-prod/, which idk yet how to directly link the perm mp4 link
+    async def _extract_cdn_url(self, dlp_format='best'):
+        """
+        Extract the CDN URL without downloading.
+        Returns: (is_permanent, cdn_url, info_dict)
+        """
         ydl_opts = {
+            'format': dlp_format,
             'quiet': True,
             'no_warnings': True,
             'user_agent': YT_DLP_USER_AGENT
         }
-        try:
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(self.url, download=False)
-                if not info.get('thumbnail'):
-                    raise Exception("No thumbnail URL found in clip info")
-                self._thumbnail_url = info['thumbnail']
-                if '/clips-media-assets2.twitch.tv/' not in self._thumbnail_url:
-                    raise InvalidClipType
 
-                self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
-                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', self._thumbnail_url)
-                return mp4_url
-        except InvalidClipType:
-            raise
-        except Exception as e:
-            raise Exception(f"Failed to extract clip URL: {str(e)}")
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(self.url, download=False)
+
+        info = await asyncio.get_event_loop().run_in_executor(None, extract)
+
+        self._thumbnail_url = info.get('thumbnail')
+
+        # Check if this is a permanent media-assets2 URL
+        if self._thumbnail_url and '/clips-media-assets2.twitch.tv/' in self._thumbnail_url:
+            self.logger.info(f"{self.id} is permanent media-assets2 type")
+            mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', self._thumbnail_url)
+            return True, mp4_url, info
+
+        # Otherwise use the temporary URL from yt-dlp
+        cdn_url = info.get('url')
+        if not cdn_url:
+            raise Exception("Failed to extract CDN URL from Twitch clip")
+
+        self.logger.info(f"{self.id} is temporary URL type (expires in ~10hrs)")
+        return False, cdn_url, info
