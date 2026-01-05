@@ -63,6 +63,11 @@ class InstagramClip(BaseClip):
     def url(self) -> str:
         return f"https://www.instagram.com/reel/{self._shortcode}/"
 
+    @property
+    def clyppy_url(self) -> str:
+        """Use /embed/ path for Instagram redirect-based embeds"""
+        return f"https://clyppy.io/embed/{self.clyppy_id}"
+
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=None) -> DownloadResponse:
         """
         Create a redirect-based embed for Instagram using kkinstagram.com.
