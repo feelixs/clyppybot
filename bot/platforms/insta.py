@@ -1,9 +1,11 @@
 import re
 import asyncio
 import time
+import os
 from bot.classes import BaseClip, BaseMisc
 from bot.errors import VideoTooLong, NoDuration
 from bot.types import DownloadResponse
+from bot.io import get_aiohttp_session
 from typing import Optional
 
 
@@ -61,50 +63,54 @@ class InstagramClip(BaseClip):
     def url(self) -> str:
         return f"https://www.instagram.com/reel/{self._shortcode}/"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
-        # Rate limiting: ensure minimum delay between Instagram requests
-        current_time = time.time()
-        time_since_last = current_time - self.misc.last_request_time
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=None) -> DownloadResponse:
+        """
+        Create a redirect-based embed for Instagram using kkinstagram.com.
+        Instead of downloading the video, we create a clyppy.io/embed/<id> URL
+        that redirects to kkinstagram, which then redirects to the Instagram CDN.
+        """
+        # Build the kkinstagram redirect URL
+        kkinstagram_url = f"https://www.kkinstagram.com/reel/{self._shortcode}"
+        self.logger.info(f"({self.id}) Creating redirect embed via kkinstagram: {kkinstagram_url}")
 
-        if time_since_last < self.misc.min_delay:
-            delay = self.misc.min_delay - time_since_last
-            self.logger.info(f"Rate limiting: waiting {delay:.1f}s before Instagram request")
-            await asyncio.sleep(delay)
+        # Ensure clyppy_id is set
+        if self.clyppy_id is None:
+            await self.compute_clyppy_id()
 
-        self.misc.last_request_time = time.time()
-        self.logger.info(f"({self.id}) run dl_check_size()...")
-
-        # Add Instagram-specific headers to avoid detection
-        extra_opts = {
-            'http_headers': {
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'DNT': '1',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'TE': 'trailers'
-            }
+        # Call clyppy.io API to create the redirect entry
+        api_url = "https://clyppy.io/api/create/redirect/"
+        headers = {
+            'X-API-Key': os.getenv('clyppy_post_key'),
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'url': kkinstagram_url,
+            'service': 'instagram',
+            'clip_id': self.clyppy_id,
+            'original_url': self.url
         }
 
-        dl = await super().dl_check_size(
-            filename=filename,
-            dlp_format=dlp_format,
-            can_send_files=can_send_files,
-            cookies=cookies,
-            extra_opts=extra_opts
-        )
-        if dl is not None:
-            return dl
+        async with get_aiohttp_session() as session:
+            async with session.post(api_url, json=payload, headers=headers) as response:
+                if response.status in [200, 201]:
+                    result = await response.json()
+                    self.logger.info(f"Created redirect entry: {result}")
+                else:
+                    error_text = await response.text()
+                    self.logger.error(f"Failed to create redirect: {response.status} - {error_text}")
+                    raise Exception(f"Failed to create Instagram redirect: {error_text}")
 
-        return await super().download(
-            filename=filename,
-            dlp_format=dlp_format,
-            can_send_files=can_send_files,
-            cookies=cookies,
-            extra_opts=extra_opts
+        # Return DownloadResponse with the embed URL
+        embed_url = f"https://clyppy.io/embed/{self.clyppy_id}"
+        self.logger.info(f"({self.id}) Returning embed URL: {embed_url}")
+
+        return DownloadResponse(
+            remote_url=embed_url,
+            local_file_path=None,
+            duration=self.duration,
+            width=0,  # Unknown for redirect-based embeds
+            height=0,
+            filesize=0,
+            video_name=None,
+            can_be_discord_uploaded=False
         )
