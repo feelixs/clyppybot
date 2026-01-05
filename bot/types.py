@@ -27,7 +27,6 @@ class DownloadResponse:
     filesize: float
     video_name: Optional[str]
     can_be_discord_uploaded: Optional[bool]
-    override_show_download_button: Optional[bool]
 
 
 @dataclass

@@ -115,6 +115,5 @@ class InstagramClip(BaseClip):
             height=0,
             filesize=0,
             video_name=None,
-            can_be_discord_uploaded=False,
-            override_show_download_button=False
+            can_be_discord_uploaded=False
         )
