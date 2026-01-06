@@ -327,12 +327,12 @@ class AutoEmbedder:
                     label=f"View On {self.platform_tools.platform_name}" if self.platform_tools.platform_name != "base" else "View Source",
                     url=clip.url if clip.share_url is None else clip.share_url
                 ))
-            #if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
-            #    comp.append(Button(
-            #        style=ButtonStyle.LINK,
-            #        label="Download",
-            #        url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
-            #    ))
+            if (btn_idx == 0 or btn_idx == 2) and self.platform_tools.platform_name.lower() not in INVALID_DL_PLATFORMS:
+                comp.append(Button(
+                    style=ButtonStyle.LINK,
+                    label="Download",
+                    url=f"https://clyppy.io/clip-downloader?clip={clip.url}"
+                ))
 
             if guild.is_dm:
                 chn = "{dm}"
