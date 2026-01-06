@@ -99,27 +99,27 @@ class TikTokClip(BaseClip):
             return f"https://www.tiktok.com/@{self._user}/video/{self._video_id}"
         return f"https://www.tiktok.com/video/{self._video_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False) -> DownloadResponse:
-        # download & upload to clyppy.io
-        self.logger.info(f"({self.id}) run dl_download()...")
-        local_file = await super().dl_download(
-            filename=filename,
-            dlp_format=dlp_format,
-            can_send_files=can_send_files,
-            cookies=cookies
+    @property
+    def clyppy_url(self) -> str:
+        return f"https://clyppy.io/e/{self.clyppy_id}"
+
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
+        # Build the kktiktok redirect URL
+        kktiktok_url = f"https://kktiktok.com/{self._video_id}"
+        self.logger.info(f"({self.id}) Creating redirect embed via kktiktok: {kktiktok_url}")
+
+        # Ensure clyppy_id is set
+        if self.clyppy_id is None:
+            await self.compute_clyppy_id()
+
+        return DownloadResponse(
+            remote_url=kktiktok_url,
+            local_file_path=None,
+            duration=self.duration,
+            width=0,
+            height=0,
+            filesize=0,
+            video_name=None,
+            can_be_discord_uploaded=False,
+            clyppy_object_is_stored_as_redirect=True,
         )
-        if local_file.can_be_discord_uploaded:
-            return DownloadResponse(
-                remote_url=None,
-                local_file_path=local_file.local_file_path,
-                duration=local_file.duration,
-                width=local_file.width,
-                height=local_file.height,
-                filesize=local_file.filesize,
-                video_name=local_file.video_name,
-                can_be_discord_uploaded=True,
-                clyppy_object_is_stored_as_redirect=False
-            )
-        else:
-            self.logger.info(f"({self.id}) hosting on clyppy.io...")
-            return await self.upload_to_clyppyio(local_file)
