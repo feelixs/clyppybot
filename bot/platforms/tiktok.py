@@ -1,8 +1,11 @@
 import re
+import os
+import aiohttp
+import aiofiles
 from aiohttp import ClientSession
-from bot.types import DownloadResponse
+from bot.types import DownloadResponse, LocalFileInfo
 from bot.errors import VideoTooLong, NoDuration
-from bot.classes import BaseClip, BaseMisc
+from bot.classes import BaseClip, BaseMisc, get_video_details, is_discord_compatible
 from typing import Optional, Tuple
 
 
@@ -123,3 +126,56 @@ class TikTokClip(BaseClip):
             can_be_discord_uploaded=False,
             clyppy_object_is_stored_as_redirect=True,
         )
+
+    async def dl_download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> Optional[LocalFileInfo]:
+        """
+        Download TikTok video via kktiktok redirect.
+
+        Uses kktiktok.com with a Discord bot user agent to get the
+        TikTok CDN URL, then downloads the video directly.
+        """
+        if os.path.isfile(filename):
+            self.logger.info("file already exists! returning...")
+            return get_video_details(filename)
+
+        kktiktok_url = f"https://kktiktok.com/{self._video_id}"
+        discord_ua = "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Get the redirect URL (don't follow it, just get the Location header)
+                async with session.head(kktiktok_url, headers={"User-Agent": discord_ua}, allow_redirects=False) as response:
+                    if response.status not in (301, 302, 307, 308):
+                        self.logger.error(f"kktiktok did not redirect, got status {response.status}")
+                        return None
+
+                    cdn_url = response.headers.get("Location")
+                    if not cdn_url:
+                        self.logger.error("kktiktok redirect had no Location header")
+                        return None
+
+                self.logger.info(f"({self.id}) Got CDN URL from kktiktok: {cdn_url[:100]}...")
+
+                # Download the video from the CDN
+                async with session.get(cdn_url, headers={"User-Agent": discord_ua}) as response:
+                    if response.status != 200:
+                        self.logger.error(f"Failed to download from CDN, status {response.status}")
+                        return None
+
+                    async with aiofiles.open(filename, 'wb') as f:
+                        async for chunk in response.content.iter_chunked(8192):
+                            await f.write(chunk)
+
+            if os.path.exists(filename):
+                d = get_video_details(filename)
+                if is_discord_compatible(d.filesize) and can_send_files:
+                    self.logger.info(f"{self.id} can be uploaded to discord...")
+                    d.can_be_discord_uploaded = True
+                return d
+
+            self.logger.error(f"dl_download error: Could not find file after download")
+            return None
+
+        except Exception as e:
+            self.logger.error(f"kktiktok download error: {str(e)}")
+            return None
