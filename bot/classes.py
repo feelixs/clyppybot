@@ -587,6 +587,54 @@ class BaseClip(ABC):
             self.logger.error(f"Failed to upload video: {remote_url}")
             raise UploadFailed
 
+    async def download_first_frame_webp(self, video_url: str, output_path: str) -> str:
+        """
+        Downloads only the first frame from a remote video URL and saves it as webp.
+        Uses ffmpeg to efficiently extract the frame without downloading the full video.
+
+        Args:
+            video_url: Remote URL to the video (must be a direct video URL, not a page URL)
+            output_path: Path where the webp file will be saved
+
+        Returns:
+            Path to the generated webp file
+
+        Raises:
+            Exception: If ffmpeg fails to extract the frame
+        """
+        import subprocess
+
+        cmd = [
+            'ffmpeg',
+            '-i', video_url,
+            '-vframes', '1',
+            '-c:v', 'libwebp',
+            '-quality', '85',
+            '-y',  # overwrite output file if exists
+            output_path
+        ]
+
+        self.logger.info(f"Extracting first frame from remote URL to {output_path}")
+
+        def run_ffmpeg():
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode != 0:
+                raise Exception(f"ffmpeg failed: {result.stderr}")
+            return output_path
+
+        result = await asyncio.get_event_loop().run_in_executor(None, run_ffmpeg)
+
+        if not os.path.exists(output_path):
+            raise Exception(f"ffmpeg did not create output file: {output_path}")
+
+        self.logger.info(f"Successfully created webp thumbnail: {output_path}")
+        return result
+
     async def create_first_frame_webp(self, video_path: str, output_path: Optional[str] = None) -> str:
         """
         Creates a webp file from the first frame of an mp4 video.

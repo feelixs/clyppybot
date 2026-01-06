@@ -7,6 +7,7 @@ from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTO
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union, Tuple
 from bot.io.upload import upload_video
+from pathlib import Path
 import traceback
 import asyncio
 import time
@@ -368,6 +369,7 @@ class AutoEmbedder:
 
             thumb_url = None
             uploading_to_discord = response.can_be_discord_uploaded and has_file_perms
+            clip_webp = None
             if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
@@ -382,13 +384,32 @@ class AutoEmbedder:
                 except Exception as e:
                     self.logger.info(f"Exception in creating/uploading webp thumbnail for {clip.url}: {str(e)}")
                     # keep thumb_url as None
-            elif not uploading_to_discord and response.local_file_path is None:
+            elif not uploading_to_discord and response.local_file_path is None and response.remote_url:
                 if clip.service == 'twitch':
                     try:
+                        # perhaps the thumbnail is hosted on twitch (for pre-v2 clips)
                         thumb_url = await clip.get_thumbnail()
                     except Exception as e:
                         self.logger.info(f"Failed to get twitch thumbnail for {clip.url}: {str(e)}")
                         thumb_url = None
+
+                if not thumb_url:
+                    self.logger.info(f"[{clip.clyppy_id}] Thumbnail url is None, downloading from remote cdn url...")
+                    try:
+                        clip_webp = await clip.download_first_frame_webp(response.remote_url, f'{clip.clyppy_id}.webp')
+                        status, thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                        if not status:
+                            self.logger.info(f"Uploading {clip_webp} failed (status = False)")
+                            thumb_url = None
+                    except Exception as e:
+                        self.logger.info(f"Failed to get or upload thumbnail for {clip.url}: {str(e)}")
+                        thumb_url = None
+
+            if clip_webp:
+                try:
+                    Path(clip_webp).unlink()
+                except Exception as e:
+                    self.logger.info(f"Failed to delete {clip_webp}: {str(e)}")
 
             interaction_data = {
                 'is_redirect': response.clyppy_object_is_stored_as_redirect,

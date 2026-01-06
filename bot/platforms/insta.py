@@ -77,10 +77,6 @@ class InstagramClip(BaseClip):
         kkinstagram_url = f"https://www.kkinstagram.com/reel/{self._shortcode}"
         self.logger.info(f"({self.id}) Creating redirect embed via kkinstagram: {kkinstagram_url}")
 
-        # Ensure clyppy_id is set
-        if self.clyppy_id is None:
-            await self.compute_clyppy_id()
-
         return DownloadResponse(
             remote_url=kkinstagram_url,
             local_file_path=None,

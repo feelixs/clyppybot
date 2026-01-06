@@ -76,15 +76,9 @@ class TwitchClip(BaseClip):
         if dl is not None and dl.can_be_discord_uploaded:
             return dl
 
-        # Ensure clyppy_id is set
-        if self.clyppy_id is None:
-            await self.compute_clyppy_id()
-
         # Extract video info and determine URL type
         is_permanent, cdn_url, info = await self._extract_cdn_url(dlp_format)
-
         self.logger.info(f"({self.id}) Extracted CDN URL (permanent={is_permanent})")
-
         return DownloadResponse(
             remote_url=cdn_url,
             local_file_path=None,

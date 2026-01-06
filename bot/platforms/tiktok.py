@@ -111,10 +111,6 @@ class TikTokClip(BaseClip):
         kktiktok_url = f"https://kktiktok.com/{self._video_id}"
         self.logger.info(f"({self.id}) Creating redirect embed via kktiktok: {kktiktok_url}")
 
-        # Ensure clyppy_id is set
-        if self.clyppy_id is None:
-            await self.compute_clyppy_id()
-
         return DownloadResponse(
             remote_url=kktiktok_url,
             local_file_path=None,
