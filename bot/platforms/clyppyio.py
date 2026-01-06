@@ -75,5 +75,6 @@ class ClyppyioClip(BaseClip):
             height=self.data['height'],
             filesize=self.data['filesize'],
             video_name=self.data['video_name'],
+            clyppy_object_is_stored_as_redirect=False,
             can_be_discord_uploaded=is_discord_compatible(self.data['filesize']) and can_send_files
         )

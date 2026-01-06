@@ -310,7 +310,8 @@ class AutoEmbedder:
                     height=info['height'],
                     filesize=info['file_size'],
                     video_name=info['title'],
-                    can_be_discord_uploaded=False
+                    can_be_discord_uploaded=False,
+                    clyppy_object_is_stored_as_redirect=False
                 )
 
         # send embed

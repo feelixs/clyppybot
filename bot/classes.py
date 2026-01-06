@@ -367,7 +367,8 @@ class BaseClip(ABC):
                         width=format_info['width'],
                         height=format_info['height'],
                         video_name=info.get('title'),
-                        can_be_discord_uploaded=None
+                        can_be_discord_uploaded=None,
+                        clyppy_object_is_stored_as_redirect=False
                     )
 
                 # Fall back to formats list if direct URL not available
@@ -395,7 +396,8 @@ class BaseClip(ABC):
                             width=format_info['width'],
                             height=format_info['height'],
                             video_name=info.get('title'),
-                            can_be_discord_uploaded=None
+                            can_be_discord_uploaded=None,
+                            clyppy_object_is_stored_as_redirect=False
                         )
 
                 # If we get here, no suitable format was found
@@ -426,7 +428,8 @@ class BaseClip(ABC):
                     height=local.height,
                     filesize=local.filesize,
                     video_name=local.video_name,
-                    can_be_discord_uploaded=True
+                    can_be_discord_uploaded=True,
+                    clyppy_object_is_stored_as_redirect=False
                 )
         else:
             resp.filesize = 0  # it's hosted on external cdn, not clyppy.io, so make this 0 to reduce confusion
@@ -484,7 +487,8 @@ class BaseClip(ABC):
                     height=local.height,
                     filesize=local.filesize,
                     video_name=local.video_name,
-                    can_be_discord_uploaded=True
+                    can_be_discord_uploaded=True,
+                    clyppy_object_is_stored_as_redirect=False
                 )
 
         if upload_if_large:
@@ -576,7 +580,8 @@ class BaseClip(ABC):
                 height=local_file_info.height,
                 width=local_file_info.width,
                 video_name=local_file_info.video_name,
-                can_be_discord_uploaded=None
+                can_be_discord_uploaded=None,
+                clyppy_object_is_stored_as_redirect=False
             )
         else:
             self.logger.error(f"Failed to upload video: {remote_url}")

@@ -117,7 +117,8 @@ class TikTokClip(BaseClip):
                 height=local_file.height,
                 filesize=local_file.filesize,
                 video_name=local_file.video_name,
-                can_be_discord_uploaded=True
+                can_be_discord_uploaded=True,
+                clyppy_object_is_stored_as_redirect=False
             )
         else:
             self.logger.info(f"({self.id}) hosting on clyppy.io...")
