@@ -164,6 +164,7 @@ class TikTokClip(BaseClip):
 
             if os.path.exists(filename):
                 d = get_video_details(filename)
+                d.video_name = "TikTok Video"
                 if is_discord_compatible(d.filesize) and can_send_files:
                     self.logger.info(f"{self.id} can be uploaded to discord...")
                     d.can_be_discord_uploaded = True
