@@ -1,14 +1,10 @@
 from bot.errors import InvalidClipType, VideoTooLong
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
-from bot.io import get_aiohttp_session
 from bot.env import YT_DLP_USER_AGENT
-from urllib.parse import urlparse, parse_qs
 from yt_dlp import YoutubeDL
 from typing import Optional
 import asyncio
-import time
-import os
 import re
 
 
@@ -74,7 +70,7 @@ class YtClip(BaseClip):
         """Use /e/ path for YouTube redirect-based embeds"""
         return f"https://clyppy.io/e/{self.clyppy_id}"
 
-    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=None) -> DownloadResponse:
         """
         Extract CDN URL and create a redirect-based embed.
         No video download needed - Discord follows the redirect to YouTube CDN.
@@ -97,36 +93,7 @@ class YtClip(BaseClip):
         # Extract CDN URL without downloading
         cdn_url, info = await self._extract_cdn_url(dlp_format, cookies)
 
-        # Parse expiry from URL (YouTube uses 'expire' param)
-        expires_at = self._get_url_expiry(cdn_url)
-
-        # Call clyppy.io API to create the redirect entry
-        api_url = "https://clyppy.io/api/create/redirect/"
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'url': cdn_url,
-            'service': 'youtube',
-            'clip_id': self.clyppy_id,
-            'original_url': self.url,
-            'expires_at': expires_at
-        }
-
-        async with get_aiohttp_session() as session:
-            async with session.post(api_url, json=payload, headers=headers) as response:
-                if response.status in [200, 201]:
-                    result = await response.json()
-                    self.logger.info(f"Created YouTube redirect entry: {result}")
-                else:
-                    error_text = await response.text()
-                    self.logger.error(f"Failed to create YouTube redirect: {response.status} - {error_text}")
-                    raise Exception(f"Failed to create YouTube redirect: {error_text}")
-
-        # Return DownloadResponse with the embed URL
-        embed_url = f"https://clyppy.io/e/{self.clyppy_id}"
-        self.logger.info(f"({self.id}) Returning embed URL: {embed_url}")
+        self.logger.info(f"({self.id}) Extracted CDN URL, returning DownloadResponse")
 
         return DownloadResponse(
             remote_url=cdn_url,
@@ -136,7 +103,8 @@ class YtClip(BaseClip):
             height=dict(info).get('height') or 0,
             filesize=dict(info).get('filesize') or 0,
             video_name=info.get('title'),
-            can_be_discord_uploaded=False
+            can_be_discord_uploaded=False,
+            clyppy_object_is_stored_as_redirect=True
         )
 
     async def _extract_cdn_url(self, dlp_format='best/bv*+ba', cookies=True):
@@ -161,11 +129,3 @@ class YtClip(BaseClip):
             raise Exception("Failed to extract CDN URL from YouTube video")
 
         return cdn_url, info
-
-    def _get_url_expiry(self, cdn_url: str) -> int:
-        """Parse expiry timestamp from YouTube CDN URL."""
-        params = parse_qs(urlparse(cdn_url).query)
-        if 'expire' in params:
-            return int(params['expire'][0])
-        # Fallback: 6 hours from now
-        return int(time.time()) + (6 * 60 * 60)

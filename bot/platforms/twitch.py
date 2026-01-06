@@ -1,14 +1,11 @@
 from bot.classes import BaseMisc
 from bot.types import DownloadResponse
 from bot.classes import BaseClip
-from bot.io import get_aiohttp_session
 from yt_dlp import YoutubeDL
 from bot.env import YT_DLP_USER_AGENT
 from typing import Optional
 import asyncio
 import re
-import os
-import time
 
 
 class TwitchMisc(BaseMisc):
@@ -63,7 +60,7 @@ class TwitchClip(BaseClip):
     async def get_thumbnail(self):
         return self._thumbnail_url
 
-    async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
         """
         Extract direct CDN URL and create a redirect-based embed.
         No video download needed - Discord follows the redirect to the CDN.
@@ -86,38 +83,7 @@ class TwitchClip(BaseClip):
         # Extract video info and determine URL type
         is_permanent, cdn_url, info = await self._extract_cdn_url(dlp_format)
 
-        # Set expiry for temporary URLs (~10 hours from now)
-        expires_at = None
-        if not is_permanent:
-            expires_at = int(time.time()) + (10 * 60 * 60)  # 10 hours
-
-        # Call clyppy.io API to create the redirect entry
-        api_url = "https://clyppy.io/api/create/redirect/"
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'url': cdn_url,
-            'service': 'twitch',
-            'clip_id': self.clyppy_id,
-            'original_url': self.url,
-            'expires_at': expires_at
-        }
-
-        async with get_aiohttp_session() as session:
-            async with session.post(api_url, json=payload, headers=headers) as response:
-                if response.status in [200, 201]:
-                    result = await response.json()
-                    self.logger.info(f"Created Twitch redirect entry: {result}")
-                else:
-                    error_text = await response.text()
-                    self.logger.error(f"Failed to create Twitch redirect: {response.status} - {error_text}")
-                    raise Exception(f"Failed to create Twitch redirect: {error_text}")
-
-        # Return DownloadResponse with the embed URL
-        embed_url = f"https://clyppy.io/e/{self.clyppy_id}"
-        self.logger.info(f"({self.id}) Returning embed URL: {embed_url} (permanent={is_permanent})")
+        self.logger.info(f"({self.id}) Extracted CDN URL (permanent={is_permanent})")
 
         return DownloadResponse(
             remote_url=cdn_url,
@@ -127,7 +93,8 @@ class TwitchClip(BaseClip):
             height=dict(info).get('height') or 0,
             filesize=dict(info).get('filesize') or 0,
             video_name=info.get('title'),
-            can_be_discord_uploaded=False
+            can_be_discord_uploaded=False,
+            clyppy_object_is_stored_as_redirect=True
         )
 
     async def _extract_cdn_url(self, dlp_format='best'):

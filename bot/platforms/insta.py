@@ -1,9 +1,7 @@
 import re
-import os
 from bot.classes import BaseClip, BaseMisc
 from bot.errors import VideoTooLong, NoDuration
 from bot.types import DownloadResponse
-from bot.io import get_aiohttp_session
 from typing import Optional
 
 
@@ -80,40 +78,14 @@ class InstagramClip(BaseClip):
         if self.clyppy_id is None:
             await self.compute_clyppy_id()
 
-        # Call clyppy.io API to create the redirect entry
-        api_url = "https://clyppy.io/api/create/redirect/"
-        headers = {
-            'X-API-Key': os.getenv('clyppy_post_key'),
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'url': kkinstagram_url,
-            'service': 'instagram',
-            'clip_id': self.clyppy_id,
-            'original_url': self.url
-        }
-
-        async with get_aiohttp_session() as session:
-            async with session.post(api_url, json=payload, headers=headers) as response:
-                if response.status in [200, 201]:
-                    result = await response.json()
-                    self.logger.info(f"Created redirect entry: {result}")
-                else:
-                    error_text = await response.text()
-                    self.logger.error(f"Failed to create redirect: {response.status} - {error_text}")
-                    raise Exception(f"Failed to create Instagram redirect: {error_text}")
-
-        # Return DownloadResponse with the embed URL
-        embed_url = f"https://clyppy.io/embed/{self.clyppy_id}"
-        self.logger.info(f"({self.id}) Returning embed URL: {embed_url}")
-
         return DownloadResponse(
-            remote_url=embed_url,
+            remote_url=kkinstagram_url,
             local_file_path=None,
             duration=self.duration,
             width=0,  # Unknown for redirect-based embeds
             height=0,
             filesize=0,
             video_name=None,
-            can_be_discord_uploaded=False
+            can_be_discord_uploaded=False,
+            clyppy_object_is_stored_as_redirect=True,
         )

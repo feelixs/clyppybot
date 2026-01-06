@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
-from typing import List, Union
+from typing import List, Union, Tuple
 from bot.io.upload import upload_video
 import traceback
 import asyncio
@@ -59,7 +59,7 @@ class AutoEmbedder:
     def get_words(text: str) -> List[str]:
         return re.split(r"[ \n]+", text)
 
-    def get_next_clip_link_loc(self, words: List[str], n=0, print=True) -> (bool, int):
+    def get_next_clip_link_loc(self, words: List[str], n=0, print=True) -> Tuple[bool, int]:
         for i in range(n, len(words)):
             word = words[i]
             if self.platform_tools.is_clip_link(word):
@@ -305,6 +305,7 @@ class AutoEmbedder:
                     remote_url=info['url'],
                     local_file_path=None,
                     duration=info['duration'],
+                    clyppy_object_is_stored_as_redirect=info['is_redirect'],
                     width=info['width'],
                     height=info['height'],
                     filesize=info['file_size'],
@@ -352,6 +353,9 @@ class AutoEmbedder:
             elif clip.service == 'tiktok':
                 expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=24)
                 expires_at = expires_at.timestamp()
+            elif clip.service == 'youtube':
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=6)
+                expires_at = expires_at.timestamp()
             else:
                 expires_at = None
 
@@ -387,6 +391,7 @@ class AutoEmbedder:
                         thumb_url = None
 
             interaction_data = {
+                'is_redirect': response.clyppy_object_is_stored_as_redirect,
                 'edit': False,  # create new BotInteraction obj
                 'create_new_video': video_doesnt_exist,
                 'server_name': guild.name,

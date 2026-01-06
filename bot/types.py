@@ -27,6 +27,7 @@ class DownloadResponse:
     filesize: float
     video_name: Optional[str]
     can_be_discord_uploaded: Optional[bool]
+    clyppy_object_is_stored_as_redirect: Optional[bool]
 
 
 @dataclass
