@@ -166,10 +166,12 @@ class TokenGiverBot:
             logger.error(f"Could not find guild with ID {CLYPPY_SUPPORT_SERVER_ID}")
             return
 
+        await guild.chunk()
+
         total_removed = 0
         members_processed = 0
 
-        async for member in guild.fetch_members():
+        for member in guild.members:
             removed = await self.cleanup_vote_roles_for_member(member)
             total_removed += removed
             members_processed += 1
