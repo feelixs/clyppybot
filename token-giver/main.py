@@ -2,13 +2,14 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from interactions import Client, Intents, listen
+from interactions import Client, Intents, listen, Task, IntervalTrigger
 from interactions.api.events import MemberAdd
 from bot.env import CLYPPY_SUPPORT_SERVER_ID
 from bot.io import get_aiohttp_session
 import logging
 import asyncio
 import sqlite3
+import re
 from datetime import datetime
 from os import getenv
 
@@ -121,12 +122,85 @@ class TokenGiverBot:
                     error_data = await response.json()
                     raise Exception(f"Failed to give VIP tokens: {error_data.get('error', 'Unknown error')}")
 
+    async def cleanup_vote_roles_for_member(self, member):
+        """
+        Remove redundant vote roles from a member, keeping only the highest.
+
+        Finds all roles matching 'X Votes' pattern, determines the max X,
+        and removes all vote roles with X less than the max.
+        """
+        vote_role_pattern = re.compile(r'^(\d+)\s+Votes?$')
+        vote_roles = []
+
+        for role in member.roles:
+            match = vote_role_pattern.match(role.name)
+            if match:
+                vote_count = int(match.group(1))
+                vote_roles.append((vote_count, role))
+
+        if len(vote_roles) <= 1:
+            return 0
+
+        max_votes = max(vote_count for vote_count, _ in vote_roles)
+        roles_to_remove = [role for vote_count, role in vote_roles if vote_count < max_votes]
+
+        removed_count = 0
+        for role in roles_to_remove:
+            try:
+                await member.remove_role(role)
+                removed_count += 1
+                logger.info(f"Removed role '{role.name}' from {member.username} (ID: {member.id})")
+            except Exception as e:
+                logger.error(f"Failed to remove role '{role.name}' from {member.id}: {e}")
+
+        return removed_count
+
+    async def cleanup_all_vote_roles(self):
+        """
+        Clean up vote roles for all members in the support server.
+        """
+        logger.info("Starting vote role cleanup task...")
+
+        guild = self.bot.get_guild(CLYPPY_SUPPORT_SERVER_ID)
+        if not guild:
+            logger.error(f"Could not find guild with ID {CLYPPY_SUPPORT_SERVER_ID}")
+            return
+
+        total_removed = 0
+        members_processed = 0
+
+        async for member in guild.fetch_members():
+            removed = await self.cleanup_vote_roles_for_member(member)
+            total_removed += removed
+            members_processed += 1
+
+        logger.info(f"Vote role cleanup complete. Processed {members_processed} members, removed {total_removed} redundant vote roles.")
+
+    def setup_tasks(self):
+        """Setup background tasks"""
+        @Task.create(IntervalTrigger(hours=24))
+        async def vote_role_cleanup_task():
+            await self.cleanup_all_vote_roles()
+
+        self.vote_role_cleanup_task = vote_role_cleanup_task
+
     async def start(self):
         """Start the bot"""
         token = os.getenv('TOKEN_GIVER_BOT_TOKEN')
         if not token:
             logger.error("TOKEN_GIVER_BOT_TOKEN environment variable not set")
             return
+
+        self.setup_tasks()
+
+        @listen()
+        async def on_ready():
+            logger.info("Bot is ready, running initial vote role cleanup...")
+            await self.cleanup_all_vote_roles()
+            self.vote_role_cleanup_task.start()
+            logger.info("Vote role cleanup task scheduled to run every 24 hours")
+
+        self.bot.add_listener(on_ready)
 
         logger.info("Starting Token Giver Bot...")
         await self.bot.astart(token)
