@@ -34,17 +34,17 @@ class InstagramMisc(BaseMisc):
             self.logger.info(f"Invalid Instagram URL: {url}")
             raise NoDuration
 
-        valid, tokens_used, duration = await self.is_shortform(
-            url=url,
-            basemsg=basemsg,
-            cookies=cookies
-        )
-        if not valid:
-            self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong(duration)
-        self.logger.info(f"{url} is_shortform=True")
+        #valid, tokens_used, duration = await self.is_shortform(
+        #    url=url,
+        #    basemsg=basemsg,
+        #    cookies=cookies
+        #)
+        #if not valid:
+        #    self.logger.info(f"{url} is_shortform=False")
+        #    raise VideoTooLong(duration)
+        #self.logger.info(f"{url} is_shortform=True")
 
-        return InstagramClip(shortcode, self.cdn_client, tokens_used, duration, self)
+        return InstagramClip(shortcode, self.cdn_client, 0, 0, self)
 
 
 class InstagramClip(BaseClip):

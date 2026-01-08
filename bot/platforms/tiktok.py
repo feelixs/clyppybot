@@ -72,17 +72,17 @@ class TikTokMisc(BaseMisc):
                 raise NoDuration
 
         # Verify video length (assuming all TikTok videos are short-form)
-        valid, tokens_used, duration = await self.is_shortform(
-            url=url,
-            basemsg=basemsg,
-            cookies=cookies
-        )
-        if not valid:
-            self.logger.info(f"{url} is_shortform=False")
-            raise VideoTooLong(duration)
-        self.logger.info(f"{url} is_shortform=True")
+        #valid, tokens_used, duration = await self.is_shortform(
+        #    url=url,
+        #    basemsg=basemsg,
+        #    cookies=cookies
+        #)
+        #if not valid:
+        #    self.logger.info(f"{url} is_shortform=False")
+        #    raise VideoTooLong(duration)
+        #self.logger.info(f"{url} is_shortform=True")
 
-        return TikTokClip(video_id, user, self.cdn_client, tokens_used, duration)
+        return TikTokClip(video_id, user, self.cdn_client, 0, 0)
 
 
 class TikTokClip(BaseClip):
