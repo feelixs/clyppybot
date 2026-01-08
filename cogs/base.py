@@ -414,6 +414,41 @@ class Base(Extension):
         await self.refresh_cookies_task()
         await ctx.send("✅ Cookies refreshed from server!", ephemeral=True)
 
+    @slash_command(
+        name="delete_message",
+        description="Manually delete a message sent by Clyppy",
+        scopes=[759798762171662399],
+        options=[
+            SlashCommandOption(
+                name="message_id",
+                description="The ID of the message to delete",
+                type=OptionType.STRING,
+                required=True
+            ),
+            SlashCommandOption(
+                name="channel_id",
+                description="The ID of the channel containing the message",
+                type=OptionType.STRING,
+                required=True
+            )
+        ]
+    )
+    async def delete_msg_cmd(self, ctx: SlashContext, message_id: str, channel_id: str):
+        await ctx.defer(ephemeral=True)
+
+        # Only allow specific user to use this command
+        if ctx.author.id != 164115540426752001:
+            await ctx.send("You are not authorized to use this command.")
+            return
+
+        try:
+            channel = await self.bot.fetch_channel(int(channel_id))
+            message = await channel.fetch_message(int(message_id))
+            await message.delete()
+            await ctx.send(f"Successfully deleted message {message_id} from channel {channel_id}")
+        except Exception as e:
+            await ctx.send(f"Error deleting message: {e}")
+
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
         await self.bot.base_embedder.vote_cmd(ctx)
