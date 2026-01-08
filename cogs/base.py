@@ -427,13 +427,19 @@ class Base(Extension):
             ),
             SlashCommandOption(
                 name="channel_id",
-                description="The ID of the channel containing the message",
+                description="The ID of the channel (or user ID if is_dm is True)",
                 type=OptionType.STRING,
                 required=True
+            ),
+            SlashCommandOption(
+                name="is_dm",
+                description="If True, channel_id is treated as a user ID to fetch their DM",
+                type=OptionType.BOOLEAN,
+                required=False
             )
         ]
     )
-    async def delete_msg_cmd(self, ctx: SlashContext, message_id: str, channel_id: str):
+    async def delete_msg_cmd(self, ctx: SlashContext, message_id: str, channel_id: str, is_dm: bool = False):
         await ctx.defer(ephemeral=True)
 
         # Only allow specific user to use this command
@@ -442,10 +448,14 @@ class Base(Extension):
             return
 
         try:
-            channel = await self.bot.fetch_channel(int(channel_id))
+            if is_dm:
+                user = await self.bot.fetch_user(int(channel_id))
+                channel = await user.fetch_dm(force=False)
+            else:
+                channel = await self.bot.fetch_channel(int(channel_id))
             message = await channel.fetch_message(int(message_id))
             await message.delete()
-            await ctx.send(f"Successfully deleted message {message_id} from channel {channel_id}")
+            await ctx.send(f"Successfully deleted message {message_id} from {'DM with user ' if is_dm else 'channel '}{channel_id}")
         except Exception as e:
             await ctx.send(f"Error deleting message: {e}")
 
