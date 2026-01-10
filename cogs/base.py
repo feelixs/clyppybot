@@ -738,7 +738,8 @@ class Base(Extension):
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
                 color=COLOR_GREEN,
-                logger=self.logger
+                logger=self.logger,
+                embed=False
             )
             await self.post_servers(len(self.bot.guilds))
 
@@ -757,7 +758,8 @@ class Base(Extension):
                      f"members - {event.guild.member_count}\n"
                      f"widget - {w}\n",
                 color=COLOR_RED,
-                logger=self.logger
+                logger=self.logger,
+                embed=False
             )
             await self.post_servers(len(self.bot.guilds))
 
