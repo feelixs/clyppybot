@@ -8,7 +8,6 @@ import re
 class KickMisc(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
-        self.always_embed = True
         self.platform_name = "Kick"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:

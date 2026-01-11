@@ -359,10 +359,14 @@ class Base(Extension):
 
     @slash_command(name="setquickembeds", scopes=[759798762171662399], options=[
         SlashCommandOption(name="guild_id", type=OptionType.STRING, required=True),
-        SlashCommandOption(name="value", type=OptionType.BOOLEAN, required=True)])
-    async def setquickembeds(self, ctx, guild_id: str, value: bool):
-        self.bot.guild_settings.set_embed_enabled(int(guild_id), value)
-        return await ctx.send("OK!")
+        SlashCommandOption(name="value", type=OptionType.STRING, required=True,
+                           description="Platforms: 'all', 'none', or comma-separated (e.g., 'twitch,kick')")])
+    async def setquickembeds(self, ctx, guild_id: str, value: str):
+        success, error_msg, valid_platforms = self.bot.guild_settings.set_quickembed_platforms(int(guild_id), value)
+        if success:
+            return await ctx.send(f"OK! Set quickembeds to: {valid_platforms if valid_platforms else 'none'}")
+        else:
+            return await ctx.send(f"Error: {error_msg}")
 
     @slash_command(name="change_tokens", scopes=[759798762171662399], options=[
         SlashCommandOption(name="user_id", type=OptionType.STRING, required=True),
@@ -568,8 +572,8 @@ class Base(Extension):
             return await ctx.send("An error occurred while setting the error channel. Please try again.")
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
-                   options=[SlashCommandOption(name="quickembeds", type=OptionType.BOOLEAN,
-                                               description="Should Clyppy respond to links? True=enabled, False=disabled, default=True",
+                   options=[SlashCommandOption(name="quickembeds", type=OptionType.STRING,
+                                               description="Platforms: 'all', 'none', or comma-separated (e.g., 'twitch,kick,medal')",
                                                required=False),
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
@@ -578,7 +582,7 @@ class Base(Extension):
                                                description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)
                             ])
-    async def settings(self, ctx: SlashContext, quickembeds: bool = None, on_error: str = None,
+    async def settings(self, ctx: SlashContext, quickembeds: str = None, on_error: str = None,
                        embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
@@ -596,11 +600,15 @@ class Base(Extension):
             await self._send_settings_help(ctx, False)
             return
 
-        current_embed_setting = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
-        chosen_embed = current_embed_setting
+        current_qe_platforms = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
+        chosen_qe = current_qe_platforms
         if quickembeds is not None:
-            chosen_embed = quickembeds
-            self.bot.guild_settings.set_embed_enabled(ctx.guild.id, quickembeds)
+            success, error_msg, valid_platforms = self.bot.guild_settings.set_quickembed_platforms(
+                ctx.guild.id, quickembeds)
+            if not success:
+                await ctx.send(f"Error setting quickembeds: {error_msg}")
+                return
+            chosen_qe = valid_platforms
 
         # Get current settings
         current_setting = self.bot.guild_settings.get_setting(ctx.guild.id)
@@ -629,10 +637,18 @@ class Base(Extension):
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
-        chosen_embed = "enabled" if chosen_embed else "disabled"
+        # Format quickembed display
+        from bot.db import VALID_QUICKEMBED_PLATFORMS
+        if not chosen_qe:
+            qe_display = "none"
+        elif set(chosen_qe) == set(VALID_QUICKEMBED_PLATFORMS):
+            qe_display = "all"
+        else:
+            qe_display = ', '.join(chosen_qe)
+
         await ctx.send(
             "Successfully changed settings:\n\n"
-            f"**quickembeds**: {chosen_embed}\n"
+            f"**quickembeds**: {qe_display}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}\n\n"
         )
@@ -640,7 +656,7 @@ class Base(Extension):
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - /settings called',
             load=f'user: {ctx.user.username}\n'
                  "Successfully changed settings:\n\n"
-                 f"**quickembeds**: {chosen_embed}\n"
+                 f"**quickembeds**: {qe_display}\n"
                  f"**on_error**: {on_error}\n"
                  f"**embed_buttons**: {embed_buttons}\n\n",
             color=COLOR_GREEN,
@@ -649,20 +665,31 @@ class Base(Extension):
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
+        from bot.db import VALID_QUICKEMBED_PLATFORMS
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
-        qe = self.bot.guild_settings.get_embed_enabled(ctx.guild.id)
+        qe_platforms = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
 
         es = POSSIBLE_EMBED_BUTTONS[es]
-        qe = "enabled" if qe else "disabled"
+
+        # Format quickembed display
+        if not qe_platforms:
+            qe = "none"
+        elif set(qe_platforms) == set(VALID_QUICKEMBED_PLATFORMS):
+            qe = "all"
+        else:
+            qe = ', '.join(qe_platforms)
+
+        valid_platforms_str = ', '.join(VALID_QUICKEMBED_PLATFORMS)
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
             'followed by its available options.\n\n'
-            '**quickembeds** [Available for Twitch & Kick clips] Should Clyppy automatically respond to links sent in this server? If disabled, '
-            'users can still embed videos using the `/embed` command.\n'
-            ' - `True`: enabled\n'
-            ' - `False`: disabled (default)\n\n'
+            '**quickembeds** Configure which platforms Clyppy automatically embeds:\n'
+            ' - `all`: Enable for all platforms\n'
+            ' - `none`: Disable all quickembeds (use `/embed` command instead)\n'
+            f' - Comma-separated list: e.g., `twitch,kick,medal`\n'
+            f' - Valid platforms: `{valid_platforms_str}`\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'

@@ -1,14 +1,33 @@
 import sqlite3
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable
+from typing import Any, Callable, List, Tuple, Optional
 from bot.env import POSSIBLE_TOO_LARGE, POSSIBLE_ON_ERRORS
 
 logger = logging.getLogger(__name__)
 
+# All valid quickembed platform identifiers (lowercase)
+VALID_QUICKEMBED_PLATFORMS = [
+    'twitch', 'kick', 'insta', 'medal', 'reddit', 'facebook',
+    'yt', 'x', 'bsky', 'tiktok', 'r34', 'xvid', 'phub',
+    'youp', 'vimeo', 'bili', 'dailymotion', 'drive', 'dsc'
+]
+DEFAULT_QUICKEMBED_PLATFORMS = 'twitch,kick'
+
+# Map platform_name (class attribute) to short identifier (db storage)
+PLATFORM_NAME_TO_ID = {
+    'Twitch': 'twitch', 'Kick': 'kick', 'Instagram': 'insta',
+    'Medal': 'medal', 'Reddit': 'reddit', 'Facebook': 'facebook',
+    'YouTube': 'yt', 'Twitter': 'x', 'BlueSky': 'bsky',
+    'TikTok': 'tiktok', 'Rule34Video': 'r34', 'Xvideos': 'xvid',
+    'PornHub': 'phub', 'YouPorn': 'youp', 'Vimeo': 'vimeo',
+    'Bilibili': 'bili', 'Dailymotion': 'dailymotion',
+    'Google Drive': 'drive', 'Discord': 'dsc'
+}
+
 
 class DbResponseFormat:
-    def __init__(self, possible_values: [str], stored_int: int):
+    def __init__(self, possible_values: List[str], stored_int: int):
         self.all_values = possible_values
         self.id = stored_int
         self.setting_str = possible_values[self.id]
@@ -67,7 +86,7 @@ class GuildDatabase:
             conn.execute('''
                             CREATE TABLE IF NOT EXISTS embed_enabled (
                                 guild_id INTEGER PRIMARY KEY,
-                                setting BOOLEAN
+                                setting TEXT
                             )
                         ''')
             conn.execute('''
@@ -76,6 +95,34 @@ class GuildDatabase:
                                 setting BOOLEAN
                             )
                         ''')
+
+            # Migration: Convert boolean embed_enabled to TEXT if needed
+            try:
+                cursor = conn.execute('PRAGMA table_info(embed_enabled)')
+                columns = {c[1]: c[2] for c in cursor.fetchall()}
+
+                if 'setting' in columns and 'INT' in columns['setting'].upper():
+                    # Old schema detected (BOOLEAN stored as INTEGER) - migrate
+                    logger.info("Migrating embed_enabled from BOOLEAN to TEXT...")
+                    cursor = conn.execute('SELECT guild_id, setting FROM embed_enabled')
+                    rows = cursor.fetchall()
+
+                    conn.execute('DROP TABLE embed_enabled')
+                    conn.execute('''
+                        CREATE TABLE embed_enabled (
+                            guild_id INTEGER PRIMARY KEY,
+                            setting TEXT
+                        )
+                    ''')
+
+                    for guild_id, old_val in rows:
+                        new_val = 'twitch,kick' if old_val else 'none'
+                        conn.execute('INSERT INTO embed_enabled VALUES (?, ?)',
+                                     (guild_id, new_val))
+                    logger.info(f"Migration complete: {len(rows)} guilds migrated")
+            except Exception as e:
+                logger.error(f"Migration check failed: {e}")
+
             conn.commit()
 
     def get_nsfw_enabled(self, guild_id) -> bool:
@@ -104,7 +151,8 @@ class GuildDatabase:
             logger.error(f"Database error when setting nsfw_enabled for guild {guild_id}: {e}")
             return False
 
-    def get_embed_enabled(self, guild_id) -> bool:
+    def get_quickembed_platforms(self, guild_id) -> list:
+        """Returns list of enabled platform IDs for this guild."""
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
@@ -112,23 +160,60 @@ class GuildDatabase:
                     (guild_id,)
                 )
                 result = cursor.fetchone()
-                return result[0] if result else True
-        except sqlite3.Error as e:
-            logger.error(f"Database error when getting embed_enabled for guild {guild_id}: {e}")
-            return False  # default = false
 
-    def set_embed_enabled(self, guild_id: int, new: bool):
+                if not result or not result[0]:
+                    return DEFAULT_QUICKEMBED_PLATFORMS.split(',')
+
+                setting = result[0]
+                if setting == 'none':
+                    return []
+                if setting == 'all':
+                    return VALID_QUICKEMBED_PLATFORMS.copy()
+
+                return [p.strip().lower() for p in setting.split(',')
+                        if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS]
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting quickembed_platforms for guild {guild_id}: {e}")
+            return []
+
+    def is_platform_quickembed_enabled(self, guild_id, platform_name: str) -> bool:
+        """Check if platform is enabled for quickembeds."""
+        platform_id = PLATFORM_NAME_TO_ID.get(platform_name, platform_name.lower())
+        return platform_id in self.get_quickembed_platforms(guild_id)
+
+    def set_quickembed_platforms(self, guild_id: int, platforms_str: str) -> Tuple[bool, Optional[str], Optional[List[str]]]:
+        """
+        Set quickembed platforms for a guild.
+        Returns (success, error_msg, valid_platforms)
+        """
+        platforms_str = platforms_str.strip().lower()
+
+        if platforms_str == 'none':
+            normalized, valid = 'none', []
+        elif platforms_str == 'all':
+            normalized, valid = 'all', VALID_QUICKEMBED_PLATFORMS.copy()
+        else:
+            requested = [p.strip() for p in platforms_str.split(',')]
+            valid = [p for p in requested if p in VALID_QUICKEMBED_PLATFORMS]
+            invalid = [p for p in requested if p and p not in VALID_QUICKEMBED_PLATFORMS]
+
+            if invalid:
+                return False, f"Invalid platform(s): {', '.join(invalid)}. Valid options: {', '.join(VALID_QUICKEMBED_PLATFORMS)}, 'all', or 'none'", None
+            if not valid:
+                return False, "No valid platforms specified", None
+            normalized = ','.join(valid)
+
         try:
             with self.get_db() as conn:
                 conn.execute('''
                     INSERT OR REPLACE INTO embed_enabled (guild_id, setting)
                     VALUES (?, ?)
-                ''', (guild_id, new))
+                ''', (guild_id, normalized))
                 conn.commit()
-                return True
+                return True, None, valid
         except sqlite3.Error as e:
-            logger.error(f"Database error when setting embed_enabled for guild {guild_id}: {e}")
-            return False
+            logger.error(f"Database error when setting quickembed_platforms for guild {guild_id}: {e}")
+            return False, f"Database error: {e}", None
 
     def get_embed_buttons(self, guild_id: int) -> int:
         try:

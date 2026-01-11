@@ -725,7 +725,6 @@ class BaseMisc(ABC):
     def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.platform_name = None
-        self.always_embed = False  # are quickembeds enabled for this platform?
         self.is_nsfw = False
         self.dl_timeout_secs = 600  # 10 min bc why not
         self.bot = bot
@@ -826,10 +825,9 @@ class BaseMisc(ABC):
 
 
 class BaseAutoEmbed:
-    def __init__(self, platform: BaseMisc, always_embed=False):
+    def __init__(self, platform: BaseMisc):
         self.bot = platform.bot
         self.is_base = False
-        self.always_embed_this_platform = always_embed
         self.platform = platform
         self.logger = platform.logger
         self.embedder = AutoEmbedder(
@@ -865,7 +863,8 @@ class BaseAutoEmbed:
                     platform=self.platform,
                     slug=self.platform.parse_clip_url(event.message.content.split(" ")[-1])
                 )
-            elif self.platform.is_dl_server(event.message.guild) or self.platform.always_embed:
+            else:
+                # Platform-specific quickembed check happens inside on_message_create
                 await self.embedder.on_message_create(event)
 
     @staticmethod

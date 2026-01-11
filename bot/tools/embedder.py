@@ -108,8 +108,9 @@ class AutoEmbedder:
             elif event.message.author.id == 1341521799342588006:
                 return 1  # logger webhook
 
-            if not self.bot.guild_settings.get_embed_enabled(guild.id):
-                # quickembeds not enabled
+            if not self.bot.guild_settings.is_platform_quickembed_enabled(
+                    guild.id, self.platform_tools.platform_name):
+                # quickembeds not enabled for this platform
                 return 1
 
             words = self.get_words(event.message.content)

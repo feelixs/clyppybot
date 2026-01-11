@@ -32,10 +32,7 @@ class BaseEmbedder(BaseAutoEmbed):
         self.is_base = True
         self.logger = logging.getLogger(self.__class__.__name__)
         self.platform = BASIC_MISC(bot)
-        super().__init__(
-            platform=self.platform,
-            always_embed=False
-        )
+        super().__init__(platform=self.platform)
 
 
 def init_misc(bot: Client) -> Client:
@@ -87,12 +84,9 @@ def init_misc(bot: Client) -> Client:
         bot.dsc
     ]
 
-    quickembed_platforms = ['kick', 'twitch']
+    # Quickembed platform configuration is now per-guild in the database
     bot.platform_embedders = [
-        BaseAutoEmbed(
-            platform=platform,
-            always_embed=[platform.platform_name in quickembed_platforms]
-        )
+        BaseAutoEmbed(platform=platform)
         for platform in bot.platform_list
     ]
     bot.platform_embedders.append(bot.base_embedder)
