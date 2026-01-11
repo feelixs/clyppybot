@@ -665,7 +665,7 @@ class Base(Extension):
         )
 
     async def _send_settings_help(self, ctx: SlashContext, prepend_admin: bool = False):
-        from bot.db import VALID_QUICKEMBED_PLATFORMS
+        from bot.db import VALID_QUICKEMBED_PLATFORMS, PLATFORM_NAME_TO_ID
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
         qe_platforms = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
@@ -680,7 +680,8 @@ class Base(Extension):
         else:
             qe = ', '.join(qe_platforms)
 
-        valid_platforms_str = ', '.join(VALID_QUICKEMBED_PLATFORMS)
+        # Use friendly platform names for display
+        valid_platforms_str = ', '.join(PLATFORM_NAME_TO_ID.keys())
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
@@ -688,8 +689,8 @@ class Base(Extension):
             '**quickembeds** Configure which platforms Clyppy automatically embeds:\n'
             ' - `all`: Enable for all platforms\n'
             ' - `none`: Disable all quickembeds (use `/embed` command instead)\n'
-            f' - Comma-separated list: e.g., `twitch,kick,medal`\n'
-            f' - Valid platforms: `{valid_platforms_str}`\n\n'
+            f' - Comma-separated list: e.g., `Twitch,Kick,Medal`\n'
+            f' - Valid platforms: `None, All, {valid_platforms_str}`\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'

@@ -101,9 +101,9 @@ class GuildDatabase:
                 cursor = conn.execute('PRAGMA table_info(embed_enabled)')
                 columns = {c[1]: c[2] for c in cursor.fetchall()}
 
-                if 'setting' in columns and 'INT' in columns['setting'].upper():
-                    # Old schema detected (BOOLEAN stored as INTEGER) - migrate
-                    logger.info("Migrating embed_enabled from BOOLEAN to TEXT...")
+                if 'setting' in columns and columns['setting'].upper() != 'TEXT':
+                    # Old schema detected (BOOLEAN or other non-TEXT type) - migrate
+                    logger.info(f"Migrating embed_enabled from {columns['setting']} to TEXT...")
                     cursor = conn.execute('SELECT guild_id, setting FROM embed_enabled')
                     rows = cursor.fetchall()
 
@@ -184,21 +184,37 @@ class GuildDatabase:
     def set_quickembed_platforms(self, guild_id: int, platforms_str: str) -> Tuple[bool, Optional[str], Optional[List[str]]]:
         """
         Set quickembed platforms for a guild.
+        Accepts both friendly names (Twitch, Instagram) and short identifiers (twitch, insta).
         Returns (success, error_msg, valid_platforms)
         """
-        platforms_str = platforms_str.strip().lower()
+        platforms_str = platforms_str.strip()
 
-        if platforms_str == 'none':
+        if platforms_str.lower() == 'none':
             normalized, valid = 'none', []
-        elif platforms_str == 'all':
+        elif platforms_str.lower() == 'all':
             normalized, valid = 'all', VALID_QUICKEMBED_PLATFORMS.copy()
         else:
+            # Build reverse mapping: lowercase friendly name -> short id
+            name_to_id = {name.lower(): id for name, id in PLATFORM_NAME_TO_ID.items()}
+
             requested = [p.strip() for p in platforms_str.split(',')]
-            valid = [p for p in requested if p in VALID_QUICKEMBED_PLATFORMS]
-            invalid = [p for p in requested if p and p not in VALID_QUICKEMBED_PLATFORMS]
+            valid = []
+            invalid = []
+
+            for p in requested:
+                if not p:
+                    continue
+                p_lower = p.lower()
+                # Check if it's a friendly name first, then short identifier
+                if p_lower in name_to_id:
+                    valid.append(name_to_id[p_lower])
+                elif p_lower in VALID_QUICKEMBED_PLATFORMS:
+                    valid.append(p_lower)
+                else:
+                    invalid.append(p)
 
             if invalid:
-                return False, f"Invalid platform(s): {', '.join(invalid)}. Valid options: {', '.join(VALID_QUICKEMBED_PLATFORMS)}, 'all', or 'none'", None
+                return False, f"Invalid platform(s): {', '.join(invalid)}. Valid options: {', '.join(PLATFORM_NAME_TO_ID.keys())}, 'all', or 'none'", None
             if not valid:
                 return False, "No valid platforms specified", None
             normalized = ','.join(valid)
