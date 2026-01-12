@@ -843,9 +843,8 @@ class Base(Extension):
         except Exception as e:
             self.logger.warning(f"Failed to fetch embed count: {e}")
         await self.bot.change_presence(activity=Activity(
-            type=ActivityType.STREAMING,
-            name=status_text,
-            url="https://twitch.tv/hesmen"
+            type=ActivityType.CUSTOM,
+            name=status_text
         ))
 
     async def post_servers(self, num: int):
