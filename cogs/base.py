@@ -418,7 +418,7 @@ class Base(Extension):
             return
 
         # Fetch all settings
-        quickembeds = self.bot.guild_settings.get_quickembed_platforms(gid)
+        quickembeds, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(gid)
         error_channel = self.bot.guild_settings.get_error_channel(gid)
         embed_buttons = self.bot.guild_settings.get_embed_buttons(gid)
         on_error = self.bot.guild_settings.get_on_error(gid)
@@ -429,7 +429,8 @@ class Base(Extension):
             title=f"Settings for Guild {gid}",
             color=COLOR_GREEN
         )
-        embed.add_field(name="QuickEmbed Platforms", value=", ".join(quickembeds) if quickembeds else "None", inline=False)
+        s = ", ".join(quickembeds) if quickembeds else "None"
+        embed.add_field(name="QuickEmbed Platforms", value=f'{s} (default)' if qe_is_default else s, inline=False)
         embed.add_field(name="Error Channel", value=f"<#{error_channel}>" if error_channel else "Not set", inline=True)
         embed.add_field(name="Embed Buttons", value=POSSIBLE_EMBED_BUTTONS[embed_buttons], inline=True)
         embed.add_field(name="On Error", value=str(on_error), inline=True)
@@ -641,7 +642,7 @@ class Base(Extension):
             await self._send_settings_help(ctx, False)
             return
 
-        current_qe_platforms = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
+        current_qe_platforms, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
         chosen_qe = current_qe_platforms
         if quickembeds is not None:
             success, error_msg, valid_platforms = self.bot.guild_settings.set_quickembed_platforms(
@@ -689,7 +690,7 @@ class Base(Extension):
 
         await ctx.send(
             "Successfully changed settings:\n\n"
-            f"**quickembeds**: {qe_display}\n"
+            f"**quickembeds**: {qe_display}{' (default)' if qe_is_default else ''}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}\n\n"
         )
@@ -709,7 +710,7 @@ class Base(Extension):
         from bot.db import VALID_QUICKEMBED_PLATFORMS, PLATFORM_NAME_TO_ID
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
-        qe_platforms = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
+        qe_platforms, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
 
         es = POSSIBLE_EMBED_BUTTONS[es]
 
@@ -740,7 +741,7 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
-            f'**Current Settings:**\n**quickembeds**: {qe}\n{cs}\n**embed_buttons**: {es}\n\n'
+            f'**Current Settings:**\n**quickembeds**: {qe}{" (default)" if qe_is_default else ""}\n{cs}\n**embed_buttons**: {es}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 

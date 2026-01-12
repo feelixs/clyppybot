@@ -151,7 +151,7 @@ class GuildDatabase:
             logger.error(f"Database error when setting nsfw_enabled for guild {guild_id}: {e}")
             return False
 
-    def get_quickembed_platforms(self, guild_id) -> list:
+    def get_quickembed_platforms(self, guild_id) -> Tuple[List[str], bool]:
         """Returns list of enabled platform IDs for this guild."""
         try:
             with self.get_db() as conn:
@@ -162,24 +162,24 @@ class GuildDatabase:
                 result = cursor.fetchone()
 
                 if not result or not result[0]:
-                    return DEFAULT_QUICKEMBED_PLATFORMS.split(',')
+                    return DEFAULT_QUICKEMBED_PLATFORMS.split(','), True
 
                 setting = result[0]
                 if setting == 'none':
-                    return []
+                    return [], False
                 if setting == 'all':
-                    return VALID_QUICKEMBED_PLATFORMS.copy()
+                    return VALID_QUICKEMBED_PLATFORMS.copy(), False
 
-                return [p.strip().lower() for p in setting.split(',')
-                        if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS]
+                return [p.strip().lower() for p in setting.split(',') if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS], False
         except sqlite3.Error as e:
             logger.error(f"Database error when getting quickembed_platforms for guild {guild_id}: {e}")
-            return []
+            return DEFAULT_QUICKEMBED_PLATFORMS.split(','), True
 
     def is_platform_quickembed_enabled(self, guild_id, platform_name: str) -> bool:
         """Check if platform is enabled for quickembeds."""
         platform_id = PLATFORM_NAME_TO_ID.get(platform_name, platform_name.lower())
-        return platform_id in self.get_quickembed_platforms(guild_id)
+        p, _ = self.get_quickembed_platforms(guild_id)
+        return platform_id in p
 
     def set_quickembed_platforms(self, guild_id: int, platforms_str: str) -> Tuple[bool, Optional[str], Optional[List[str]]]:
         """
