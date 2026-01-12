@@ -418,11 +418,11 @@ class Base(Extension):
             return
 
         # Fetch all settings
-        quickembeds = await self.bot.guild_settings.get_quickembed_platforms(gid)
-        error_channel = await self.bot.guild_settings.get_error_channel(gid)
-        embed_buttons = await self.bot.guild_settings.get_embed_buttons(gid)
-        on_error = await self.bot.guild_settings.get_on_error(gid)
-        nsfw_enabled = await self.bot.guild_settings.get_nsfw_enabled(gid)
+        quickembeds = self.bot.guild_settings.get_quickembed_platforms(gid)
+        error_channel = self.bot.guild_settings.get_error_channel(gid)
+        embed_buttons = self.bot.guild_settings.get_embed_buttons(gid)
+        on_error = self.bot.guild_settings.get_on_error(gid)
+        nsfw_enabled = self.bot.guild_settings.get_nsfw_enabled(gid)
 
         # Format response
         embed = Embed(
