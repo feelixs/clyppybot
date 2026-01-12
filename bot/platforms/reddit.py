@@ -5,7 +5,7 @@ from typing import Optional
 from bot.platforms.kick import KickMisc
 from bot.platforms.medal import MedalMisc
 from bot.types import DownloadResponse
-from bot.errors import VideoTooLong, NoDuration, UnsupportedError
+from bot.errors import VideoTooLong, NoDuration
 from bot.classes import BaseClip, BaseMisc
 
 
@@ -178,7 +178,7 @@ class RedditClip(BaseClip):
         mclip = await m.get_clip(self.external_link)
         return await mclip.download(filename, dlp_format, can_send_files)
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=None) -> DownloadResponse:
         if self.external_link is None:
             pass
         elif 'kick.com' in self.external_link:

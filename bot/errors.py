@@ -174,4 +174,6 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise UrlUnparsable
     elif 'Error passing `ffmpeg -i` command output:' in err or 'At least one output file must be specified' in err:
         raise InvalidFileType
+    elif 'error 404' in err.lower():
+        raise VideoUnavailable
     raise
