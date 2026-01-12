@@ -406,6 +406,37 @@ class Base(Extension):
         await self.post_servers(len(self.bot.guilds))
         await ctx.send("You can now safely exit.")
 
+    @slash_command(name="viewsettings", description="View settings for a guild", scopes=[759798762171662399], options=[
+        SlashCommandOption(name="guild_id", type=OptionType.STRING, required=True, description="Guild ID to view")])
+    async def viewsettings(self, ctx: SlashContext, guild_id: str):
+        await ctx.defer()
+
+        try:
+            gid = int(guild_id)
+        except ValueError:
+            await ctx.send("Invalid guild ID.")
+            return
+
+        # Fetch all settings
+        quickembeds = await self.bot.guild_settings.get_quickembed_platforms(gid)
+        error_channel = await self.bot.guild_settings.get_error_channel(gid)
+        embed_buttons = await self.bot.guild_settings.get_embed_buttons(gid)
+        on_error = await self.bot.guild_settings.get_on_error(gid)
+        nsfw_enabled = await self.bot.guild_settings.get_nsfw_enabled(gid)
+
+        # Format response
+        embed = Embed(
+            title=f"Settings for Guild {gid}",
+            color=COLOR_GREEN
+        )
+        embed.add_field(name="QuickEmbed Platforms", value=", ".join(quickembeds) if quickembeds else "None", inline=False)
+        embed.add_field(name="Error Channel", value=f"<#{error_channel}>" if error_channel else "Not set", inline=True)
+        embed.add_field(name="Embed Buttons", value=POSSIBLE_EMBED_BUTTONS[embed_buttons], inline=True)
+        embed.add_field(name="On Error", value=POSSIBLE_ON_ERRORS[int(on_error[0])], inline=True)
+        embed.add_field(name="NSFW Enabled", value="Yes" if nsfw_enabled else "No", inline=True)
+
+        await ctx.send(embed=embed)
+
     @slash_command(
         name="refresh_cookies",
         description="Manually refresh cookies from server",
