@@ -12,7 +12,7 @@ VALID_QUICKEMBED_PLATFORMS = [
     'yt', 'x', 'bsky', 'tiktok', 'r34', 'xvid', 'phub',
     'youp', 'vimeo', 'bili', 'dailymotion', 'drive', 'dsc'
 ]
-DEFAULT_QUICKEMBED_PLATFORMS = 'twitch,kick'
+DEFAULT_QUICKEMBED_PLATFORMS = 'insta,tiktok,twitch,medal,x'
 
 # Map platform_name (class attribute) to short identifier (db storage)
 PLATFORM_NAME_TO_ID = {

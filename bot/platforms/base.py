@@ -1,8 +1,10 @@
-from bot.env import EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS, NSFW_DOMAIN_TRIGGERS
+from bot.env import EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS, NSFW_DOMAIN_TRIGGERS, YT_DLP_USER_AGENT
 from bot.classes import BaseMisc, BaseClip
 from bot.types import DownloadResponse
 from bot.errors import VideoTooLong
+from yt_dlp import YoutubeDL
 from urllib.parse import urlparse
+import asyncio
 
 
 COOKIES_PLATFORMS = ['facebook']
@@ -59,13 +61,61 @@ class BASIC_CLIP(BaseClip):
     def url(self) -> str:
         return self._url
 
+    @property
+    def clyppy_url(self) -> str:
+        """Use /e/ path for redirect-based embeds"""
+        return f"https://clyppy.io/e/{self.clyppy_id}"
+
+    async def _extract_cdn_url(self, dlp_format='best/bv*+ba', cookies=False):
+        """
+        Extract the CDN URL without downloading.
+        Returns: (cdn_url, info_dict)
+        """
+        ydl_opts = {
+            'format': dlp_format,
+            'quiet': True,
+            'no_warnings': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(self.url, download=False)
+
+        info = await asyncio.get_event_loop().run_in_executor(None, extract)
+
+        cdn_url = info.get('url')
+        if not cdn_url:
+            raise Exception("Failed to extract CDN URL")
+
+        return cdn_url, info
+
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
         cookies = any(domain in self.url for domain in COOKIES_PLATFORMS)
-        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(
+
+        # First try to download for Discord upload
+        self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=False)...")
+        dl = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
             cookies=cookies,
-            upload_if_large=True
+            upload_if_large=False
+        )
+        if dl is not None and dl.can_be_discord_uploaded:
+            return dl
+
+        # Fall back to CDN URL extraction for redirect-based embed
+        cdn_url, info = await self._extract_cdn_url(dlp_format, cookies)
+        self.logger.info(f"({self.id}) Extracted CDN URL")
+        return DownloadResponse(
+            remote_url=cdn_url,
+            local_file_path=None,
+            duration=info.get('duration') or 0,
+            width=dict(info).get('width') or 0,
+            height=dict(info).get('height') or 0,
+            filesize=dict(info).get('filesize') or 0,
+            video_name=info.get('title'),
+            can_be_discord_uploaded=False,
+            clyppy_object_is_stored_as_redirect=True
         )
