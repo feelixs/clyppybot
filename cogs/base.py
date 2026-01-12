@@ -2,8 +2,8 @@ import asyncio
 from datetime import datetime, timezone
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
-                          Permissions, ActivityType, Activity, Task, IntervalTrigger, ComponentContext, Message,
-                          component_callback, Button, ButtonStyle)
+                          Permissions, Task, IntervalTrigger, ComponentContext, Message,
+                          component_callback, Button, ButtonStyle, Activity)
 from bot.env import SUPPORT_SERVER_URL
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
@@ -41,7 +41,7 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
         self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60 * 24))  # refresh cookies every 24 hours
-        self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60 * 60))  # update status every hour
+        self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60 * 60 * 24))  # update status every 24 hours
         self.base_embedder = self.bot.base_embedder.embedder
 
     @staticmethod
@@ -827,25 +827,21 @@ class Base(Extension):
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
-            # Update status immediately on startup
-            await self.update_status()
 
     async def update_status(self):
         """Fetch embed count and update bot status"""
-        status_text = "/help"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://clyppy.io/api/stats/embeds-count/") as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         count = data.get("count", 0)
-                        status_text = f"{format_count(count)} embeds"
+                        self.bot.cached_embed_count = count
+                        status_text = f"{format_count(count)} videos saved"
+                        await self.bot.change_presence(activity=Activity(name=status_text))
+                        self.logger.info(f"Updated status: {status_text}")
         except Exception as e:
             self.logger.warning(f"Failed to fetch embed count: {e}")
-        await self.bot.change_presence(activity=Activity(
-            type=ActivityType.CUSTOM,
-            name=status_text
-        ))
 
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
