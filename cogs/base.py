@@ -432,7 +432,7 @@ class Base(Extension):
         embed.add_field(name="QuickEmbed Platforms", value=", ".join(quickembeds) if quickembeds else "None", inline=False)
         embed.add_field(name="Error Channel", value=f"<#{error_channel}>" if error_channel else "Not set", inline=True)
         embed.add_field(name="Embed Buttons", value=POSSIBLE_EMBED_BUTTONS[embed_buttons], inline=True)
-        embed.add_field(name="On Error", value=POSSIBLE_ON_ERRORS[int(on_error[0])], inline=True)
+        embed.add_field(name="On Error", value=str(on_error), inline=True)
         embed.add_field(name="NSFW Enabled", value="Yes" if nsfw_enabled else "No", inline=True)
 
         await ctx.send(embed=embed)
