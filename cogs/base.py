@@ -55,7 +55,9 @@ class Base(Extension):
             url = url[1:]
         while url.endswith('*') or url.endswith(']') or url.endswith('`'):
             url = url[:-1]
-        if not url.startswith("https://"):
+        if url.startswith("http://"):
+            url = "https://" + url[7:]  # Upgrade http to https
+        elif not url.startswith("https://"):
             url = "https://" + url
         return url
 

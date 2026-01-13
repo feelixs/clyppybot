@@ -2,6 +2,7 @@ from bot.classes import BaseMisc
 from bot.types import DownloadResponse
 from bot.classes import BaseClip
 from bot.errors import InvalidClipType
+from bot.shardlock import ShardLock
 from yt_dlp import YoutubeDL
 from bot.env import YT_DLP_USER_AGENT
 from typing import Optional
@@ -59,53 +60,53 @@ class TwitchClip(BaseClip):
         return self._thumbnail_url
 
     async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
-        # Extract channel/uploader info first
-        await self._extract_clip_info()
-
-        dl = await super().dl_check_size(
-            filename=filename,
-            dlp_format=dlp_format,
-            can_send_files=can_send_files,
-            cookies=cookies
-        )
-        if dl is not None:
-            dl.broadcaster_username = self._broadcaster_username
-            dl.video_uploader_username = self._video_uploader_username
-            return dl
-
-        try:
-            media_assets_url = self._get_direct_clip_url()
-            ydl_opts = {
-                'format': dlp_format,
-                'quiet': True,
-                'no_warnings': True,
-                'user_agent': YT_DLP_USER_AGENT
-            }
-            extracted = await asyncio.get_event_loop().run_in_executor(
-                None,
-                self._extract_info,
-                ydl_opts
-            )
-            extracted.remote_url = media_assets_url
-            extracted.broadcaster_username = self._broadcaster_username
-            extracted.video_uploader_username = self._video_uploader_username
-            return extracted
-        except InvalidClipType:
-            # fetch temporary v2 link (default)
-            response = await super().download(
+        async with ShardLock.get("twitch", max_concurrent=2):
+            # Extract channel/uploader info first
+            await self._extract_clip_info()
+            dl = await super().dl_check_size(
                 filename=filename,
                 dlp_format=dlp_format,
                 can_send_files=can_send_files,
                 cookies=cookies
             )
-            response.broadcaster_username = self._broadcaster_username
-            response.video_uploader_username = self._video_uploader_username
-            return response
+            if dl is not None:
+                dl.broadcaster_username = self._broadcaster_username
+                dl.video_uploader_username = self._video_uploader_username
+                return dl
 
-    async def _extract_clip_info(self, max_retries=3, retry_delay=3):
+            try:
+                media_assets_url = self._get_direct_clip_url()
+                ydl_opts = {
+                    'format': dlp_format,
+                    'quiet': True,
+                    'no_warnings': True,
+                    'user_agent': YT_DLP_USER_AGENT
+                }
+                extracted = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self._extract_info,
+                    ydl_opts
+                )
+                extracted.remote_url = media_assets_url
+                extracted.broadcaster_username = self._broadcaster_username
+                extracted.video_uploader_username = self._video_uploader_username
+                return extracted
+            except InvalidClipType:
+                # fetch temporary v2 link (default)
+                response = await super().download(
+                    filename=filename,
+                    dlp_format=dlp_format,
+                    can_send_files=can_send_files,
+                    cookies=cookies
+                )
+                response.broadcaster_username = self._broadcaster_username
+                response.video_uploader_username = self._video_uploader_username
+                return response
+
+    async def _extract_clip_info(self):
         """Extract channel and uploader info from yt-dlp (cached to avoid rate limiting)"""
         if self._cached_info is not None:
-            return  # Already extracted
+            return
 
         ydl_opts = {
             'quiet': True,
@@ -119,29 +120,14 @@ class TwitchClip(BaseClip):
                 info = ydl.extract_info(self.url, download=False)
                 return info
 
-        for attempt in range(max_retries):
-            try:
-                info = await asyncio.get_event_loop().run_in_executor(None, extract)
-                self._cached_info = info  # Cache the full info dict
-                self._broadcaster_username = info.get('channel')
-                self._video_uploader_username = info.get('uploader')
-                self._thumbnail_url = info.get('thumbnail')
-                return  # Success
-            except Exception as e:
-                error_str = str(e)
-                # Detect Twitch rate limit (KeyError('data') in yt-dlp error)
-                if "KeyError('data')" in error_str or 'KeyError("data")' in error_str:
-                    self.logger.warning(f"Twitch rate limit detected for {self.id} (attempt {attempt + 1}/{max_retries})")
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(retry_delay)
-                        continue
-                    else:
-                        self.logger.error(f"Twitch rate limit: max retries exceeded for {self.id}")
-                        raise
-                else:
-                    # Non-rate-limit error, don't retry
-                    self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
-                    raise
+        try:
+            info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._cached_info = info
+            self._broadcaster_username = info.get('channel')
+            self._video_uploader_username = info.get('uploader')
+            self._thumbnail_url = info.get('thumbnail')
+        except Exception as e:
+            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links
