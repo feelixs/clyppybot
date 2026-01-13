@@ -51,6 +51,7 @@ class BASIC_CLIP(BaseClip):
     def __init__(self, url: str, cdn_client, tokens_used: int, duration: int):
         self._service = 'base'
         self._url = url
+        self._uses_redirect = False
         super().__init__(url, cdn_client, tokens_used, duration)
 
     @property
@@ -63,8 +64,10 @@ class BASIC_CLIP(BaseClip):
 
     @property
     def clyppy_url(self) -> str:
-        """Use /e/ path for redirect-based embeds"""
-        return f"https://clyppy.io/e/{self.clyppy_id}"
+        """Use /e/ path for redirect-based embeds, regular path for downloaded files"""
+        if self._uses_redirect:
+            return f"https://clyppy.io/e/{self.clyppy_id}"
+        return f"https://clyppy.io/{self.clyppy_id}"
 
     async def _extract_cdn_url(self, dlp_format='best/bv*+ba', cookies=False):
         """
@@ -105,9 +108,23 @@ class BASIC_CLIP(BaseClip):
         if dl is not None and dl.can_be_discord_uploaded:
             return dl
 
-        # Fall back to CDN URL extraction for redirect-based embed
+        # Try CDN URL extraction for redirect-based embed
         cdn_url, info = await self._extract_cdn_url(dlp_format, cookies)
-        self.logger.info(f"({self.id}) Extracted CDN URL")
+
+        # Check if URL is m3u8 - if so, fall back to download logic
+        if cdn_url and ('m3u8' in cdn_url.lower() or cdn_url.lower().endswith('.m3u8')):
+            self.logger.info(f"({self.id}) CDN URL is m3u8, falling back to download...")
+            return await super().dl_check_size(
+                filename=filename,
+                dlp_format=dlp_format,
+                can_send_files=can_send_files,
+                cookies=cookies,
+                upload_if_large=True
+            )
+
+        # Direct URL - use redirect approach
+        self._uses_redirect = True
+        self.logger.info(f"({self.id}) Extracted CDN URL (redirect)")
         return DownloadResponse(
             remote_url=cdn_url,
             local_file_path=None,
