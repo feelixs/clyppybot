@@ -264,8 +264,8 @@ class AutoEmbedder:
             the_file = f'https://clyppy.io/media/{clip.service}_{clip.clyppy_id}.mp4'
             file_not_exists, _ = await is_404(the_file)
             if file_not_exists:
-                self.logger.info("YTDLP is manually downloading this clip to be uploaded to the server")
-                await respond_to.reply("YTDLP is manually downloading this clip to be uploaded to the server")
+                self.logger.info("(is_dl_server) YTDLP is manually downloading this clip to be uploaded to the server")
+                await respond_to.reply("(is_dl_server) YTDLP is manually downloading this clip to be uploaded to the server")
                 response: LocalFileInfo = await self.bot.tools.dl.download_clip(
                     clip=clip,
                     can_send_files=False,
@@ -279,8 +279,8 @@ class AutoEmbedder:
                 asyncio.create_task(respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}"))
                 return
             else:
-                self.logger.info(f"Video file `{the_file}` already exists on the server! Cancelling")
-                asyncio.create_task(respond_to.reply("Video file already exists on the server!"))
+                self.logger.info(f"(is_dl_server) Video file `{the_file}` already exists on the server! Cancelling")
+                asyncio.create_task(respond_to.reply("(is_dl_server) Video file already exists on the server!"))
                 return
         else:
             # proceed normally
