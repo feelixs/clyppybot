@@ -102,7 +102,7 @@ class TwitchClip(BaseClip):
             response.video_uploader_username = self._video_uploader_username
             return response
 
-    async def _extract_clip_info(self):
+    async def _extract_clip_info(self, max_retries=3, retry_delay=3):
         """Extract channel and uploader info from yt-dlp (cached to avoid rate limiting)"""
         if self._cached_info is not None:
             return  # Already extracted
@@ -119,14 +119,29 @@ class TwitchClip(BaseClip):
                 info = ydl.extract_info(self.url, download=False)
                 return info
 
-        try:
-            info = await asyncio.get_event_loop().run_in_executor(None, extract)
-            self._cached_info = info  # Cache the full info dict
-            self._broadcaster_username = info.get('channel')
-            self._video_uploader_username = info.get('uploader')
-            self._thumbnail_url = info.get('thumbnail')
-        except Exception as e:
-            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
+        for attempt in range(max_retries):
+            try:
+                info = await asyncio.get_event_loop().run_in_executor(None, extract)
+                self._cached_info = info  # Cache the full info dict
+                self._broadcaster_username = info.get('channel')
+                self._video_uploader_username = info.get('uploader')
+                self._thumbnail_url = info.get('thumbnail')
+                return  # Success
+            except Exception as e:
+                error_str = str(e)
+                # Detect Twitch rate limit (KeyError('data') in yt-dlp error)
+                if "KeyError('data')" in error_str or 'KeyError("data")' in error_str:
+                    self.logger.warning(f"Twitch rate limit detected for {self.id} (attempt {attempt + 1}/{max_retries})")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    else:
+                        self.logger.error(f"Twitch rate limit: max retries exceeded for {self.id}")
+                        raise
+                else:
+                    # Non-rate-limit error, don't retry
+                    self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
+                    raise
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links
