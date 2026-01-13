@@ -96,7 +96,7 @@ class XvidClip(BaseClip):
     async def get_thumbnail(self):
         return self._thumbnail_url
 
-    async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
+    async def download(self, filename=None, dlp_format='mp4-high', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
         """
         Extract direct CDN URL and create a redirect-based embed.
         No video download needed - Discord follows the redirect to the CDN.
@@ -127,7 +127,7 @@ class XvidClip(BaseClip):
             clyppy_object_is_stored_as_redirect=True
         )
 
-    async def _extract_cdn_url(self, dlp_format='best'):
+    async def _extract_cdn_url(self, dlp_format='mp4-high'):
         """
         Extract the CDN URL without downloading.
         Returns: (cdn_url, info_dict)
