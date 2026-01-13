@@ -1,7 +1,10 @@
 from bot.errors import InvalidClipType, VideoTooLong
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
+from bot.env import YT_DLP_USER_AGENT
+from yt_dlp import YoutubeDL
 from typing import Optional
+import asyncio
 import re
 
 
@@ -53,6 +56,7 @@ class YtClip(BaseClip):
         else:
             self._url = f"https://youtube.com/watch/?v={slug}"
         super().__init__(slug, cdn_client, tokens_used, duration)
+        self._broadcaster_username = None
 
     @property
     def service(self) -> str:
@@ -64,10 +68,38 @@ class YtClip(BaseClip):
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(
+
+        # Extract channel info first
+        await self._extract_clip_info()
+
+        response = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
             cookies=cookies,
             upload_if_large=True
         )
+
+        response.broadcaster_username = self._broadcaster_username
+        return response
+
+    async def _extract_clip_info(self):
+        """Extract channel info from yt-dlp"""
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                return info
+
+        try:
+            info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._broadcaster_username = info.get('channel')
+        except Exception as e:
+            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
