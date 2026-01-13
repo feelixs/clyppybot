@@ -59,6 +59,7 @@ class Xclip(BaseClip):
         self._url = f"https://x.com/{user}/status/{slug}"
         super().__init__(slug, cdn_client, tokens_used, duration)
         self._video_uploader_username = None
+        self._cached_info = None
 
     @property
     def service(self) -> str:
@@ -100,12 +101,14 @@ class Xclip(BaseClip):
             return response
 
     async def _extract_clip_info(self):
-        """Extract uploader info from yt-dlp"""
+        """Extract uploader info from yt-dlp (cached to avoid rate limiting)"""
+        if self._cached_info is not None:
+            return
+
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
-            'extract_flat': True,
             'user_agent': YT_DLP_USER_AGENT
         }
 
@@ -116,6 +119,7 @@ class Xclip(BaseClip):
 
         try:
             info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._cached_info = info
             self._video_uploader_username = info.get('uploader_id')
         except Exception as e:
             self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")

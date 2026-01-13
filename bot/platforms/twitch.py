@@ -45,6 +45,7 @@ class TwitchClip(BaseClip):
         self._thumbnail_url = None
         self._broadcaster_username = None
         self._video_uploader_username = None
+        self._cached_info = None  # Cache yt-dlp extraction to avoid rate limiting
 
     @property
     def service(self) -> str:
@@ -102,12 +103,14 @@ class TwitchClip(BaseClip):
             return response
 
     async def _extract_clip_info(self):
-        """Extract channel and uploader info from yt-dlp"""
+        """Extract channel and uploader info from yt-dlp (cached to avoid rate limiting)"""
+        if self._cached_info is not None:
+            return  # Already extracted
+
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
-            'extract_flat': True,
             'user_agent': YT_DLP_USER_AGENT
         }
 
@@ -118,6 +121,7 @@ class TwitchClip(BaseClip):
 
         try:
             info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._cached_info = info  # Cache the full info dict
             self._broadcaster_username = info.get('channel')
             self._video_uploader_username = info.get('uploader')
             self._thumbnail_url = info.get('thumbnail')
@@ -128,25 +132,22 @@ class TwitchClip(BaseClip):
         # only works for some twitch clip links
         # for some reason only some twitch links are type media-assets2
         # and others use https://static-cdn.jtvnw.net/twitch-clips-thumbnails-prod/, which idk yet how to directly link the perm mp4 link
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'user_agent': YT_DLP_USER_AGENT
-        }
         try:
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(self.url, download=False)
-                if not info.get('thumbnail'):
-                    raise Exception("No thumbnail URL found in clip info")
-                self._thumbnail_url = info['thumbnail']
-                self._broadcaster_username = info.get('channel')
-                self._video_uploader_username = info.get('uploader')
-                if '/clips-media-assets2.twitch.tv/' not in self._thumbnail_url:
-                    raise InvalidClipType
+            # Use cached info from _extract_clip_info() to avoid rate limiting
+            info = self._cached_info
+            if info is None:
+                raise Exception("No cached info available - _extract_clip_info() should be called first")
 
-                self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
-                mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', self._thumbnail_url)
-                return mp4_url
+            if not info.get('thumbnail'):
+                raise Exception("No thumbnail URL found in clip info")
+
+            self._thumbnail_url = info['thumbnail']
+            if '/clips-media-assets2.twitch.tv/' not in self._thumbnail_url:
+                raise InvalidClipType
+
+            self.logger.info(f"{self.id} is of type media-assets2, parsing direct URL...")
+            mp4_url = re.sub(r'-preview-\d+x\d+\.jpg$', '.mp4', self._thumbnail_url)
+            return mp4_url
         except InvalidClipType:
             raise
         except Exception as e:

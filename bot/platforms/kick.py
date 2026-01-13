@@ -54,6 +54,7 @@ class KickClip(BaseClip):
         super().__init__(slug, cdn_client, tokens_used, 0)
         self._broadcaster_username = None
         self._video_uploader_username = None
+        self._cached_info = None
 
     @property
     def service(self) -> str:
@@ -82,12 +83,14 @@ class KickClip(BaseClip):
         return response
 
     async def _extract_clip_info(self):
-        """Extract channel and uploader info from yt-dlp"""
+        """Extract channel and uploader info from yt-dlp (cached to avoid rate limiting)"""
+        if self._cached_info is not None:
+            return
+
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
-            'extract_flat': True,
             'user_agent': YT_DLP_USER_AGENT
         }
 
@@ -98,6 +101,7 @@ class KickClip(BaseClip):
 
         try:
             info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._cached_info = info
             self._broadcaster_username = info.get('channel')
             self._video_uploader_username = info.get('uploader')
         except Exception as e:
