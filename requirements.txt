@@ -2,6 +2,7 @@ git+https://github.com/interactions-py/interactions.py.git
 git+https://github.com/yt-dlp/yt-dlp.git
 aiohappyeyeballs==2.5.0
 aiofiles
+curl_cffi
 aiohttp==3.12.14
 aiosignal==1.4.0
 attrs==24.2.0

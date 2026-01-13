@@ -514,6 +514,10 @@ class Base(Extension):
         await ctx.defer()
         await self.bot.base_embedder.tokens_cmd(ctx)
 
+    @slash_command(name="invite", description="Display a link to invite Clyppy to your server")
+    async def invite(self, ctx: SlashContext):
+        await ctx.send(f"You can invite me to a server with this link: https://clyppy.io/invite\n\nNeed help? Join the support server {SUPPORT_SERVER_URL}")
+
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration
     #@slash_command(name=)
