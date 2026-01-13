@@ -1,7 +1,10 @@
 import re
+import asyncio
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
 from bot.errors import InvalidClipType, VideoTooLong
+from bot.env import YT_DLP_USER_AGENT
+from yt_dlp import YoutubeDL
 from typing import Optional
 
 
@@ -55,6 +58,7 @@ class Xclip(BaseClip):
         self._service = "twitter"
         self._url = f"https://x.com/{user}/status/{slug}"
         super().__init__(slug, cdn_client, tokens_used, duration)
+        self._video_uploader_username = None
 
     @property
     def service(self) -> str:
@@ -65,6 +69,9 @@ class Xclip(BaseClip):
         return self._url
 
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True) -> DownloadResponse:
+        # Extract uploader info first
+        await self._extract_clip_info()
+
         # download & upload to clyppy.io
         self.logger.info(f"({self.id}) run dl_download()...")
         local_file = await super().dl_download(
@@ -83,8 +90,32 @@ class Xclip(BaseClip):
                 filesize=local_file.filesize,
                 video_name=local_file.video_name,
                 can_be_discord_uploaded=True,
-                clyppy_object_is_stored_as_redirect=False
+                clyppy_object_is_stored_as_redirect=False,
+                video_uploader_username=self._video_uploader_username
             )
         else:
             self.logger.info(f"({self.id}) hosting on clyppy.io...")
-            return await self.upload_to_clyppyio(local_file)
+            response = await self.upload_to_clyppyio(local_file)
+            response.video_uploader_username = self._video_uploader_username
+            return response
+
+    async def _extract_clip_info(self):
+        """Extract uploader info from yt-dlp"""
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                return info
+
+        try:
+            info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._video_uploader_username = info.get('uploader_id')
+        except Exception as e:
+            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
