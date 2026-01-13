@@ -80,7 +80,7 @@ class YtClip(BaseClip):
             upload_if_large=True
         )
 
-        response.broadcaster_username = self._broadcaster_username
+        response.video_uploader_username = self._broadcaster_username
         return response
 
     async def _extract_clip_info(self):
