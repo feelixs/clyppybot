@@ -111,9 +111,10 @@ class BASIC_CLIP(BaseClip):
         # Try CDN URL extraction for redirect-based embed
         cdn_url, info = await self._extract_cdn_url(dlp_format, cookies)
 
-        # Check if URL is m3u8 - if so, fall back to download logic
-        if cdn_url and ('m3u8' in cdn_url.lower() or cdn_url.lower().endswith('.m3u8')):
-            self.logger.info(f"({self.id}) CDN URL is m3u8, falling back to download...")
+        # Check if URL ends with .mp4 (ignoring query params) - if not, fall back to download
+        cdn_path = urlparse(cdn_url).path.lower() if cdn_url else ''
+        if not cdn_path.endswith('.mp4'):
+            self.logger.info(f"({self.id}) CDN URL is not .mp4, falling back to download...")
             return await super().dl_check_size(
                 filename=filename,
                 dlp_format=dlp_format,
