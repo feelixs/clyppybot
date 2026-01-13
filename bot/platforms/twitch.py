@@ -58,6 +58,9 @@ class TwitchClip(BaseClip):
         return self._thumbnail_url
 
     async def download(self, filename=None, dlp_format='best', can_send_files=False, cookies=False, extra_opts=None) -> DownloadResponse:
+        # Extract channel/uploader info first
+        await self._extract_clip_info()
+
         dl = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
@@ -65,6 +68,8 @@ class TwitchClip(BaseClip):
             cookies=cookies
         )
         if dl is not None:
+            dl.broadcaster_username = self._broadcaster_username
+            dl.video_uploader_username = self._video_uploader_username
             return dl
 
         try:
@@ -86,12 +91,38 @@ class TwitchClip(BaseClip):
             return extracted
         except InvalidClipType:
             # fetch temporary v2 link (default)
-            return await super().download(
+            response = await super().download(
                 filename=filename,
                 dlp_format=dlp_format,
                 can_send_files=can_send_files,
                 cookies=cookies
             )
+            response.broadcaster_username = self._broadcaster_username
+            response.video_uploader_username = self._video_uploader_username
+            return response
+
+    async def _extract_clip_info(self):
+        """Extract channel and uploader info from yt-dlp"""
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                return info
+
+        try:
+            info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._broadcaster_username = info.get('channel')
+            self._video_uploader_username = info.get('uploader')
+            self._thumbnail_url = info.get('thumbnail')
+        except Exception as e:
+            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")
 
     def _get_direct_clip_url(self):
         # only works for some twitch clip links
