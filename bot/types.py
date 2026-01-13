@@ -28,6 +28,8 @@ class DownloadResponse:
     video_name: Optional[str]
     can_be_discord_uploaded: Optional[bool]
     clyppy_object_is_stored_as_redirect: Optional[bool]
+    broadcaster_username: Optional[str] = None  # channel/creator (e.g., the streamer)
+    video_uploader_username: Optional[str] = None  # uploader (e.g., who clipped it)
 
 
 @dataclass

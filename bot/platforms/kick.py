@@ -1,7 +1,10 @@
 from bot.classes import BaseClip, DownloadResponse
 from bot.io.cdn import CdnSpacesClient
 from bot.classes import BaseMisc
+from bot.env import YT_DLP_USER_AGENT
+from yt_dlp import YoutubeDL
 from typing import Optional
+import asyncio
 import re
 
 
@@ -49,6 +52,8 @@ class KickClip(BaseClip):
         self.user = user
         # pass dummy duration because we know kick clips will never need to use vip tokens
         super().__init__(slug, cdn_client, tokens_used, 0)
+        self._broadcaster_username = None
+        self._video_uploader_username = None
 
     @property
     def service(self) -> str:
@@ -60,10 +65,40 @@ class KickClip(BaseClip):
 
     async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, useragent=None) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
-        return await super().dl_check_size(
+
+        # Extract channel/uploader info before downloading
+        await self._extract_clip_info()
+
+        response = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
             can_send_files=can_send_files,
             cookies=cookies,
             upload_if_large=True
         )
+
+        response.broadcaster_username = self._broadcaster_username
+        response.video_uploader_username = self._video_uploader_username
+        return response
+
+    async def _extract_clip_info(self):
+        """Extract channel and uploader info from yt-dlp"""
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'user_agent': YT_DLP_USER_AGENT
+        }
+
+        def extract():
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                return info
+
+        try:
+            info = await asyncio.get_event_loop().run_in_executor(None, extract)
+            self._broadcaster_username = info.get('channel')
+            self._video_uploader_username = info.get('uploader')
+        except Exception as e:
+            self.logger.warning(f"Failed to extract clip info for {self.id}: {e}")

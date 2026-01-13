@@ -43,6 +43,8 @@ class TwitchClip(BaseClip):
         # pass dummy duration because we know twitch clips will never need to use vip tokens
         super().__init__(slug, cdn_client, tokens_used, 0)
         self._thumbnail_url = None
+        self._broadcaster_username = None
+        self._video_uploader_username = None
 
     @property
     def service(self) -> str:
@@ -79,6 +81,8 @@ class TwitchClip(BaseClip):
                 ydl_opts
             )
             extracted.remote_url = media_assets_url
+            extracted.broadcaster_username = self._broadcaster_username
+            extracted.video_uploader_username = self._video_uploader_username
             return extracted
         except InvalidClipType:
             # fetch temporary v2 link (default)
@@ -104,6 +108,8 @@ class TwitchClip(BaseClip):
                 if not info.get('thumbnail'):
                     raise Exception("No thumbnail URL found in clip info")
                 self._thumbnail_url = info['thumbnail']
+                self._broadcaster_username = info.get('channel')
+                self._video_uploader_username = info.get('uploader')
                 if '/clips-media-assets2.twitch.tv/' not in self._thumbnail_url:
                     raise InvalidClipType
 

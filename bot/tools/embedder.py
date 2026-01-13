@@ -439,7 +439,9 @@ class AutoEmbedder:
                 'uploaded_to_discord': uploading_to_discord,
                 'video_file_dur': response.duration,
                 'expires_at_timestamp': expires_at,
-                'is_extended': extend_with_ai
+                'is_extended': extend_with_ai,
+                'broadcaster_username': response.broadcaster_username,
+                'video_uploader_username': response.video_uploader_username
             }
 
             try:
