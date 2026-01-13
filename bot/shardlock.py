@@ -10,7 +10,6 @@ class ShardLock:
     """
 
     _locks_dir = Path("/tmp/clyppybot_locks")
-    _instances = {}  # Cache lock instances per platform
 
     def __init__(self, platform: str, max_concurrent: int = 1, min_interval: float = 0.5):
         self.platform = platform
@@ -24,11 +23,8 @@ class ShardLock:
 
     @classmethod
     def get(cls, platform: str, max_concurrent: int = 1, min_interval: float = 0.5) -> 'ShardLock':
-        """Get or create a lock instance for a platform."""
-        key = f"{platform}_{max_concurrent}"
-        if key not in cls._instances:
-            cls._instances[key] = cls(platform, max_concurrent, min_interval)
-        return cls._instances[key]
+        """Create a new lock instance (each async context needs its own state)."""
+        return cls(platform, max_concurrent, min_interval)
 
     def _slot_path(self, slot: int) -> Path:
         return self._locks_dir / f"{self.platform}_{slot}.lock"
@@ -38,6 +34,7 @@ class ShardLock:
         while True:
             for slot in range(self.max_concurrent):
                 lock_path = self._slot_path(slot)
+                f = None
                 try:
                     f = open(lock_path, 'w')
                     # Try non-blocking lock
@@ -48,10 +45,11 @@ class ShardLock:
                     return self
                 except BlockingIOError:
                     # Slot busy, try next
-                    f.close()
+                    if f:
+                        f.close()
                     continue
             # All slots busy, wait and retry
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.1)
 
     async def __aexit__(self, *args):
         if self._file:
