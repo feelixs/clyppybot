@@ -872,7 +872,7 @@ class Base(Extension):
                         count = data.get("count", 0)
                         self.bot.cached_embed_count = count
                         status_text = format_count(count)
-                        await self.bot.change_presence(activity=Activity(name=status_text, type=ActivityType.WATCHING))
+                        await self.bot.change_presence(activity=Activity(name=status_text, type=ActivityType.PLAYING))
                         self.logger.info(f"Updated status: {status_text}")
         except Exception as e:
             self.logger.warning(f"Failed to fetch embed count: {e}")
