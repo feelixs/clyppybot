@@ -5,6 +5,7 @@ from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from aiohttp import FormData
 from bot.io.cdn import CdnSpacesClient
+from cogs.base import format_count
 import aiohttp
 import logging
 import asyncio
@@ -12,20 +13,11 @@ import sys
 import os
 
 
-def format_count(count: int) -> str:
-    """Format a number with K/M suffix (e.g., 1004690 -> '1.0M')"""
-    if count >= 1_000_000:
-        return f"{count / 1_000_000:.1f}M"
-    elif count >= 1_000:
-        return f"{count / 1_000:.1f}k"
-    return str(count)
-
-
 async def fetch_embed_count(client=None) -> str:
     """Fetch embed count from API (or use cached value) and return formatted string"""
     # Use cached value if available on bot
     if client and hasattr(client, 'cached_embed_count'):
-        return f"{format_count(client.cached_embed_count)} videos saved"
+        return format_count(client.cached_embed_count)
     # Otherwise fetch fresh
     try:
         async with aiohttp.ClientSession() as session:
@@ -33,7 +25,7 @@ async def fetch_embed_count(client=None) -> str:
                 if resp.status == 200:
                     data = await resp.json()
                     count = data.get("count", 0)
-                    return f"{format_count(count)} videos saved"
+                    return format_count(count)
     except Exception:
         pass
     return "/help"

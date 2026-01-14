@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
-                          component_callback, Button, ButtonStyle, Activity)
+                          component_callback, Button, ButtonStyle, Activity, ActivityType)
 from bot.env import SUPPORT_SERVER_URL
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
@@ -17,12 +17,8 @@ import os
 
 
 def format_count(count: int) -> str:
-    """Format a number with K/M suffix (e.g., 1004690 -> '1.0M')"""
-    if count >= 1_000_000:
-        return f"{count / 1_000_000:.1f}M"
-    elif count >= 1_000:
-        return f"{count / 1_000:.1f}k"
-    return str(count)
+    """Format a number with commas (e.g., 1004690 -> '1,004,690')"""
+    return f"{count:,} clips"
 
 
 def compute_platform(url: str, bot) -> Tuple[Optional[BaseMisc], Optional[str]]:
@@ -41,7 +37,7 @@ class Base(Extension):
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
         self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60 * 24))  # refresh cookies every 24 hours
-        self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60 * 60 * 24))  # update status every 24 hours
+        self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60))  # update status every minute
         self.base_embedder = self.bot.base_embedder.embedder
 
     @staticmethod
@@ -875,8 +871,8 @@ class Base(Extension):
                         data = await resp.json()
                         count = data.get("count", 0)
                         self.bot.cached_embed_count = count
-                        status_text = f"{format_count(count)} videos saved"
-                        await self.bot.change_presence(activity=Activity(name=status_text))
+                        status_text = format_count(count)
+                        await self.bot.change_presence(activity=Activity(name=status_text, type=ActivityType.WATCHING))
                         self.logger.info(f"Updated status: {status_text}")
         except Exception as e:
             self.logger.warning(f"Failed to fetch embed count: {e}")
