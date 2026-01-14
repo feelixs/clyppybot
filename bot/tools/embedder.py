@@ -177,19 +177,20 @@ class AutoEmbedder:
             except:
                 pass
 
-            exception = {
-                'name': exc_name,
-                'msg': err_msg
-            }
-            await push_interaction_error(
-                parent_msg=respond_to,
-                clip=clip,
-                platform_name=self.platform_tools.platform_name,
-                clip_url=clip_link,
-                error_info=exception,
-                handled=handled,
-                logger=self.logger
-            )
+            if exc_name != "None":
+                exception = {
+                    'name': exc_name,
+                    'msg': err_msg
+                }
+                await push_interaction_error(
+                    parent_msg=respond_to,
+                    clip=clip,
+                    platform_name=self.platform_tools.platform_name,
+                    clip_url=clip_link,
+                    error_info=exception,
+                    handled=handled,
+                    logger=self.logger
+                )
 
     async def _wait_for_download(self, clip_id: str, timeout: float = 30):
         start_time = time.time()
