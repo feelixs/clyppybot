@@ -1087,7 +1087,7 @@ class BaseAutoEmbed:
         except Exception as e:
             self.logger.info(f"Exception in /{'extend' if extend_with_ai else 'embed'} preparation: {str(e)}")
             await ctx.send(
-                content=f"Unexpected error while trying to {'extend' if extend_with_ai else 'embed'} this url",
+                content=f"Unexpected error while trying to {'extend' if extend_with_ai else 'embed'} this url. Please **report** this error by joining our [Support Server]({SUPPORT_SERVER_URL})",
                 components=create_nexus_comps()
             )
             await send_webhook(
