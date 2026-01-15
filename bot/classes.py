@@ -1328,7 +1328,7 @@ Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes pe
         except Exception as e:
             response_msg = type(e).__name__ + ": " + str(e)
             self.logger.info(f'Unexpected error in /{'extend' if extend_with_ai else 'embed'}: {response_msg}')
-            asyncio.create_task(ctx.send(f"An unexpected error occurred with your input `{url}`",
+            asyncio.create_task(ctx.send(f"An unexpected error occurred with your input `{url}`. Please **report** this error by joining our [Support Server]({SUPPORT_SERVER_URL})",
                            components=create_nexus_comps()))
             success, response, err_handled = False, "Unexpected error", False
 
