@@ -62,7 +62,7 @@ class Watch(Extension):
             # the bot sent the message
             return
 
-        if "clyppy" in event.message.content or str(CLYPPYBOT_ID) in event.message.content:
+        if ("clyppy" in event.message.content or str(CLYPPYBOT_ID) in event.message.content) and event.channel.id != 1341521764680994986:
             self.logger.info(f"{event.message.guild.name}: #{event.message.channel.name} "
                              f"@{event.message.author.username} - \"{event.message.content}\"")
 
