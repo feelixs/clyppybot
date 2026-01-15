@@ -1245,7 +1245,7 @@ class BaseAutoEmbed:
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "No duration", True
         except InvalidFileType:
-            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (invalid type/corrupted video file)"
+            response_msg = f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (invalid type/corrupted video file). Please **report** this error by joining our [Support Server]({SUPPORT_SERVER_URL})"
             asyncio.create_task(ctx.send(response_msg, components=create_nexus_comps()))
             success, response, err_handled = False, "Invalid file type", True
         except NoPermsToView:
@@ -1319,7 +1319,7 @@ Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes pe
             if len(error_text) > 500:
                 error_text = error_text[:497] + "..."
 
-            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: \n\n```{error_text}```",
+            asyncio.create_task(ctx.send(f"The video-generator API refused to create a video from your input: \n\n```{error_text}```\n\nPlease **report** this error by joining our [Support Server]({SUPPORT_SERVER_URL})",
                                          components=create_nexus_comps()))
             success, response, err_handled = False, "VideoExtensionFailed", True
         except ExceptionHandled:
