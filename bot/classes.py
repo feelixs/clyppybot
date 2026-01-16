@@ -614,7 +614,7 @@ class BaseClip(ABC):
             output_path
         ]
 
-        self.logger.info(f"Extracting first frame from remote URL to {output_path}")
+        self.logger.info(f"[thumbnail] Extracting first frame from remote URL to {output_path}")
 
         def run_ffmpeg():
             result = subprocess.run(
@@ -624,13 +624,13 @@ class BaseClip(ABC):
                 timeout=30
             )
             if result.returncode != 0:
-                raise Exception(f"ffmpeg failed: {result.stderr}")
+                raise Exception(f"[thumbnaill] ffmpeg failed: {result.stderr}")
             return output_path
 
         result = await asyncio.get_event_loop().run_in_executor(None, run_ffmpeg)
 
         if not os.path.exists(output_path):
-            raise Exception(f"ffmpeg did not create output file: {output_path}")
+            raise Exception(f"[thumbnail] ffmpeg failed to create output file: {output_path}")
 
         self.logger.info(f"Successfully created webp thumbnail: {output_path}")
         return result

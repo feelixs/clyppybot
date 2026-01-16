@@ -395,20 +395,32 @@ class AutoEmbedder:
                         self.logger.info(f"Failed to get twitch thumbnail for {clip.url}: {str(e)}")
                         thumb_url = None
 
+                local_video_path = ...
                 get_thumb_for_redirects_platforms = ['twitch']
                 if not thumb_url and (not response.clyppy_object_is_stored_as_redirect or clip.service in get_thumb_for_redirects_platforms):
                     # can't get thumbnails for redirect objects usually
-                    self.logger.info(f"[{clip.clyppy_id}] Thumbnail url is None, downloading from remote cdn url...")
+                    self.logger.info(f"[{clip.clyppy_id}] Thumbnail url is None, downloading thumbnail from remote cdn url...")
                     try:
                         clip_webp = await clip.download_first_frame_webp(response.remote_url, f'{clip.clyppy_id}.webp')
                         status, thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
                         if not status:
-                            self.logger.info(f"Uploading {clip_webp} failed (status = False)")
+                            self.logger.info(f"[thumbnail] Uploading {clip_webp} failed (status = False)")
                             thumb_url = None
                     except Exception as e:
-                        self.logger.info(f"Failed to get or upload thumbnail for {clip.url}: {str(e)}")
+                        self.logger.info(f"Failed to fetch or upload thumbnail for {clip.url}: {str(e)}")
                         thumb_url = None
-
+                elif local_video_path:
+                    # for redirect files we may have still downloaded its video to check length, just not uploaded it to the server
+                    self.logger.info(f"[{clip.clyppy_id}] Thumbnail url is None but local file exists, extracting thumbnail...")
+                    try:
+                        clip_webp = await clip.create_first_frame_webp(local_video_path, f'{clip.clyppy_id}.webp')
+                        status, thumb_url = await self.bot.cdn_client.upload_webp(clip_webp)
+                        if not status:
+                            self.logger.info(f"[thumbnail] Uploading {clip_webp} failed (status = False)")
+                            thumb_url = None
+                    except Exception as e:
+                        self.logger.info(f"Failed to create or upload thumbnail for {clip.url}: {str(e)}")
+                        thumb_url = None
             if clip_webp:
                 try:
                     Path(clip_webp).unlink()
