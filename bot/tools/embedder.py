@@ -202,6 +202,10 @@ class AutoEmbedder:
     async def send_welcome_dm_if_first_time(self, user):
         """Send welcome DM to user if this is their first embed. Fire-and-forget, never blocks."""
         try:
+            if user.bot:
+                self.logger.info(f"User {user.id} - {user.username} is a bot. not sendin them a welcome dm")
+                return
+
             # Check if user has already received welcome DM
             if self.bot.guild_settings.has_received_welcome_dm(user.id):
                 self.logger.info(f"User {user.id} has already received welcome DM, skipping")
