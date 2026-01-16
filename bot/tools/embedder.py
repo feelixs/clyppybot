@@ -372,6 +372,7 @@ class AutoEmbedder:
             thumb_url = None
             uploading_to_discord = response.can_be_discord_uploaded and has_file_perms
             clip_webp = None
+            local_video_path = None
             if response.remote_url is None and not uploading_to_discord and video_doesnt_exist:
                 self.logger.info("The remote url was None for a new video create but we're not uploading to Discord!")
                 raise UnknownError
@@ -395,7 +396,8 @@ class AutoEmbedder:
                         self.logger.info(f"Failed to get twitch thumbnail for {clip.url}: {str(e)}")
                         thumb_url = None
 
-                local_video_path = ...
+                potential_local_file = f'{clip.service}_{clip.clyppy_id}.mp4' if clip.service != 'base' else f'{clip.clyppy_id}.mp4'
+                local_video_path = potential_local_file if Path(potential_local_file).exists() else None
                 get_thumb_for_redirects_platforms = ['twitch']
                 if not thumb_url and (not response.clyppy_object_is_stored_as_redirect or clip.service in get_thumb_for_redirects_platforms):
                     # can't get thumbnails for redirect objects usually
@@ -426,6 +428,11 @@ class AutoEmbedder:
                     Path(clip_webp).unlink()
                 except Exception as e:
                     self.logger.info(f"Failed to delete {clip_webp}: {str(e)}")
+            if local_video_path:
+                try:
+                    Path(local_video_path).unlink()
+                except Exception as e:
+                    self.logger.info(f"Failed to delete local video {local_video_path}: {str(e)}")
 
             interaction_data = {
                 'is_redirect': response.clyppy_object_is_stored_as_redirect,
