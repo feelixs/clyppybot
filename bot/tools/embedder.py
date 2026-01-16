@@ -199,6 +199,41 @@ class AutoEmbedder:
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
+    async def send_welcome_dm_if_first_time(self, user):
+        """Send welcome DM to user if this is their first embed. Fire-and-forget, never blocks."""
+        try:
+            # Check if user has already received welcome DM
+            if self.bot.guild_settings.has_received_welcome_dm(user.id):
+                self.logger.info(f"User {user.id} has already received welcome DM, skipping")
+                return
+
+            # Record that we're sending (or attempting to send) the DM
+            # Do this before sending to prevent duplicate attempts if DM fails
+            self.bot.guild_settings.record_welcome_dm_sent(user.id)
+
+            # Try to send the DM
+            try:
+                msg = (f"**Welcome to Clyppy!** 🎬\n\n"
+                       f"Thanks for using Clyppy to embed your clips!"
+                       f"I will automatically embed links from certain platforms, if your server admin has setup `quickembeds` using my `/settings` command."
+                       f"Otherwise, all platforms are embeddable via the `/embed` command."
+                       f"All your embedded videos are automatically saved to your personal clip library.\n\n"
+                       f"You can view and manage all your clips at any time using the link below")
+                await user.send(content=msg, components=[
+                    Button(style=ButtonStyle(ButtonStyle.LINK), label="View My Clips", url="https://clyppy.io/profile/clips")
+                ])
+                self.logger.info(f"Successfully sent welcome DM to user {user.id} ({user.username})")
+            except errors.Forbidden:
+                # User has DMs disabled
+                self.logger.info(f"Could not send welcome DM to user {user.id} ({user.username}): DMs disabled")
+            except Exception as e:
+                # Other DM failure (Discord API error, etc.)
+                self.logger.error(f"Failed to send welcome DM to user {user.id} ({user.username}): {e}")
+
+        except Exception as e:
+            # Catch-all to ensure this never crashes the main embed flow
+            self.logger.error(f"Error in send_welcome_dm_if_first_time for user {user.id}: {e}")
+
     async def process_clip_link(
             self, clip: 'BaseClip',
             clip_link: str, respond_to: Union[Message, SlashContext],
@@ -481,6 +516,9 @@ class AutoEmbedder:
                         if new_id != clip.clyppy_id:
                             self.logger.info(f"Overwriting clyppy url {clip.clyppy_url} with https://clyppy.io/{new_id}")
                             clip.clyppy_id = new_id  # clyppy_url is a property() that pulls from clyppy_id
+
+                    # Send welcome DM if this is user's first embed (fire-and-forget, never blocks)
+                    asyncio.create_task(self.send_welcome_dm_if_first_time(respond_to.author))
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
                     return

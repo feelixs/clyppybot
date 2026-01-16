@@ -838,7 +838,9 @@ class BaseAutoEmbed:
         self.OTHER_TXT_COMMANDS = {
             ".help": self.send_help,
             ".tokens": self.tokens_cmd,
-            ".vote": self.vote_cmd
+            ".vote": self.vote_cmd,
+            ".myclips": self.myclips_cmd,
+            ".invite": self.invite_cmd
         }
 
     async def handle_message(self, event: MessageCreate, skip_check: bool = False, url: str = None):
@@ -967,6 +969,44 @@ class BaseAutoEmbed:
         ])
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        )
+
+    async def myclips_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+            pre = '.'
+
+        msg = (f"**Your Clip Library** 🎬\n\n"
+               f"All your embedded videos are automatically saved to your personal clip library!\n\n"
+               f"View and manage all your clips at any time:")
+        await ctx.send(content=msg, components=[
+            Button(style=ButtonStyle(ButtonStyle.LINK), label="View My Clips", url="https://clyppy.io/profile/clips")
+        ])
+        await send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}myclips called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        )
+
+    async def invite_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+            pre = '.'
+
+        msg = f"You can invite me to a server with this link: https://clyppy.io/invite\n\nNeed help? Join the support server {SUPPORT_SERVER_URL}"
+        await ctx.send(msg)
+        await send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}invite called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,

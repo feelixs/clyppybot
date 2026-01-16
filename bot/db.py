@@ -95,6 +95,12 @@ class GuildDatabase:
                                 setting BOOLEAN
                             )
                         ''')
+            conn.execute('''
+                            CREATE TABLE IF NOT EXISTS welcome_dm_sent (
+                                user_id INTEGER PRIMARY KEY,
+                                sent_at TIMESTAMP NOT NULL
+                            )
+                        ''')
 
             # Migration: Convert boolean embed_enabled to TEXT if needed
             try:
@@ -341,4 +347,34 @@ class GuildDatabase:
                 return True
         except sqlite3.Error as e:
             logger.error(f"Database error when setting value for guild {guild_id}: {e}")
+            return False
+
+    def has_received_welcome_dm(self, user_id: int) -> bool:
+        """Check if user has already received welcome DM."""
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT user_id FROM welcome_dm_sent WHERE user_id = ?',
+                    (user_id,)
+                )
+                result = cursor.fetchone()
+                return result is not None
+        except sqlite3.Error as e:
+            logger.error(f"Database error when checking welcome DM for user {user_id}: {e}")
+            # Fail-safe: assume DM was sent to avoid spam on database errors
+            return True
+
+    def record_welcome_dm_sent(self, user_id: int) -> bool:
+        """Record that a user received welcome DM."""
+        try:
+            with self.get_db() as conn:
+                from datetime import datetime
+                conn.execute(
+                    'INSERT OR IGNORE INTO welcome_dm_sent (user_id, sent_at) VALUES (?, ?)',
+                    (user_id, datetime.now().isoformat())
+                )
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when recording welcome DM for user {user_id}: {e}")
             return False
