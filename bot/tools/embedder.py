@@ -208,7 +208,7 @@ class AutoEmbedder:
 
             # Check if user has already received welcome DM
             if self.bot.guild_settings.has_received_welcome_dm(user.id):
-                self.logger.info(f"User {user.id} has already received welcome DM, skipping")
+                self.logger.info(f"User {user.id} - {user.username} has already received welcome DM, skipping")
                 return
 
             # Record that we're sending (or attempting to send) the DM
