@@ -214,11 +214,11 @@ class AutoEmbedder:
             # Try to send the DM
             try:
                 msg = (f"**Welcome to Clyppy!** 🎬\n\n"
-                       f"Thanks for using Clyppy to embed your clips!"
+                       f"Thanks for using Clyppy to embed your clips! "
                        f"I will automatically embed links from certain platforms, if your server admin has setup `quickembeds` using my `/settings` command. "
                        f"Otherwise, all platforms are embeddable via the `/embed` command.\n"
                        f"All your embedded videos are automatically saved to your personal clip library.\n\n"
-                       f"You can view and manage all your clips at any time using the link below")
+                       f"You can view and manage all your clips at any time using the link below. Your link library is private - only viewable by yourself in my web app.")
                 await user.send(content=msg, components=[
                     Button(style=ButtonStyle(ButtonStyle.LINK), label="View My Clips", url="https://clyppy.io/profile/clips")
                 ])
