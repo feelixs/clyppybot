@@ -843,7 +843,8 @@ class BaseAutoEmbed:
             ".tokens": self.tokens_cmd,
             ".vote": self.vote_cmd,
             ".myclips": self.myclips_cmd,
-            ".invite": self.invite_cmd
+            ".invite": self.invite_cmd,
+            ".profile": self.profile_cmd
         }
 
     async def handle_message(self, event: MessageCreate, skip_check: bool = False, url: str = None):
@@ -1015,6 +1016,25 @@ class BaseAutoEmbed:
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
         )
+
+    async def profile_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+            pre = '.'
+
+        msg = "**View and share your clip library with the world!**\n\nShare your profile with friends to show them what you're watching."
+        asyncio.create_task(ctx.send(content=msg, components=[
+            Button(style=ButtonStyle.LINK, label="View My Profile", url=f"https://clyppy.io/clips/{ctx.user.username}")
+        ]))
+        asyncio.create_task(send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        ))
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
