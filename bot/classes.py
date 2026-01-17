@@ -1026,7 +1026,8 @@ class BaseAutoEmbed:
 
         msg = "**View and share your clip library with the world!**\n\nShare your profile with friends to show them what you're watching."
         asyncio.create_task(ctx.send(content=msg, components=[
-            Button(style=ButtonStyle.LINK, label="View My Profile", url=f"https://clyppy.io/clips/{ctx.user.username}")
+            Button(style=ButtonStyle.LINK, label=f"View @{ctx.user.username} Profile", url=f"https://clyppy.io/clips/{ctx.user.username}"),
+            Button(style=ButtonStyle.LINK, label="Login to my Profile", url=f"https://clyppy.io/profile/clips")
         ]))
         asyncio.create_task(send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called',
