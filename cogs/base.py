@@ -536,12 +536,13 @@ class Base(Extension):
         url = self._sanitize_url(url)
         for p in self.bot.platform_embedders:
             if slug := p.platform.parse_clip_url(url):
-                return await self.bot.base_embedder.command_embed(
+                await self.bot.base_embedder.command_embed(
                     ctx=ctx,
                     url=url,
                     platform=p.platform,
                     slug=slug
                 )
+                return
         # incompatible (should never get here, since bot.base is a catch-all)
         await ctx.send("An unexpected error occurred.")
         raise Exception(f"Error in /embed - bot.base did not catch url {url}, exited returning None")
@@ -572,7 +573,7 @@ class Base(Extension):
     @slash_command(name="help", description="Get help using Clyppy")
     async def help(self, ctx: SlashContext):
         await ctx.defer()
-        return await self.bot.base_embedder.send_help(ctx)
+        await self.bot.base_embedder.send_help(ctx)
 
     @slash_command(name="setup", description="Display or change Clyppy's general settings",
                    options=[SlashCommandOption(name="error_channel", type=OptionType.CHANNEL,
@@ -580,44 +581,50 @@ class Base(Extension):
                                                required=False)])
     async def setup(self, ctx: SlashContext, error_channel=None):
         if ctx.guild is None:
-            await ctx.send("This command is only available in servers.")
+            asyncio.create_task(ctx.send("This command is only available in servers."))
             return
         if ctx.guild.id == ctx.author.id:  # in case they patch the "dm guild is None" situation
-            await ctx.send("This command is only available in servers.")
+            asyncio.create_task(ctx.send("This command is only available in servers."))
             return
 
         if not ctx.author.has_permission(Permissions.ADMINISTRATOR):
-            await ctx.send("Only members with the **Administrator** permission can change Clyppy's settings.")
+            asyncio.create_task(ctx.send("Only members with the **Administrator** permission can change Clyppy's settings."))
             return
         if error_channel is None:
             if (ec := self.bot.guild_settings.get_error_channel(ctx.guild.id)) == 0:
                 cur_chn = ("Unconfigured\n\n"
                            "When not configured, Clyppy will send error messages to the same channel as the interaction.")
-                return await ctx.send("Current error channel: " + cur_chn)
+                asyncio.create_task(ctx.send("Current error channel: " + cur_chn))
+                return
             else:
                 try:
                     cur_chn = self.bot.get_channel(ec)
-                    return await ctx.send(f"Current error channel: {cur_chn.mention}")
+                    asyncio.create_task(ctx.send(f"Current error channel: {cur_chn.mention}"))
+                    return
                 except:
                     cur_chn = ("Channel not found - error channel was reset to **Unconfigured**\n\n"
                                "Make sure Clyppy has the `VIEW_CHANNELS` permission, and that the channel still exists."
                                "\nWhen not configured, Clyppy will send error messages to the same channel as the interaction.\n\n"
                                f"More info:\nTried to retrieve channel <#{ec}> but failed.")
                     self.bot.guild_settings.set_error_channel(ctx.guild.id, 0)
-                    return await ctx.send("Current error channel: " + cur_chn)
+                    asyncio.create_task(ctx.send("Current error channel: " + cur_chn))
+                    return
 
         await ctx.defer()
         if ctx.guild is None:
-            await ctx.send("This command is only available in servers.")
+            asyncio.create_task(ctx.send("This command is only available in servers."))
             return
+
         if (e := self.bot.get_channel(error_channel)) is None:
-            return await ctx.send(f"Channel #{error_channel} not found.\n\n"
-                                  f"Please make sure Clyppy has the `VIEW_CHANNELS` permission & try again.")
+            asyncio.create_task(ctx.send(f"Channel #{error_channel} not found.\n\n"
+                                  f"Please make sure Clyppy has the `VIEW_CHANNELS` permission & try again."))
+            return
+
         res = self.bot.guild_settings.set_error_channel(ctx.guild.id, e.id)
         if res:
-            return await ctx.send(f"Success! Error channel set to {e.mention}")
+            asyncio.create_task(ctx.send(f"Success! Error channel set to {e.mention}"))
         else:
-            return await ctx.send("An error occurred while setting the error channel. Please try again.")
+            asyncio.create_task(ctx.send("An error occurred while setting the error channel. Please try again."))
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
                    options=[SlashCommandOption(name="quickembeds", type=OptionType.STRING,

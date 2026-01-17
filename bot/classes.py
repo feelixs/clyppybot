@@ -7,7 +7,7 @@ from PIL import Image
 from time import time
 from datetime import datetime
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle
+from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle, EmbedFooter
 from interactions.api.events import MessageCreate
 
 from bot.io.io import author_has_enough_tokens_for_ai_extend
@@ -914,19 +914,19 @@ class BaseAutoEmbed:
             f"- Join my [Discord server]({SUPPORT_SERVER_URL}) to be a part of the community!\n"
             f"- Star me on [GitHub]({GITHUB_URL}) to stay updated :)")
         help_embed = Embed(title="ABOUT CLYPPY", description=about)
-        help_embed.footer = f"CLYPPY v{VERSION}"
-        await ctx.send(
+        help_embed.footer = EmbedFooter(f"CLYPPY v{VERSION}")
+        asyncio.create_task(ctx.send(
             content="Clyppy is a social bot that makes sharing videos easier!",
             embed=help_embed,
             components=create_nexus_comps()
-        )
-        await send_webhook(
+        ))
+        asyncio.create_task(send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {pre}help called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
-        )
+        ))
 
     async def tokens_cmd(self, ctx: Union[SlashContext, Message]):
         pre = '/'
@@ -936,21 +936,21 @@ class BaseAutoEmbed:
             pre = '.'
 
         tokens = await self.bot.base_embedder.fetch_tokens(ctx.user)
-        await ctx.send(
+        asyncio.create_task(ctx.send(
             content=f"**You have `{tokens}` VIP tokens**\nUse your VIP tokens to embed longer videos!\n\n"
                     f"You can gain more by **voting** with `{pre}vote`",
             components=[
                 Button(style=ButtonStyle.LINK, label="Vote!", url=CLYPPY_VOTE_URL),
                 Button(style=ButtonStyle.LINK, label="View VIP Token History", url="https://clyppy.io/profile/tokens/history/")
             ]
-        )
-        await send_webhook(
+        ))
+        asyncio.create_task(send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - {pre}tokens called',
             load=f"response - {tokens} tokens",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
-        )
+        ))
 
     async def vote_cmd(self, ctx: Union[SlashContext, Message]):
         pre = '/'
@@ -966,17 +966,17 @@ class BaseAutoEmbed:
                f"- 1 free VIP token per vote!\n"
                f"- VIP tokens allow you to embed videos longer than the standard {MAX_VIDEO_LEN_SEC // 60} minutes!\n\n"
                f"You can get some free tokens by voting below, or purchasing them in bulk from our store `(づ๑•ᴗ•๑)づ♡`")
-        await ctx.send(content=msg, components=[
+        asyncio.create_task(ctx.send(content=msg, components=[
             Button(style=ButtonStyle(ButtonStyle.LINK), label="Vote!", url=CLYPPY_VOTE_URL),
             Button(style=ButtonStyle(ButtonStyle.LINK), label="Buy in Bulk", url=BUY_TOKENS_URL)
-        ])
-        await send_webhook(
+        ]))
+        asyncio.create_task(send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
-        )
+        ))
 
     async def myclips_cmd(self, ctx: Union[SlashContext, Message]):
         pre = '/'
@@ -1036,20 +1036,22 @@ class BaseAutoEmbed:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
             if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
-                return None
+                return
             elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
-                return await ctx.send(
+                await ctx.send(
                     content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
                     components=create_nexus_comps()
                 )
+                return
             elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
-                return await ctx.send(
+                await ctx.send(
                     content=f"I don't have permission to embed links in this channel",
                     components=create_nexus_comps()
                 )
+                return
             if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
                 if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
-                    return None
+                    return
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
@@ -1066,13 +1068,13 @@ class BaseAutoEmbed:
 
             if platform is None:
                 self.logger.info(f"return incompatible for /{'extend' if extend_with_ai else 'embed'} {url}")
-                await ctx.send(
+                asyncio.create_task(ctx.send(
                     content=f"Couldn't {'extend' if extend_with_ai else 'embed'} that url (invalid/incompatible)",
                     components=create_nexus_comps()
-                )
-                await send_webhook(
+                ))
+                asyncio.create_task(send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
-                    load=f"user - {ctx.user.username}\n"
+                    load=f"user - {ctx.user.username} {ctx.user.id}\n"
                          f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
@@ -1080,18 +1082,18 @@ class BaseAutoEmbed:
                     color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
-                )
-                return None
+                ))
+                return
             elif platform.is_nsfw and not nsfw_enabed:
-                await ctx.send(
+                asyncio.create_task(ctx.send(
                     f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
                     f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
                     f" - If you're not an admin, you can invite me to one of your servers, and then create a new age-restricted channel there\n"
                     f"\n**Note** for iOS users, due to the Apple Store's rules, you may need to access [discord.com]({ctx_link}) in your phone's browser to enable this.\n"
-                )
-                await send_webhook(
+                ))
+                asyncio.create_task(send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
-                    load=f"user - {ctx.user.username}\n"
+                    load=f"user - {ctx.user.username} {ctx.user.id}\n"
                          f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
@@ -1099,14 +1101,14 @@ class BaseAutoEmbed:
                     color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
-                )
-                return None
+                ))
+                return
 
             if self.bot.currently_embedding_users.count(ctx.user.id) >= 2:
-                await ctx.send(f"You're already embedding 2 videos. Please wait for one to finish before trying again.")
-                await send_webhook(
+                asyncio.create_task(ctx.send(f"You're already embedding 2 videos. Please wait for one to finish before trying again."))
+                asyncio.create_task(send_webhook(
                     title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
-                    load=f"user - {ctx.user.username}\n"
+                    load=f"user - {ctx.user.username} {ctx.user.id}\n"
                          f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                          f"platform: {p}\n"
                          f"slug: {slug}\n"
@@ -1114,8 +1116,8 @@ class BaseAutoEmbed:
                     color=COLOR_RED,
                     url=APPUSE_LOG_WEBHOOK,
                     logger=self.logger
-                )
-                return None
+                ))
+                return
             else:
                 self.bot.currently_embedding_users.append(ctx.user.id)
 
@@ -1129,13 +1131,13 @@ class BaseAutoEmbed:
                 self.bot.currently_downloading.append(slug)
         except Exception as e:
             self.logger.info(f"Exception in /{'extend' if extend_with_ai else 'embed'} preparation: {str(e)}")
-            await ctx.send(
+            asyncio.create_task(ctx.send(
                 content=f"Unexpected error while trying to {'extend' if extend_with_ai else 'embed'} this url. Please **report** this error by joining our [Support Server]({SUPPORT_SERVER_URL})",
                 components=create_nexus_comps()
-            )
-            await send_webhook(
+            ))
+            asyncio.create_task(send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - Failure',
-                load=f"user - {ctx.user.username}\n"
+                load=f"user - {ctx.user.username} {ctx.user.id}\n"
                      f"cmd - {pre}{'extend' if extend_with_ai else 'embed'} url:{url}\n"
                      f"platform: {p}\n"
                      f"slug: {slug}\n"
@@ -1143,7 +1145,7 @@ class BaseAutoEmbed:
                 color=COLOR_RED,
                 url=APPUSE_LOG_WEBHOOK,
                 logger=self.logger
-            )
+            ))
             try:
                 while slug in self.bot.currently_downloading:
                     self.bot.currently_downloading.remove(slug)
@@ -1159,7 +1161,7 @@ class BaseAutoEmbed:
                     del self.embedder.clip_id_msg_timestamps[ctx.id]
             except KeyError:
                 pass
-            return None
+            return
 
         timeout_task = asyncio.create_task(self._handle_timeout(
             ctx=ctx,
@@ -1382,7 +1384,7 @@ Voting with `/vote` will increase it by {EMBED_W_TOKEN_MAX_LEN // 60} minutes pe
                 url_str = "`error`"
             asyncio.create_task(send_webhook(
                 title=f'{"DM" if guild.is_dm else guild.name} - {pre}{'extend' if extend_with_ai else 'embed'} called - {"Success" if success else "Failure"}',
-                load=f"user - {ctx.user.username}\n"
+                load=f"user - {ctx.user.username} {ctx.user.id}\n"
                      f"cmd - `{pre}{'extend' if extend_with_ai else 'embed'} url:{url}`\n"
                      f"platform: {platform_name}\n"
                      f"slug: {slug}\n"
