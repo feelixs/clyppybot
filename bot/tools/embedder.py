@@ -222,9 +222,9 @@ class AutoEmbedder:
                        f"I will automatically embed links from certain platforms, if your server admin has setup `quickembeds` using my `/settings` command. "
                        f"Otherwise, all platforms are embeddable via the `/embed` command.\n"
                        f"All your embedded videos are automatically saved to your personal clip library.\n\n"
-                       f"You can view and manage all your clips at any time using the link below. Your link library is private - only viewable by yourself in my web app.")
+                       f"You can view and manage all your clips at any time using the link below. To set your link library to private, click the link below.")
                 await user.send(content=msg, components=[
-                    Button(style=ButtonStyle(ButtonStyle.LINK), label="View My Clips", url="https://clyppy.io/profile/clips")
+                    Button(style=ButtonStyle(ButtonStyle.LINK), label="View My Profile", url="https://clyppy.io/profile/clips")
                 ])
                 self.logger.info(f"Successfully sent welcome DM to user {user.id} ({user.username})")
             except errors.Forbidden:
