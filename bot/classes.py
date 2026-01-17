@@ -209,6 +209,9 @@ def get_video_details(file_path) -> 'LocalFileInfo':
 
 def fetch_cookies(opts, logger):
     try:
+        # Enable EJS Challenge solver
+        opts['remote_components'] = ['ejs:github']
+
         # Try cookie file first (downloaded from server)
         cookie_file = os.getenv("COOKIE_FILE")
         if cookie_file and os.path.exists(cookie_file):
