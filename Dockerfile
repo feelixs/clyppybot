@@ -6,8 +6,13 @@ LABEL description="This is a custom Python image for my application."
 COPY . .
 
 RUN apt-get -yq update && apt-get install -y git
-RUN pip3 install -r requirements.txt
-RUN apt-get install -yq ffmpeg
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN apt-get install -yq ffmpeg curl unzip
+
+# Install Deno for yt-dlp YouTube n-challenge solving
+RUN curl -fsSL https://deno.land/install.sh | sh
+ENV DENO_INSTALL="/root/.deno"
+ENV PATH="${DENO_INSTALL}/bin:${PATH}"
 
 RUN chmod +x run.sh
 
