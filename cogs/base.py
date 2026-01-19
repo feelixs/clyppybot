@@ -520,9 +520,15 @@ class Base(Extension):
     async def invite(self, ctx: SlashContext):
         await self.bot.base_embedder.invite_cmd(ctx)
 
-    @slash_command(name="profile", description="View and share your clip library with the world")
-    async def profile(self, ctx: SlashContext):
-        await self.bot.base_embedder.profile_cmd(ctx)
+    @slash_command(name="profile", description="View and share your clip library with the world",
+                   options=[SlashCommandOption(
+                       name="user",
+                       description="User ID or username",
+                       required=False,
+                       type=OptionType.STRING)
+                   ])
+    async def profile(self, ctx: SlashContext, user: str = None):
+        await self.bot.base_embedder.profile_cmd(ctx, user)
 
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration

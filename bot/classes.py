@@ -999,25 +999,42 @@ class BaseAutoEmbed:
             logger=self.logger
         )
 
-    async def profile_cmd(self, ctx: Union[SlashContext, Message]):
+    async def profile_cmd(self, ctx: Union[SlashContext, Message], target_user: str = None):
         pre = '/'
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
             ctx.user = ctx.author
             pre = '.'
 
-        msg = f"**View and share your clip library with the world!**\n\nAll the clips you've shared are saved here 🎬"
-        asyncio.create_task(ctx.send(content=msg, components=[
-            Button(style=ButtonStyle.LINK, label=f"@{ctx.user.username}'s Clips", url=f"https://clyppy.io/clips/{ctx.user.username}"),
-            Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips")
-        ]))
-        asyncio.create_task(send_webhook(
-            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called',
-            load=f"response - success",
-            color=COLOR_GREEN,
-            url=APPUSE_LOG_WEBHOOK,
-            logger=self.logger
-        ))
+        if target_user:
+            # User specified another user to view
+            # target_user can be a user ID or username
+            display_name = target_user.lstrip('@')  # Remove @ prefix if present
+            msg = f"**Check out this user's clip library!**"
+            asyncio.create_task(ctx.send(content=msg, components=[
+                Button(style=ButtonStyle.LINK, label=f"@{display_name}'s Clips", url=f"https://clyppy.io/clips/{display_name}")
+            ]))
+            asyncio.create_task(send_webhook(
+                title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called for {display_name}',
+                load=f"response - success",
+                color=COLOR_GREEN,
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
+            ))
+        else:
+            # Show caller's own profile
+            msg = f"**View and share your clip library with the world!**\n\nAll the clips you've shared are saved here 🎬"
+            asyncio.create_task(ctx.send(content=msg, components=[
+                Button(style=ButtonStyle.LINK, label=f"@{ctx.user.username}'s Clips", url=f"https://clyppy.io/clips/{ctx.user.username}"),
+                Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips")
+            ]))
+            asyncio.create_task(send_webhook(
+                title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called',
+                load=f"response - success",
+                color=COLOR_GREEN,
+                url=APPUSE_LOG_WEBHOOK,
+                logger=self.logger
+            ))
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
