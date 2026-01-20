@@ -163,15 +163,6 @@ class Base(Extension):
         clyppyid = clip_ctx[-1]
         is_discord_uploaded = clip_ctx[1] == "d"  # was it a discord upload
 
-        buttons = [
-            Button(
-                style=ButtonStyle.DANGER,
-                label="X",
-                custom_id=f"ibtn-delete-d-{clyppyid}" if is_discord_uploaded else f"ibtn-delete-{clyppyid}"
-            ),
-            Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')
-        ]
-
         try:
             clyppy_cdn = False
 
@@ -183,6 +174,17 @@ class Base(Extension):
                 original = clip_info['requested_by']
                 if original is not None:
                     original = int(original)
+
+                cmp_url = 'https://clyppy.io/profile/clips'
+                cpm_params = f'?msgid={ctx.message.id}&clipid={clyppyid}'
+                buttons = [
+                    Button(
+                        style=ButtonStyle.DANGER,
+                        label="X",
+                        custom_id=f"ibtn-delete-d-{clyppyid}" if is_discord_uploaded else f"ibtn-delete-{clyppyid}"
+                    ),
+                    Button(style=ButtonStyle.LINK, label=f"View your clips", url=cmp_url + cpm_params)
+                ]
 
                 deleted = clip_info['is_deleted']
                 dstr = clip_info['deleted_at_str']
@@ -304,6 +306,8 @@ class Base(Extension):
 
         self.logger.info(f"{ctx.message.id}, {ctx.id}, {ctx.message_id}")
         data = {"video_id": clyppyid, "user_id": ctx.author.id, "msg_id": ctx.message.id}
+
+        cmp_url = 'https://clyppy.io/profile/clips'
         try:
             response = await callback_clip_delete_msg(
                 data=data,
@@ -335,7 +339,7 @@ class Base(Extension):
 
         except Exception as e:
             self.logger.info(f"@component_callback for button {ctx.custom_id} - Error: {e}")
-            await ctx.send(f"Uh oh... an error occurred deleting the clip {clyppyid}:\n{str(e)}", components=[Button(style=ButtonStyle.LINK, label=f"View your clips", url='https://clyppy.io/profile/clips')])
+            await ctx.send(f"Uh oh... an error occurred deleting the clip {clyppyid}:\n{str(e)}", components=[Button(style=ButtonStyle.LINK, label=f"View your clips", url=cmp_url)])
             await send_webhook(
                 title=f'{"DM" if ctx.guild is None else ctx.guild.name}, {ctx.author.username} - \'delete\' called on {clyppyid}',
                 load=f"response - unexpected error: {e}",
@@ -895,6 +899,10 @@ class Base(Extension):
     async def post_servers(self, num: int):
         if os.getenv("TEST") is not None:
             return
+
+        # Calculate total user count across all guilds
+        total_users = sum(guild.member_count or 0 for guild in self.bot.guilds)
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -922,3 +930,20 @@ class Base(Extension):
                     self.logger.info(f"Successfully posted servers to botlist.me - response: {r}")
         except Exception as e:
             self.logger.info(f"Failed to post servers to botlist.me: {type(e).__name__}: {str(e)}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                        url="https://discordbotlist.com/api/v1/bots/1111723928604381314/stats",
+                        json={
+                            'users': total_users,
+                            'guilds': num
+                        },
+                        headers={
+                            'Authorization': os.getenv('DISCORDBOTLIST_TOKEN'),
+                            'Accept': 'application/json'
+                        }
+                ) as resp:
+                    r = await resp.json()
+                    self.logger.info(f"Successfully posted servers to discordbotlist.com - response: {r}")
+        except Exception as e:
+            self.logger.info(f"Failed to post servers to discordbotlist.com: {type(e).__name__}: {str(e)}")
