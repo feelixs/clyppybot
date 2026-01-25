@@ -887,6 +887,24 @@ class Base(Extension):
                 await self.post_servers(len(self.bot.guilds))
             self.logger.info("--------------")
 
+            # Initialize TaskManager and register task functions
+            task_manager = TaskManager.get()
+            api = get_api_client()
+            task_manager.register("bulk_upsert_members", api.bulk_upsert_members)
+
+            # Load and run any pending tasks from previous shutdown
+            await task_manager.load_and_run_pending()
+
+            # Reconcile sessions with Discord's current state
+            try:
+                result = await SessionReconciler.reconcile_all(self.bot)
+                self.logger.info(
+                    f"Session reconciliation complete: "
+                    f"{result['voice_closed']} voice, {result['game_closed']} game sessions closed"
+                )
+            except Exception as e:
+                self.logger.error(f"Session reconciliation failed: {e}")
+
     async def update_status(self):
         """Fetch embed count and update bot status"""
         try:

@@ -9,8 +9,15 @@ from cogs.base import format_count
 import aiohttp
 import logging
 import asyncio
+import signal
 import sys
 import os
+
+from insightbot.config import config
+from insightbot.logging_config import setup_logging, get_logger
+from insightbot.api_client import close_api_client, get_api_client
+from insightbot.services.session_reconciler import SessionReconciler
+from insightbot.services.task_manager import TaskManager
 
 
 async def fetch_embed_count(client=None) -> str:
@@ -132,11 +139,70 @@ Bot = init_misc(Bot)
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
 
+async def on_shutdown(bot):
+    """Called when the bot is shutting down."""
+    # Save analytics state before shutdown
+    logger.info("Saving analytics state...")
+    try:
+        from insightbot.events.analytics_collector import AnalyticsCollector
+        for ext in bot.ext.values():
+            if isinstance(ext, AnalyticsCollector):
+                ext.save_state()
+                break
+    except Exception as e:
+        logger.error(f"Failed to save analytics state: {e}")
+
+    logger.info("Shutting down TaskManager...")
+    task_manager = TaskManager.get()
+    await task_manager.shutdown(timeout=30.0)
+    logger.info("Closing API client...")
+    await close_api_client()
+    logger.info("Bot shutdown complete")
+
+
+def handle_sigterm(signum, frame):
+    """Handle SIGTERM signal from Docker by converting to KeyboardInterrupt."""
+    logger.info("Received SIGTERM signal, initiating graceful shutdown...")
+    raise KeyboardInterrupt()
+
+
 async def main():
+    signal.signal(signal.SIGTERM, handle_sigterm)
+
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
-    await Bot.guild_settings.setup_db()
-    await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
+
+    # Load extensions
+    Bot.load_extension("insightbot.extensions.stats")
+    Bot.load_extension("insightbot.extensions.top")
+    Bot.load_extension("insightbot.extensions.counters")
+    Bot.load_extension("insightbot.extensions.admin")
+    Bot.load_extension("insightbot.extensions.games")
+    Bot.load_extension("insightbot.extensions.topics")
+
+    # Load event handlers
+    Bot.load_extension("insightbot.events.messages")
+    Bot.load_extension("insightbot.events.voice")
+    Bot.load_extension("insightbot.events.presence")
+    Bot.load_extension("insightbot.events.members")
+
+    # Load background tasks
+    Bot.load_extension("insightbot.tasks.counter_updater")
+    Bot.load_extension("insightbot.tasks.digest_scheduler")
+
+    # Load analytics collector
+    Bot.load_extension("insightbot.events.analytics_collector")
+
+    # Load invite tracker
+    Bot.load_extension("insightbot.events.invite_tracker")
+
+    try:
+        await Bot.guild_settings.setup_db()
+        await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
+    except KeyboardInterrupt:
+        logger.info("Received interrupt signal")
+    finally:
+        asyncio.run(on_shutdown(Bot))
 
 
 asyncio.run(main())
