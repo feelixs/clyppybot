@@ -55,6 +55,7 @@ class AutoEmbedder:
         self.logger = logger
         self.platform_tools = platform_tools
         self.clip_id_msg_timestamps = {}
+        self.embedding_timestamps = {}  # Track when clips were added to currently_embedding
 
     @staticmethod
     def get_words(text: str) -> List[str]:
@@ -134,10 +135,15 @@ class AutoEmbedder:
     async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
+
+        # Clean up stale entries (clips that have been processing for > 5 minutes)
+        await self._cleanup_stale_downloads()
+
         if parsed_id in self.bot.currently_embedding:
             await self._wait_for_download(parsed_id)
         else:
             self.bot.currently_embedding.append(parsed_id)
+            self.embedding_timestamps[parsed_id] = time.time()
 
         clip = None
         handled = False
@@ -173,8 +179,12 @@ class AutoEmbedder:
             except ValueError:
                 pass
             try:
+                del self.embedding_timestamps[parsed_id]
+            except KeyError:
+                pass
+            try:
                 del self.clip_id_msg_timestamps[respond_to.id]
-            except:
+            except KeyError:
                 pass
 
             if exc_name != "None":
@@ -192,10 +202,41 @@ class AutoEmbedder:
                     logger=self.logger
                 )
 
-    async def _wait_for_download(self, clip_id: str, timeout: float = 30):
+    async def _cleanup_stale_downloads(self, max_age_seconds: float = 300):
+        """Remove clips from currently_embedding that have been processing for too long (default 5 minutes)"""
+        current_time = time.time()
+        stale_clips = []
+
+        for clip_id in list(self.bot.currently_embedding):
+            if clip_id in self.embedding_timestamps:
+                age = current_time - self.embedding_timestamps[clip_id]
+                if age > max_age_seconds:
+                    stale_clips.append(clip_id)
+                    self.logger.warning(f"Cleaning up stale download: {clip_id} (age: {age:.1f}s)")
+
+        for clip_id in stale_clips:
+            try:
+                while clip_id in self.bot.currently_embedding:
+                    self.bot.currently_embedding.remove(clip_id)
+            except ValueError:
+                pass
+            try:
+                del self.embedding_timestamps[clip_id]
+            except KeyError:
+                pass
+
+    async def _wait_for_download(self, clip_id: str, timeout: float = 60):
         start_time = time.time()
         while clip_id in self.bot.currently_embedding:
             if time.time() - start_time > timeout:
+                self.logger.error(f"Timeout waiting for clip {clip_id}. Forcing cleanup and retrying...")
+                # Force cleanup this clip and let the caller retry
+                try:
+                    while clip_id in self.bot.currently_embedding:
+                        self.bot.currently_embedding.remove(clip_id)
+                    del self.embedding_timestamps[clip_id]
+                except (ValueError, KeyError):
+                    pass
                 raise TimeoutError(f"Waiting for clip {clip_id} download timed out")
             await asyncio.sleep(0.1)
 
