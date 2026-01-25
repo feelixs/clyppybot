@@ -1,5 +1,5 @@
 from interactions import Extension, listen
-from interactions.api.events import MemberAdd, MemberRemove, GuildJoin, GuildLeft
+from interactions.api.events import MemberAdd, MemberRemove, GuildJoin, GuildLeft, RoleCreate, RoleUpdate, RoleDelete, MemberUpdate
 
 from ..logging_config import get_logger
 from ..api_client import get_api_client
@@ -143,6 +143,47 @@ class MemberEvents(Extension):
                         persist_args=(members_data,),
                         persist_kwargs={"guild_id": int(guild.id)},
                     )
+
+            # Sync roles in bulk
+            if guild.roles:
+                task_manager = TaskManager.get()
+                roles_data = [
+                    {
+                        "role_id": int(role.id),
+                        "guild_id": int(guild.id),
+                        "name": role.name,
+                        "color": role.color.value if role.color else None,
+                        "position": role.position,
+                        "is_hoisted": role.hoist,
+                        "is_mentionable": role.mentionable,
+                        "is_managed": role.managed,
+                    }
+                    for role in guild.roles
+                    if not role.default  # Skip @everyone
+                ]
+                if roles_data:
+                    task_manager.create_task(
+                        api.bulk_upsert_roles(roles_data),
+                        name="bulk_upsert_roles",
+                        persist_args=(roles_data,),
+                    )
+
+                # Sync member roles
+                member_roles_data = [
+                    {
+                        "user_id": int(member.id),
+                        "role_ids": [int(r.id) for r in member.roles if not r.default]
+                    }
+                    for member in guild.members
+                    if not member.bot
+                ]
+                if member_roles_data:
+                    task_manager.create_task(
+                        api.bulk_sync_member_roles(int(guild.id), member_roles_data),
+                        name="bulk_sync_member_roles",
+                        persist_args=(int(guild.id), member_roles_data),
+                    )
+
         except Exception as e:
             logger.error(f"Error handling guild join: {e}")
 
@@ -153,6 +194,78 @@ class MemberEvents(Extension):
 
         if guild:
             logger.info(f"Left guild: {guild.name if hasattr(guild, 'name') else guild.id}")
+
+    @listen(RoleCreate)
+    async def on_role_create(self, event: RoleCreate):
+        """Handle when a role is created."""
+        role = event.role
+
+        try:
+            api = get_api_client()
+            await api.upsert_role(
+                role_id=int(role.id),
+                guild_id=int(role.guild.id),
+                name=role.name,
+                color=role.color.value if role.color else None,
+                position=role.position,
+                is_hoisted=role.hoist,
+                is_mentionable=role.mentionable,
+                is_managed=role.managed,
+            )
+            logger.debug(f"Role created: {role.name} in guild {role.guild.id}")
+        except Exception as e:
+            logger.error(f"Error handling role create: {e}")
+
+    @listen(RoleUpdate)
+    async def on_role_update(self, event: RoleUpdate):
+        """Handle when a role is updated."""
+        role = event.role
+
+        try:
+            api = get_api_client()
+            await api.upsert_role(
+                role_id=int(role.id),
+                guild_id=int(role.guild.id),
+                name=role.name,
+                color=role.color.value if role.color else None,
+                position=role.position,
+                is_hoisted=role.hoist,
+                is_mentionable=role.mentionable,
+                is_managed=role.managed,
+            )
+            logger.debug(f"Role updated: {role.name} in guild {role.guild.id}")
+        except Exception as e:
+            logger.error(f"Error handling role update: {e}")
+
+    @listen(RoleDelete)
+    async def on_role_delete(self, event: RoleDelete):
+        """Handle when a role is deleted."""
+        try:
+            api = get_api_client()
+            await api.delete_role(int(event.role_id))
+            logger.debug(f"Role deleted: {event.role_id}")
+        except Exception as e:
+            logger.error(f"Error handling role delete: {e}")
+
+    @listen(MemberUpdate)
+    async def on_member_update(self, event: MemberUpdate):
+        """Handle when a member is updated (including role changes)."""
+        before = event.before
+        after = event.after
+
+        # Only sync if roles changed
+        if before and after and before.roles != after.roles:
+            try:
+                api = get_api_client()
+                role_ids = [int(r.id) for r in after.roles if not r.default]
+                await api.sync_member_roles(
+                    guild_id=int(after.guild.id),
+                    user_id=int(after.id),
+                    role_ids=role_ids,
+                )
+                logger.debug(f"Member roles updated: {after.id} in guild {after.guild.id}")
+            except Exception as e:
+                logger.error(f"Error handling member role update: {e}")
 
 
 def setup(bot):

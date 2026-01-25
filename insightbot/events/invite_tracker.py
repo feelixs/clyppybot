@@ -34,9 +34,26 @@ class InviteTracker(Extension):
         # guild_id -> {invite_code -> CachedInvite}
         self._invite_cache: Dict[int, Dict[str, CachedInvite]] = {}
 
+    def _has_manage_guild_permission(self, guild) -> bool:
+        """Check if the bot has MANAGE_GUILD permission in the guild."""
+        from interactions import Permissions
+        try:
+            bot_member = guild.get_member(self.bot.user.id)
+            if not bot_member:
+                return False
+            return bot_member.has_permission(Permissions.MANAGE_GUILD)
+        except Exception as e:
+            logger.debug(f"Guild {guild.id}: permission check error: {e}")
+            return False
+
     async def _cache_guild_invites(self, guild) -> bool:
         """Cache all invites for a guild. Returns True if successful."""
         guild_id = int(guild.id)
+
+        # Check permission before attempting to fetch
+        if not self._has_manage_guild_permission(guild):
+            logger.debug(f"Skipping invite cache for guild {guild_id}: missing MANAGE_GUILD permission")
+            return False
 
         try:
             # Fetch all invites for the guild
@@ -66,6 +83,10 @@ class InviteTracker(Extension):
         """Compare cached invites to current invites to find which was used."""
         guild_id = int(guild.id)
         old_cache = self._invite_cache.get(guild_id, {})
+
+        # Check permission before attempting to fetch
+        if not self._has_manage_guild_permission(guild):
+            return None
 
         try:
             # Fetch current invites

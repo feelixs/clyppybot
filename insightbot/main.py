@@ -74,6 +74,8 @@ async def on_ready():
     task_manager = TaskManager.get()
     api = get_api_client()
     task_manager.register("bulk_upsert_members", api.bulk_upsert_members)
+    task_manager.register("bulk_upsert_roles", api.bulk_upsert_roles)
+    task_manager.register("bulk_sync_member_roles", api.bulk_sync_member_roles)
 
     # Load and run any pending tasks from previous shutdown
     await task_manager.load_and_run_pending()

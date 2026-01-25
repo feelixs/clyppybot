@@ -907,6 +907,80 @@ class APIClient:
             f"/api/internal/topics/stats/{guild_id}",
         )
 
+    # Role operations
+    async def upsert_role(
+        self,
+        role_id: int,
+        guild_id: int,
+        name: str,
+        color: Optional[int] = None,
+        position: int = 0,
+        is_hoisted: bool = False,
+        is_mentionable: bool = False,
+        is_managed: bool = False,
+    ) -> None:
+        """Create or update a role."""
+        await self._request(
+            "POST",
+            "/api/internal/roles",
+            json={
+                "role_id": role_id,
+                "guild_id": guild_id,
+                "name": name,
+                "color": color,
+                "position": position,
+                "is_hoisted": is_hoisted,
+                "is_mentionable": is_mentionable,
+                "is_managed": is_managed,
+            },
+        )
+
+    async def delete_role(self, role_id: int) -> None:
+        """Delete a role."""
+        await self._request("DELETE", f"/api/internal/roles/{role_id}")
+
+    async def bulk_upsert_roles(self, roles_data: List[dict]) -> int:
+        """Bulk create or update roles. Returns count upserted."""
+        if not roles_data:
+            return 0
+        result = await self._request(
+            "POST",
+            "/api/internal/roles/bulk",
+            json={"roles": roles_data},
+        )
+        return result.get("count", 0)
+
+    async def sync_member_roles(
+        self,
+        guild_id: int,
+        user_id: int,
+        role_ids: List[int],
+    ) -> None:
+        """Sync a single member's roles."""
+        await self._request(
+            "PUT",
+            f"/api/internal/members/{guild_id}/{user_id}/roles",
+            json={"role_ids": role_ids},
+        )
+
+    async def bulk_sync_member_roles(
+        self,
+        guild_id: int,
+        member_roles: List[dict],
+    ) -> int:
+        """Bulk sync member roles for a guild. Returns count processed."""
+        if not member_roles:
+            return 0
+        result = await self._request(
+            "POST",
+            "/api/internal/member-roles/bulk",
+            json={
+                "guild_id": guild_id,
+                "member_roles": member_roles,
+            },
+        )
+        return result.get("count", 0)
+
 
 # Global client instance
 _client: Optional[APIClient] = None
