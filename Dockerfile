@@ -7,6 +7,7 @@ COPY . .
 
 RUN apt-get -yq update && apt-get install -y git
 RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r insightbot/requirements.txt
 RUN apt-get install -yq ffmpeg curl unzip
 
 # Install Deno for yt-dlp YouTube n-challenge solving
