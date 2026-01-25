@@ -1,3 +1,5 @@
+import asyncio
+
 from interactions import Extension, listen
 from interactions.api.events import MemberAdd, MemberRemove, GuildJoin, GuildLeft, RoleCreate, RoleUpdate, RoleDelete, MemberUpdate
 
@@ -130,21 +132,20 @@ class MemberEvents(Extension):
 
                 if discord_users_data:
                     task_manager = TaskManager.get()
-                    # Bulk upsert discord_users first
-                    task_manager.create_task(
-                        api.bulk_upsert_discord_users(discord_users_data),
-                        name="bulk_upsert_discord_users",
-                        persist_args=(discord_users_data,),
-                    )
-                    # Then bulk upsert members
-                    task_manager.create_task(
+                    # discord_users must complete before members (FK constraint)
+                    await api.bulk_upsert_discord_users(discord_users_data)
+                    # Members can run as background task now
+                    members_task = task_manager.create_task(
                         api.bulk_upsert_members(members_data, guild),
                         name="bulk_upsert_members",
                         persist_args=(members_data,),
                         persist_kwargs={"guild_id": int(guild.id)},
                     )
+                else:
+                    members_task = None
 
             # Sync roles in bulk
+            roles_task = None
             if guild.roles:
                 task_manager = TaskManager.get()
                 roles_data = [
@@ -162,13 +163,13 @@ class MemberEvents(Extension):
                     if not role.default  # Skip @everyone
                 ]
                 if roles_data:
-                    task_manager.create_task(
+                    roles_task = task_manager.create_task(
                         api.bulk_upsert_roles(roles_data),
                         name="bulk_upsert_roles",
                         persist_args=(roles_data,),
                     )
 
-                # Sync member roles
+                # Sync member roles - must wait for members and roles to complete (FK constraints)
                 member_roles_data = [
                     {
                         "user_id": int(member.id),
@@ -178,6 +179,10 @@ class MemberEvents(Extension):
                     if not member.bot
                 ]
                 if member_roles_data:
+                    # Wait for prerequisite tasks before syncing member_roles
+                    tasks_to_await = [t for t in [members_task, roles_task] if t]
+                    if tasks_to_await:
+                        await asyncio.gather(*tasks_to_await)
                     task_manager.create_task(
                         api.bulk_sync_member_roles(int(guild.id), member_roles_data),
                         name="bulk_sync_member_roles",
