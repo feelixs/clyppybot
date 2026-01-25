@@ -29,8 +29,8 @@ class Config:
         """Load configuration from environment variables."""
         return cls(
             discord_token=os.environ["DISCORD_TOKEN"],
-            discord_client_id=os.environ["DISCORD_CLIENT_ID"],
-            discord_client_secret=os.environ["DISCORD_CLIENT_SECRET"],
+            discord_client_id=os.environ.get("DISCORD_CLIENT_ID"),
+            discord_client_secret=os.environ.get("DISCORD_CLIENT_SECRET"),
             api_base_url=os.getenv("API_BASE_URL", "http://localhost:8000"),
             bot_api_key=os.environ["BOT_API_KEY"],
             openai_api_key=os.getenv("MY_OPENAI_API_KEY", ""),
