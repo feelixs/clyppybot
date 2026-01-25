@@ -15,6 +15,9 @@ import logging
 import aiohttp
 import os
 
+from insightbot.services.session_reconciler import SessionReconciler
+from insightbot.api_client import get_api_client
+
 
 def format_count(count: int) -> str:
     """Format a number with commas (e.g., 1004690 -> '1,004,690')"""

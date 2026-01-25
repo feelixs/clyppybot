@@ -13,10 +13,7 @@ import signal
 import sys
 import os
 
-from insightbot.config import config
-from insightbot.logging_config import setup_logging, get_logger
-from insightbot.api_client import close_api_client, get_api_client
-from insightbot.services.session_reconciler import SessionReconciler
+from insightbot.api_client import close_api_client
 from insightbot.services.task_manager import TaskManager
 
 
