@@ -136,6 +136,10 @@ class AutoEmbedder:
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
 
+        # Validate parsed_id is a string
+        if not isinstance(parsed_id, str):
+            self.logger.info(f"[WARNING] parse_clip_url returned non-string type {type(parsed_id)}: {parsed_id}")
+
         # Clean up stale entries (clips that have been processing for > 5 minutes)
         await self._cleanup_stale_downloads()
 
@@ -208,6 +212,11 @@ class AutoEmbedder:
         stale_clips = []
 
         for clip_id in list(self.bot.currently_embedding):
+            # Skip non-string entries (defensive programming)
+            if not isinstance(clip_id, str):
+                self.logger.warning(f"Non-string entry in currently_embedding: {type(clip_id)} - {clip_id}")
+                continue
+
             if clip_id in self.embedding_timestamps:
                 age = current_time - self.embedding_timestamps[clip_id]
                 if age > max_age_seconds:
