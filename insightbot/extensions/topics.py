@@ -28,29 +28,29 @@ PERIOD_CHOICES = [
 class TopicsExtension(Extension):
     """Topic tracking slash commands."""
 
-    @slash_command(
-        name="topics",
-        description="View topic insights",
-        sub_cmd_name="trending",
-        sub_cmd_description="View trending topics in this server",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period to analyze",
-                type=OptionType.STRING,
-                required=False,
-                choices=PERIOD_CHOICES,
-            ),
-            SlashCommandOption(
-                name="limit",
-                description="Number of topics to show (5-20)",
-                type=OptionType.INTEGER,
-                required=False,
-                min_value=5,
-                max_value=20,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="topics",
+    #    description="View topic insights",
+    #    sub_cmd_name="trending",
+    #    sub_cmd_description="View trending topics in this server",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period to analyze",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=PERIOD_CHOICES,
+    #        ),
+    #        SlashCommandOption(
+    #            name="limit",
+    #            description="Number of topics to show (5-20)",
+    #            type=OptionType.INTEGER,
+    #            required=False,
+    #            min_value=5,
+    #            max_value=20,
+    #        ),
+    #    ],
+    #)
     async def topics_trending(self, ctx: SlashContext, period: str = "7", limit: int = 10):
         """View trending topics in this server."""
         await ctx.defer()
@@ -104,35 +104,35 @@ class TopicsExtension(Extension):
             logger.error(f"Error getting trending topics: {e}")
             await ctx.send("An error occurred while fetching trending topics.", ephemeral=True)
 
-    @slash_command(
-        name="topics",
-        description="View topic insights",
-        sub_cmd_name="channel",
-        sub_cmd_description="View trending topics in a specific channel",
-        options=[
-            SlashCommandOption(
-                name="channel",
-                description="Channel to analyze",
-                type=OptionType.CHANNEL,
-                required=True,
-            ),
-            SlashCommandOption(
-                name="period",
-                description="Time period to analyze",
-                type=OptionType.STRING,
-                required=False,
-                choices=PERIOD_CHOICES,
-            ),
-            SlashCommandOption(
-                name="limit",
-                description="Number of topics to show (5-20)",
-                type=OptionType.INTEGER,
-                required=False,
-                min_value=5,
-                max_value=20,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="topics",
+        #description="View topic insights",
+        #sub_cmd_name="channel",
+        #sub_cmd_description="View trending topics in a specific channel",
+            #options=[
+            #SlashCommandOption(
+            #    name="channel",
+            #    description="Channel to analyze",
+            #    type=OptionType.CHANNEL,
+            #    required=True,
+            #),
+            #SlashCommandOption(
+            #    name="period",
+            #    description="Time period to analyze",
+            #    type=OptionType.STRING,
+            #    required=False,
+            #    choices=PERIOD_CHOICES,
+            #),
+            #SlashCommandOption(
+            #    name="limit",
+            #    description="Number of topics to show (5-20)",
+            #    type=OptionType.INTEGER,
+            #    required=False,
+            #    min_value=5,
+            #    max_value=20,
+        #),
+        #],
+    #)
     async def topics_channel(self, ctx: SlashContext, channel: GuildText, period: str = "7", limit: int = 10):
         """View trending topics in a specific channel."""
         await ctx.defer()
@@ -186,30 +186,30 @@ class TopicsExtension(Extension):
             logger.error(f"Error getting channel topics: {e}")
             await ctx.send("An error occurred while fetching channel topics.", ephemeral=True)
 
-    @slash_command(
-        name="topics",
-        description="View topic insights",
-        sub_cmd_name="emerging",
-        sub_cmd_description="View potential new topics from unknown words",
-        options=[
-            SlashCommandOption(
-                name="min_users",
-                description="Minimum unique users mentioning the word",
-                type=OptionType.INTEGER,
-                required=False,
-                min_value=1,
-                max_value=50,
-            ),
-            SlashCommandOption(
-                name="limit",
-                description="Number of words to show (5-20)",
-                type=OptionType.INTEGER,
-                required=False,
-                min_value=5,
-                max_value=20,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="topics",
+        #description="View topic insights",
+        #sub_cmd_name="emerging",
+        #sub_cmd_description="View potential new topics from unknown words",
+            #options=[
+            #SlashCommandOption(
+            #    name="min_users",
+            #    description="Minimum unique users mentioning the word",
+            #    type=OptionType.INTEGER,
+            #    required=False,
+            #    min_value=1,
+            #    max_value=50,
+            #),
+            #SlashCommandOption(
+            #    name="limit",
+            #    description="Number of words to show (5-20)",
+            #    type=OptionType.INTEGER,
+            #    required=False,
+            #    min_value=5,
+            #    max_value=20,
+        #),
+        #],
+    #)
     async def topics_emerging(self, ctx: SlashContext, min_users: int = 3, limit: int = 10):
         """View potential new topics from unknown words."""
         await ctx.defer()
@@ -257,12 +257,12 @@ class TopicsExtension(Extension):
             logger.error(f"Error getting emerging topics: {e}")
             await ctx.send("An error occurred while fetching emerging topics.", ephemeral=True)
 
-    @slash_command(
-        name="topics",
-        description="View topic insights",
-        sub_cmd_name="stats",
-        sub_cmd_description="View overall topic statistics for this server",
-    )
+        #@slash_command(
+        #name="topics",
+        #description="View topic insights",
+        #sub_cmd_name="stats",
+        #sub_cmd_description="View overall topic statistics for this server",
+    #)
     async def topics_stats(self, ctx: SlashContext):
         """View overall topic statistics."""
         await ctx.defer()

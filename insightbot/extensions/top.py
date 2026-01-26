@@ -33,21 +33,21 @@ INVITE_PERIOD_CHOICES = [
 class TopExtension(Extension):
     """Leaderboard slash commands."""
 
-    @slash_command(
-        name="top",
-        description="View leaderboards",
-        sub_cmd_name="messages",
-        sub_cmd_description="View message leaderboard",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period for the leaderboard",
-                type=OptionType.STRING,
-                required=False,
-                choices=PERIOD_CHOICES,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="top",
+    #    description="View leaderboards",
+    #    sub_cmd_name="messages",
+    #    sub_cmd_description="View message leaderboard",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period for the leaderboard",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=PERIOD_CHOICES,
+    #        ),
+    #    ],
+    #)
     async def top_messages(self, ctx: SlashContext, period: str = "week"):
         """Show message leaderboard."""
         await ctx.defer()
@@ -98,21 +98,21 @@ class TopExtension(Extension):
             logger.error(f"Error getting message leaderboard: {e}")
             await ctx.send("An error occurred while fetching the leaderboard.", ephemeral=True)
 
-    @slash_command(
-        name="top",
-        description="View leaderboards",
-        sub_cmd_name="voice",
-        sub_cmd_description="View voice time leaderboard",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period for the leaderboard",
-                type=OptionType.STRING,
-                required=False,
-                choices=PERIOD_CHOICES,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="top",
+    #    description="View leaderboards",
+    #    sub_cmd_name="voice",
+    #    sub_cmd_description="View voice time leaderboard",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period for the leaderboard",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=PERIOD_CHOICES,
+    #        ),
+    #    ],
+    #)
     async def top_voice(self, ctx: SlashContext, period: str = "week"):
         """Show voice time leaderboard."""
         await ctx.defer()
@@ -169,21 +169,21 @@ class TopExtension(Extension):
             logger.error(f"Error getting voice leaderboard: {e}")
             await ctx.send("An error occurred while fetching the leaderboard.", ephemeral=True)
 
-    @slash_command(
-        name="top",
-        description="View leaderboards",
-        sub_cmd_name="games",
-        sub_cmd_description="View gaming time leaderboard",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period for the leaderboard",
-                type=OptionType.STRING,
-                required=False,
-                choices=PERIOD_CHOICES,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="top",
+    #    description="View leaderboards",
+    #    sub_cmd_name="games",
+    #    sub_cmd_description="View gaming time leaderboard",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period for the leaderboard",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=PERIOD_CHOICES,
+    #        ),
+    #    ],
+    #)
     async def top_games(self, ctx: SlashContext, period: str = "week"):
         """Show gaming time leaderboard."""
         await ctx.defer()
@@ -240,21 +240,21 @@ class TopExtension(Extension):
             logger.error(f"Error getting games leaderboard: {e}")
             await ctx.send("An error occurred while fetching the leaderboard.", ephemeral=True)
 
-    @slash_command(
-        name="top",
-        description="View leaderboards",
-        sub_cmd_name="invites",
-        sub_cmd_description="View invite leaderboard",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period for the leaderboard",
-                type=OptionType.STRING,
-                required=False,
-                choices=INVITE_PERIOD_CHOICES,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="top",
+    #    description="View leaderboards",
+    #    sub_cmd_name="invites",
+    #    sub_cmd_description="View invite leaderboard",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period for the leaderboard",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=INVITE_PERIOD_CHOICES,
+    #        ),
+    #    ],
+    #)
     async def top_invites(self, ctx: SlashContext, period: str = "all"):
         """Show invite leaderboard."""
         await ctx.defer()

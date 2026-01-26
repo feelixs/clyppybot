@@ -21,23 +21,23 @@ logger = get_logger("insightbot.extensions.games")
 class GamesExtension(Extension):
     """Game statistics slash commands."""
 
-    @slash_command(
-        name="topgames",
-        description="View the most played games on this server",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period (today, week, month)",
-                type=OptionType.STRING,
-                required=False,
-                choices=[
-                    {"name": "Today", "value": "today"},
-                    {"name": "This Week", "value": "week"},
-                    {"name": "This Month", "value": "month"},
-                ],
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="topgames",
+    #    description="View the most played games on this server",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="period",
+    #            description="Time period (today, week, month)",
+    #            type=OptionType.STRING,
+    #            required=False,
+    #            choices=[
+    #                {"name": "Today", "value": "today"},
+    #                {"name": "This Week", "value": "week"},
+    #                {"name": "This Month", "value": "month"},
+    #            ],
+    #        ),
+    #    ],
+    #)
     async def topgames(self, ctx: SlashContext, period: str = "week"):
         """View the most played games on this server."""
         await ctx.defer()
@@ -92,29 +92,29 @@ class GamesExtension(Extension):
             logger.error(f"Error getting top games: {e}")
             await ctx.send("An error occurred while fetching game statistics.", ephemeral=True)
 
-    @slash_command(
-        name="mygames",
-        description="View your personal gaming stats",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period (today, week, month)",
-                type=OptionType.STRING,
-                required=False,
-                choices=[
-                    {"name": "Today", "value": "today"},
-                    {"name": "This Week", "value": "week"},
-                    {"name": "This Month", "value": "month"},
-                ],
-            ),
-            SlashCommandOption(
-                name="user",
-                description="User to view stats for (defaults to you)",
-                type=OptionType.USER,
-                required=False,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="mygames",
+        #description="View your personal gaming stats",
+            #options=[
+            #SlashCommandOption(
+            #    name="period",
+            #    description="Time period (today, week, month)",
+            #    type=OptionType.STRING,
+            #    required=False,
+            #    choices=[
+            #        {"name": "Today", "value": "today"},
+            #        {"name": "This Week", "value": "week"},
+            #        {"name": "This Month", "value": "month"},
+            #    ],
+            #),
+            #SlashCommandOption(
+            #    name="user",
+            #    description="User to view stats for (defaults to you)",
+            #    type=OptionType.USER,
+            #    required=False,
+        #),
+        #],
+    #)
     async def mygames(self, ctx: SlashContext, period: str = "month", user: Member = None):
         """View your personal gaming stats."""
         await ctx.defer()
@@ -182,23 +182,23 @@ class GamesExtension(Extension):
             logger.error(f"Error getting user games: {e}")
             await ctx.send("An error occurred while fetching game statistics.", ephemeral=True)
 
-    @slash_command(
-        name="gamestats",
-        description="View overall gaming statistics for this server",
-        options=[
-            SlashCommandOption(
-                name="period",
-                description="Time period (today, week, month)",
-                type=OptionType.STRING,
-                required=False,
-                choices=[
-                    {"name": "Today", "value": "today"},
-                    {"name": "This Week", "value": "week"},
-                    {"name": "This Month", "value": "month"},
-                ],
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="gamestats",
+        #description="View overall gaming statistics for this server",
+            #options=[
+            #SlashCommandOption(
+            #    name="period",
+            #    description="Time period (today, week, month)",
+            #    type=OptionType.STRING,
+            #    required=False,
+            #    choices=[
+            #        {"name": "Today", "value": "today"},
+            #        {"name": "This Week", "value": "week"},
+            #        {"name": "This Month", "value": "month"},
+            #    ],
+        #),
+        #],
+    #)
     async def gamestats(self, ctx: SlashContext, period: str = "week"):
         """View overall gaming statistics for this server."""
         await ctx.defer()

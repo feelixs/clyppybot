@@ -52,39 +52,39 @@ class CountersExtension(Extension):
         self.bot = bot
         self._pending_overwrites: dict[int, dict] = {}  # channel_id -> counter data
 
-    @slash_command(
-        name="counter",
-        description="Manage counter channels",
-        sub_cmd_name="setup",
-        sub_cmd_description="Create a counter channel",
-        options=[
-            SlashCommandOption(
-                name="channel",
-                description="The voice channel to use as counter",
-                type=OptionType.CHANNEL,
-                channel_types=[ChannelType.GUILD_VOICE],
-                required=True,
-            ),
-            SlashCommandOption(
-                name="template",
-                description="Text to display. Use /counter help for available keywords.",
-                type=OptionType.STRING,
-                required=True,
-            ),
-            SlashCommandOption(
-                name="role",
-                description="Role to count (for {role} keyword)",
-                type=OptionType.ROLE,
-                required=False,
-            ),
-            SlashCommandOption(
-                name="goal",
-                description="Goal target number (for {goal} keyword)",
-                type=OptionType.INTEGER,
-                required=False,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="counter",
+        #description="Manage counter channels",
+        #sub_cmd_name="setup",
+        #sub_cmd_description="Create a counter channel",
+        #options=[
+        #    SlashCommandOption(
+        #        name="channel",
+        #        description="The voice channel to use as counter",
+        #        type=OptionType.CHANNEL,
+        #        channel_types=[ChannelType.GUILD_VOICE],
+        #        required=True,
+        #    ),
+        #    SlashCommandOption(
+        #        name="template",
+        #        description="Text to display. Use /counter help for available keywords.",
+        #        type=OptionType.STRING,
+        #        required=True,
+        #    ),
+        #    SlashCommandOption(
+        #        name="role",
+        #        description="Role to count (for {role} keyword)",
+        #        type=OptionType.ROLE,
+        #        required=False,
+        #    ),
+        #    SlashCommandOption(
+        #        name="goal",
+        #        description="Goal target number (for {goal} keyword)",
+        #        type=OptionType.INTEGER,
+        #        required=False,
+        #    ),
+        #],
+    #)
     @has_manage_channels()
     async def counter_setup(
         self,
@@ -218,21 +218,21 @@ class CountersExtension(Extension):
             logger.error(f"Error creating counter: {e}")
             await ctx.send("An error occurred while creating the counter.", ephemeral=True)
 
-    @slash_command(
-        name="counter",
-        description="Manage counter channels",
-        sub_cmd_name="remove",
-        sub_cmd_description="Remove a counter channel",
-        options=[
-            SlashCommandOption(
-                name="channel",
-                description="The counter channel to remove",
-                type=OptionType.CHANNEL,
-                channel_types=[ChannelType.GUILD_VOICE],
-                required=True,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="counter",
+        #description="Manage counter channels",
+        #sub_cmd_name="remove",
+        #sub_cmd_description="Remove a counter channel",
+            #options=[
+            #SlashCommandOption(
+            #    name="channel",
+            #    description="The counter channel to remove",
+            #    type=OptionType.CHANNEL,
+            #    channel_types=[ChannelType.GUILD_VOICE],
+            #    required=True,
+        #),
+        #],
+    #)
     @has_manage_channels()
     async def counter_remove(self, ctx: SlashContext, channel: GuildVoice):
         """Remove a counter channel."""
@@ -261,12 +261,12 @@ class CountersExtension(Extension):
             logger.error(f"Error removing counter: {e}")
             await ctx.send("An error occurred while removing the counter.", ephemeral=True)
 
-    @slash_command(
-        name="counter",
-        description="Manage counter channels",
-        sub_cmd_name="help",
-        sub_cmd_description="Learn how to create counter channels",
-    )
+        #@slash_command(
+        #name="counter",
+        #description="Manage counter channels",
+        #sub_cmd_name="help",
+        #sub_cmd_description="Learn how to create counter channels",
+    #)
     async def counter_help(self, ctx: SlashContext):
         """Show help for counter keywords."""
         embed = Embed(
@@ -315,12 +315,12 @@ class CountersExtension(Extension):
         )
         await ctx.send(embed=embed, ephemeral=True)
 
-    @slash_command(
-        name="counter",
-        description="Manage counter channels",
-        sub_cmd_name="list",
-        sub_cmd_description="List all counter channels",
-    )
+        #@slash_command(
+        #name="counter",
+        #description="Manage counter channels",
+        #sub_cmd_name="list",
+        #sub_cmd_description="List all counter channels",
+    #)
     async def counter_list(self, ctx: SlashContext):
         """List all counter channels."""
         await ctx.defer()

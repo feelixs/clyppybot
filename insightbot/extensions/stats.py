@@ -20,12 +20,12 @@ logger = get_logger("insightbot.extensions.stats")
 class StatsExtension(Extension):
     """Stats slash commands."""
 
-    @slash_command(
-        name="stats",
-        description="View server statistics",
-        sub_cmd_name="server",
-        sub_cmd_description="View overall server statistics",
-    )
+    #@slash_command(
+    #    name="stats",
+    #    description="View server statistics",
+    #    sub_cmd_name="server",
+    #    sub_cmd_description="View overall server statistics",
+    #)
     async def stats_server(self, ctx: SlashContext):
         """Show server statistics."""
         await ctx.defer()
@@ -91,20 +91,20 @@ class StatsExtension(Extension):
             logger.error(f"Error getting server stats: {e}")
             await ctx.send("An error occurred while fetching statistics.", ephemeral=True)
 
-    @slash_command(
-        name="stats",
-        description="View server statistics",
-        sub_cmd_name="channel",
-        sub_cmd_description="View channel statistics",
-        options=[
-            SlashCommandOption(
-                name="channel",
-                description="The channel to view stats for (defaults to current)",
-                type=OptionType.CHANNEL,
-                required=False,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="stats",
+        #description="View server statistics",
+        #sub_cmd_name="channel",
+        #sub_cmd_description="View channel statistics",
+            #options=[
+            #SlashCommandOption(
+            #    name="channel",
+            #    description="The channel to view stats for (defaults to current)",
+            #    type=OptionType.CHANNEL,
+            #    required=False,
+        #),
+        #],
+    #)
     async def stats_channel(self, ctx: SlashContext, channel: GuildText = None):
         """Show channel statistics."""
         await ctx.defer()
@@ -144,20 +144,20 @@ class StatsExtension(Extension):
             logger.error(f"Error getting channel stats: {e}")
             await ctx.send("An error occurred while fetching statistics.", ephemeral=True)
 
-    @slash_command(
-        name="stats",
-        description="View server statistics",
-        sub_cmd_name="user",
-        sub_cmd_description="View user statistics",
-        options=[
-            SlashCommandOption(
-                name="user",
-                description="The user to view stats for (defaults to yourself)",
-                type=OptionType.USER,
-                required=False,
-            ),
-        ],
-    )
+        #@slash_command(
+        #name="stats",
+        #description="View server statistics",
+        #sub_cmd_name="user",
+        #sub_cmd_description="View user statistics",
+            #options=[
+            #SlashCommandOption(
+            #    name="user",
+            #    description="The user to view stats for (defaults to yourself)",
+            #    type=OptionType.USER,
+            #    required=False,
+        #),
+        #],
+    #)
     async def stats_user(self, ctx: SlashContext, user: Member = None):
         """Show user statistics."""
         await ctx.defer()
@@ -212,12 +212,12 @@ class StatsExtension(Extension):
             logger.error(f"Error getting user stats: {e}")
             await ctx.send("An error occurred while fetching statistics.", ephemeral=True)
 
-    @slash_command(
-        name="stats",
-        description="View server statistics",
-        sub_cmd_name="voice",
-        sub_cmd_description="View voice channel activity",
-    )
+        #@slash_command(
+        #name="stats",
+        #description="View server statistics",
+        #sub_cmd_name="voice",
+        #sub_cmd_description="View voice channel activity",
+    #)
     async def stats_voice(self, ctx: SlashContext):
         """Show voice channel statistics."""
         await ctx.defer()

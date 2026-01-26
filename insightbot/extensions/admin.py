@@ -44,35 +44,35 @@ def has_manage_guild():
 class AdminExtension(Extension):
     """Admin and digest commands."""
 
-    @slash_command(
-        name="digest",
-        description="Manage weekly digests",
-        sub_cmd_name="setup",
-        sub_cmd_description="Configure weekly digest",
-        options=[
-            SlashCommandOption(
-                name="channel",
-                description="Channel to post digests in",
-                type=OptionType.CHANNEL,
-                required=True,
-            ),
-            SlashCommandOption(
-                name="day",
-                description="Day of the week to post",
-                type=OptionType.INTEGER,
-                required=False,
-                choices=DAY_CHOICES,
-            ),
-            SlashCommandOption(
-                name="hour",
-                description="Hour to post (UTC, 0-23)",
-                type=OptionType.INTEGER,
-                required=False,
-                min_value=0,
-                max_value=23,
-            ),
-        ],
-    )
+    #@slash_command(
+    #    name="digest",
+    #    description="Manage weekly digests",
+    #    sub_cmd_name="setup",
+    #    sub_cmd_description="Configure weekly digest",
+    #    options=[
+    #        SlashCommandOption(
+    #            name="channel",
+    #           description="Channel to post digests in",
+    #            type=OptionType.CHANNEL,
+    #            required=True,
+    #        ),
+    #        SlashCommandOption(
+    #            name="day",
+    #            description="Day of the week to post",
+    #            type=OptionType.INTEGER,
+    #            required=False,
+    #            choices=DAY_CHOICES,
+    #        ),
+    #        SlashCommandOption(
+    #            name="hour",
+    #            description="Hour to post (UTC, 0-23)",
+    #            type=OptionType.INTEGER,
+    #            required=False,
+    #            min_value=0,
+    #            max_value=23,
+    #        ),
+    #    ],
+    #)
     @has_manage_guild()
     async def digest_setup(
         self,
@@ -113,12 +113,12 @@ class AdminExtension(Extension):
             logger.error(f"Error setting up digest: {e}")
             await ctx.send("An error occurred while configuring the digest.", ephemeral=True)
 
-    @slash_command(
-        name="digest",
-        description="Manage weekly digests",
-        sub_cmd_name="disable",
-        sub_cmd_description="Disable weekly digest",
-    )
+        #@slash_command(
+        #name="digest",
+        #description="Manage weekly digests",
+        #sub_cmd_name="disable",
+        #sub_cmd_description="Disable weekly digest",
+    #)
     @has_manage_guild()
     async def digest_disable(self, ctx: SlashContext):
         """Disable weekly digest."""
@@ -136,12 +136,12 @@ class AdminExtension(Extension):
             logger.error(f"Error disabling digest: {e}")
             await ctx.send("An error occurred while disabling the digest.", ephemeral=True)
 
-    @slash_command(
-        name="digest",
-        description="Manage weekly digests",
-        sub_cmd_name="preview",
-        sub_cmd_description="Preview the current week's digest",
-    )
+        #@slash_command(
+        #name="digest",
+        #description="Manage weekly digests",
+        #sub_cmd_name="preview",
+        #sub_cmd_description="Preview the current week's digest",
+    #)
     @has_manage_guild()
     async def digest_preview(self, ctx: SlashContext):
         """Preview the weekly digest."""
@@ -181,12 +181,12 @@ class AdminExtension(Extension):
             logger.error(f"Error generating digest preview: {e}")
             await ctx.send("An error occurred while generating the digest preview.", ephemeral=True)
 
-    @slash_command(
-        name="digest",
-        description="Manage weekly digests",
-        sub_cmd_name="status",
-        sub_cmd_description="Check digest configuration status",
-    )
+        #@slash_command(
+        #name="digest",
+        #description="Manage weekly digests",
+        #sub_cmd_name="status",
+        #sub_cmd_description="Check digest configuration status",
+    #)
     async def digest_status(self, ctx: SlashContext):
         """Check digest status."""
         await ctx.defer(ephemeral=True)
@@ -242,10 +242,10 @@ class AdminExtension(Extension):
             logger.error(f"Error checking digest status: {e}")
             await ctx.send("An error occurred while checking digest status.", ephemeral=True)
 
-    @slash_command(
-        name="queue-status",
-        description="Show event queue status (admin only)",
-    )
+        #@slash_command(
+        #name="queue-status",
+        #description="Show event queue status (admin only)",
+    #)
     @has_manage_guild()
     async def queue_status(self, ctx: SlashContext):
         """Show the current event queue depth by type."""
