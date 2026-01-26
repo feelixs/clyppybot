@@ -18,6 +18,10 @@ class MemberEvents(Extension):
     @listen(MemberAdd)
     async def on_member_add(self, event: MemberAdd):
         """Track when a member joins a guild."""
+        # Skip if GUILD_MEMBERS intent is not available
+        if not intent_flags.HAS_GUILD_MEMBERS:
+            return
+
         member = event.member
 
         if not member.guild:
@@ -52,6 +56,10 @@ class MemberEvents(Extension):
     @listen(MemberRemove)
     async def on_member_remove(self, event: MemberRemove):
         """Track when a member leaves a guild."""
+        # Skip if GUILD_MEMBERS intent is not available
+        if not intent_flags.HAS_GUILD_MEMBERS:
+            return
+
         member = event.member
 
         if not member.guild:
@@ -104,6 +112,9 @@ class MemberEvents(Extension):
             # Log if it's a new guild (either joined while running, or joined while offline)
             if self.bot.is_ready or was_inserted:
                 logger.info(f"Joined guild: {guild.name} ({guild.id})")
+
+            # Initialize task variables
+            members_task = None
 
             # Sync existing members in bulk (only if GUILD_MEMBERS intent is available)
             if intent_flags.HAS_GUILD_MEMBERS and guild.members:
@@ -186,24 +197,26 @@ class MemberEvents(Extension):
                     )
 
                 # Sync member roles - must wait for members and roles to complete (FK constraints)
-                member_roles_data = [
-                    {
-                        "user_id": int(member.id),
-                        "role_ids": [int(r.id) for r in member.roles if not r.default]
-                    }
-                    for member in guild.members
-                    if not member.bot
-                ]
-                if member_roles_data:
-                    # Wait for prerequisite tasks before syncing member_roles
-                    tasks_to_await = [t for t in [members_task, roles_task] if t]
-                    if tasks_to_await:
-                        await asyncio.gather(*tasks_to_await)
-                    task_manager.create_task(
-                        api.bulk_sync_member_roles(int(guild.id), member_roles_data),
-                        name="bulk_sync_member_roles",
-                        persist_args=(int(guild.id), member_roles_data),
-                    )
+                # Only sync if GUILD_MEMBERS intent is available (otherwise guild.members is empty)
+                if intent_flags.HAS_GUILD_MEMBERS and guild.members:
+                    member_roles_data = [
+                        {
+                            "user_id": int(member.id),
+                            "role_ids": [int(r.id) for r in member.roles if not r.default]
+                        }
+                        for member in guild.members
+                        if not member.bot
+                    ]
+                    if member_roles_data:
+                        # Wait for prerequisite tasks before syncing member_roles
+                        tasks_to_await = [t for t in [members_task, roles_task] if t]
+                        if tasks_to_await:
+                            await asyncio.gather(*tasks_to_await)
+                        task_manager.create_task(
+                            api.bulk_sync_member_roles(int(guild.id), member_roles_data),
+                            name="bulk_sync_member_roles",
+                            persist_args=(int(guild.id), member_roles_data),
+                        )
 
         except Exception as e:
             logger.error(f"Error handling guild join: {e}")
@@ -271,6 +284,10 @@ class MemberEvents(Extension):
     @listen(MemberUpdate)
     async def on_member_update(self, event: MemberUpdate):
         """Handle when a member is updated (including role changes)."""
+        # Skip if GUILD_MEMBERS intent is not available
+        if not intent_flags.HAS_GUILD_MEMBERS:
+            return
+
         before = event.before
         after = event.after
 
