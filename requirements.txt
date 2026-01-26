@@ -43,3 +43,5 @@ botocore
 replicate
 runwayml
 google-genai
+aiosqlite
+httpx
