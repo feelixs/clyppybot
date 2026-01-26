@@ -6,6 +6,7 @@ from interactions.api.events import PresenceUpdate
 from ..logging_config import get_logger
 from ..api_client import get_api_client
 from ..services.event_queue import get_event_queue, EVENT_USER_LAST_ONLINE
+from .. import intent_flags
 
 logger = get_logger("insightbot.events.presence")
 
@@ -16,6 +17,10 @@ class PresenceEvents(Extension):
     @listen(PresenceUpdate)
     async def on_presence_update(self, event: PresenceUpdate):
         """Track game session statistics."""
+        # Skip if GUILD_PRESENCES intent is not available
+        if not intent_flags.HAS_GUILD_PRESENCES:
+            return
+
         # Ignore if no guild
         if not event.guild_id:
             return

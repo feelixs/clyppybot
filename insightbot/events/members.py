@@ -7,6 +7,7 @@ from ..logging_config import get_logger
 from ..api_client import get_api_client
 from ..services.task_manager import TaskManager
 from ..services.event_queue import get_event_queue, EVENT_USER_LAST_ONLINE
+from .. import intent_flags
 
 logger = get_logger("insightbot.events.members")
 
@@ -104,8 +105,8 @@ class MemberEvents(Extension):
             if self.bot.is_ready or was_inserted:
                 logger.info(f"Joined guild: {guild.name} ({guild.id})")
 
-            # Sync existing members in bulk
-            if guild.members:
+            # Sync existing members in bulk (only if GUILD_MEMBERS intent is available)
+            if intent_flags.HAS_GUILD_MEMBERS and guild.members:
                 # Prepare discord_users bulk data (global user profiles)
                 discord_users_data = [
                     {
@@ -143,18 +144,19 @@ class MemberEvents(Extension):
                         persist_kwargs={"guild_id": int(guild.id)},
                     )
 
-                    # Capture initial presence states for online users
-                    queue = get_event_queue()
-                    online_count = 0
-                    for member in guild.members:
-                        if not member.bot and member.status and str(member.status) in ['online', 'idle', 'dnd']:
-                            await queue.enqueue(EVENT_USER_LAST_ONLINE, {
-                                "user_id": int(member.id),
-                            })
-                            online_count += 1
+                    # Capture initial presence states for online users (only if GUILD_PRESENCES is available)
+                    if intent_flags.HAS_GUILD_PRESENCES:
+                        queue = get_event_queue()
+                        online_count = 0
+                        for member in guild.members:
+                            if not member.bot and member.status and str(member.status) in ['online', 'idle', 'dnd']:
+                                await queue.enqueue(EVENT_USER_LAST_ONLINE, {
+                                    "user_id": int(member.id),
+                                })
+                                online_count += 1
 
-                    if online_count > 0:
-                        logger.info(f"Queued {online_count} initial presence states for guild {guild.id}")
+                        if online_count > 0:
+                            logger.info(f"Queued {online_count} initial presence states for guild {guild.id}")
                 else:
                     members_task = None
 

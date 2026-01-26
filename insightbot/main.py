@@ -8,6 +8,7 @@ from .api_client import close_api_client, get_api_client
 from .services.session_reconciler import SessionReconciler
 from .services.task_manager import TaskManager
 from .services.event_queue import close_event_queue, get_event_queue
+from . import intent_flags
 
 # Configure logging
 setup_logging()
@@ -93,6 +94,27 @@ async def on_ready():
     """Called when the bot is ready and connected to Discord."""
     logger.info(f"Bot is ready! Logged in as {bot.user}")
     logger.info(f"Connected to {len(bot.guilds)} guilds")
+
+    # Check if privileged intents are actually granted and set global flags
+    intent_flags.HAS_GUILD_PRESENCES = bool(bot.intents & Intents.GUILD_PRESENCES)
+    intent_flags.HAS_GUILD_MEMBERS = bool(bot.intents & Intents.GUILD_MEMBERS)
+    intent_flags.HAS_MESSAGE_CONTENT = bool(bot.intents & Intents.MESSAGE_CONTENT)
+
+    if not intent_flags.HAS_GUILD_PRESENCES:
+        logger.warning(
+            "GUILD_PRESENCES intent is not enabled - online status tracking and game activity disabled. "
+            "Enable it in the Discord Developer Portal."
+        )
+    if not intent_flags.HAS_GUILD_MEMBERS:
+        logger.warning(
+            "GUILD_MEMBERS intent is not enabled - member tracking may be incomplete. "
+            "Enable it in the Discord Developer Portal."
+        )
+    if not intent_flags.HAS_MESSAGE_CONTENT:
+        logger.warning(
+            "MESSAGE_CONTENT intent is not enabled - message content will not be available. "
+            "Enable it in the Discord Developer Portal."
+        )
 
     # Initialize TaskManager and register task functions
     task_manager = TaskManager.get()

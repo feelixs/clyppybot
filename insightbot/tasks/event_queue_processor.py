@@ -13,6 +13,7 @@ from ..services.event_queue import (
     EVENT_VOICE_END,
     EVENT_USER_LAST_ONLINE,
 )
+from .. import intent_flags
 
 logger = get_logger("insightbot.tasks.event_queue_processor")
 
@@ -41,7 +42,11 @@ class EventQueueProcessor(Extension):
         # Process each event type
         # IMPORTANT: VOICE_END must come before VOICE_START so that channel switches
         # (which queue an end + start) close the old session before opening the new one.
-        event_types = [EVENT_USER_UPSERT, EVENT_MESSAGE, EVENT_VOICE_END, EVENT_VOICE_START, EVENT_USER_LAST_ONLINE]
+        event_types = [EVENT_USER_UPSERT, EVENT_MESSAGE, EVENT_VOICE_END, EVENT_VOICE_START]
+
+        # Only process EVENT_USER_LAST_ONLINE if GUILD_PRESENCES intent is available
+        if intent_flags.HAS_GUILD_PRESENCES:
+            event_types.append(EVENT_USER_LAST_ONLINE)
 
         for event_type in event_types:
             # Drain-until-empty pattern
