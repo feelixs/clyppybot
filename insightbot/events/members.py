@@ -253,7 +253,8 @@ class MemberEvents(Extension):
     @listen(RoleUpdate)
     async def on_role_update(self, event: RoleUpdate):
         """Handle when a role is updated."""
-        role = event.role
+        # RoleUpdate has before/after attributes, not role
+        role = event.after
 
         try:
             api = get_api_client()
@@ -276,8 +277,9 @@ class MemberEvents(Extension):
         """Handle when a role is deleted."""
         try:
             api = get_api_client()
-            await api.delete_role(int(event.role_id))
-            logger.debug(f"Role deleted: {event.role_id}")
+            # RoleDelete has 'id' attribute, not 'role_id'
+            await api.delete_role(int(event.id))
+            logger.debug(f"Role deleted: {event.id}")
         except Exception as e:
             logger.error(f"Error handling role delete: {e}")
 
