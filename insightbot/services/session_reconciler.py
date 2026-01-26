@@ -10,6 +10,7 @@ from interactions import ActivityType
 from ..api_client import get_api_client
 from ..logging_config import get_logger
 from .event_queue import get_event_queue, EVENT_USER_LAST_ONLINE
+from .. import intent_flags
 
 logger = get_logger("insightbot.services.reconciler")
 
@@ -43,12 +44,20 @@ class SessionReconciler:
     """Reconciles database sessions with Discord's actual state on startup."""
 
     @staticmethod
-    async def reconcile_guild(guild, rate_limiter: _ShardRateLimiter, shard_id: int) -> dict:
+    async def reconcile_guild(
+        guild, rate_limiter: _ShardRateLimiter, shard_id: int, snapshot_time: datetime
+    ) -> dict:
         """
         Reconcile all sessions for a guild.
 
         Compares open sessions in the database against Discord's current state
         and closes any sessions that are no longer valid.
+
+        Args:
+            guild: Guild to reconcile
+            rate_limiter: Rate limiter for gateway requests
+            shard_id: Shard ID for this guild
+            snapshot_time: Only close sessions started before this time (prevents race conditions)
 
         Returns:
             dict with 'voice_closed' and 'game_closed' counts
@@ -81,15 +90,15 @@ class SessionReconciler:
             if member.voice and member.voice.channel:
                 users_in_voice.add(user_id)
 
-            # Check game activity from presence
-            if member.user.activities:
+            # Check game activity from presence (only if GUILD_PRESENCES is available)
+            if intent_flags.HAS_GUILD_PRESENCES and member.user.activities:
                 for activity in member.user.activities:
                     if activity.type == ActivityType.GAME:
                         users_playing_games[user_id] = activity.name
                         break
 
-            # Capture online presence state
-            if member.status and member.status.value in ('online', 'idle', 'dnd'):
+            # Capture online presence state (only if GUILD_PRESENCES is available)
+            if intent_flags.HAS_GUILD_PRESENCES and member.status and member.status.value in ('online', 'idle', 'dnd'):
                 users_online.append(user_id)
 
         # Get open sessions from database
@@ -112,24 +121,28 @@ class SessionReconciler:
             elif users_playing_games[user_id] != session["game_name"]:
                 game_to_close.append(session["session_id"])
 
-        # Bulk close sessions
+        # Bulk close sessions (only those started before snapshot_time)
         voice_closed = 0
         game_closed = 0
 
         if voice_to_close:
-            voice_closed = await api.bulk_end_voice_sessions(voice_to_close, now)
+            voice_closed = await api.bulk_end_voice_sessions(
+                voice_to_close, now, started_before=snapshot_time
+            )
             logger.info(
                 f"Guild {guild.name}: closed {voice_closed} stale voice sessions"
             )
 
         if game_to_close:
-            game_closed = await api.bulk_end_game_sessions(game_to_close, now)
+            game_closed = await api.bulk_end_game_sessions(
+                game_to_close, now, started_before=snapshot_time
+            )
             logger.info(
                 f"Guild {guild.name}: closed {game_closed} stale game sessions"
             )
 
-        # Capture initial presence states for currently online users
-        if users_online:
+        # Capture initial presence states for currently online users (only if GUILD_PRESENCES is available)
+        if intent_flags.HAS_GUILD_PRESENCES and users_online:
             queue = get_event_queue()
             for user_id in users_online:
                 await queue.enqueue(EVENT_USER_LAST_ONLINE, {
@@ -145,16 +158,23 @@ class SessionReconciler:
         }
 
     @staticmethod
-    async def reconcile_all(bot) -> dict:
+    async def reconcile_all(bot, snapshot_time: datetime = None) -> dict:
         """
         Reconcile sessions across all guilds.
 
         Groups guilds by shard and processes them concurrently with
         per-shard gateway rate limiting.
 
+        Args:
+            bot: Bot instance
+            snapshot_time: Only close sessions started before this time. If None, uses current time.
+
         Returns:
             dict with total 'voice_closed' and 'game_closed' counts
         """
+        if snapshot_time is None:
+            snapshot_time = datetime.now(timezone.utc)
+
         rate_limiter = _ShardRateLimiter()
         total_shards = getattr(bot, 'total_shards', 1) or 1
 
@@ -174,7 +194,9 @@ class SessionReconciler:
 
         async def _reconcile(guild, shard_id: int) -> dict:
             try:
-                return await SessionReconciler.reconcile_guild(guild, rate_limiter, shard_id)
+                return await SessionReconciler.reconcile_guild(
+                    guild, rate_limiter, shard_id, snapshot_time
+                )
             except Exception as e:
                 logger.error(f"Failed to reconcile guild {guild.name}: {e}")
                 return {"voice_closed": 0, "game_closed": 0}

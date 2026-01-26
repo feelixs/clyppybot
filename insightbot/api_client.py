@@ -572,15 +572,27 @@ class APIClient:
         result = await self._request("GET", f"/api/internal/voice/open/{guild_id}")
         return result or []
 
-    async def bulk_end_voice_sessions(self, session_ids: List[int], ended_at: datetime) -> int:
-        """End multiple voice sessions. Returns count closed."""
+    async def bulk_end_voice_sessions(
+        self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
+    ) -> int:
+        """End multiple voice sessions. Returns count closed.
+
+        Args:
+            session_ids: List of session IDs to close
+            ended_at: Timestamp to set as end time
+            started_before: Only close sessions started before this time (for reconciliation)
+        """
+        payload = {
+            "session_ids": session_ids,
+            "ended_at": ended_at.isoformat(),
+        }
+        if started_before:
+            payload["started_before"] = started_before.isoformat()
+
         result = await self._request(
             "POST",
             "/api/internal/voice/bulk-end",
-            json={
-                "session_ids": session_ids,
-                "ended_at": ended_at.isoformat(),
-            },
+            json=payload,
         )
         return result.get("closed_count", 0) if result else 0
 
@@ -589,15 +601,27 @@ class APIClient:
         result = await self._request("GET", f"/api/internal/games/open/{guild_id}")
         return result or []
 
-    async def bulk_end_game_sessions(self, session_ids: List[int], ended_at: datetime) -> int:
-        """End multiple game sessions. Returns count closed."""
+    async def bulk_end_game_sessions(
+        self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
+    ) -> int:
+        """End multiple game sessions. Returns count closed.
+
+        Args:
+            session_ids: List of session IDs to close
+            ended_at: Timestamp to set as end time
+            started_before: Only close sessions started before this time (for reconciliation)
+        """
+        payload = {
+            "session_ids": session_ids,
+            "ended_at": ended_at.isoformat(),
+        }
+        if started_before:
+            payload["started_before"] = started_before.isoformat()
+
         result = await self._request(
             "POST",
             "/api/internal/games/bulk-end",
-            json={
-                "session_ids": session_ids,
-                "ended_at": ended_at.isoformat(),
-            },
+            json=payload,
         )
         return result.get("closed_count", 0) if result else 0
 

@@ -1,5 +1,6 @@
 import asyncio
 import signal
+from datetime import datetime, timezone
 from interactions import AutoShardedClient, Intents, listen, Activity, ActivityType
 
 from .config import config
@@ -126,15 +127,25 @@ async def on_ready():
     # Load and run any pending tasks from previous shutdown
     await task_manager.load_and_run_pending()
 
-    # Reconcile sessions with Discord's current state
-    try:
-        result = await SessionReconciler.reconcile_all(bot)
-        logger.info(
-            f"Session reconciliation complete: "
-            f"{result['voice_closed']} voice, {result['game_closed']} game sessions closed"
-        )
-    except Exception as e:
-        logger.error(f"Session reconciliation failed: {e}")
+    # Capture snapshot time BEFORE bot starts processing events
+    # This prevents race conditions where new sessions created after ready
+    # would be incorrectly closed by reconciliation
+    snapshot_time = datetime.now(timezone.utc)
+    logger.info(f"Starting session reconciliation (snapshot time: {snapshot_time.isoformat()})")
+
+    # Run reconciliation in background so bot can process events immediately
+    async def run_reconciliation():
+        try:
+            result = await SessionReconciler.reconcile_all(bot, snapshot_time)
+            logger.info(
+                f"Session reconciliation complete: "
+                f"{result['voice_closed']} voice, {result['game_closed']} game sessions closed"
+            )
+        except Exception as e:
+            logger.error(f"Session reconciliation failed: {e}")
+
+    # Start reconciliation task without blocking on_ready
+    asyncio.create_task(run_reconciliation())
 
 
 @listen()
