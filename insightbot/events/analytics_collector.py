@@ -38,6 +38,9 @@ FREQ_MIN_MENTIONS = 10
 # Regex pattern for extracting words (supports Unicode for multilingual)
 WORD_PATTERN = re.compile(r'[\w\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uac00-\ud7af]+', re.UNICODE)
 
+# Regex to strip URLs from message content before word extraction
+URL_PATTERN = re.compile(r'https?://\S+', re.IGNORECASE)
+
 # Pickle file path for persisting analytics data across restarts
 ANALYTICS_PICKLE_PATH = Path(__file__).parent.parent / "data" / "analytics_state.pkl"
 
@@ -396,7 +399,9 @@ class AnalyticsCollector(Extension):
         Must be called while holding self._lock.
         """
         content_lower = content.lower()
-        words = WORD_PATTERN.findall(content_lower)
+        # Strip URLs before extracting words to avoid splitting links into fake words
+        content_clean = URL_PATTERN.sub('', content_lower)
+        words = WORD_PATTERN.findall(content_clean)
         seen_topics: Set[int] = set()  # Track topics already counted for this message
         seen_words: Set[str] = set()   # Track unknown words already counted
         seen_freq_words: Set[str] = set()  # Track words for frequency (avoid duplicates)
