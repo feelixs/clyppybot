@@ -141,6 +141,24 @@ class APIClient:
         )
         return result.get("count", 0)
 
+    async def update_user_last_online(self, user_id: int) -> None:
+        """Update user's last_online timestamp."""
+        await self._request(
+            "PATCH",
+            "/api/internal/discord-users/last-online",
+            json={"user_id": user_id},
+        )
+
+    async def batch_update_user_last_online(self, user_ids: List[int]) -> None:
+        """Batch update last_online timestamps."""
+        if not user_ids:
+            return
+        await self._request(
+            "PATCH",
+            "/api/internal/discord-users/last-online/batch",
+            json={"user_ids": user_ids},
+        )
+
     # Member operations
     async def upsert_member(
         self,
@@ -240,6 +258,21 @@ class APIClient:
             },
         )
 
+    async def batch_increment_message_counts(self, messages: List[dict]) -> None:
+        """Batch increment message counts.
+
+        Args:
+            messages: List of message increment dictionaries with keys:
+                guild_id, channel_id, user_id, hour_bucket, message_count, character_count
+        """
+        if not messages:
+            return
+        await self._request(
+            "POST",
+            "/api/internal/messages/batch",
+            json={"messages": messages},
+        )
+
     # Voice sessions
     async def start_voice_session(
         self,
@@ -278,6 +311,36 @@ class APIClient:
             },
         )
         return result.get("duration_seconds") if result else None
+
+    async def batch_start_voice_sessions(self, sessions: List[dict]) -> None:
+        """Batch start voice sessions.
+
+        Args:
+            sessions: List of session start dictionaries with keys:
+                guild_id, channel_id, user_id, started_at
+        """
+        if not sessions:
+            return
+        await self._request(
+            "POST",
+            "/api/internal/voice/batch-start",
+            json={"sessions": sessions},
+        )
+
+    async def batch_end_voice_sessions(self, sessions: List[dict]) -> None:
+        """Batch end voice sessions.
+
+        Args:
+            sessions: List of session end dictionaries with keys:
+                guild_id, user_id, ended_at
+        """
+        if not sessions:
+            return
+        await self._request(
+            "POST",
+            "/api/internal/voice/batch-end",
+            json={"sessions": sessions},
+        )
 
     # Game sessions
     async def start_game_session(

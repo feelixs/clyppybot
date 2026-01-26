@@ -6,3 +6,6 @@ httpx>=0.26.0
 
 # Utilities
 python-dotenv>=1.0.0
+
+# SQLite async support (for event queue)
+aiosqlite>=0.19.0

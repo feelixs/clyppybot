@@ -4,7 +4,12 @@ from interactions import Extension, listen
 from interactions.api.events import VoiceStateUpdate
 
 from ..logging_config import get_logger
-from ..api_client import get_api_client
+from ..services.event_queue import (
+    get_event_queue,
+    EVENT_USER_UPSERT,
+    EVENT_VOICE_START,
+    EVENT_VOICE_END,
+)
 
 logger = get_logger("insightbot.events.voice")
 
@@ -42,56 +47,52 @@ class VoiceEvents(Extension):
 
         try:
             now = datetime.now(timezone.utc)
-            api = get_api_client()
+            queue = get_event_queue()
 
             # User joined a voice channel
             if not before or not before.channel:
                 if after.channel:
-                    # Upsert user to discord_users
+                    # Enqueue user upsert
                     member = after.member
                     if member:
-                        await api.upsert_discord_user(
-                            user=user_ref,
-                            global_name=member.global_name,
-                        )
+                        await queue.enqueue(EVENT_USER_UPSERT, {
+                            "user_id": int(user_ref.id),
+                            "username": user_ref.username,
+                            "global_name": member.global_name,
+                            "avatar_hash": user_ref.avatar.hash if user_ref.avatar else None,
+                        })
 
-                    # Start a new session
-                    await api.start_voice_session(
-                        guild_id=guild_id,
-                        channel_id=int(after.channel.id),
-                        user_id=user_ref.id,
-                        started_at=now,
-                    )
-                    logger.debug(f"Started voice session for user {user_ref.id} in guild {guild_id}")
+                    # Enqueue voice session start
+                    await queue.enqueue(EVENT_VOICE_START, {
+                        "guild_id": guild_id,
+                        "channel_id": int(after.channel.id),
+                        "user_id": int(user_ref.id),
+                        "started_at": now.isoformat(),
+                    })
+                    logger.debug(f"Queued voice session start for user {user_ref.id} in guild {guild_id}")
 
             # User left a voice channel
             elif before.channel and (not after or not after.channel or after.channel.id != before.channel.id):
-                # End the current session
-                duration = await api.end_voice_session(
-                    guild_id=guild_id,
-                    user_id=user_ref.id,
-                    ended_at=now,
-                )
-                if duration:
-                    logger.debug(
-                        f"Ended voice session for user {user_ref.id} in guild {guild_id} "
-                        f"(duration: {duration}s)"
-                    )
+                # Enqueue voice session end
+                await queue.enqueue(EVENT_VOICE_END, {
+                    "guild_id": guild_id,
+                    "user_id": int(user_ref.id),
+                    "ended_at": now.isoformat(),
+                })
+                logger.debug(f"Queued voice session end for user {user_ref.id} in guild {guild_id}")
 
                 # If they moved to another channel, start a new session
                 if after and after.channel and (not before.channel or after.channel.id != before.channel.id):
-                    await api.start_voice_session(
-                        guild_id=guild_id,
-                        channel_id=int(after.channel.id),
-                        user_id=user_ref.id,
-                        started_at=now,
-                    )
-                    logger.debug(
-                        f"Started new voice session for user {user_ref.id} in guild {guild_id}"
-                    )
+                    await queue.enqueue(EVENT_VOICE_START, {
+                        "guild_id": guild_id,
+                        "channel_id": int(after.channel.id),
+                        "user_id": int(user_ref.id),
+                        "started_at": now.isoformat(),
+                    })
+                    logger.debug(f"Queued new voice session start for user {user_ref.id} in guild {guild_id}")
 
         except Exception as e:
-            logger.error(f"Error tracking voice state: {e}")
+            logger.error(f"Error queueing voice state event: {e}")
 
 
 def setup(bot):

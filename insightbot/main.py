@@ -1,19 +1,20 @@
 import asyncio
 import signal
-from interactions import Client, Intents, listen, Activity, ActivityType
+from interactions import AutoShardedClient, Intents, listen, Activity, ActivityType
 
 from .config import config
 from .logging_config import setup_logging, get_logger
 from .api_client import close_api_client, get_api_client
 from .services.session_reconciler import SessionReconciler
 from .services.task_manager import TaskManager
+from .services.event_queue import close_event_queue, get_event_queue
 
 # Configure logging
 setup_logging()
 logger = get_logger("insightbot")
 
 
-class InsightBot(Client):
+class InsightBot(AutoShardedClient):
     """Main bot client with lifecycle hooks."""
 
     async def on_startup(self) -> None:
@@ -22,6 +23,27 @@ class InsightBot(Client):
 
     async def on_shutdown(self) -> None:
         """Called when the bot is shutting down."""
+        # Flush event queue before shutdown
+        logger.info("Flushing event queue...")
+        try:
+            from .tasks.event_queue_processor import EventQueueProcessor
+            queue = get_event_queue()
+
+            # Trigger final queue processing
+            for ext in self.ext.values():
+                if isinstance(ext, EventQueueProcessor):
+                    await ext.process_queue()
+                    break
+
+            # Check remaining queue depth
+            depths = await queue.get_queue_depth()
+            if depths:
+                logger.warning(f"Queue not empty at shutdown: {depths}")
+            else:
+                logger.info("Event queue fully drained")
+        except Exception as e:
+            logger.error(f"Failed to flush event queue: {e}")
+
         # Save analytics state before shutdown
         logger.info("Saving analytics state...")
         try:
@@ -36,6 +58,8 @@ class InsightBot(Client):
         logger.info("Shutting down TaskManager...")
         task_manager = TaskManager.get()
         await task_manager.shutdown(timeout=30.0)
+        logger.info("Closing event queue...")
+        await close_event_queue()
         logger.info("Closing API client...")
         await close_api_client()
         logger.info("Bot shutdown complete")
@@ -127,6 +151,7 @@ def main():
     # Load background tasks
     bot.load_extension("bot.tasks.counter_updater")
     bot.load_extension("bot.tasks.digest_scheduler")
+    bot.load_extension("bot.tasks.event_queue_processor")
 
     # Load analytics collector
     bot.load_extension("bot.events.analytics_collector")

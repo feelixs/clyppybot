@@ -4,7 +4,7 @@ from interactions import Extension, listen
 from interactions.api.events import MessageCreate
 
 from ..logging_config import get_logger
-from ..api_client import get_api_client
+from ..services.event_queue import get_event_queue, EVENT_USER_UPSERT, EVENT_MESSAGE
 
 logger = get_logger("insightbot.events.messages")
 
@@ -26,25 +26,27 @@ class MessageEvents(Extension):
             now = datetime.now(timezone.utc)
             hour_bucket = now.replace(minute=0, second=0, microsecond=0)
 
-            api = get_api_client()
+            queue = get_event_queue()
 
-            # Upsert user to discord_users (ensures we have their profile)
-            await api.upsert_discord_user(
-                user=message.author,
-                global_name=getattr(message.author, 'global_name', None),
-            )
+            # Enqueue user upsert (ensures we have their profile)
+            await queue.enqueue(EVENT_USER_UPSERT, {
+                "user_id": int(message.author.id),
+                "username": message.author.username,
+                "global_name": getattr(message.author, 'global_name', None),
+                "avatar_hash": message.author.avatar.hash if message.author.avatar else None,
+            })
 
-            # Increment message count
-            await api.increment_message_count(
-                guild_id=int(message.guild.id),
-                channel_id=int(message.channel.id),
-                user_id=int(message.author.id),
-                hour_bucket=hour_bucket,
-                message_count=1,
-                character_count=len(message.content) if message.content else 0,
-            )
+            # Enqueue message increment
+            await queue.enqueue(EVENT_MESSAGE, {
+                "guild_id": int(message.guild.id),
+                "channel_id": int(message.channel.id),
+                "user_id": int(message.author.id),
+                "hour_bucket": hour_bucket.isoformat(),
+                "message_count": 1,
+                "character_count": len(message.content) if message.content else 0,
+            })
         except Exception as e:
-            logger.error(f"Error tracking message: {e}")
+            logger.error(f"Error queueing message event: {e}")
 
 
 def setup(bot):

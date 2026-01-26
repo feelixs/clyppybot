@@ -16,6 +16,7 @@ from interactions import (
 from ..logging_config import get_logger
 from ..api_client import get_api_client
 from ..services.digest_service import DigestService
+from ..services.event_queue import get_event_queue
 
 logger = get_logger("insightbot.extensions.admin")
 
@@ -240,6 +241,51 @@ class AdminExtension(Extension):
         except Exception as e:
             logger.error(f"Error checking digest status: {e}")
             await ctx.send("An error occurred while checking digest status.", ephemeral=True)
+
+    @slash_command(
+        name="queue-status",
+        description="Show event queue status (admin only)",
+    )
+    @has_manage_guild()
+    async def queue_status(self, ctx: SlashContext):
+        """Show the current event queue depth by type."""
+        await ctx.defer(ephemeral=True)
+
+        if not ctx.guild:
+            await ctx.send("This command can only be used in a server.", ephemeral=True)
+            return
+
+        try:
+            queue = get_event_queue()
+            depths = await queue.get_queue_depth()
+
+            embed = Embed(
+                title="Event Queue Status",
+                color=0x5865F2,
+                timestamp=datetime.now(timezone.utc),
+            )
+
+            if not depths:
+                embed.description = "Queue is empty - all events processed!"
+            else:
+                total = sum(depths.values())
+                embed.description = f"**Total pending events:** {total}"
+
+                for event_type, count in depths.items():
+                    # Format event type nicely
+                    display_name = event_type.replace("_", " ").title()
+                    embed.add_field(
+                        name=display_name,
+                        value=f"{count} events",
+                        inline=True,
+                    )
+
+            embed.set_footer(text="Events are processed every 20 seconds")
+            await ctx.send(embed=embed, ephemeral=True)
+
+        except Exception as e:
+            logger.error(f"Error checking queue status: {e}")
+            await ctx.send("An error occurred while checking queue status.", ephemeral=True)
 
 
 def setup(bot):

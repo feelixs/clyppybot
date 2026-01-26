@@ -5,6 +5,7 @@ from interactions.api.events import PresenceUpdate
 
 from ..logging_config import get_logger
 from ..api_client import get_api_client
+from ..services.event_queue import get_event_queue, EVENT_USER_LAST_ONLINE
 
 logger = get_logger("insightbot.events.presence")
 
@@ -74,6 +75,14 @@ class PresenceEvents(Extension):
                         f"Ended game session for user {event.user.id} in guild {guild_id} "
                         f"(duration: {result.get('duration_seconds')}s)"
                     )
+
+            # Track online status
+            if event.status and event.status in ['online', 'idle', 'dnd']:
+                # User is online - enqueue last_online update
+                queue = get_event_queue()
+                await queue.enqueue(EVENT_USER_LAST_ONLINE, {
+                    "user_id": int(event.user.id),
+                })
 
         except Exception as e:
             logger.error(f"Error tracking presence state: {e}")
