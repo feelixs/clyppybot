@@ -260,6 +260,13 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                     'username': task.user_username
                 })()
                 self._deferred = True
+                # Create mock guild object if guild_id exists
+                if task.guild_id:
+                    self.guild = type('obj', (object,), {
+                        'id': task.guild_id
+                    })()
+                else:
+                    self.guild = None
 
             async def send(self, *args, **kwargs):
                 # Edit the deferred response
