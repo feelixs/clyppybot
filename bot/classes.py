@@ -1066,15 +1066,16 @@ class BaseAutoEmbed:
                         components=create_nexus_comps()
                     )
                     return
-            elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
-                await ctx.send(
-                    content=f"I don't have permission to embed links in this channel",
-                    components=create_nexus_comps()
-                )
-                return
-            if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
-                if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
+                elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
+                    await ctx.send(
+                        content=f"I don't have permission to embed links in this channel",
+                        components=create_nexus_comps()
+                    )
                     return
+
+                if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
+                    if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
+                        return
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"
