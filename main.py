@@ -199,7 +199,8 @@ async def main():
         shutdown_event.set()
 
     # Register signal handlers using asyncio's mechanism
-    loop = asyncio.get_event_loop()
+    # Use get_running_loop() since we're inside an async function
+    loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, handle_shutdown_signal)
 
@@ -241,4 +242,23 @@ async def main():
         await on_shutdown(Bot)
 
 
-asyncio.run(main())
+# Manually create and manage event loop to have full control over signal handling
+# (asyncio.run() installs its own signal handlers that interfere with ours)
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+try:
+    loop.run_until_complete(main())
+finally:
+    try:
+        # Cancel all remaining tasks
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        # Wait for all tasks to finish cancelling
+        loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+        # Shutdown async generators
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        # Shutdown default executor
+        loop.run_until_complete(loop.shutdown_default_executor())
+    finally:
+        loop.close()
