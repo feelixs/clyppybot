@@ -31,10 +31,6 @@ logger = get_logger("insightbot.events.analytics_collector")
 MIN_WORD_LENGTH = 2
 MAX_WORD_LENGTH = 16  # Avoid tracking URLs and very long strings
 
-# Word frequency tracking for phrase correlation detection
-# Only submit words with 10+ mentions per guild (aggressive filtering)
-FREQ_MIN_MENTIONS = 10
-
 # Regex pattern for extracting words (supports Unicode for multilingual)
 WORD_PATTERN = re.compile(r'[\w\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uac00-\ud7af]+', re.UNICODE)
 
@@ -101,13 +97,6 @@ class UnknownWordStats:
     user_ids: Set[int] = field(default_factory=set)
 
 
-@dataclass
-class WordFrequencyStats:
-    """Accumulated word frequency for phrase correlation detection."""
-
-    mention_count: int = 0
-
-
 class AnalyticsCollector(Extension):
     """Collects Discord events and submits hourly analytics."""
 
@@ -141,11 +130,6 @@ class AnalyticsCollector(Extension):
         # (guild_id, channel_id, word) -> UnknownWordStats
         self._unknown_words: Dict[tuple[int, int, str], UnknownWordStats] = defaultdict(
             UnknownWordStats
-        )
-        # (guild_id, channel_id, word) -> WordFrequencyStats
-        # Tracks ALL words (including stopwords) for phrase correlation detection
-        self._word_frequency: Dict[tuple[int, int, str], WordFrequencyStats] = defaultdict(
-            WordFrequencyStats
         )
         # Track the current date for daily topic submission
         self._current_date: date = datetime.now(timezone.utc).date()
@@ -252,24 +236,15 @@ class AnalyticsCollector(Extension):
                         )
                         self._unknown_words[key] = stats
 
-                # Restore word frequency
-                if "word_frequency" in state:
-                    for key, data in state["word_frequency"].items():
-                        stats = WordFrequencyStats(
-                            mention_count=data["mention_count"],
-                        )
-                        self._word_frequency[key] = stats
-
                 # Restore date
                 if "current_date" in state:
                     self._current_date = state["current_date"]
 
             topic_count = len(state.get("topic_mentions", {}))
             word_count = len(state.get("unknown_words", {}))
-            freq_count = len(state.get("word_frequency", {}))
             logger.info(
                 f"Restored persisted state: {topic_count} topic entries, "
-                f"{word_count} unknown word entries, {freq_count} word frequencies"
+                f"{word_count} unknown word entries"
             )
 
             # Remove pickle file after loading
@@ -286,7 +261,7 @@ class AnalyticsCollector(Extension):
         self._saving_state = True
         with self._lock:
             # Skip if no data to save
-            if not self._topic_mentions and not self._unknown_words and not self._word_frequency:
+            if not self._topic_mentions and not self._unknown_words:
                 logger.debug("No analytics state to persist")
                 return
 
@@ -307,12 +282,6 @@ class AnalyticsCollector(Extension):
                     }
                     for key, stats in self._unknown_words.items()
                 },
-                "word_frequency": {
-                    key: {
-                        "mention_count": stats.mention_count,
-                    }
-                    for key, stats in self._word_frequency.items()
-                },
             }
 
         try:
@@ -322,8 +291,7 @@ class AnalyticsCollector(Extension):
 
             logger.info(
                 f"Saved analytics state: {len(state['topic_mentions'])} topic entries, "
-                f"{len(state['unknown_words'])} unknown word entries, "
-                f"{len(state['word_frequency'])} word frequencies"
+                f"{len(state['unknown_words'])} unknown word entries"
             )
         except Exception as e:
             logger.error(f"Failed to save analytics state: {e}")
@@ -394,8 +362,6 @@ class AnalyticsCollector(Extension):
         Tier 3 - Context Match: Anchor/ambiguous word + nearby context word
         Tier 4 - Unsupported: Anchor/ambiguous word without support (don't count)
 
-        Also tracks ALL word frequencies for phrase correlation detection.
-
         Must be called while holding self._lock.
         """
         content_lower = content.lower()
@@ -404,20 +370,8 @@ class AnalyticsCollector(Extension):
         words = WORD_PATTERN.findall(content_clean)
         seen_topics: Set[int] = set()  # Track topics already counted for this message
         seen_words: Set[str] = set()   # Track unknown words already counted
-        seen_freq_words: Set[str] = set()  # Track words for frequency (avoid duplicates)
 
         for idx, word in enumerate(words):
-            # Track word frequency for ALL words (including stopwords)
-            # This enables phrase correlation detection
-            if (
-                    len(word) >= MIN_WORD_LENGTH
-                    and len(word) <= MAX_WORD_LENGTH
-                    and word not in seen_freq_words
-            ):
-                seen_freq_words.add(word)
-                freq_key = (guild_id, channel_id, word)
-                self._word_frequency[freq_key].mention_count += 1
-
             # Check if word matches a topic alias
             cached_alias = self._topic_aliases.get(word)
 
@@ -585,7 +539,6 @@ class AnalyticsCollector(Extension):
         """Collect topic stats and reset counters.
 
         Returns (date, topic_mentions, unknown_words).
-        Word frequency is collected separately via _collect_and_reset_word_frequency().
         """
         with self._lock:
             current_date = self._current_date
@@ -619,46 +572,12 @@ class AnalyticsCollector(Extension):
                     "user_ids": list(stats.user_ids),
                 })
 
-            # Reset topic counters (but NOT word_frequency - that's hourly)
+            # Reset topic counters
             self._topic_mentions.clear()
             self._unknown_words.clear()
             self._current_date = datetime.now(timezone.utc).date()
 
             return current_date, topic_data, word_data
-
-    def _collect_and_reset_word_frequency(self) -> tuple[date, dict]:
-        """Collect word frequency stats and reset counters.
-
-        Returns (date, word_frequency).
-        Word frequency is filtered to only include words with 10+ mentions per guild.
-        Called hourly to batch database writes.
-        """
-        with self._lock:
-            current_date = self._current_date
-
-            # Aggregate by guild/word to check threshold
-            guild_word_totals: Dict[tuple[int, str], int] = defaultdict(int)
-            for (guild_id, channel_id, word), stats in self._word_frequency.items():
-                guild_word_totals[(guild_id, word)] += stats.mention_count
-
-            # Collect only words that meet the threshold
-            # Structure: guild_id -> channel_id -> list of frequency data
-            freq_data: Dict[int, Dict[int, list]] = {}
-            for (guild_id, channel_id, word), stats in self._word_frequency.items():
-                if guild_word_totals[(guild_id, word)] >= FREQ_MIN_MENTIONS:
-                    if guild_id not in freq_data:
-                        freq_data[guild_id] = {}
-                    if channel_id not in freq_data[guild_id]:
-                        freq_data[guild_id][channel_id] = []
-                    freq_data[guild_id][channel_id].append({
-                        "word": word,
-                        "mention_count": stats.mention_count,
-                    })
-
-            # Reset word frequency counters
-            self._word_frequency.clear()
-
-            return current_date, freq_data
 
     async def _get_member_counts(self) -> Dict[int, int]:
         """Get current member counts for all guilds."""
@@ -669,7 +588,7 @@ class AnalyticsCollector(Extension):
 
     @Task.create(IntervalTrigger(minutes=60))
     async def hourly_aggregation(self):
-        """Submit hourly analytics and word frequency data to the API."""
+        """Submit hourly analytics to the API."""
         if not self.bot.is_ready:
             return
 
@@ -710,9 +629,6 @@ class AnalyticsCollector(Extension):
 
         except Exception as e:
             logger.error(f"Failed to submit hourly analytics: {e}")
-
-        # Submit word frequency data (batched hourly for efficiency)
-        await self._submit_word_frequency()
 
     @Task.create(IntervalTrigger(minutes=5))
     async def topic_aggregation(self):
@@ -757,35 +673,6 @@ class AnalyticsCollector(Extension):
 
         except Exception as e:
             logger.error(f"Failed to submit topic data: {e}")
-
-    async def _submit_word_frequency(self) -> None:
-        """Collect and submit word frequency data (hourly batch)."""
-        try:
-            freq_date, word_frequency = self._collect_and_reset_word_frequency()
-
-            # Skip if no frequency data
-            if not word_frequency:
-                logger.debug("No word frequency data to submit")
-                return
-
-            api = get_api_client()
-            await api.submit_word_frequency(
-                date=datetime.combine(freq_date, datetime.min.time()),
-                word_frequency=word_frequency,
-            )
-
-            freq_count = sum(
-                sum(len(words) for words in channels.values())
-                for channels in word_frequency.values()
-            )
-
-            logger.info(
-                f"Submitted word frequency batch: {freq_count} entries "
-                f"for {freq_date.isoformat()}"
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to submit word frequency: {e}")
 
 
 def setup(bot):

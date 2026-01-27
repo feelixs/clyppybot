@@ -923,7 +923,6 @@ class APIClient:
             date: datetime,
             topic_mentions: dict,
             unknown_words: dict,
-            word_frequency: dict = None,
     ) -> dict:
         """Submit topic tracking data.
 
@@ -931,8 +930,6 @@ class APIClient:
             date: The date for the data
             topic_mentions: Dict of guild_id -> channel_id -> list of mention data
             unknown_words: Dict of guild_id -> channel_id -> list of unknown word data
-            word_frequency: Dict of guild_id -> channel_id -> list of word frequency data
-                           (for phrase correlation detection, pre-filtered to 10+ mentions)
 
         Returns:
             Response with status and counts processed
@@ -942,40 +939,10 @@ class APIClient:
             "topic_mentions": topic_mentions,
             "unknown_words": unknown_words,
         }
-        if word_frequency:
-            payload["word_frequency"] = word_frequency
 
         return await self._request(
             "POST",
             "/api/internal/topics/data",
-            json=payload,
-        )
-
-    async def submit_word_frequency(
-            self,
-            date: datetime,
-            word_frequency: dict,
-    ) -> dict:
-        """Submit word frequency data for phrase correlation detection.
-
-        Called hourly to batch database writes efficiently.
-
-        Args:
-            date: The date for the data
-            word_frequency: Dict of guild_id -> channel_id -> list of word frequency data
-                           (pre-filtered to 10+ mentions per guild)
-
-        Returns:
-            Response with status and counts processed
-        """
-        payload = {
-            "date": date.strftime("%Y-%m-%d"),
-            "word_frequency": word_frequency,
-        }
-
-        return await self._request(
-            "POST",
-            "/api/internal/topics/word-frequency",
             json=payload,
         )
 
