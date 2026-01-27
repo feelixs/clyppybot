@@ -262,6 +262,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                     'username': task.user_username
                 })()
                 self._deferred = True
+                # Flag to indicate this is a restored task - skip permission checks
+                self._restored_task = True
                 # Create mock channel object
                 self.channel = type('obj', (object,), {
                     'id': task.channel_id
