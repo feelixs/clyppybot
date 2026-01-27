@@ -3,10 +3,10 @@ from interactions.api.gateway.gateway import GatewayClient, OPCODE, FastJson
 from bot.setup import init_misc
 from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
-from aiohttp import FormData
 from bot.io.cdn import CdnSpacesClient
 from cogs.base import format_count
 import aiohttp
+import signal
 import logging
 import asyncio
 import sys
@@ -83,7 +83,7 @@ async def save_to_server():
     async with get_aiohttp_session() as session:
         try:
             headers = {'X-API-Key': os.getenv('clyppy_post_key')}
-            data = FormData()
+            data = aiohttp.FormData()
             data.add_field('env', env)
             with open("guild_settings.db", "rb") as f:
                 data.add_field('file', f)
@@ -132,7 +132,30 @@ Bot = init_misc(Bot)
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
 
+async def on_shutdown(bot):
+    """Called when the bot is shutting down."""
+    # Save analytics state before shutdown
+    logger.info("Waiting for tasks to complete...")
+
+    timeout = 120
+    while timeout > 0:
+        await asyncio.sleep(1)
+        if len(bot.currently_embedding) == 0 and len(bot.currently_downloading) == 0:
+            break
+        timeout -= 1
+
+    logger.info("Tasks complete..." if timeout > 0 else "Timeout reached while waiting for tasks to complete...")
+    logger.info("Bot shutdown complete")
+
+
+def handle_sigterm(signum, frame):
+    """Handle SIGTERM signal from Docker by converting to KeyboardInterrupt."""
+    logger.info("Received SIGTERM signal, initiating graceful shutdown...")
+    raise KeyboardInterrupt()
+
+
 async def main():
+    signal.signal(signal.SIGTERM, handle_sigterm)
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
