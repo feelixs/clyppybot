@@ -134,18 +134,59 @@ Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_ser
 
 async def on_shutdown(bot):
     """Called when the bot is shutting down."""
-    # Save analytics state before shutdown
-    logger.info("Waiting for tasks to complete...")
+    logger.info("Initiating graceful shutdown...")
 
-    timeout = 60 * 5
+    # Step 1: Set shutdown flag (no new tasks will be accepted)
+    bot.is_shutting_down = True
+    logger.info("Shutdown flag set - new tasks will be queued")
+
+    # Step 2: Wait for current tasks to complete (with reasonable timeout)
+    logger.info("Waiting for active tasks to complete...")
+    timeout = 60 * 3  # 3 minutes max
+    start_time = asyncio.get_event_loop().time()
+
     while timeout > 0:
-        await asyncio.sleep(1)
-        if len(bot.currently_embedding) == 0 and len(bot.currently_downloading) == 0:
+        embedding_count = len(bot.currently_embedding)
+        downloading_count = len(bot.currently_downloading)
+
+        if embedding_count == 0 and downloading_count == 0:
+            logger.info("All active tasks completed")
             break
+
+        if asyncio.get_event_loop().time() - start_time > 10:
+            # Log status every 10 seconds
+            logger.info(f"Still waiting: {embedding_count} embedding, {downloading_count} downloading")
+            start_time = asyncio.get_event_loop().time()
+
+        await asyncio.sleep(1)
         timeout -= 1
 
-    logger.info("Tasks complete..." if timeout > 0 else "Timeout reached while waiting for tasks to complete...")
-    logger.info("Bot shutdown complete")
+    if timeout <= 0:
+        logger.warning(f"Timeout reached - forcing shutdown with {len(bot.currently_embedding)} "
+                      f"embedding and {len(bot.currently_downloading)} downloading tasks remaining")
+
+    # Step 3: Save task queue to disk
+    logger.info("Saving task queue...")
+    queue_count = bot.task_queue.get_task_count()
+    logger.info(f"Task queue: {queue_count[0]} quickembeds, {queue_count[1]} slash commands")
+    bot.task_queue.save()
+
+    # Step 4: Save database
+    try:
+        logger.info("Saving database...")
+        await bot.guild_settings.save()
+        logger.info("Database saved successfully")
+    except Exception as e:
+        logger.error(f"Failed to save database: {e}")
+
+    # Step 5: Stop the bot
+    logger.info("Stopping bot...")
+    try:
+        await bot.stop()
+    except Exception as e:
+        logger.error(f"Error stopping bot: {e}")
+
+    logger.info("Shutdown complete")
 
 
 def handle_sigterm(signum, frame):
@@ -159,7 +200,13 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
+
+    # Load and process queued tasks from previous shutdown
+    logger.info("Loading task queue from previous session...")
+    Bot.task_queue.load()
+
     try:
+        # Start the bot
         await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
     except KeyboardInterrupt:
         logger.info("Received interrupt signal")

@@ -9,3 +9,7 @@ CLAUDE.md
 *.mp4
 *.png
 test/
+
+# Task queue data
+data/
+task_queue.pkl

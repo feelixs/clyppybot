@@ -548,6 +548,29 @@ class Base(Extension):
     async def embed(self, ctx: SlashContext, url: str):
         self.logger.info(f"@slash_command for /embed - {ctx.author.id} - {url}")
         url = self._sanitize_url(url)
+
+        # Check if bot is shutting down
+        if self.bot.is_shutting_down:
+            self.logger.info(f"Bot is shutting down, queueing /embed command for {url}")
+
+            # Defer immediately so Discord knows we received the command
+            await ctx.defer()
+
+            from bot.task_queue import SlashCommandTask
+            task = SlashCommandTask(
+                interaction_id=ctx.interaction_id,
+                interaction_token=ctx.token,
+                channel_id=ctx.channel_id,
+                guild_id=ctx.guild_id if ctx.guild else None,
+                user_id=ctx.author.id,
+                user_username=ctx.author.username,
+                clip_url=url,
+                extend_with_ai=False
+            )
+            self.bot.task_queue.add_slash_command(task)
+            # Don't send any response - the deferred state will be resumed on restart
+            return
+
         for p in self.bot.platform_embedders:
             if slug := p.platform.parse_clip_url(url):
                 await self.bot.base_embedder.command_embed(
@@ -885,6 +908,13 @@ class Base(Extension):
             self.logger.info(f"CLYPPY VERSION: {VERSION}")
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
+
+            # Process queued tasks from previous session
+            from bot.task_queue import process_queued_tasks
+            try:
+                await process_queued_tasks(self.bot, self.bot.task_queue)
+            except Exception as e:
+                self.logger.error(f"Error processing queued tasks: {e}")
             self.logger.info("--------------")
 
     async def update_status(self):

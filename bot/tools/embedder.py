@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
 from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
+from bot.task_queue import QuickembedTask
 from typing import List, Union, Tuple
 from bot.io.upload import upload_video
 from pathlib import Path
@@ -116,6 +117,26 @@ class AutoEmbedder:
 
             words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
+
+            # If shutting down, queue tasks instead of processing
+            if self.bot.is_shutting_down:
+                self.logger.info(f"Bot is shutting down, queueing {num_links} clip(s) from message {event.message.id}")
+                if num_links >= 1:
+                    for word in words:
+                        if self.platform_tools.is_clip_link(word):
+                            task = QuickembedTask(
+                                message_id=event.message.id,
+                                channel_id=event.message.channel.id,
+                                guild_id=guild.id,
+                                guild_name=guild.name,
+                                is_dm=guild.is_dm,
+                                clip_url=word,
+                                author_id=event.message.author.id,
+                                author_username=event.message.author.username
+                            )
+                            self.bot.task_queue.add_quickembed(task)
+                return 1
+
             if num_links == 1:
                 contains_clip_link, index = self.get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
