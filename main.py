@@ -154,6 +154,15 @@ async def on_shutdown(bot):
     await task_manager.shutdown(timeout=30.0)
     logger.info("Closing API client...")
     await close_api_client()
+
+    timeout = 120
+    while timeout > 0:
+        await asyncio.sleep(1)
+        if len(bot.currently_embedding) == 0 and len(bot.currently_downloading) == 0:
+            break
+        timeout -= 1
+
+    logger.info("Tasks complete..." if timeout > 0 else "Timeout reached while waiting for tasks to complete...")
     logger.info("Bot shutdown complete")
 
 
