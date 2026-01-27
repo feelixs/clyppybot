@@ -31,6 +31,7 @@ class SlashCommandTask:
     interaction_token: str
     channel_id: int
     guild_id: Optional[int]
+    guild_name: Optional[str]
     user_id: int
     user_username: str
     clip_url: str
@@ -187,9 +188,10 @@ async def process_quickembed_task(bot, task: QuickembedTask):
 
         # Find the appropriate platform embedder
         platform_embedder = None
-        for embedder in bot.platform_embedders:
-            if embedder.platform_tools.is_clip_link(task.clip_url):
-                platform_embedder = embedder
+        for embedder_wrapper in bot.platform_embedders:
+            # embedder_wrapper is a BaseAutoEmbed object with .platform and .embedder attributes
+            if embedder_wrapper.platform.is_clip_link(task.clip_url):
+                platform_embedder = embedder_wrapper.embedder
                 break
 
         if not platform_embedder:
@@ -263,7 +265,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                 # Create mock guild object if guild_id exists
                 if task.guild_id:
                     self.guild = type('obj', (object,), {
-                        'id': task.guild_id
+                        'id': task.guild_id,
+                        'name': task.guild_name or 'Unknown Guild'
                     })()
                 else:
                     self.guild = None

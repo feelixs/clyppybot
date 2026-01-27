@@ -563,6 +563,7 @@ class Base(Extension):
                     interaction_token=ctx.token,
                     channel_id=int(ctx.channel_id),
                     guild_id=int(ctx.guild_id) if ctx.guild else None,
+                    guild_name=ctx.guild.name if ctx.guild else None,
                     user_id=int(ctx.author.id),
                     user_username=ctx.author.username,
                     clip_url=url,
