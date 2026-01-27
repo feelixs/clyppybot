@@ -15,6 +15,8 @@ EVENT_MESSAGE = "message"
 EVENT_VOICE_START = "voice_start"
 EVENT_VOICE_END = "voice_end"
 EVENT_USER_LAST_ONLINE = "user_last_online"
+EVENT_CHANNEL_UPSERT = "channel_upsert"
+EVENT_CHANNEL_DELETE = "channel_delete"
 
 # Status constants
 STATUS_PENDING = "pending"
@@ -52,21 +54,21 @@ class EventQueue:
 
             # Create table and index
             await self._db.execute("""
-                CREATE TABLE IF NOT EXISTS event_queue (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    event_type TEXT NOT NULL,
-                    payload TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    status TEXT NOT NULL DEFAULT 'pending',
-                    retry_count INTEGER NOT NULL DEFAULT 0,
-                    last_error TEXT
-                )
-            """)
+                                   CREATE TABLE IF NOT EXISTS event_queue (
+                                                                              id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                                              event_type TEXT NOT NULL,
+                                                                              payload TEXT NOT NULL,
+                                                                              created_at TEXT NOT NULL,
+                                                                              status TEXT NOT NULL DEFAULT 'pending',
+                                                                              retry_count INTEGER NOT NULL DEFAULT 0,
+                                                                              last_error TEXT
+                                   )
+                                   """)
 
             await self._db.execute("""
-                CREATE INDEX IF NOT EXISTS idx_queue_status_type_created
-                ON event_queue (status, event_type, created_at)
-            """)
+                                   CREATE INDEX IF NOT EXISTS idx_queue_status_type_created
+                                       ON event_queue (status, event_type, created_at)
+                                   """)
 
             await self._db.commit()
             logger.info(f"Event queue initialized at {self._db_path}")
@@ -142,7 +144,7 @@ class EventQueue:
                 WHERE id IN ({placeholders})
                 """,
                 [STATUS_PROCESSING] + event_ids,
-            )
+                )
             await db.commit()
 
             # Parse and return events
@@ -207,7 +209,7 @@ class EventQueue:
                 WHERE id IN ({placeholders})
                 """,
                 [STATUS_PENDING, error] + event_ids,
-            )
+                )
             await db.commit()
             logger.warning(f"Marked {len(event_ids)} events as failed for retry: {error}")
         except Exception as e:

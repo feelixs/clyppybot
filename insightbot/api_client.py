@@ -295,6 +295,16 @@ class APIClient:
         """Delete a channel."""
         await self._request("DELETE", f"/api/internal/channels/{channel_id}")
 
+    async def batch_delete_channels(self, channel_ids: List[int]) -> None:
+        """Batch delete channels."""
+        if not channel_ids:
+            return
+        await self._request(
+            "POST",
+            "/api/internal/channels/bulk-delete",
+            json={"channel_ids": channel_ids},
+        )
+
     # Message stats
     async def increment_message_count(
             self,

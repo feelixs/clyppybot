@@ -12,6 +12,8 @@ from ..services.event_queue import (
     EVENT_VOICE_START,
     EVENT_VOICE_END,
     EVENT_USER_LAST_ONLINE,
+    EVENT_CHANNEL_UPSERT,
+    EVENT_CHANNEL_DELETE,
 )
 from .. import intent_flags
 
@@ -42,7 +44,8 @@ class EventQueueProcessor(Extension):
         # Process each event type
         # IMPORTANT: VOICE_END must come before VOICE_START so that channel switches
         # (which queue an end + start) close the old session before opening the new one.
-        event_types = [EVENT_USER_UPSERT, EVENT_MESSAGE, EVENT_VOICE_END, EVENT_VOICE_START]
+        # CHANNEL_DELETE should come before CHANNEL_UPSERT to handle recreations properly.
+        event_types = [EVENT_USER_UPSERT, EVENT_MESSAGE, EVENT_CHANNEL_DELETE, EVENT_CHANNEL_UPSERT, EVENT_VOICE_END, EVENT_VOICE_START]
 
         # Only process EVENT_USER_LAST_ONLINE if GUILD_PRESENCES intent is available
         if intent_flags.HAS_GUILD_PRESENCES:
@@ -65,6 +68,10 @@ class EventQueueProcessor(Extension):
                             await self._process_user_upserts(api, events)
                         elif event_type == EVENT_MESSAGE:
                             await self._process_messages(api, events)
+                        elif event_type == EVENT_CHANNEL_UPSERT:
+                            await self._process_channel_upserts(api, events)
+                        elif event_type == EVENT_CHANNEL_DELETE:
+                            await self._process_channel_deletes(api, events)
                         elif event_type == EVENT_VOICE_START:
                             await self._process_voice_starts(api, events)
                         elif event_type == EVENT_VOICE_END:
@@ -122,6 +129,18 @@ class EventQueueProcessor(Extension):
         unique_user_ids = list(set(user_ids))
         await api.batch_update_user_last_online(unique_user_ids)
         logger.debug(f"Updated last_online for {len(unique_user_ids)} users")
+
+    async def _process_channel_upserts(self, api, events):
+        """Process channel_upsert events."""
+        channels = [e["payload"] for e in events]
+        count = await api.bulk_upsert_channels(channels)
+        logger.debug(f"Upserted {count} channels")
+
+    async def _process_channel_deletes(self, api, events):
+        """Process channel_delete events."""
+        channel_ids = [e["payload"]["channel_id"] for e in events]
+        await api.batch_delete_channels(channel_ids)
+        logger.debug(f"Deleted {len(channel_ids)} channels")
 
 
 def setup(bot):

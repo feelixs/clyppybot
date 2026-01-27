@@ -4,7 +4,7 @@ from interactions import Extension, listen, PermissionOverwrite
 from interactions.api.events import ChannelCreate, ChannelUpdate, ChannelDelete
 
 from ..logging_config import get_logger
-from ..api_client import get_api_client
+from ..services.event_queue import get_event_queue, EVENT_CHANNEL_UPSERT, EVENT_CHANNEL_DELETE
 
 logger = get_logger("insightbot.events.channels")
 
@@ -25,14 +25,14 @@ class ChannelEvents(Extension):
         return result
 
     async def _sync_channel(self, channel):
-        """Sync a single channel to the database."""
+        """Enqueue a channel upsert event."""
         if not channel.guild:
             return  # Skip DM channels
 
         try:
             guild_id = int(channel.guild.id)
             channel_id = int(channel.id)
-            api = get_api_client()
+            queue = get_event_queue()
 
             # Get permission overwrites
             permission_overwrites = []
@@ -54,22 +54,23 @@ class ChannelEvents(Extension):
             if hasattr(channel, 'nsfw'):
                 is_nsfw = channel.nsfw
 
-            await api.upsert_channel(
-                channel_id=channel_id,
-                guild_id=guild_id,
-                name=channel.name,
-                channel_type=int(channel.type),
-                topic=topic,
-                position=channel.position if hasattr(channel, 'position') else None,
-                parent_id=parent_id,
-                is_nsfw=is_nsfw,
-                permission_overwrites=permission_overwrites,
-            )
+            # Enqueue channel upsert event
+            await queue.enqueue(EVENT_CHANNEL_UPSERT, {
+                "channel_id": channel_id,
+                "guild_id": guild_id,
+                "name": channel.name,
+                "channel_type": int(channel.type),
+                "topic": topic,
+                "position": channel.position if hasattr(channel, 'position') else None,
+                "parent_id": parent_id,
+                "is_nsfw": is_nsfw,
+                "permission_overwrites": permission_overwrites,
+            })
 
-            logger.debug(f"Synced channel {channel.name} ({channel_id}) in guild {guild_id}")
+            logger.debug(f"Enqueued channel upsert for {channel.name} ({channel_id}) in guild {guild_id}")
 
         except Exception as e:
-            logger.error(f"Failed to sync channel {channel.id}: {e}")
+            logger.error(f"Failed to enqueue channel upsert for {channel.id}: {e}")
 
     @listen(ChannelCreate)
     async def on_channel_create(self, event: ChannelCreate):
@@ -89,11 +90,14 @@ class ChannelEvents(Extension):
 
         try:
             channel_id = int(event.channel.id)
-            api = get_api_client()
+            queue = get_event_queue()
 
-            await api.delete_channel(channel_id)
+            # Enqueue channel delete event
+            await queue.enqueue(EVENT_CHANNEL_DELETE, {
+                "channel_id": channel_id,
+            })
 
-            logger.debug(f"Deleted channel {event.channel.name} ({channel_id})")
+            logger.debug(f"Enqueued channel delete for {event.channel.name} ({channel_id})")
 
         except Exception as e:
-            logger.error(f"Failed to delete channel {event.channel.id}: {e}")
+            logger.error(f"Failed to enqueue channel delete for {event.channel.id}: {e}")
