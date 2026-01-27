@@ -6,15 +6,11 @@ from bot.db import GuildDatabase
 from bot.io.cdn import CdnSpacesClient
 from cogs.base import format_count
 import aiohttp
-import signal
 import logging
 import asyncio
 import signal
 import sys
 import os
-
-from insightbot.api_client import close_api_client
-from insightbot.services.task_manager import TaskManager
 
 
 async def fetch_embed_count(client=None) -> str:
