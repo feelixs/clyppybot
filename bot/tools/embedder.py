@@ -658,8 +658,10 @@ class AutoEmbedder:
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                 if result['success']:
+                    # Handle both Message objects and dict responses (from restored tasks)
+                    msg_id = bot_message.id if hasattr(bot_message, 'id') else bot_message.get('id', 0)
                     await publish_interaction(
-                        interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
+                        interaction_data={'response_time': my_response_time, 'msg_id': msg_id},
                         apikey=self.api_key,
                         edit_id=result['id'],
                         edit_type='response_time'
