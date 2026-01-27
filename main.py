@@ -159,7 +159,12 @@ async def main():
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
-    await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
+    try:
+        await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
+    except KeyboardInterrupt:
+        logger.info("Received interrupt signal")
+    finally:
+        asyncio.run(on_shutdown(Bot))
 
 
 asyncio.run(main())
