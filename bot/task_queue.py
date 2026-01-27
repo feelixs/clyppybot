@@ -30,6 +30,7 @@ class SlashCommandTask:
     interaction_id: int
     interaction_token: str
     channel_id: int
+    channel_name: Optional[str]
     guild_id: Optional[int]
     guild_name: Optional[str]
     user_id: int
@@ -257,9 +258,16 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                 self.channel_id = task.channel_id
                 self.guild_id = task.guild_id
                 self.author_id = task.user_id
+                # Create mock author with send method for DMs
+                async def author_send(*args, **kwargs):
+                    # Can't send DMs during restoration, just log
+                    logger.info(f"Skipping DM to user {task.user_id} during task restoration")
+                    return None
+
                 self.author = type('obj', (object,), {
                     'id': task.user_id,
-                    'username': task.user_username
+                    'username': task.user_username,
+                    'send': author_send
                 })()
                 # Alias for SlashContext compatibility
                 self.user = self.author
@@ -269,7 +277,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                 # Create mock channel object
                 self.channel = type('obj', (object,), {
                     'id': task.channel_id,
-                    'nsfw': False  # Default to safe
+                    'nsfw': False,  # Default to safe
+                    'name': task.channel_name or 'unknown-channel'
                 })()
                 # Create mock guild object if guild_id exists
                 if task.guild_id:

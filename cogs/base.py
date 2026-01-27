@@ -564,6 +564,7 @@ class Base(Extension):
                     interaction_id=int(ctx.id),
                     interaction_token=ctx.token,
                     channel_id=int(ctx.channel_id),
+                    channel_name=ctx.channel.name if hasattr(ctx.channel, 'name') else 'unknown-channel',
                     guild_id=int(ctx.guild_id) if ctx.guild else None,
                     guild_name=ctx.guild.name if ctx.guild else None,
                     user_id=int(ctx.author.id),

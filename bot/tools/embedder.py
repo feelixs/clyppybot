@@ -364,6 +364,9 @@ class AutoEmbedder:
             try_send_files=True, extend_with_ai=False):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
             has_file_perms = True
+        elif getattr(respond_to, '_restored_task', False):
+            # Restored task - assume permissions are valid since interaction was deferred successfully
+            has_file_perms = True
         else:
             has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
 
