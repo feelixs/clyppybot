@@ -261,12 +261,15 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                     'id': task.user_id,
                     'username': task.user_username
                 })()
+                # Alias for SlashContext compatibility
+                self.user = self.author
                 self._deferred = True
                 # Flag to indicate this is a restored task - skip permission checks
                 self._restored_task = True
                 # Create mock channel object
                 self.channel = type('obj', (object,), {
-                    'id': task.channel_id
+                    'id': task.channel_id,
+                    'nsfw': False  # Default to safe
                 })()
                 # Create mock guild object if guild_id exists
                 if task.guild_id:
