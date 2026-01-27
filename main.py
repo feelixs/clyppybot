@@ -187,6 +187,7 @@ async def main():
     # Load background tasks
     Bot.load_extension("insightbot.tasks.counter_updater")
     Bot.load_extension("insightbot.tasks.digest_scheduler")
+    Bot.load_extension("insightbot.tasks.event_queue_processor")
 
     # Load analytics collector
     Bot.load_extension("insightbot.events.analytics_collector")
