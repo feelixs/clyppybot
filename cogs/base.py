@@ -550,12 +550,46 @@ class Base(Extension):
                        type=OptionType.STRING)
                    ])
     async def embed(self, ctx: SlashContext, url: str):
+        # Defer IMMEDIATELY before any processing to ensure we respond within 3s
+        await ctx.defer()
+
         self.logger.info(f"@slash_command for /embed - {ctx.author.id} - {url}")
         url = self._sanitize_url(url)
+
+        # Check if bot is shutting down
+        if self.bot.is_shutting_down:
+            self.logger.info(f"Bot is shutting down, queueing /embed command for {url}")
+
+            try:
+                # Interaction already deferred at the top of this function
+
+                from bot.task_queue import SlashCommandTask
+                task = SlashCommandTask(
+                    interaction_id=int(ctx.id),
+                    interaction_token=ctx.token,
+                    channel_id=int(ctx.channel_id),
+                    channel_name=ctx.channel.name if hasattr(ctx.channel, 'name') else 'unknown-channel',
+                    guild_id=int(ctx.guild_id) if ctx.guild else None,
+                    guild_name=ctx.guild.name if ctx.guild else None,
+                    user_id=int(ctx.author.id),
+                    user_username=ctx.author.username,
+                    clip_url=url,
+                    extend_with_ai=False
+                )
+                self.bot.task_queue.add_slash_command(task)
+                self.logger.info(f"Successfully queued task for {url}")
+            except Exception as e:
+                self.logger.error(f"Failed to queue task during shutdown: {e}")
+                import traceback
+                self.logger.error(traceback.format_exc())
+            # Don't send any response - the deferred state will be resumed on restart
+            return
+
         for p in self.bot.platform_embedders:
             if slug := p.platform.parse_clip_url(url):
                 await self.bot.base_embedder.command_embed(
                     ctx=ctx,
+                    already_deferred=True,
                     url=url,
                     platform=p.platform,
                     slug=slug
@@ -889,6 +923,13 @@ class Base(Extension):
             self.logger.info(f"CLYPPY VERSION: {VERSION}")
             if os.getenv("TEST") is not None:
                 await self.post_servers(len(self.bot.guilds))
+
+            # Process queued tasks from previous session
+            from bot.task_queue import process_queued_tasks
+            try:
+                await process_queued_tasks(self.bot, self.bot.task_queue)
+            except Exception as e:
+                self.logger.error(f"Error processing queued tasks: {e}")
             self.logger.info("--------------")
 
             # Initialize TaskManager and register task functions

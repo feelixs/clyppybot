@@ -4,10 +4,10 @@ from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_inf
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
-from bot.types import DownloadResponse, LocalFileInfo, GuildType
+from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
+from bot.task_queue import QuickembedTask
 from typing import List, Union, Tuple
 from bot.io.upload import upload_video
-from bot.platforms.discord_attach import DiscordAttachmentId
 from pathlib import Path
 import traceback
 import asyncio
@@ -117,6 +117,26 @@ class AutoEmbedder:
 
             words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
+
+            # If shutting down, queue tasks instead of processing
+            if self.bot.is_shutting_down:
+                self.logger.info(f"Bot is shutting down, queueing {num_links} clip(s) from message {event.message.id}")
+                if num_links >= 1:
+                    for word in words:
+                        if self.platform_tools.is_clip_link(word):
+                            task = QuickembedTask(
+                                message_id=event.message.id,
+                                channel_id=event.message.channel.id,
+                                guild_id=guild.id,
+                                guild_name=guild.name,
+                                is_dm=guild.is_dm,
+                                clip_url=word,
+                                author_id=event.message.author.id,
+                                author_username=event.message.author.username
+                            )
+                            self.bot.task_queue.add_quickembed(task)
+                return 1
+
             if num_links == 1:
                 contains_clip_link, index = self.get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
@@ -343,6 +363,9 @@ class AutoEmbedder:
             respond_to: Union[Message, SlashContext], guild: GuildType,
             try_send_files=True, extend_with_ai=False):
         if guild.is_dm:  # dm gives error (nonetype has no attribute 'permissions_for')
+            has_file_perms = True
+        elif getattr(respond_to, '_restored_task', False):
+            # Restored task - assume permissions are valid since interaction was deferred successfully
             has_file_perms = True
         else:
             has_file_perms = Permissions.ATTACH_FILES in respond_to.channel.permissions_for(respond_to.guild.me)
@@ -601,7 +624,8 @@ class AutoEmbedder:
                     comp = ActionRow(*comp)
 
                 # send message
-                if isinstance(respond_to, SlashContext):
+                # Check if it's a SlashContext (or MinimalContext with send method)
+                if isinstance(respond_to, SlashContext) or (hasattr(respond_to, 'send') and not hasattr(respond_to, 'reply')):
                     if uploading_to_discord:
                         bot_message = await respond_to.send(file=response.local_file_path, components=comp)
                     else:
@@ -634,8 +658,10 @@ class AutoEmbedder:
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
                 if result['success']:
+                    # Handle both Message objects and dict responses (from restored tasks)
+                    msg_id = bot_message.id if hasattr(bot_message, 'id') else bot_message.get('id', 0)
                     await publish_interaction(
-                        interaction_data={'response_time': my_response_time, 'msg_id': bot_message.id},
+                        interaction_data={'response_time': my_response_time, 'msg_id': msg_id},
                         apikey=self.api_key,
                         edit_id=result['id'],
                         edit_type='response_time'

@@ -11,6 +11,19 @@ COLOR_GREEN = 65280
 
 
 @dataclass
+class DiscordAttachmentId:
+    """Structured ID for Discord CDN attachments"""
+    channel: str
+    some_id: str
+    filename: str
+    url_params: Optional[str]
+
+    def to_string(self) -> str:
+        """Convert to a string identifier for tracking in currently_embedding"""
+        return self.some_id
+
+
+@dataclass
 class GuildType:
     id: int
     name: str

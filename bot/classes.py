@@ -1036,7 +1036,7 @@ class BaseAutoEmbed:
                 logger=self.logger
             ))
 
-    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False):
+    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False, already_deferred=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time()
             while clip_id in self.bot.currently_downloading:
@@ -1046,7 +1046,8 @@ class BaseAutoEmbed:
 
         pre = "/"
         if isinstance(ctx, SlashContext):
-            await ctx.defer(ephemeral=False)
+            if not already_deferred:
+                await ctx.defer(ephemeral=False)
         elif isinstance(ctx, Message):
             pre = "."
             ctx.send = ctx.reply
@@ -1055,23 +1056,27 @@ class BaseAutoEmbed:
         if ctx.guild:
             guild = GuildType(ctx.guild.id, ctx.guild.name, False)
             ctx_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}"
-            if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
-                return
-            elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
-                await ctx.send(
-                    content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
-                    components=create_nexus_comps()
-                )
-                return
-            elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
-                await ctx.send(
-                    content=f"I don't have permission to embed links in this channel",
-                    components=create_nexus_comps()
-                )
-                return
-            if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
-                if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
+
+            # Skip permission checks for restored tasks (interaction was already deferred successfully)
+            if not getattr(ctx, '_restored_task', False):
+                if Permissions.SEND_MESSAGES not in ctx.channel.permissions_for(ctx.guild.me):
                     return
+                elif Permissions.READ_MESSAGE_HISTORY not in ctx.channel.permissions_for(ctx.guild.me) and isinstance(ctx, Message):
+                    await ctx.send(
+                        content=f"I don't have the permission `Read Message History` in this channel, which is required for text commands",
+                        components=create_nexus_comps()
+                    )
+                    return
+                elif Permissions.EMBED_LINKS not in ctx.channel.permissions_for(ctx.guild.me):
+                    await ctx.send(
+                        content=f"I don't have permission to embed links in this channel",
+                        components=create_nexus_comps()
+                    )
+                    return
+
+                if Permissions.SEND_MESSAGES_IN_THREADS not in ctx.channel.permissions_for(ctx.guild.me):
+                    if isinstance(ctx.channel, TYPE_THREAD_CHANNEL):
+                        return
         else:
             guild = GuildType(ctx.author.id, ctx.author.username, True)
             ctx_link = f"https://discord.com/channels/@me/{ctx.bot.user.id}"

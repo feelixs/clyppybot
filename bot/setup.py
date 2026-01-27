@@ -61,6 +61,14 @@ def init_misc(bot: Client) -> Client:
     bot.currently_embedding = []  # used in embedder.py (AutoEmbedder) -> for quickembeds (and i guess also triggers for command embeds)
     bot.currently_downloading = []  # used in command embeds across all platforms
     bot.currently_embedding_users = []  # used for command embeds
+    bot.is_shutting_down = False  # flag to reject new tasks during shutdown
+
+    # Task queue for graceful shutdown
+    from bot.task_queue import TaskQueue
+    from pathlib import Path
+    # Create data directory if it doesn't exist
+    Path("data").mkdir(exist_ok=True)
+    bot.task_queue = TaskQueue(queue_file="data/task_queue.pkl")
 
     bot.platform_list = [
         bot.twitch,
