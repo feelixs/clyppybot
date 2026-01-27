@@ -553,21 +553,27 @@ class Base(Extension):
         if self.bot.is_shutting_down:
             self.logger.info(f"Bot is shutting down, queueing /embed command for {url}")
 
-            # Defer immediately so Discord knows we received the command
-            await ctx.defer()
+            try:
+                # Defer immediately so Discord knows we received the command
+                await ctx.defer()
 
-            from bot.task_queue import SlashCommandTask
-            task = SlashCommandTask(
-                interaction_id=ctx.interaction_id,
-                interaction_token=ctx.token,
-                channel_id=ctx.channel_id,
-                guild_id=ctx.guild_id if ctx.guild else None,
-                user_id=ctx.author.id,
-                user_username=ctx.author.username,
-                clip_url=url,
-                extend_with_ai=False
-            )
-            self.bot.task_queue.add_slash_command(task)
+                from bot.task_queue import SlashCommandTask
+                task = SlashCommandTask(
+                    interaction_id=int(ctx.id),
+                    interaction_token=ctx.token,
+                    channel_id=int(ctx.channel_id),
+                    guild_id=int(ctx.guild_id) if ctx.guild else None,
+                    user_id=int(ctx.author.id),
+                    user_username=ctx.author.username,
+                    clip_url=url,
+                    extend_with_ai=False
+                )
+                self.bot.task_queue.add_slash_command(task)
+                self.logger.info(f"Successfully queued task for {url}")
+            except Exception as e:
+                self.logger.error(f"Failed to queue task during shutdown: {e}")
+                import traceback
+                self.logger.error(traceback.format_exc())
             # Don't send any response - the deferred state will be resumed on restart
             return
 

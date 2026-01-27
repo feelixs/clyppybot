@@ -164,61 +164,76 @@ async def cleanup_old_videos():
             cleanup_logger.error(f"Error during cleanup: {str(e)}")
 
 
-async def on_shutdown(bot):
-    """Called when the bot is shutting down."""
-    logger.info("Initiating graceful shutdown...")
-
-    # Step 1: Set shutdown flag (no new tasks will be accepted)
-    bot.is_shutting_down = True
-    logger.info("Shutdown flag set - new tasks will be queued")
-
-    # Step 2: Wait for current tasks to complete (with reasonable timeout)
+async def wait_for_active_tasks(bot):
+    """Wait for active download/embed tasks to complete before shutting down."""
     logger.info("Waiting for active tasks to complete...")
+
+    # Give tasks a grace period to start (tasks in setup phase might not be tracked yet)
+    await asyncio.sleep(2)
+
     timeout = 60 * 3  # 3 minutes max
-    start_time = asyncio.get_event_loop().time()
+    last_log_time = asyncio.get_event_loop().time()
+    total_elapsed = 0
 
     while timeout > 0:
-        embedding_count = len(bot.currently_embedding)
-        downloading_count = len(bot.currently_downloading)
+        try:
+            embedding_count = len(bot.currently_embedding)
+            downloading_count = len(bot.currently_downloading)
 
-        if embedding_count == 0 and downloading_count == 0:
-            logger.info("All active tasks completed")
+            # Log immediately if there are tasks
+            if total_elapsed == 0 and (embedding_count > 0 or downloading_count > 0):
+                logger.info(f"Found active tasks: {embedding_count} embedding, {downloading_count} downloading")
+
+            # Check if tasks completed
+            if embedding_count == 0 and downloading_count == 0:
+                logger.info(f"All active tasks completed (checked at {total_elapsed}s)")
+                break
+
+            # Log every second during first 10 seconds for debugging
+            if total_elapsed < 10:
+                logger.info(f"[{total_elapsed}s] Embedding: {embedding_count}, Downloading: {downloading_count}")
+
+            current_time = asyncio.get_event_loop().time()
+            if current_time - last_log_time >= 10:
+                # Log status every 10 seconds after the first 10
+                logger.info(f"Still waiting ({total_elapsed}s elapsed): {embedding_count} embedding, {downloading_count} downloading")
+                if embedding_count > 0:
+                    logger.info(f"  Embedding IDs: {bot.currently_embedding}")
+                if downloading_count > 0:
+                    logger.info(f"  Downloading slugs: {bot.currently_downloading}")
+                last_log_time = current_time
+
+            await asyncio.sleep(1)
+            timeout -= 1
+            total_elapsed += 1
+        except Exception as e:
+            logger.error(f"Error in wait loop at {total_elapsed}s: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             break
 
-        if asyncio.get_event_loop().time() - start_time > 10:
-            # Log status every 10 seconds
-            logger.info(f"Still waiting: {embedding_count} embedding, {downloading_count} downloading")
-            start_time = asyncio.get_event_loop().time()
-
-        await asyncio.sleep(1)
-        timeout -= 1
-
     if timeout <= 0:
-        logger.warning(f"Timeout reached - forcing shutdown with {len(bot.currently_embedding)} "
+        logger.warning(f"Timeout reached after {total_elapsed}s - forcing shutdown with {len(bot.currently_embedding)} "
                       f"embedding and {len(bot.currently_downloading)} downloading tasks remaining")
+    else:
+        logger.info(f"All tasks completed after {total_elapsed}s")
 
-    # Step 3: Save task queue to disk
+
+async def save_state(bot):
+    """Save task queue and database before shutting down."""
+    # Save task queue to disk
     logger.info("Saving task queue...")
     queue_count = bot.task_queue.get_task_count()
     logger.info(f"Task queue: {queue_count[0]} quickembeds, {queue_count[1]} slash commands")
     bot.task_queue.save()
 
-    # Step 4: Save database
+    # Save database
     try:
         logger.info("Saving database...")
         await bot.guild_settings.save()
         logger.info("Database saved successfully")
     except Exception as e:
         logger.error(f"Failed to save database: {e}")
-
-    # Step 5: Stop the bot
-    logger.info("Stopping bot...")
-    try:
-        await bot.stop()
-    except Exception as e:
-        logger.error(f"Error stopping bot: {e}")
-
-    logger.info("Shutdown complete")
 
 
 async def main():
@@ -255,24 +270,49 @@ async def main():
             return_when=asyncio.FIRST_COMPLETED
         )
 
-        # If shutdown was triggered, cancel tasks
+        # If shutdown was triggered, do graceful shutdown
         if shutdown_event.is_set():
-            logger.info("Shutdown event triggered, stopping bot...")
+            logger.info("Shutdown event triggered, initiating graceful shutdown...")
 
-            # Cancel cleanup task
-            cleanup_task.cancel()
             try:
-                await cleanup_task
-            except asyncio.CancelledError:
-                pass
+                # Step 1: Set shutdown flag (no new tasks will be accepted)
+                Bot.is_shutting_down = True
+                logger.info("Shutdown flag set - new tasks will be queued")
 
-            # Cancel bot task
-            if not bot_task.done():
-                bot_task.cancel()
+                # Step 2: Wait for active downloads/embeds to complete (bot still running)
+                logger.info("About to call wait_for_active_tasks()")
+                await wait_for_active_tasks(Bot)
+                logger.info("wait_for_active_tasks() completed")
+
+                # Step 3: Now stop the bot tasks
+                logger.info("Stopping bot tasks...")
+
+                # Cancel cleanup task
+                cleanup_task.cancel()
                 try:
-                    await bot_task
+                    await cleanup_task
                 except asyncio.CancelledError:
-                    pass
+                    logger.info("Cleanup task cancelled")
+
+                # Cancel bot task
+                if not bot_task.done():
+                    bot_task.cancel()
+                    try:
+                        await bot_task
+                    except asyncio.CancelledError:
+                        logger.info("Bot task cancelled")
+
+                # Step 4: Save state
+                logger.info("About to save state...")
+                await save_state(Bot)
+                logger.info("State saved")
+
+                logger.info("Shutdown complete")
+            except Exception as e:
+                logger.error(f"Error during shutdown: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+
         else:
             # Bot task completed naturally (shouldn't happen normally)
             logger.info("Bot task completed")
@@ -280,9 +320,8 @@ async def main():
 
     except Exception as e:
         logger.error(f"Error in main loop: {e}")
-    finally:
-        # Always run shutdown procedure
-        await on_shutdown(Bot)
+        import traceback
+        logger.error(traceback.format_exc())
 
 
 # Manually create and manage event loop to have full control over signal handling
