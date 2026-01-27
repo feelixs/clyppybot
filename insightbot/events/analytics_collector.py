@@ -134,8 +134,8 @@ class AnalyticsCollector(Extension):
         self._context_words: Dict[int, Set[str]] = {}
         # set of stopwords
         self._stopwords: Set[str] = set()
-        # (guild_id, channel_id, topic_id) -> TopicMentionStats
-        self._topic_mentions: Dict[tuple[int, int, int], TopicMentionStats] = defaultdict(
+        # (guild_id, channel_id, topic_id, matched_alias) -> TopicMentionStats
+        self._topic_mentions: Dict[tuple[int, int, int, str], TopicMentionStats] = defaultdict(
             TopicMentionStats
         )
         # (guild_id, channel_id, word) -> UnknownWordStats
@@ -360,7 +360,7 @@ class AnalyticsCollector(Extension):
                 )
 
     def _is_context_word_nearby(
-        self, words: List[str], index: int, category_id: int, max_distance: int = 3
+            self, words: List[str], index: int, category_id: int, max_distance: int = 3
     ) -> bool:
         """Check if a context word for the category appears within max_distance of the index.
 
@@ -385,7 +385,7 @@ class AnalyticsCollector(Extension):
         return False
 
     def _process_message_for_topics(
-        self, content: str, guild_id: int, channel_id: int, user_id: int
+            self, content: str, guild_id: int, channel_id: int, user_id: int
     ) -> None:
         """Extract words from message and track topic mentions with tier-based matching.
 
@@ -410,9 +410,9 @@ class AnalyticsCollector(Extension):
             # Track word frequency for ALL words (including stopwords)
             # This enables phrase correlation detection
             if (
-                len(word) >= MIN_WORD_LENGTH
-                and len(word) <= MAX_WORD_LENGTH
-                and word not in seen_freq_words
+                    len(word) >= MIN_WORD_LENGTH
+                    and len(word) <= MAX_WORD_LENGTH
+                    and word not in seen_freq_words
             ):
                 seen_freq_words.add(word)
                 freq_key = (guild_id, channel_id, word)
@@ -426,7 +426,7 @@ class AnalyticsCollector(Extension):
                 if not cached_alias.is_anchor and not cached_alias.is_ambiguous:
                     if cached_alias.topic_id not in seen_topics:
                         seen_topics.add(cached_alias.topic_id)
-                        key = (guild_id, channel_id, cached_alias.topic_id)
+                        key = (guild_id, channel_id, cached_alias.topic_id, word)
                         self._topic_mentions[key].mention_count += 1
                         self._topic_mentions[key].user_ids.add(user_id)
                 else:
@@ -445,16 +445,16 @@ class AnalyticsCollector(Extension):
 
                     if should_count and cached_alias.topic_id not in seen_topics:
                         seen_topics.add(cached_alias.topic_id)
-                        key = (guild_id, channel_id, cached_alias.topic_id)
+                        key = (guild_id, channel_id, cached_alias.topic_id, word)
                         self._topic_mentions[key].mention_count += 1
                         self._topic_mentions[key].user_ids.add(user_id)
 
             # Unknown words (not a known alias)
             elif (
-                len(word) >= MIN_WORD_LENGTH
-                and len(word) <= MAX_WORD_LENGTH  # Avoid very long strings like URLs
-                and word not in self._stopwords
-                and word not in seen_words
+                    len(word) >= MIN_WORD_LENGTH
+                    and len(word) <= MAX_WORD_LENGTH  # Avoid very long strings like URLs
+                    and word not in self._stopwords
+                    and word not in seen_words
             ):
                 seen_words.add(word)
                 key = (guild_id, channel_id, word)
@@ -593,13 +593,14 @@ class AnalyticsCollector(Extension):
             # Collect topic mentions
             # Structure: guild_id -> channel_id -> list of mention data
             topic_data: Dict[int, Dict[int, list]] = {}
-            for (guild_id, channel_id, topic_id), stats in self._topic_mentions.items():
+            for (guild_id, channel_id, topic_id, matched_alias), stats in self._topic_mentions.items():
                 if guild_id not in topic_data:
                     topic_data[guild_id] = {}
                 if channel_id not in topic_data[guild_id]:
                     topic_data[guild_id][channel_id] = []
                 topic_data[guild_id][channel_id].append({
                     "topic_id": topic_id,
+                    "matched_alias": matched_alias,
                     "mention_count": stats.mention_count,
                     "user_ids": list(stats.user_ids),
                 })

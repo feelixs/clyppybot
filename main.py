@@ -182,6 +182,7 @@ async def main():
     Bot.load_extension("insightbot.events.voice")
     Bot.load_extension("insightbot.events.presence")
     Bot.load_extension("insightbot.events.members")
+    Bot.load_extension("bot.events.channels")
 
     # Load background tasks
     Bot.load_extension("insightbot.tasks.counter_updater")

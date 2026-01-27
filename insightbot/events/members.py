@@ -171,6 +171,57 @@ class MemberEvents(Extension):
                 else:
                     members_task = None
 
+            # Sync channels in bulk
+            if guild.channels:
+                task_manager = TaskManager.get()
+                channels_data = []
+                for channel in guild.channels:
+                    # Serialize permission overwrites
+                    permission_overwrites = []
+                    if hasattr(channel, 'permission_overwrites') and channel.permission_overwrites:
+                        for ow in channel.permission_overwrites:
+                            permission_overwrites.append({
+                                "target_type": "role" if ow.type == 0 else "member",
+                                "target_id": int(ow.id),
+                                "allow_bits": int(ow.allow),
+                                "deny_bits": int(ow.deny),
+                            })
+
+                    # Get parent_id (for channels in categories)
+                    parent_id = None
+                    if hasattr(channel, 'parent_id') and channel.parent_id:
+                        parent_id = int(channel.parent_id)
+
+                    # Get topic (for text channels)
+                    topic = None
+                    if hasattr(channel, 'topic'):
+                        topic = channel.topic
+
+                    # Get NSFW flag
+                    is_nsfw = False
+                    if hasattr(channel, 'nsfw'):
+                        is_nsfw = channel.nsfw
+
+                    channels_data.append({
+                        "channel_id": int(channel.id),
+                        "guild_id": int(guild.id),
+                        "name": channel.name,
+                        "channel_type": int(channel.type),
+                        "topic": topic,
+                        "position": channel.position if hasattr(channel, 'position') else None,
+                        "parent_id": parent_id,
+                        "is_nsfw": is_nsfw,
+                        "permission_overwrites": permission_overwrites,
+                    })
+
+                if channels_data:
+                    task_manager.create_task(
+                        api.bulk_upsert_channels(channels_data, guild),
+                        name="bulk_upsert_channels",
+                        persist_args=(channels_data,),
+                        persist_kwargs={"guild_id": int(guild.id)},
+                    )
+
             # Sync roles in bulk
             roles_task = None
             if guild.roles:

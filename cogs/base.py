@@ -895,19 +895,29 @@ class Base(Extension):
             task_manager = TaskManager.get()
             api = get_api_client()
             task_manager.register("bulk_upsert_members", api.bulk_upsert_members)
+            task_manager.register("bulk_upsert_channels", api.bulk_upsert_channels)
+            task_manager.register("bulk_upsert_roles", api.bulk_upsert_roles)
+            task_manager.register("bulk_sync_member_roles", api.bulk_sync_member_roles)
 
             # Load and run any pending tasks from previous shutdown
             await task_manager.load_and_run_pending()
 
-            # Reconcile sessions with Discord's current state
-            try:
-                result = await SessionReconciler.reconcile_all(self.bot)
-                self.logger.info(
-                    f"Session reconciliation complete: "
-                    f"{result['voice_closed']} voice, {result['game_closed']} game sessions closed"
-                )
-            except Exception as e:
-                self.logger.error(f"Session reconciliation failed: {e}")
+            snapshot_time = datetime.now(timezone.utc)
+            self.logger.info(f"Starting session reconciliation (snapshot time: {snapshot_time.isoformat()})")
+
+            # Run reconciliation in background so bot can process events immediately
+            async def run_reconciliation():
+                try:
+                    result = await SessionReconciler.reconcile_all(self.bot, snapshot_time)
+                    self.logger.info(
+                        f"Session reconciliation complete: "
+                        f"{result['voice_closed']} voice, {result['game_closed']} game sessions closed"
+                    )
+                except Exception as e:
+                    self.logger.error(f"Session reconciliation failed: {e}")
+
+            # Start reconciliation task without blocking on_ready
+            asyncio.create_task(run_reconciliation())
 
     async def update_status(self):
         """Fetch embed count and update bot status"""

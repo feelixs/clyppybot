@@ -40,11 +40,11 @@ class APIClient:
             self._client = None
 
     async def _request(
-        self,
-        method: str,
-        endpoint: str,
-        json: Optional[dict] = None,
-        params: Optional[dict] = None,
+            self,
+            method: str,
+            endpoint: str,
+            json: Optional[dict] = None,
+            params: Optional[dict] = None,
     ) -> Optional[dict]:
         """Make an API request."""
         client = await self._get_client()
@@ -68,13 +68,13 @@ class APIClient:
 
     # Guild operations
     async def upsert_guild(
-        self,
-        guild_id: int,
-        name: str,
-        icon_hash: Optional[str] = None,
-        member_count: int = 0,
-        boost_level: int = 0,
-        boost_count: int = 0,
+            self,
+            guild_id: int,
+            name: str,
+            icon_hash: Optional[str] = None,
+            member_count: int = 0,
+            boost_level: int = 0,
+            boost_count: int = 0,
     ) -> bool:
         """Create or update a guild. Returns True if inserted (new), False if updated."""
         result = await self._request(
@@ -110,9 +110,9 @@ class APIClient:
 
     # Discord user operations
     async def upsert_discord_user(
-        self,
-        user: Member | User,
-        global_name: Optional[str] = None
+            self,
+            user: Member | User,
+            global_name: Optional[str] = None
     ) -> None:
         """Upsert global Discord user data."""
         user = user.user if isinstance(user, Member) else user
@@ -128,8 +128,8 @@ class APIClient:
         )
 
     async def bulk_upsert_discord_users(
-        self,
-        users: List[dict],
+            self,
+            users: List[dict],
     ) -> int:
         """Bulk upsert Discord user data. Returns count upserted."""
         if not users:
@@ -161,12 +161,12 @@ class APIClient:
 
     # Member operations
     async def upsert_member(
-        self,
-        guild_id: int,
-        user: Member | User,
-        display_name: Optional[str] = None,
-        joined_at: Optional[datetime] = None,
-        is_bot: bool = False,
+            self,
+            guild_id: int,
+            user: Member | User,
+            display_name: Optional[str] = None,
+            joined_at: Optional[datetime] = None,
+            is_bot: bool = False,
     ) -> None:
         """Create or update a member."""
         user = user.user if isinstance(user, Member) else user
@@ -187,7 +187,7 @@ class APIClient:
         )
 
     async def bulk_upsert_members(
-        self, members: List[dict], guild=None, guild_id: int = None
+            self, members: List[dict], guild=None, guild_id: int = None
     ) -> int:
         """Bulk create or update members. Returns count upserted.
 
@@ -218,10 +218,10 @@ class APIClient:
         await self._request("DELETE", f"/api/internal/members/{guild_id}/{user_id}")
 
     async def log_member_event(
-        self,
-        guild_id: int,
-        user_id: int,
-        event_type: str,
+            self,
+            guild_id: int,
+            user_id: int,
+            event_type: str,
     ) -> None:
         """Log a member join/leave event."""
         await self._request(
@@ -234,15 +234,76 @@ class APIClient:
             },
         )
 
+    # Channel operations
+    async def upsert_channel(
+            self,
+            channel_id: int,
+            guild_id: int,
+            name: str,
+            channel_type: int,
+            topic: Optional[str] = None,
+            position: Optional[int] = None,
+            parent_id: Optional[int] = None,
+            is_nsfw: bool = False,
+            permission_overwrites: Optional[List[dict]] = None,
+    ) -> None:
+        """Create or update a channel with its permission overwrites."""
+        await self._request(
+            "POST",
+            "/api/internal/channels",
+            json={
+                "channel_id": channel_id,
+                "guild_id": guild_id,
+                "name": name,
+                "channel_type": channel_type,
+                "topic": topic,
+                "position": position,
+                "parent_id": parent_id,
+                "is_nsfw": is_nsfw,
+                "permission_overwrites": permission_overwrites or [],
+            },
+        )
+
+    async def bulk_upsert_channels(
+            self, channels: List[dict], guild=None, guild_id: int = None
+    ) -> int:
+        """Bulk create or update channels. Returns count upserted.
+
+        Args:
+            channels: List of channel data dictionaries
+            guild: Discord guild object (optional, for logging)
+            guild_id: Guild ID (optional, used if guild not provided)
+        """
+        try:
+            if not channels:
+                return 0
+            gid = guild_id or (int(guild.id) if guild else None)
+            result = await self._request(
+                "POST",
+                "/api/internal/channels/bulk",
+                json={"channels": channels},
+            )
+            count = result.get("count", 0)
+            logger.debug(f"Synced {count} channels for guild {gid}")
+            return count
+        except Exception as e:
+            gid = guild_id or (int(guild.id) if guild else "unknown")
+            logger.error(f"Failed to sync channels for guild {gid}: {e}")
+            return 0
+
+    async def delete_channel(self, channel_id: int) -> None:
+        """Delete a channel."""
+        await self._request("DELETE", f"/api/internal/channels/{channel_id}")
+
     # Message stats
     async def increment_message_count(
-        self,
-        guild_id: int,
-        channel_id: int,
-        user_id: int,
-        hour_bucket: datetime,
-        message_count: int = 1,
-        character_count: int = 0,
+            self,
+            guild_id: int,
+            channel_id: int,
+            user_id: int,
+            hour_bucket: datetime,
+            message_count: int = 1,
+            character_count: int = 0,
     ) -> None:
         """Increment message count for tracking."""
         await self._request(
@@ -275,11 +336,11 @@ class APIClient:
 
     # Voice sessions
     async def start_voice_session(
-        self,
-        guild_id: int,
-        channel_id: int,
-        user_id: int,
-        started_at: datetime,
+            self,
+            guild_id: int,
+            channel_id: int,
+            user_id: int,
+            started_at: datetime,
     ) -> int:
         """Start a voice session."""
         result = await self._request(
@@ -295,10 +356,10 @@ class APIClient:
         return result["session_id"]
 
     async def end_voice_session(
-        self,
-        guild_id: int,
-        user_id: int,
-        ended_at: datetime,
+            self,
+            guild_id: int,
+            user_id: int,
+            ended_at: datetime,
     ) -> Optional[int]:
         """End a voice session."""
         result = await self._request(
@@ -344,12 +405,12 @@ class APIClient:
 
     # Game sessions
     async def start_game_session(
-        self,
-        guild_id: int,
-        user_id: int,
-        game_name: str,
-        started_at: datetime,
-        application_id: Optional[int] = None,
+            self,
+            guild_id: int,
+            user_id: int,
+            game_name: str,
+            started_at: datetime,
+            application_id: Optional[int] = None,
     ) -> int:
         """Start a game session."""
         result = await self._request(
@@ -366,10 +427,10 @@ class APIClient:
         return result["session_id"]
 
     async def end_game_session(
-        self,
-        guild_id: int,
-        user_id: int,
-        ended_at: datetime,
+            self,
+            guild_id: int,
+            user_id: int,
+            ended_at: datetime,
     ) -> Optional[dict]:
         """End a game session."""
         result = await self._request(
@@ -384,10 +445,10 @@ class APIClient:
         return result
 
     async def get_game_leaderboard(
-        self,
-        guild_id: int,
-        period: str = "week",
-        limit: int = 10,
+            self,
+            guild_id: int,
+            period: str = "week",
+            limit: int = 10,
     ) -> List[dict]:
         """Get games leaderboard (by player playtime)."""
         result = await self._request(
@@ -398,10 +459,10 @@ class APIClient:
         return result.get("entries", [])
 
     async def get_top_games(
-        self,
-        guild_id: int,
-        period: str = "week",
-        limit: int = 20,
+            self,
+            guild_id: int,
+            period: str = "week",
+            limit: int = 20,
     ) -> List[dict]:
         """Get top games leaderboard (by total playtime)."""
         result = await self._request(
@@ -412,10 +473,10 @@ class APIClient:
         return result.get("entries", [])
 
     async def get_user_games(
-        self,
-        guild_id: int,
-        user_id: int,
-        period: str = "month",
+            self,
+            guild_id: int,
+            user_id: int,
+            period: str = "month",
     ) -> List[dict]:
         """Get games played by a specific user."""
         result = await self._request(
@@ -426,9 +487,9 @@ class APIClient:
         return result.get("games", [])
 
     async def get_server_game_stats(
-        self,
-        guild_id: int,
-        period: str = "week",
+            self,
+            guild_id: int,
+            period: str = "week",
     ) -> dict:
         """Get server-wide game statistics."""
         return await self._request(
@@ -438,10 +499,10 @@ class APIClient:
         )
 
     async def get_game_detail(
-        self,
-        guild_id: int,
-        game_id: int,
-        period: str = "month",
+            self,
+            guild_id: int,
+            game_id: int,
+            period: str = "month",
     ) -> dict:
         """Get detailed information about a specific game."""
         return await self._request(
@@ -470,10 +531,10 @@ class APIClient:
         )
 
     async def get_message_leaderboard(
-        self,
-        guild_id: int,
-        period: str = "week",
-        limit: int = 10,
+            self,
+            guild_id: int,
+            period: str = "week",
+            limit: int = 10,
     ) -> List[dict]:
         """Get message leaderboard."""
         result = await self._request(
@@ -484,10 +545,10 @@ class APIClient:
         return result.get("entries", [])
 
     async def get_voice_leaderboard(
-        self,
-        guild_id: int,
-        period: str = "week",
-        limit: int = 10,
+            self,
+            guild_id: int,
+            period: str = "week",
+            limit: int = 10,
     ) -> List[dict]:
         """Get voice leaderboard."""
         result = await self._request(
@@ -509,13 +570,13 @@ class APIClient:
         return result or []
 
     async def create_counter(
-        self,
-        guild_id: int,
-        channel_id: int,
-        counter_type: str,
-        template: str,
-        role_id: Optional[int] = None,
-        goal_target: Optional[int] = None,
+            self,
+            guild_id: int,
+            channel_id: int,
+            counter_type: str,
+            template: str,
+            role_id: Optional[int] = None,
+            goal_target: Optional[int] = None,
     ) -> dict:
         """Create a counter."""
         return await self._request(
@@ -573,7 +634,7 @@ class APIClient:
         return result or []
 
     async def bulk_end_voice_sessions(
-        self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
+            self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
     ) -> int:
         """End multiple voice sessions. Returns count closed.
 
@@ -602,7 +663,7 @@ class APIClient:
         return result or []
 
     async def bulk_end_game_sessions(
-        self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
+            self, session_ids: List[int], ended_at: datetime, started_before: datetime = None
     ) -> int:
         """End multiple game sessions. Returns count closed.
 
@@ -636,12 +697,12 @@ class APIClient:
             raise
 
     async def upsert_digest_config(
-        self,
-        guild_id: int,
-        channel_id: int,
-        day_of_week: int = 0,
-        hour_utc: int = 12,
-        enabled: bool = True,
+            self,
+            guild_id: int,
+            channel_id: int,
+            day_of_week: int = 0,
+            hour_utc: int = 12,
+            enabled: bool = True,
     ) -> None:
         """Create or update digest configuration."""
         await self._request(
@@ -687,11 +748,11 @@ class APIClient:
         return await self._request("GET", f"/api/internal/subscriptions/{guild_id}")
 
     async def upsert_subscription(
-        self,
-        guild_id: int,
-        tier: int,
-        expires_at: Optional[datetime] = None,
-        payment_id: Optional[str] = None,
+            self,
+            guild_id: int,
+            tier: int,
+            expires_at: Optional[datetime] = None,
+            payment_id: Optional[str] = None,
     ) -> None:
         """Create or update subscription."""
         await self._request(
@@ -716,10 +777,10 @@ class APIClient:
 
     # Analytics operations
     async def submit_hourly_analytics(
-        self,
-        timestamp: datetime,
-        guild_stats: dict,
-        channel_stats: dict,
+            self,
+            timestamp: datetime,
+            guild_stats: dict,
+            channel_stats: dict,
     ) -> dict:
         """Submit hourly analytics data.
 
@@ -743,12 +804,12 @@ class APIClient:
 
     # Invite tracking operations
     async def record_member_invite(
-        self,
-        guild_id: int,
-        member_id: int,
-        invited_by_id: Optional[int],
-        invite_code: Optional[str],
-        joined_at: datetime,
+            self,
+            guild_id: int,
+            member_id: int,
+            invited_by_id: Optional[int],
+            invite_code: Optional[str],
+            joined_at: datetime,
     ) -> dict:
         """Record which invite was used when a member joined.
 
@@ -775,10 +836,10 @@ class APIClient:
         )
 
     async def get_invite_leaderboard(
-        self,
-        guild_id: int,
-        period: str = "all",
-        limit: int = 10,
+            self,
+            guild_id: int,
+            period: str = "all",
+            limit: int = 10,
     ) -> List[dict]:
         """Get top inviters for a guild.
 
@@ -798,10 +859,10 @@ class APIClient:
         return result.get("entries", [])
 
     async def get_user_invites(
-        self,
-        guild_id: int,
-        user_id: int,
-        limit: int = 50,
+            self,
+            guild_id: int,
+            user_id: int,
+            limit: int = 50,
     ) -> dict:
         """Get members invited by a specific user.
 
@@ -848,11 +909,11 @@ class APIClient:
         return result or []
 
     async def submit_topic_data(
-        self,
-        date: datetime,
-        topic_mentions: dict,
-        unknown_words: dict,
-        word_frequency: dict = None,
+            self,
+            date: datetime,
+            topic_mentions: dict,
+            unknown_words: dict,
+            word_frequency: dict = None,
     ) -> dict:
         """Submit topic tracking data.
 
@@ -881,9 +942,9 @@ class APIClient:
         )
 
     async def submit_word_frequency(
-        self,
-        date: datetime,
-        word_frequency: dict,
+            self,
+            date: datetime,
+            word_frequency: dict,
     ) -> dict:
         """Submit word frequency data for phrase correlation detection.
 
@@ -909,10 +970,10 @@ class APIClient:
         )
 
     async def get_trending_topics(
-        self,
-        guild_id: int,
-        days: int = 7,
-        limit: int = 10,
+            self,
+            guild_id: int,
+            days: int = 7,
+            limit: int = 10,
     ) -> dict:
         """Get trending topics for a guild.
 
@@ -931,10 +992,10 @@ class APIClient:
         )
 
     async def get_emerging_topics(
-        self,
-        guild_id: int,
-        min_mentions: int = 5,
-        limit: int = 20,
+            self,
+            guild_id: int,
+            min_mentions: int = 5,
+            limit: int = 20,
     ) -> dict:
         """Get emerging unknown words that might be new topics.
 
@@ -953,11 +1014,11 @@ class APIClient:
         )
 
     async def get_channel_topics(
-        self,
-        guild_id: int,
-        channel_id: int,
-        days: int = 7,
-        limit: int = 10,
+            self,
+            guild_id: int,
+            channel_id: int,
+            days: int = 7,
+            limit: int = 10,
     ) -> dict:
         """Get trending topics for a specific channel.
 
@@ -977,8 +1038,8 @@ class APIClient:
         )
 
     async def get_topic_stats(
-        self,
-        guild_id: int,
+            self,
+            guild_id: int,
     ) -> dict:
         """Get overall topic statistics for a guild.
 
@@ -996,15 +1057,15 @@ class APIClient:
 
     # Role operations
     async def upsert_role(
-        self,
-        role_id: int,
-        guild_id: int,
-        name: str,
-        color: Optional[int] = None,
-        position: int = 0,
-        is_hoisted: bool = False,
-        is_mentionable: bool = False,
-        is_managed: bool = False,
+            self,
+            role_id: int,
+            guild_id: int,
+            name: str,
+            color: Optional[int] = None,
+            position: int = 0,
+            is_hoisted: bool = False,
+            is_mentionable: bool = False,
+            is_managed: bool = False,
     ) -> None:
         """Create or update a role."""
         await self._request(
@@ -1038,10 +1099,10 @@ class APIClient:
         return result.get("count", 0)
 
     async def sync_member_roles(
-        self,
-        guild_id: int,
-        user_id: int,
-        role_ids: List[int],
+            self,
+            guild_id: int,
+            user_id: int,
+            role_ids: List[int],
     ) -> None:
         """Sync a single member's roles."""
         await self._request(
@@ -1051,9 +1112,9 @@ class APIClient:
         )
 
     async def bulk_sync_member_roles(
-        self,
-        guild_id: int,
-        member_roles: List[dict],
+            self,
+            guild_id: int,
+            member_roles: List[dict],
     ) -> int:
         """Bulk sync member roles for a guild. Returns count processed."""
         if not member_roles:
