@@ -624,7 +624,8 @@ class AutoEmbedder:
                     comp = ActionRow(*comp)
 
                 # send message
-                if isinstance(respond_to, SlashContext):
+                # Check if it's a SlashContext (or MinimalContext with send method)
+                if isinstance(respond_to, SlashContext) or (hasattr(respond_to, 'send') and not hasattr(respond_to, 'reply')):
                     if uploading_to_discord:
                         bot_message = await respond_to.send(file=response.local_file_path, components=comp)
                     else:
