@@ -546,6 +546,9 @@ class Base(Extension):
                        type=OptionType.STRING)
                    ])
     async def embed(self, ctx: SlashContext, url: str):
+        # Defer IMMEDIATELY before any processing to ensure we respond within 3s
+        await ctx.defer()
+
         self.logger.info(f"@slash_command for /embed - {ctx.author.id} - {url}")
         url = self._sanitize_url(url)
 
@@ -554,8 +557,7 @@ class Base(Extension):
             self.logger.info(f"Bot is shutting down, queueing /embed command for {url}")
 
             try:
-                # Defer immediately so Discord knows we received the command
-                await ctx.defer()
+                # Interaction already deferred at the top of this function
 
                 from bot.task_queue import SlashCommandTask
                 task = SlashCommandTask(
@@ -582,6 +584,7 @@ class Base(Extension):
             if slug := p.platform.parse_clip_url(url):
                 await self.bot.base_embedder.command_embed(
                     ctx=ctx,
+                    already_deferred=True,
                     url=url,
                     platform=p.platform,
                     slug=slug

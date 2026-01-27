@@ -1036,7 +1036,7 @@ class BaseAutoEmbed:
                 logger=self.logger
             ))
 
-    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False):
+    async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False, already_deferred=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
             start_time = time()
             while clip_id in self.bot.currently_downloading:
@@ -1046,7 +1046,8 @@ class BaseAutoEmbed:
 
         pre = "/"
         if isinstance(ctx, SlashContext):
-            await ctx.defer(ephemeral=False)
+            if not already_deferred:
+                await ctx.defer(ephemeral=False)
         elif isinstance(ctx, Message):
             pre = "."
             ctx.send = ctx.reply

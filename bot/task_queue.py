@@ -289,7 +289,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
             url=task.clip_url,
             platform=platform,
             slug=slug,
-            extend_with_ai=task.extend_with_ai
+            extend_with_ai=task.extend_with_ai,
+            already_deferred=True  # Interaction was deferred before shutdown
         )
 
         logger.info(f"Successfully processed queued slash command: {task.clip_url}")
