@@ -189,14 +189,20 @@ async def on_shutdown(bot):
     logger.info("Shutdown complete")
 
 
-def handle_sigterm(signum, frame):
-    """Handle SIGTERM signal from Docker by converting to KeyboardInterrupt."""
-    logger.info("Received SIGTERM signal, initiating graceful shutdown...")
-    raise KeyboardInterrupt()
-
-
 async def main():
-    signal.signal(signal.SIGTERM, handle_sigterm)
+    # Set up shutdown event
+    shutdown_event = asyncio.Event()
+
+    def handle_shutdown_signal():
+        """Signal handler that triggers graceful shutdown."""
+        logger.info("Received shutdown signal (SIGTERM/SIGINT), initiating graceful shutdown...")
+        shutdown_event.set()
+
+    # Register signal handlers using asyncio's mechanism
+    loop = asyncio.get_event_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, handle_shutdown_signal)
+
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
     await Bot.guild_settings.setup_db()
@@ -205,12 +211,33 @@ async def main():
     logger.info("Loading task queue from previous session...")
     Bot.task_queue.load()
 
+    # Start the bot in a background task
+    bot_task = asyncio.create_task(Bot.astart(token=os.getenv('CLYPP_TOKEN')))
+
     try:
-        # Start the bot
-        await Bot.astart(token=os.getenv('CLYPP_TOKEN'))
-    except KeyboardInterrupt:
-        logger.info("Received interrupt signal")
+        # Wait for either the bot to finish or shutdown signal
+        done, pending = await asyncio.wait(
+            [bot_task, asyncio.create_task(shutdown_event.wait())],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+
+        # If shutdown was triggered, cancel the bot task
+        if shutdown_event.is_set():
+            logger.info("Shutdown event triggered, stopping bot...")
+            if not bot_task.done():
+                bot_task.cancel()
+                try:
+                    await bot_task
+                except asyncio.CancelledError:
+                    pass
+        else:
+            # Bot task completed naturally (shouldn't happen normally)
+            logger.info("Bot task completed")
+
+    except Exception as e:
+        logger.error(f"Error in main loop: {e}")
     finally:
+        # Always run shutdown procedure
         await on_shutdown(Bot)
 
 
