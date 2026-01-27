@@ -7,6 +7,7 @@ from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTO
 from bot.types import DownloadResponse, LocalFileInfo, GuildType
 from typing import List, Union, Tuple
 from bot.io.upload import upload_video
+from bot.platforms.discord_attach import DiscordAttachmentId
 from pathlib import Path
 import traceback
 import asyncio
@@ -136,9 +137,12 @@ class AutoEmbedder:
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
         self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
 
-        # Validate parsed_id is a string
-        if not isinstance(parsed_id, str):
-            self.logger.info(f"[WARNING] parse_clip_url returned non-string type {type(parsed_id)}: {parsed_id}")
+        # Convert DiscordAttachmentId to string if needed
+        if isinstance(parsed_id, DiscordAttachmentId):
+            parsed_id = parsed_id.to_string()
+        elif not isinstance(parsed_id, str):
+            self.logger.error(f"parse_clip_url returned unexpected type {type(parsed_id)}: {parsed_id}")
+            return
 
         # Clean up stale entries (clips that have been processing for > 5 minutes)
         await self._cleanup_stale_downloads()
@@ -212,8 +216,12 @@ class AutoEmbedder:
         stale_clips = []
 
         for clip_id in list(self.bot.currently_embedding):
-            # Skip non-string entries (defensive programming)
-            if not isinstance(clip_id, str):
+            # Convert DiscordAttachmentId to string if somehow one got in here
+            if isinstance(clip_id, DiscordAttachmentId):
+                self.logger.warning(f"Found DiscordAttachmentId in currently_embedding, converting: {clip_id}")
+                clip_id = clip_id.to_string()
+            # Skip other non-string entries (defensive programming)
+            elif not isinstance(clip_id, str):
                 self.logger.warning(f"Non-string entry in currently_embedding: {type(clip_id)} - {clip_id}")
                 continue
 
