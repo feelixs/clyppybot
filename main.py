@@ -206,6 +206,9 @@ async def wait_for_active_tasks(bot):
             await asyncio.sleep(1)
             timeout -= 1
             total_elapsed += 1
+        except asyncio.CancelledError:
+            logger.warning(f"Wait loop was cancelled at {total_elapsed}s!")
+            raise
         except Exception as e:
             logger.error(f"Error in wait loop at {total_elapsed}s: {e}")
             import traceback
@@ -281,7 +284,31 @@ async def main():
 
                 # Step 2: Wait for active downloads/embeds to complete (bot still running)
                 logger.info("About to call wait_for_active_tasks()")
-                await wait_for_active_tasks(Bot)
+                logger.info(f"bot_task status: done={bot_task.done()}, cancelled={bot_task.cancelled()}")
+
+                # Create wrapper to monitor bot_task
+                async def monitored_wait():
+                    wait_task = asyncio.create_task(wait_for_active_tasks(Bot))
+                    done, pending = await asyncio.wait(
+                        [wait_task, bot_task],
+                        return_when=asyncio.FIRST_COMPLETED
+                    )
+
+                    if bot_task in done:
+                        logger.warning("bot_task completed unexpectedly during wait!")
+                        if bot_task.exception():
+                            logger.error(f"bot_task exception: {bot_task.exception()}")
+                        # Cancel the wait and continue shutdown
+                        wait_task.cancel()
+                        try:
+                            await wait_task
+                        except asyncio.CancelledError:
+                            pass
+                    else:
+                        # wait_task completed normally
+                        await wait_task
+
+                await monitored_wait()
                 logger.info("wait_for_active_tasks() completed")
 
                 # Step 3: Now stop the bot tasks
