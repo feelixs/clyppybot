@@ -164,7 +164,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received interrupt signal")
     finally:
-        asyncio.run(on_shutdown(Bot))
+        await on_shutdown(Bot)
 
 
 asyncio.run(main())
