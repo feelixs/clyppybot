@@ -3,20 +3,7 @@ from bot.classes import BaseClip, BaseMisc
 from bot.errors import VideoTooLong, NoDuration
 from bot.types import DownloadResponse
 from typing import Optional, Dict
-from dataclasses import dataclass
-
-
-@dataclass
-class DiscordAttachmentId:
-    """Structured ID for Discord CDN attachments"""
-    channel: str
-    some_id: str
-    filename: str
-    url_params: Optional[str]
-
-    def to_string(self) -> str:
-        """Convert to a string identifier for tracking in currently_embedding"""
-        return self.some_id
+from bot.types import DiscordAttachmentId
 
 
 class DiscordMisc(BaseMisc):

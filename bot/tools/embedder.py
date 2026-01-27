@@ -4,10 +4,9 @@ from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_inf
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
 from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
-from bot.types import DownloadResponse, LocalFileInfo, GuildType
+from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
 from typing import List, Union, Tuple
 from bot.io.upload import upload_video
-from bot.platforms.discord_attach import DiscordAttachmentId
 from pathlib import Path
 import traceback
 import asyncio
