@@ -1,6 +1,7 @@
 """Task queue for graceful shutdown and restart."""
 import pickle
 import logging
+import json
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
@@ -349,10 +350,27 @@ async def edit_deferred_response_with_data(bot, ctx, *args, **kwargs):
     if "embeds" in kwargs:
         payload["embeds"] = [e.to_dict() if hasattr(e, 'to_dict') else e for e in kwargs["embeds"]]
     if "components" in kwargs:
-        payload["components"] = [c.to_dict() if hasattr(c, 'to_dict') else c for c in kwargs["components"]]
+        # Handle both single component and list of components
+        components = kwargs["components"]
+        if not isinstance(components, list):
+            components = [components]
+        payload["components"] = [c.to_dict() if hasattr(c, 'to_dict') else c for c in components]
 
     async with get_aiohttp_session() as session:
-        async with session.patch(url, json=payload) as resp:
+        # Handle file uploads
+        if "file" in kwargs:
+            import aiohttp
+            form = aiohttp.FormData()
+            form.add_field('payload_json', json.dumps(payload))
+
+            file_path = kwargs["file"]
+            with open(file_path, 'rb') as f:
+                form.add_field('files[0]', f, filename=file_path.split('/')[-1])
+                resp = await session.patch(url, data=form)
+        else:
+            resp = await session.patch(url, json=payload)
+
+        async with resp:
             if resp.status == 200:
                 logger.info(f"Successfully edited deferred response")
                 return await resp.json()
