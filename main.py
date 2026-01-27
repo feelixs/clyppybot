@@ -132,6 +132,38 @@ Bot = init_misc(Bot)
 Bot.guild_settings = GuildDatabase(on_load=load_from_server, on_save=save_to_server)
 
 
+async def cleanup_old_videos():
+    """Background task to periodically delete old video files."""
+    cleanup_logger = logging.getLogger("video_cleanup")
+    DEFAULT_EDIT_WAIT = 60 * 2  # 2 minutes
+    MIN_FILE_AGE = 60 * 10  # 10 minutes
+
+    while True:
+        try:
+            await asyncio.sleep(DEFAULT_EDIT_WAIT)
+            this_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+            cleanup_logger.info(f"Checking {this_dir} for videos to delete")
+            current_time = asyncio.get_event_loop().time()
+
+            files = os.listdir(this_dir)
+            for file in files:
+                if file.endswith(".mp4") or file.endswith(".m3u8"):
+                    file_path = os.path.join(this_dir, file)
+                    file_age = current_time - os.path.getctime(file_path)
+
+                    if file_age < MIN_FILE_AGE:
+                        cleanup_logger.info(f"Skipping {file} - too new (age: {file_age / 60:.1f} minutes)")
+                        continue
+
+                    cleanup_logger.info(f"Deleting {file} (age: {file_age / 60:.1f} minutes)")
+                    os.remove(file_path)
+        except asyncio.CancelledError:
+            cleanup_logger.info("Video cleanup task cancelled")
+            break
+        except Exception as e:
+            cleanup_logger.error(f"Error during cleanup: {str(e)}")
+
+
 async def on_shutdown(bot):
     """Called when the bot is shutting down."""
     logger.info("Initiating graceful shutdown...")
@@ -212,7 +244,8 @@ async def main():
     logger.info("Loading task queue from previous session...")
     Bot.task_queue.load()
 
-    # Start the bot in a background task
+    # Start background tasks
+    cleanup_task = asyncio.create_task(cleanup_old_videos())
     bot_task = asyncio.create_task(Bot.astart(token=os.getenv('CLYPP_TOKEN')))
 
     try:
@@ -222,9 +255,18 @@ async def main():
             return_when=asyncio.FIRST_COMPLETED
         )
 
-        # If shutdown was triggered, cancel the bot task
+        # If shutdown was triggered, cancel tasks
         if shutdown_event.is_set():
             logger.info("Shutdown event triggered, stopping bot...")
+
+            # Cancel cleanup task
+            cleanup_task.cancel()
+            try:
+                await cleanup_task
+            except asyncio.CancelledError:
+                pass
+
+            # Cancel bot task
             if not bot_task.done():
                 bot_task.cancel()
                 try:
@@ -234,6 +276,7 @@ async def main():
         else:
             # Bot task completed naturally (shouldn't happen normally)
             logger.info("Bot task completed")
+            cleanup_task.cancel()
 
     except Exception as e:
         logger.error(f"Error in main loop: {e}")
