@@ -268,7 +268,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
                 self.author = type('obj', (object,), {
                     'id': task.user_id,
                     'username': task.user_username,
-                    'send': author_send
+                    'send': author_send,
+                    'bot': True  # dont send dm
                 })()
                 # Alias for SlashContext compatibility
                 self.user = self.author
