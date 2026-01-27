@@ -137,7 +137,7 @@ async def on_shutdown(bot):
     # Save analytics state before shutdown
     logger.info("Waiting for tasks to complete...")
 
-    timeout = 120
+    timeout = 60 * 5
     while timeout > 0:
         await asyncio.sleep(1)
         if len(bot.currently_embedding) == 0 and len(bot.currently_downloading) == 0:
