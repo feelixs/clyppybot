@@ -11,6 +11,7 @@ import asyncio
 import signal
 import sys
 import os
+import time
 
 
 async def fetch_embed_count(client=None) -> str:
@@ -143,7 +144,7 @@ async def cleanup_old_videos():
             await asyncio.sleep(DEFAULT_EDIT_WAIT)
             this_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
             cleanup_logger.info(f"Checking {this_dir} for videos to delete")
-            current_time = asyncio.get_event_loop().time()
+            current_time = time.time()
 
             files = os.listdir(this_dir)
             for file in files:
