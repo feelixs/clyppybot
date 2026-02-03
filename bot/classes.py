@@ -1050,15 +1050,6 @@ class BaseAutoEmbed:
                 ) as response:
                     data = await response.json()
 
-                    if response.status == 403 and 'private' in data.get('error', '').lower():
-                        # Private profile
-                        await ctx.send(embed=Embed(
-                            title="🔒 Private Profile",
-                            description="This user's profile is set to private.",
-                            color=0xFF5555
-                        ))
-                        return
-
                     if response.status == 404 or not data.get('success'):
                         # User not found - fall back to showing buttons
                         if target_user:
@@ -1078,14 +1069,16 @@ class BaseAutoEmbed:
                     stats = data['data']
                     username_display = stats.get('username') or display_name
                     is_bot = stats.get('is_bot', False)
+                    is_private = stats.get('private_profile', False)
                     bot_tag = " 🤖" if is_bot else ""
+                    private_tag = " private 🔒" if is_private else ""
 
                     embed = Embed(
-                        title=f"{username_display}'s Profile{bot_tag}",
+                        title=f"{username_display}'s Profile{bot_tag}{private_tag}",
                         color=0x5865F2
                     )
 
-                    # Statistics field
+                    # Statistics field (always shown)
                     unique_clips = stats.get('unique_clip_count', 0)
                     total_embeds = stats.get('total_embed_count', 0)
                     servers_used = stats.get('servers_used', 0)
@@ -1099,58 +1092,60 @@ class BaseAutoEmbed:
                     )
                     embed.add_field(name="Quick Stats", value=stats_text, inline=True)
 
-                    # Platform breakdown field
-                    platform_breakdown = stats.get('platform_breakdown', {})
-                    if platform_breakdown:
-                        # Platform emoji mapping
-                        platform_emojis = {
-                            'twitch': '💜',
-                            'youtube': '🔴',
-                            'kick': '💚',
-                            'tiktok': '🎵',
-                            'medal': '🏅',
-                            'instagram': '📸',
-                            'x': '𝕏',
-                            'twitter': '𝕏'
-                        }
-                        platform_lines = []
-                        # Sort by percentage descending, take top 3
-                        sorted_platforms = sorted(
-                            platform_breakdown.items(),
-                            key=lambda x: x[1]['percentage'],
-                            reverse=True
-                        )[:3]
-                        for platform, info in sorted_platforms:
-                            emoji = platform_emojis.get(platform.lower(), '📹')
-                            platform_lines.append(f"{emoji} **{platform.capitalize()}:** {info['percentage']}%")
+                    # Only show detailed stats if profile is not private
+                    if not is_private:
+                        # Platform breakdown field
+                        platform_breakdown = stats.get('platform_breakdown', {})
+                        if platform_breakdown:
+                            # Platform emoji mapping
+                            platform_emojis = {
+                                'twitch': '💜',
+                                'youtube': '🔴',
+                                'kick': '💚',
+                                'tiktok': '🎵',
+                                'medal': '🏅',
+                                'instagram': '📸',
+                                'x': '𝕏',
+                                'twitter': '𝕏'
+                            }
+                            platform_lines = []
+                            # Sort by percentage descending, take top 3
+                            sorted_platforms = sorted(
+                                platform_breakdown.items(),
+                                key=lambda x: x[1]['percentage'],
+                                reverse=True
+                            )[:3]
+                            for platform, info in sorted_platforms:
+                                emoji = platform_emojis.get(platform.lower(), '📹')
+                                platform_lines.append(f"{emoji} **{platform.capitalize()}:** {info['percentage']}%")
 
-                        if platform_lines:
-                            embed.add_field(name="Favorite Platforms", value="\n".join(platform_lines), inline=True)
+                            if platform_lines:
+                                embed.add_field(name="Top Platforms", value="\n".join(platform_lines), inline=True)
 
-                    # Activity field
-                    first_embed = stats.get('first_embed_at')
-                    latest_embed = stats.get('latest_embed_at')
-                    if first_embed or latest_embed:
-                        activity_lines = []
-                        if first_embed:
-                            try:
-                                first_dt = datetime.fromisoformat(first_embed.replace('Z', '+00:00'))
-                                activity_lines.append(f"📅 **First:** {first_dt.strftime('%b %d, %Y')}")
-                            except Exception:
-                                pass
-                        if latest_embed:
-                            try:
-                                latest_dt = datetime.fromisoformat(latest_embed.replace('Z', '+00:00'))
-                                activity_lines.append(f"🕐 **Latest:** {latest_dt.strftime('%b %d, %Y')}")
-                            except Exception:
-                                pass
-                        if activity_lines:
-                            embed.add_field(name="📆 Activity", value="\n".join(activity_lines), inline=False)
+                        # Activity field
+                        first_embed = stats.get('first_embed_at')
+                        latest_embed = stats.get('latest_embed_at')
+                        if first_embed or latest_embed:
+                            activity_lines = []
+                            if first_embed:
+                                try:
+                                    first_dt = datetime.fromisoformat(first_embed.replace('Z', '+00:00'))
+                                    activity_lines.append(f"📅 **First:** {first_dt.strftime('%b %d, %Y')}")
+                                except Exception:
+                                    pass
+                            if latest_embed:
+                                try:
+                                    latest_dt = datetime.fromisoformat(latest_embed.replace('Z', '+00:00'))
+                                    activity_lines.append(f"🕐 **Latest:** {latest_dt.strftime('%b %d, %Y')}")
+                                except Exception:
+                                    pass
+                            if activity_lines:
+                                embed.add_field(name="📆 Activity", value="\n".join(activity_lines), inline=False)
 
-                    # Favorite platform in footer
-                    favorite = stats.get('favorite_platform')
-                    if favorite:
-                        embed.set_footer(text=f"⭐ Favorite Platform: {favorite.capitalize()}")
+                        # Favorite platform in footer
+                        favorite = stats.get('favorite_platform')
+                        if favorite:
+                            embed.set_footer(text=f"⭐ Favorite Platform: {favorite.capitalize()}")
 
                     # Send with buttons
                     buttons = [
