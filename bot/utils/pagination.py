@@ -137,17 +137,21 @@ class UserRankPagination:
         desc_lines = []
         if top_user:
             top_name = top_user.get("user_name", "Unknown")
+            top_bot = " (bot)" if top_user.get("is_bot") else ""
             top_clips = top_user.get("unique_clip_count", 0)
-            desc_lines.append(f"🏆 Top embedder: **{top_name}** with **{top_clips:,}** clips")
+            desc_lines.append(f"🏆 Top embedder: **{top_name}**{top_bot} with **{top_clips:,}** clips")
         if target_user_rank:
             # Find target user's name
             target_name = None
+            target_is_bot = False
             for u in ranking_data:
                 if str(u.get("user_id")) == str(user_id):
                     target_name = u.get("user_name", "Unknown")
+                    target_is_bot = u.get("is_bot", False)
                     break
             if target_name:
-                desc_lines.append(f"**{target_name}** is ranked **#{target_user_rank}**")
+                bot_tag = " (bot)" if target_is_bot else ""
+                desc_lines.append(f"**{target_name}**{bot_tag} is ranked **#{target_user_rank}**")
 
         embed.description = "\n".join(desc_lines) if desc_lines else "Showing users ranked by unique clips embedded"
 
@@ -156,15 +160,17 @@ class UserRankPagination:
             rank = start_rank + idx + 1
             uid = user.get("user_id")
             username = user.get("user_name", "Unknown")
+            is_bot = user.get("is_bot", False)
+            bot_tag = " (bot)" if is_bot else ""
             unique_clips = user.get("unique_clip_count", 0)
             total_embeds = user.get("total_embed_count", 0)
             servers_used = user.get("servers_used", 0)
 
             # Highlight target user
             if str(uid) == str(user_id):
-                display_name = f"**{username}** ⭐"
+                display_name = f"**{username}**{bot_tag} ⭐"
             else:
-                display_name = username
+                display_name = f"{username}{bot_tag}"
 
             value = (
                 f"🎬 Unique Clips: **{unique_clips:,}**\n"
