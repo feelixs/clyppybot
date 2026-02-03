@@ -2,8 +2,10 @@ from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Any
 import aiohttp
 import json
+from os import getenv
 import base64
 from interactions import Embed, Button, ButtonStyle, ActionRow
+from bot.env import CLYPPYIO_USER_AGENT
 
 
 @dataclass
@@ -56,7 +58,11 @@ class ServerRankPagination:
             }
 
             async with aiohttp.ClientSession() as session:
-                async with session.get(ServerRankPagination.API_BASE_URL, params=params) as response:
+                async with session.get(ServerRankPagination.API_BASE_URL, params=params, headers={
+                    "User-Agent": CLYPPYIO_USER_AGENT,
+                    'X-API-Key': getenv('clyppy_post_key'),
+                    'Content-Type': 'application/json'
+                }) as response:
                     if response.status == 200:
                         data = await response.json()
 
@@ -255,6 +261,268 @@ class ServerRankPagination:
                 style=ButtonStyle.PRIMARY,
                 label="Last ⏭️",
                 custom_id=f"server_rank_last_{encoded_state}",
+                disabled=(page >= total_pages)
+            ),
+        ]
+
+        return [ActionRow(*buttons)]
+
+
+@dataclass
+class UserRankPaginationState:
+    """State for user ranking pagination."""
+    message_id: int
+    user_id: str
+    time_period: str = "all"
+    page: int = 1
+    total_pages: int = 1
+    user_target_page: int = 1
+    entries_per_page: int = 10
+
+
+class UserRankPagination:
+    """Utilities for user ranking pagination."""
+
+    API_BASE_URL = "https://clyppy.io/api/users/ranking/"
+    CACHE = {}  # Simple in-memory cache: {cache_key: (data, timestamp)}
+    CACHE_TTL = 3600  # 1 hour in seconds
+
+    @staticmethod
+    async def fetch_ranking_data(user_id: str, page: int = 1,
+                                  time_period: str = "all") -> Dict[str, Any]:
+        """
+        Fetch user ranking from API with caching.
+
+        Args:
+            user_id: Discord user ID
+            page: Page number to fetch
+            time_period: Time period filter ('today', 'week', 'month', 'all')
+
+        Returns:
+            API response dict with 'success', 'data', 'page', 'total_count', etc.
+        """
+        import time
+
+        # Check cache first
+        cache_key = f"user_ranking_{time_period}_{page}"
+        if cache_key in UserRankPagination.CACHE:
+            cached_data, timestamp = UserRankPagination.CACHE[cache_key]
+            if time.time() - timestamp < UserRankPagination.CACHE_TTL:
+                return cached_data
+
+        # Fetch from API
+        try:
+            params = {
+                "page": page,
+                "time_period": time_period
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(UserRankPagination.API_BASE_URL, params=params, headers={
+                    "User-Agent": CLYPPYIO_USER_AGENT,
+                    'X-API-Key': getenv('clyppy_post_key'),
+                    'Content-Type': 'application/json'
+                }) as response:
+                    if response.status == 200:
+                        data = await response.json()
+
+                        # Cache the result
+                        UserRankPagination.CACHE[cache_key] = (data, time.time())
+
+                        return data
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"API returned status {response.status}"
+                        }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    @staticmethod
+    async def find_user_page(user_id: str, time_period: str = "all") -> Optional[int]:
+        """
+        Find which page the user appears on in the ranking.
+
+        Args:
+            user_id: Discord user ID to find
+            time_period: Time period filter
+
+        Returns:
+            Page number where user appears, or None if not found
+        """
+        # API returns 100 per page, we display 10 per page
+        # So we need to fetch and search through pages
+
+        page = 1
+        while True:
+            data = await UserRankPagination.fetch_ranking_data(user_id, page, time_period)
+
+            if not data.get("success", False):
+                return None
+
+            # Search for user_id in this page's data
+            for idx, user in enumerate(data.get("data", [])):
+                if user.get("user_id") == user_id:
+                    # Calculate which display page this user is on
+                    # API page has 100 entries, we show 10 per page
+                    overall_rank = (page - 1) * 100 + idx + 1
+                    display_page = (overall_rank + 9) // 10  # Ceiling division
+                    return display_page
+
+            # Check if there are more pages
+            if not data.get("has_more", False):
+                # User not found in ranking
+                return None
+
+            page += 1
+
+            # Safety limit to avoid infinite loops
+            if page > 100:
+                return None
+
+    @staticmethod
+    def create_embed(ranking_data: List[Dict], page: int, total_pages: int,
+                     user_id: str, time_period: str = "all", entries_per_page: int = 10) -> Embed:
+        """
+        Create Discord embed showing user ranking.
+
+        Args:
+            ranking_data: List of user data dicts from API
+            page: Current page number
+            total_pages: Total number of pages
+            user_id: Target user ID (to highlight)
+            time_period: Time period for display
+            entries_per_page: Number of entries to show per page
+
+        Returns:
+            Discord Embed object
+        """
+        time_period_display = {
+            "today": "Today",
+            "week": "This Week",
+            "month": "This Month",
+            "all": "All Time"
+        }.get(time_period, "All Time")
+
+        # Calculate start rank for this page
+        start_rank = (page - 1) * entries_per_page
+
+        # Find target user's rank and data
+        target_user_rank = None
+        target_user_name = None
+
+        for idx, user in enumerate(ranking_data):
+            rank = start_rank + idx + 1
+            if user.get("user_id") == user_id:
+                target_user_rank = rank
+                target_user_name = user.get("user_name", "Unknown User")
+                break
+
+        # Create embed
+        # Use gold color for top 10, blue otherwise
+        if target_user_rank and target_user_rank <= 10:
+            color = 0xFFD700  # Gold
+        else:
+            color = 0x5865F2  # Discord Blurple
+
+        embed = Embed(
+            title=f"📊 User Clip Ranking - {time_period_display}",
+            color=color
+        )
+
+        # Add description with target user info if found
+        if target_user_rank and target_user_name:
+            embed.description = (
+                f"Showing users ranked by unique clips embedded\n"
+                f"**{target_user_name}** is ranked **#{target_user_rank}**"
+            )
+        else:
+            embed.description = "Showing users ranked by unique clips embedded"
+
+        # Add field for each user on this page
+        for idx, user in enumerate(ranking_data[:entries_per_page]):
+            rank = start_rank + idx + 1
+            user_name = user.get("user_name", "Unknown User")
+            unique_clips = user.get("unique_clip_count", 0)
+            total_embeds = user.get("total_embed_count", 0)
+            rate = user.get("embeds_per_hour", 0)
+            servers_used = user.get("servers_used", 0)
+
+            # Highlight target user
+            if user.get("user_id") == user_id:
+                user_name = f"**{user_name}** ⭐"
+
+            # Format the field value
+            value = (
+                f"🎬 Unique Clips: **{unique_clips:,}**\n"
+                f"📊 Total Embeds: **{total_embeds:,}**\n"
+                f"🌐 Servers: **{servers_used}**\n"
+                f"⚡ Rate: **{rate:.2f}**/hour"
+            )
+
+            embed.add_field(
+                name=f"#{rank} - {user_name}",
+                value=value,
+                inline=False
+            )
+
+        # Add footer
+        embed.set_footer(text=f"Page {page} of {total_pages} • Updated every hour")
+
+        return embed
+
+    @staticmethod
+    def create_buttons(page: int, total_pages: int,
+                       state: UserRankPaginationState) -> List[ActionRow]:
+        """
+        Create navigation buttons for pagination.
+
+        Args:
+            page: Current page number
+            total_pages: Total number of pages
+            state: Pagination state to encode in button custom_ids
+
+        Returns:
+            List of ActionRow components with buttons
+        """
+        # Encode state as base64 JSON for custom_id
+        state_dict = asdict(state)
+        state_json = json.dumps(state_dict)
+        encoded_state = base64.b64encode(state_json.encode()).decode()
+
+        # Create buttons
+        buttons = [
+            Button(
+                style=ButtonStyle.PRIMARY,
+                label="⏮️ First",
+                custom_id=f"user_rank_first_{encoded_state}",
+                disabled=(page == 1)
+            ),
+            Button(
+                style=ButtonStyle.PRIMARY,
+                label="◀️ Prev",
+                custom_id=f"user_rank_prev_{encoded_state}",
+                disabled=(page == 1)
+            ),
+            Button(
+                style=ButtonStyle.SECONDARY,
+                label=f"Page {page}/{total_pages}",
+                custom_id=f"user_rank_page_{encoded_state}",
+                disabled=True
+            ),
+            Button(
+                style=ButtonStyle.PRIMARY,
+                label="Next ▶️",
+                custom_id=f"user_rank_next_{encoded_state}",
+                disabled=(page >= total_pages)
+            ),
+            Button(
+                style=ButtonStyle.PRIMARY,
+                label="Last ⏭️",
+                custom_id=f"user_rank_last_{encoded_state}",
                 disabled=(page >= total_pages)
             ),
         ]

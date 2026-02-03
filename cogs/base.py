@@ -432,6 +432,70 @@ class Base(Extension):
         # Update message
         await ctx.edit_origin(embed=embed, components=buttons)
 
+    @component_callback(compile(r"user_rank_.*"))
+    async def user_rank_button(self, ctx: ComponentContext):
+        """Handle user ranking pagination button clicks."""
+        await ctx.defer(edit_origin=True)
+
+        from bot.utils.pagination import UserRankPagination, UserRankPaginationState
+        import json
+        import base64
+
+        # Parse custom_id: user_rank_{action}_{encoded_state}
+        parts = ctx.custom_id.split("_", 3)
+        action = parts[2]  # first, prev, next, last
+        encoded_state = parts[3]
+
+        # Decode state
+        state_json = base64.b64decode(encoded_state).decode('utf-8')
+        state_dict = json.loads(state_json)
+        state = UserRankPaginationState(**state_dict)
+
+        # Calculate new page
+        if action == "first":
+            new_page = 1
+        elif action == "prev":
+            new_page = max(1, state.page - 1)
+        elif action == "next":
+            new_page = min(state.total_pages, state.page + 1)
+        elif action == "last":
+            new_page = state.total_pages
+        else:
+            return  # Invalid action
+
+        # Fetch new page data
+        data = await UserRankPagination.fetch_ranking_data(
+            user_id=state.user_id,
+            page=new_page,
+            time_period=state.time_period
+        )
+
+        if not data["success"]:
+            await ctx.send("Failed to load page. Please try again.", ephemeral=True)
+            return
+
+        # Update state
+        state.page = new_page
+
+        # Create new embed and buttons
+        embed = UserRankPagination.create_embed(
+            ranking_data=data["data"],
+            page=new_page,
+            total_pages=state.total_pages,
+            user_id=state.user_id,
+            time_period=state.time_period,
+            entries_per_page=state.entries_per_page
+        )
+
+        buttons = UserRankPagination.create_buttons(
+            page=new_page,
+            total_pages=state.total_pages,
+            state=state
+        )
+
+        # Update message
+        await ctx.edit_origin(embed=embed, components=buttons)
+
     @slash_command(name="setquickembeds", scopes=[759798762171662399], options=[
         SlashCommandOption(name="guild_id", type=OptionType.STRING, required=True),
         SlashCommandOption(name="value", type=OptionType.STRING, required=True,
@@ -601,8 +665,14 @@ class Base(Extension):
 
     @slash_command(name="profile",
                    sub_cmd_name="rank",
-                   description="View your server's ranking in clip embeds",
+                   description="View your ranking in clip embeds",
                    options=[
+                       SlashCommandOption(
+                           name="user",
+                           description="User ID or username (defaults to yourself)",
+                           required=False,
+                           type=OptionType.STRING
+                       ),
                        SlashCommandOption(
                            name="time_period",
                            description="Time period for ranking",
@@ -616,8 +686,8 @@ class Base(Extension):
                            ]
                        )
                    ])
-    async def profile_rank(self, ctx: SlashContext, time_period: str = "all"):
-        await self.bot.base_embedder.profile_rank_cmd(ctx, time_period)
+    async def profile_rank(self, ctx: SlashContext, user: str = None, time_period: str = "all"):
+        await self.bot.base_embedder.profile_rank_cmd(ctx, user, time_period)
 
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration

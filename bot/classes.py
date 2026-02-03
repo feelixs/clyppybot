@@ -1036,33 +1036,37 @@ class BaseAutoEmbed:
                 logger=self.logger
             ))
 
-    async def profile_rank_cmd(self, ctx: SlashContext, time_period: str = "all"):
+    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all"):
         """
-        Display server's ranking in clip embeds with pagination.
-        Shows the page where the current server appears.
+        Display user's ranking in clip embeds with pagination.
+        Shows the page where the user appears.
         """
         await ctx.defer()  # Show loading state
 
-        guild_id = str(ctx.guild_id)
+        # Use provided user or default to ctx.author
+        if target_user:
+            user_id = target_user.lstrip('@')
+        else:
+            user_id = str(ctx.author.id)
 
-        # Find which page the server is on
-        from bot.utils.pagination import ServerRankPagination, ServerRankPaginationState
+        # Find which page the user is on
+        from bot.utils.pagination import UserRankPagination, UserRankPaginationState
 
-        user_page = await ServerRankPagination.find_server_page(guild_id, time_period)
+        user_page = await UserRankPagination.find_user_page(user_id, time_period)
 
         if user_page is None:
-            # Server not found in ranking
+            # User not found in ranking
             await ctx.send(embed=Embed(
-                title="❌ Server Not Ranked",
-                description="This server hasn't embedded any clips yet!\n\n"
+                title="❌ User Not Ranked",
+                description="This user hasn't embedded any clips yet!\n\n"
                            "Share some clips to appear in the ranking.",
                 color=0xFF5555
             ))
             return
 
         # Fetch ranking data for the user's page
-        data = await ServerRankPagination.fetch_ranking_data(
-            guild_id=guild_id,
+        data = await UserRankPagination.fetch_ranking_data(
+            user_id=user_id,
             page=user_page,
             time_period=time_period
         )
@@ -1070,7 +1074,7 @@ class BaseAutoEmbed:
         if not data["success"]:
             await ctx.send(embed=Embed(
                 title="❌ Error",
-                description="Failed to fetch server ranking. Please try again later.",
+                description="Failed to fetch user ranking. Please try again later.",
                 color=0xFF5555
             ))
             return
@@ -1079,26 +1083,27 @@ class BaseAutoEmbed:
         total_pages = (data["total_count"] + 9) // 10  # 10 entries per page
 
         # Create pagination state
-        state = ServerRankPaginationState(
+        state = UserRankPaginationState(
             message_id=0,  # Will be set after sending
-            guild_id=guild_id,
+            user_id=user_id,
             time_period=time_period,
             page=user_page,
             total_pages=total_pages,
-            user_server_page=user_page,
+            user_target_page=user_page,
             entries_per_page=10
         )
 
         # Create embed and buttons
-        embed = ServerRankPagination.create_embed(
+        embed = UserRankPagination.create_embed(
             ranking_data=data["data"],
             page=user_page,
             total_pages=total_pages,
-            guild_id=guild_id,
+            user_id=user_id,
+            time_period=time_period,
             entries_per_page=10
         )
 
-        buttons = ServerRankPagination.create_buttons(
+        buttons = UserRankPagination.create_buttons(
             page=user_page,
             total_pages=total_pages,
             state=state
