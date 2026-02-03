@@ -24,13 +24,14 @@ class UserRankPagination:
     API_BASE_URL = "https://clyppy.io/api/users/ranking/"
 
     @staticmethod
-    async def fetch_ranking_data(page: int = 1, time_period: str = "all") -> Dict[str, Any]:
+    async def fetch_ranking_data(page: int = 1, time_period: str = "all", requester_id: str = None) -> Dict[str, Any]:
         """
         Fetch user ranking from API.
 
         Args:
             page: Page number to fetch
             time_period: Time period filter ('today', 'week', 'month', 'all')
+            requester_id: Discord user ID of the requester
 
         Returns:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
@@ -41,6 +42,8 @@ class UserRankPagination:
                 "per_page": ENTRIES_PER_PAGE,
                 "time_period": time_period
             }
+            if requester_id:
+                params["requester_id"] = requester_id
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(UserRankPagination.API_BASE_URL, params=params, headers={
@@ -62,20 +65,21 @@ class UserRankPagination:
             }
 
     @staticmethod
-    async def find_user_page(user_id: str, time_period: str = "all") -> Optional[int]:
+    async def find_user_page(user_id: str, time_period: str = "all", requester_id: str = None) -> Optional[int]:
         """
         Find which page the user appears on in the ranking.
 
         Args:
             user_id: Discord user ID to find
             time_period: Time period filter
+            requester_id: Discord user ID of the requester
 
         Returns:
             Page number where user appears, or None if not found
         """
         page = 1
         while True:
-            data = await UserRankPagination.fetch_ranking_data(page, time_period)
+            data = await UserRankPagination.fetch_ranking_data(page, time_period, requester_id)
 
             if not data.get("success", False):
                 return None
@@ -116,7 +120,6 @@ class UserRankPagination:
         for idx, user in enumerate(ranking_data):
             if str(user.get("user_id")) == str(user_id):
                 target_user_rank = start_rank + idx + 1
-                target_user_name = user.get("user_name", "Unknown User")
                 break
 
         # Gold for top 10, blue otherwise
@@ -127,10 +130,10 @@ class UserRankPagination:
             color=color
         )
 
-        if target_user_rank and target_user_name:
+        if target_user_rank:
             embed.description = (
                 f"Showing users ranked by unique clips embedded\n"
-                f"**{target_user_name}** is ranked **#{target_user_rank}**"
+                f"<@{user_id}> is ranked **#{target_user_rank}**"
             )
         else:
             embed.description = "Showing users ranked by unique clips embedded"
@@ -138,14 +141,16 @@ class UserRankPagination:
         # Add field for each user
         for idx, user in enumerate(ranking_data):
             rank = start_rank + idx + 1
-            user_name = user.get("user_name", "Unknown User")
+            uid = user.get("user_id")
             unique_clips = user.get("unique_clip_count", 0)
             total_embeds = user.get("total_embed_count", 0)
             servers_used = user.get("servers_used", 0)
 
             # Highlight target user
-            if str(user.get("user_id")) == str(user_id):
-                user_name = f"**{user_name}** ⭐"
+            if str(uid) == str(user_id):
+                display_name = f"<@{uid}> ⭐"
+            else:
+                display_name = f"<@{uid}>"
 
             value = (
                 f"🎬 Unique Clips: **{unique_clips:,}**\n"
@@ -154,7 +159,7 @@ class UserRankPagination:
             )
 
             embed.add_field(
-                name=f"#{rank} - {user_name}",
+                name=f"#{rank} - {display_name}",
                 value=value,
                 inline=False
             )

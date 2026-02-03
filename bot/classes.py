@@ -1045,14 +1045,17 @@ class BaseAutoEmbed:
 
         # Use provided user or default to ctx.author
         if target_user:
-            user_id = target_user.lstrip('@')
+            # Handle Discord mention formats: <@123>, <@!123>, or raw ID
+            user_id = target_user.strip('<@!>')
         else:
             user_id = str(ctx.author.id)
 
         from bot.utils.pagination import UserRankPagination, UserRankPaginationState, ENTRIES_PER_PAGE
 
+        requester_id = str(ctx.author.id)
+
         # Find which page the user is on
-        user_page = await UserRankPagination.find_user_page(user_id, time_period)
+        user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id)
 
         if user_page is None:
             await ctx.send(embed=Embed(
@@ -1064,7 +1067,7 @@ class BaseAutoEmbed:
             return
 
         # Fetch ranking data for the user's page
-        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period)
+        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period, requester_id=requester_id)
 
         if not data.get("success"):
             await ctx.send(embed=Embed(

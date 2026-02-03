@@ -449,6 +449,7 @@ class Base(Extension):
 
         # Decode time period
         time_period = {"a": "all", "w": "week", "m": "month", "t": "today"}.get(tp_code, "all")
+        requester_id = str(ctx.author.id)
 
         # Calculate new page
         if action == "f":
@@ -463,7 +464,7 @@ class Base(Extension):
             return
 
         # Fetch new page data
-        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period)
+        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period, requester_id=requester_id)
 
         if not data.get("success"):
             await ctx.send("Failed to load page. Please try again.", ephemeral=True)
