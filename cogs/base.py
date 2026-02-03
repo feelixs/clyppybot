@@ -653,7 +653,7 @@ class Base(Extension):
 
     @slash_command(name="profile",
                    sub_cmd_name="info",
-                   description="View your Clyppy profile",
+                   sub_cmd_description="View your Clyppy profile",
                    options=[SlashCommandOption(
                        name="user",
                        description="User ID or username",
@@ -665,7 +665,7 @@ class Base(Extension):
 
     @slash_command(name="profile",
                    sub_cmd_name="rank",
-                   description="View your ranking in clip embeds",
+                   sub_cmd_description="View your ranking in clip embeds",
                    options=[
                        SlashCommandOption(
                            name="user",
