@@ -432,64 +432,74 @@ class Base(Extension):
         # Update message
         await ctx.edit_origin(embed=embed, components=buttons)
 
-    @component_callback(compile(r"user_rank_.*"))
+    @component_callback(compile(r"ur_.*"))
     async def user_rank_button(self, ctx: ComponentContext):
         """Handle user ranking pagination button clicks."""
         await ctx.defer(edit_origin=True)
 
         from bot.utils.pagination import UserRankPagination, UserRankPaginationState
-        import json
-        import base64
 
-        # Parse custom_id: user_rank_{action}_{encoded_state}
-        parts = ctx.custom_id.split("_", 3)
-        action = parts[2]  # first, prev, next, last
-        encoded_state = parts[3]
+        # Parse compact custom_id: ur_{action}_{user_id}_{time_period}_{page}_{total_pages}_{timestamp}
+        # action codes: f=first, p=prev, n=next, l=last
+        # time_period codes: a=all, w=week, m=month, t=today
+        parts = ctx.custom_id.split("_")
+        action = parts[1]  # f, p, n, l
+        user_id = parts[2]
+        tp_code = parts[3]
+        current_page = int(parts[4])
+        total_pages = int(parts[5])
+        # parts[6] is timestamp, ignored
 
-        # Decode state
-        state_json = base64.b64decode(encoded_state).decode('utf-8')
-        state_dict = json.loads(state_json)
-        state = UserRankPaginationState(**state_dict)
+        # Decode time period
+        time_period = {"a": "all", "w": "week", "m": "month", "t": "today"}.get(tp_code, "all")
 
         # Calculate new page
-        if action == "first":
+        if action == "f":  # first
             new_page = 1
-        elif action == "prev":
-            new_page = max(1, state.page - 1)
-        elif action == "next":
-            new_page = min(state.total_pages, state.page + 1)
-        elif action == "last":
-            new_page = state.total_pages
+        elif action == "p":  # prev
+            new_page = max(1, current_page - 1)
+        elif action == "n":  # next
+            new_page = min(total_pages, current_page + 1)
+        elif action == "l":  # last
+            new_page = total_pages
         else:
             return  # Invalid action
 
         # Fetch new page data
         data = await UserRankPagination.fetch_ranking_data(
-            user_id=state.user_id,
+            user_id=user_id,
             page=new_page,
-            time_period=state.time_period
+            time_period=time_period
         )
 
         if not data["success"]:
             await ctx.send("Failed to load page. Please try again.", ephemeral=True)
             return
 
-        # Update state
-        state.page = new_page
+        # Create state for buttons
+        state = UserRankPaginationState(
+            message_id=0,
+            user_id=user_id,
+            time_period=time_period,
+            page=new_page,
+            total_pages=total_pages,
+            user_target_page=new_page,
+            entries_per_page=10
+        )
 
         # Create new embed and buttons
         embed = UserRankPagination.create_embed(
             ranking_data=data["data"],
             page=new_page,
-            total_pages=state.total_pages,
-            user_id=state.user_id,
-            time_period=state.time_period,
-            entries_per_page=state.entries_per_page
+            total_pages=total_pages,
+            user_id=user_id,
+            time_period=time_period,
+            entries_per_page=10
         )
 
         buttons = UserRankPagination.create_buttons(
             page=new_page,
-            total_pages=state.total_pages,
+            total_pages=total_pages,
             state=state
         )
 

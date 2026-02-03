@@ -488,41 +488,43 @@ class UserRankPagination:
         Returns:
             List of ActionRow components with buttons
         """
-        # Encode state as base64 JSON for custom_id
-        state_dict = asdict(state)
-        state_json = json.dumps(state_dict)
-        encoded_state = base64.b64encode(state_json.encode()).decode()
+        import time
+        # Use compact format: ur_{action}_{user_id}_{time_period}_{page}_{total_pages}_{timestamp}
+        # Time period codes: a=all, w=week, m=month, t=today
+        tp_code = {"all": "a", "week": "w", "month": "m", "today": "t"}.get(state.time_period, "a")
+        # Add timestamp (seconds + milliseconds) for uniqueness
+        ts = str(int(time.time() * 1000) % 100000)  # Last 5 digits of millisecond timestamp
 
-        # Create buttons
+        # Create buttons with compact IDs
         buttons = [
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="⏮️ First",
-                custom_id=f"user_rank_first_{encoded_state}",
+                custom_id=f"ur_f_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="◀️ Prev",
-                custom_id=f"user_rank_prev_{encoded_state}",
+                custom_id=f"ur_p_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.SECONDARY,
                 label=f"Page {page}/{total_pages}",
-                custom_id=f"user_rank_page_{encoded_state}",
+                custom_id=f"ur_x_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
                 disabled=True
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Next ▶️",
-                custom_id=f"user_rank_next_{encoded_state}",
+                custom_id=f"ur_n_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
                 disabled=(page >= total_pages)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Last ⏭️",
-                custom_id=f"user_rank_last_{encoded_state}",
+                custom_id=f"ur_l_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
                 disabled=(page >= total_pages)
             ),
         ]
