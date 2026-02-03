@@ -581,7 +581,8 @@ class AutoEmbedder:
                 'expires_at_timestamp': expires_at,
                 'is_extended': extend_with_ai,
                 'broadcaster_username': response.broadcaster_username,
-                'video_uploader_username': response.video_uploader_username
+                'video_uploader_username': response.video_uploader_username,
+                'user_is_bot':  respond_to.author.bot
             }
 
             try:
