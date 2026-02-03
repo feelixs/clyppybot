@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
-                          component_callback, Button, ButtonStyle, Activity, ActivityType)
+                          component_callback, Button, ButtonStyle, Activity, ActivityType, SlashCommandChoice)
 from bot.env import SUPPORT_SERVER_URL
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
@@ -369,6 +369,69 @@ class Base(Extension):
             logger=self.logger
         )
 
+    @component_callback(compile(r"server_rank_.*"))
+    async def server_rank_button(self, ctx: ComponentContext):
+        """Handle server ranking pagination button clicks."""
+        await ctx.defer(edit_origin=True)
+
+        from bot.utils.pagination import ServerRankPagination, ServerRankPaginationState
+        import json
+        import base64
+
+        # Parse custom_id: server_rank_{action}_{encoded_state}
+        parts = ctx.custom_id.split("_", 3)
+        action = parts[2]  # first, prev, next, last
+        encoded_state = parts[3]
+
+        # Decode state
+        state_json = base64.b64decode(encoded_state).decode('utf-8')
+        state_dict = json.loads(state_json)
+        state = ServerRankPaginationState(**state_dict)
+
+        # Calculate new page
+        if action == "first":
+            new_page = 1
+        elif action == "prev":
+            new_page = max(1, state.page - 1)
+        elif action == "next":
+            new_page = min(state.total_pages, state.page + 1)
+        elif action == "last":
+            new_page = state.total_pages
+        else:
+            return  # Invalid action
+
+        # Fetch new page data
+        data = await ServerRankPagination.fetch_ranking_data(
+            guild_id=state.guild_id,
+            page=new_page,
+            time_period=state.time_period
+        )
+
+        if not data["success"]:
+            await ctx.send("Failed to load page. Please try again.", ephemeral=True)
+            return
+
+        # Update state
+        state.page = new_page
+
+        # Create new embed and buttons
+        embed = ServerRankPagination.create_embed(
+            ranking_data=data["data"],
+            page=new_page,
+            total_pages=state.total_pages,
+            guild_id=state.guild_id,
+            entries_per_page=state.entries_per_page
+        )
+
+        buttons = ServerRankPagination.create_buttons(
+            page=new_page,
+            total_pages=state.total_pages,
+            state=state
+        )
+
+        # Update message
+        await ctx.edit_origin(embed=embed, components=buttons)
+
     @slash_command(name="setquickembeds", scopes=[759798762171662399], options=[
         SlashCommandOption(name="guild_id", type=OptionType.STRING, required=True),
         SlashCommandOption(name="value", type=OptionType.STRING, required=True,
@@ -524,7 +587,9 @@ class Base(Extension):
     async def invite(self, ctx: SlashContext):
         await self.bot.base_embedder.invite_cmd(ctx)
 
-    @slash_command(name="profile", description="View and share your clip library with the world",
+    @slash_command(name="profile",
+                   sub_cmd_name="info",
+                   description="View your Clyppy profile",
                    options=[SlashCommandOption(
                        name="user",
                        description="User ID or username",
@@ -533,6 +598,26 @@ class Base(Extension):
                    ])
     async def profile(self, ctx: SlashContext, user: str = None):
         await self.bot.base_embedder.profile_cmd(ctx, user)
+
+    @slash_command(name="profile",
+                   sub_cmd_name="rank",
+                   description="View your server's ranking in clip embeds",
+                   options=[
+                       SlashCommandOption(
+                           name="time_period",
+                           description="Time period for ranking",
+                           required=False,
+                           type=OptionType.STRING,
+                           choices=[
+                               SlashCommandChoice(name="All Time", value="all"),
+                               SlashCommandChoice(name="This Week", value="week"),
+                               SlashCommandChoice(name="This Month", value="month"),
+                               SlashCommandChoice(name="Today", value="today"),
+                           ]
+                       )
+                   ])
+    async def profile_rank(self, ctx: SlashContext, time_period: str = "all"):
+        await self.bot.base_embedder.profile_rank_cmd(ctx, time_period)
 
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration
