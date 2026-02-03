@@ -1081,7 +1081,7 @@ class BaseAutoEmbed:
                     bot_tag = " 🤖" if is_bot else ""
 
                     embed = Embed(
-                        title=f"📊 {username_display}'s Profile{bot_tag}",
+                        title=f"{username_display}'s Profile{bot_tag}",
                         color=0x5865F2
                     )
 
@@ -1097,7 +1097,7 @@ class BaseAutoEmbed:
                         f"🌐 **Servers Used:** {servers_used:,}\n"
                         f"💎 **VIP Tokens:** {vip_tokens:,}"
                     )
-                    embed.add_field(name="📈 Statistics", value=stats_text, inline=True)
+                    embed.add_field(name="Quick Stats", value=stats_text, inline=True)
 
                     # Platform breakdown field
                     platform_breakdown = stats.get('platform_breakdown', {})
@@ -1114,18 +1114,18 @@ class BaseAutoEmbed:
                             'twitter': '𝕏'
                         }
                         platform_lines = []
-                        # Sort by percentage descending, take top 4
+                        # Sort by percentage descending, take top 3
                         sorted_platforms = sorted(
                             platform_breakdown.items(),
                             key=lambda x: x[1]['percentage'],
                             reverse=True
-                        )[:4]
+                        )[:3]
                         for platform, info in sorted_platforms:
                             emoji = platform_emojis.get(platform.lower(), '📹')
                             platform_lines.append(f"{emoji} **{platform.capitalize()}:** {info['percentage']}%")
 
                         if platform_lines:
-                            embed.add_field(name="🎮 Platforms", value="\n".join(platform_lines), inline=True)
+                            embed.add_field(name="Favorite Platforms", value="\n".join(platform_lines), inline=True)
 
                     # Activity field
                     first_embed = stats.get('first_embed_at')
