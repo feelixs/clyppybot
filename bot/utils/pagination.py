@@ -16,6 +16,7 @@ class UserRankPaginationState:
     time_period: str = "all"
     page: int = 1
     total_pages: int = 1
+    include_bots: bool = False
 
 
 class UserRankPagination:
@@ -24,7 +25,7 @@ class UserRankPagination:
     API_BASE_URL = "https://clyppy.io/api/users/ranking/"
 
     @staticmethod
-    async def fetch_ranking_data(page: int = 1, time_period: str = "all", requester_id: str = None) -> Dict[str, Any]:
+    async def fetch_ranking_data(page: int = 1, time_period: str = "all", requester_id: str = None, include_bots: bool = False) -> Dict[str, Any]:
         """
         Fetch user ranking from API.
 
@@ -32,6 +33,7 @@ class UserRankPagination:
             page: Page number to fetch
             time_period: Time period filter ('today', 'week', 'month', 'all')
             requester_id: Discord user ID of the requester
+            include_bots: Whether to include bot users in rankings
 
         Returns:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
@@ -40,7 +42,8 @@ class UserRankPagination:
             params = {
                 "page": page,
                 "per_page": ENTRIES_PER_PAGE,
-                "time_period": time_period
+                "time_period": time_period,
+                "include_bots": "1" if include_bots else "0"
             }
             if requester_id:
                 params["requester_id"] = requester_id
@@ -65,7 +68,7 @@ class UserRankPagination:
             }
 
     @staticmethod
-    async def find_user_page(user_id: str, time_period: str = "all", requester_id: str = None) -> Optional[int]:
+    async def find_user_page(user_id: str, time_period: str = "all", requester_id: str = None, include_bots: bool = False) -> Optional[int]:
         """
         Find which page the user appears on in the ranking.
 
@@ -73,13 +76,14 @@ class UserRankPagination:
             user_id: Discord user ID to find
             time_period: Time period filter
             requester_id: Discord user ID of the requester
+            include_bots: Whether to include bot users in rankings
 
         Returns:
             Page number where user appears, or None if not found
         """
         page = 1
         while True:
-            data = await UserRankPagination.fetch_ranking_data(page, time_period, requester_id)
+            data = await UserRankPagination.fetch_ranking_data(page, time_period, requester_id, include_bots)
 
             if not data.get("success", False):
                 return None
@@ -101,7 +105,7 @@ class UserRankPagination:
 
     @staticmethod
     def create_embed(ranking_data: List[Dict], page: int, total_pages: int,
-                     user_id: str, time_period: str = "all") -> Embed:
+                     user_id: str, time_period: str = "all", top_user: Dict = None) -> Embed:
         """Create Discord embed showing user ranking."""
         time_period_display = {
             "today": "Today",
@@ -115,7 +119,6 @@ class UserRankPagination:
 
         # Find target user's rank
         target_user_rank = None
-        target_user_name = None
 
         for idx, user in enumerate(ranking_data):
             if str(user.get("user_id")) == str(user_id):
@@ -130,13 +133,16 @@ class UserRankPagination:
             color=color
         )
 
+        # Build description
+        desc_lines = []
+        if top_user:
+            top_id = top_user.get("user_id")
+            top_clips = top_user.get("unique_clip_count", 0)
+            desc_lines.append(f"🏆 Top embedder: <@{top_id}> with **{top_clips:,}** clips")
         if target_user_rank:
-            embed.description = (
-                f"Showing users ranked by unique clips embedded\n"
-                f"<@{user_id}> is ranked **#{target_user_rank}**"
-            )
-        else:
-            embed.description = "Showing users ranked by unique clips embedded"
+            desc_lines.append(f"<@{user_id}> is ranked **#{target_user_rank}**")
+
+        embed.description = "\n".join(desc_lines) if desc_lines else "Showing users ranked by unique clips embedded"
 
         # Add field for each user
         for idx, user in enumerate(ranking_data):
@@ -170,39 +176,40 @@ class UserRankPagination:
     @staticmethod
     def create_buttons(page: int, total_pages: int, state: UserRankPaginationState) -> List[ActionRow]:
         """Create navigation buttons for pagination."""
-        # Compact format: ur_{action}_{user_id}_{tp}_{page}_{total}_{ts}
+        # Compact format: ur_{action}_{user_id}_{tp}_{page}_{total}_{bots}_{ts}
         tp_code = {"all": "a", "week": "w", "month": "m", "today": "t"}.get(state.time_period, "a")
+        bots_code = "1" if state.include_bots else "0"
         ts = str(int(time.time() * 1000) % 100000)
 
         buttons = [
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="⏮️ First",
-                custom_id=f"ur_f_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_f_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_code}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="◀️ Prev",
-                custom_id=f"ur_p_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_p_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_code}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.SECONDARY,
                 label=f"Page {page}/{total_pages}",
-                custom_id=f"ur_x_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_x_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_code}_{ts}",
                 disabled=True
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Next ▶️",
-                custom_id=f"ur_n_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_n_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_code}_{ts}",
                 disabled=(page >= total_pages)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Last ⏭️",
-                custom_id=f"ur_l_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_l_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_code}_{ts}",
                 disabled=(page >= total_pages)
             ),
         ]

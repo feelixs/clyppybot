@@ -1036,7 +1036,7 @@ class BaseAutoEmbed:
                 logger=self.logger
             ))
 
-    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all"):
+    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all", include_bots: bool = False):
         """
         Display user's ranking in clip embeds with pagination.
         Shows the page where the user appears.
@@ -1055,7 +1055,7 @@ class BaseAutoEmbed:
         requester_id = str(ctx.author.id)
 
         # Find which page the user is on
-        user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id)
+        user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id, include_bots)
 
         if user_page is None:
             await ctx.send(embed=Embed(
@@ -1067,7 +1067,7 @@ class BaseAutoEmbed:
             return
 
         # Fetch ranking data for the user's page
-        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period, requester_id=requester_id)
+        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period, requester_id=requester_id, include_bots=include_bots)
 
         if not data.get("success"):
             await ctx.send(embed=Embed(
@@ -1085,7 +1085,8 @@ class BaseAutoEmbed:
             user_id=user_id,
             time_period=time_period,
             page=user_page,
-            total_pages=total_pages
+            total_pages=total_pages,
+            include_bots=include_bots
         )
 
         # Create embed and buttons
@@ -1094,7 +1095,8 @@ class BaseAutoEmbed:
             page=user_page,
             total_pages=total_pages,
             user_id=user_id,
-            time_period=time_period
+            time_period=time_period,
+            top_user=data.get("top_user")
         )
 
         buttons = UserRankPagination.create_buttons(

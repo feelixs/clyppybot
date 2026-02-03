@@ -439,13 +439,14 @@ class Base(Extension):
 
         from bot.utils.pagination import UserRankPagination, UserRankPaginationState
 
-        # Parse compact custom_id: ur_{action}_{user_id}_{tp}_{page}_{total}_{ts}
+        # Parse compact custom_id: ur_{action}_{user_id}_{tp}_{page}_{total}_{bots}_{ts}
         parts = ctx.custom_id.split("_")
         action = parts[1]  # f, p, n, l
         user_id = parts[2]
         tp_code = parts[3]
         current_page = int(parts[4])
         total_pages = int(parts[5])
+        include_bots = parts[6] == "1"
 
         # Decode time period
         time_period = {"a": "all", "w": "week", "m": "month", "t": "today"}.get(tp_code, "all")
@@ -464,7 +465,7 @@ class Base(Extension):
             return
 
         # Fetch new page data
-        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period, requester_id=requester_id)
+        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period, requester_id=requester_id, include_bots=include_bots)
 
         if not data.get("success"):
             await ctx.send("Failed to load page. Please try again.", ephemeral=True)
@@ -475,7 +476,8 @@ class Base(Extension):
             user_id=user_id,
             time_period=time_period,
             page=new_page,
-            total_pages=total_pages
+            total_pages=total_pages,
+            include_bots=include_bots
         )
 
         # Create new embed and buttons
@@ -484,7 +486,8 @@ class Base(Extension):
             page=new_page,
             total_pages=total_pages,
             user_id=user_id,
-            time_period=time_period
+            time_period=time_period,
+            top_user=data.get("top_user")
         )
 
         buttons = UserRankPagination.create_buttons(
@@ -684,10 +687,16 @@ class Base(Extension):
                                SlashCommandChoice(name="This Month", value="month"),
                                SlashCommandChoice(name="Today", value="today"),
                            ]
+                       ),
+                       SlashCommandOption(
+                           name="bots",
+                           description="Include bots in rankings (default: No)",
+                           required=False,
+                           type=OptionType.BOOLEAN
                        )
                    ])
-    async def profile_rank(self, ctx: SlashContext, user: str = None, time_period: str = "all"):
-        await self.bot.base_embedder.profile_rank_cmd(ctx, user, time_period)
+    async def profile_rank(self, ctx: SlashContext, user: str = None, time_period: str = "all", bots: bool = False):
+        await self.bot.base_embedder.profile_rank_cmd(ctx, user, time_period, bots)
 
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration
