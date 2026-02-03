@@ -439,52 +439,42 @@ class Base(Extension):
 
         from bot.utils.pagination import UserRankPagination, UserRankPaginationState
 
-        # Parse compact custom_id: ur_{action}_{user_id}_{time_period}_{page}_{total_pages}_{timestamp}
-        # action codes: f=first, p=prev, n=next, l=last
-        # time_period codes: a=all, w=week, m=month, t=today
+        # Parse compact custom_id: ur_{action}_{user_id}_{tp}_{page}_{total}_{ts}
         parts = ctx.custom_id.split("_")
         action = parts[1]  # f, p, n, l
         user_id = parts[2]
         tp_code = parts[3]
         current_page = int(parts[4])
         total_pages = int(parts[5])
-        # parts[6] is timestamp, ignored
 
         # Decode time period
         time_period = {"a": "all", "w": "week", "m": "month", "t": "today"}.get(tp_code, "all")
 
         # Calculate new page
-        if action == "f":  # first
+        if action == "f":
             new_page = 1
-        elif action == "p":  # prev
+        elif action == "p":
             new_page = max(1, current_page - 1)
-        elif action == "n":  # next
+        elif action == "n":
             new_page = min(total_pages, current_page + 1)
-        elif action == "l":  # last
+        elif action == "l":
             new_page = total_pages
         else:
-            return  # Invalid action
+            return
 
         # Fetch new page data
-        data = await UserRankPagination.fetch_ranking_data(
-            user_id=user_id,
-            page=new_page,
-            time_period=time_period
-        )
+        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period)
 
-        if not data["success"]:
+        if not data.get("success"):
             await ctx.send("Failed to load page. Please try again.", ephemeral=True)
             return
 
         # Create state for buttons
         state = UserRankPaginationState(
-            message_id=0,
             user_id=user_id,
             time_period=time_period,
             page=new_page,
-            total_pages=total_pages,
-            user_target_page=new_page,
-            entries_per_page=10
+            total_pages=total_pages
         )
 
         # Create new embed and buttons
@@ -493,8 +483,7 @@ class Base(Extension):
             page=new_page,
             total_pages=total_pages,
             user_id=user_id,
-            time_period=time_period,
-            entries_per_page=10
+            time_period=time_period
         )
 
         buttons = UserRankPagination.create_buttons(

@@ -1049,13 +1049,12 @@ class BaseAutoEmbed:
         else:
             user_id = str(ctx.author.id)
 
-        # Find which page the user is on
-        from bot.utils.pagination import UserRankPagination, UserRankPaginationState
+        from bot.utils.pagination import UserRankPagination, UserRankPaginationState, ENTRIES_PER_PAGE
 
+        # Find which page the user is on
         user_page = await UserRankPagination.find_user_page(user_id, time_period)
 
         if user_page is None:
-            # User not found in ranking
             await ctx.send(embed=Embed(
                 title="❌ User Not Ranked",
                 description="This user hasn't embedded any clips yet!\n\n"
@@ -1065,13 +1064,9 @@ class BaseAutoEmbed:
             return
 
         # Fetch ranking data for the user's page
-        data = await UserRankPagination.fetch_ranking_data(
-            user_id=user_id,
-            page=user_page,
-            time_period=time_period
-        )
+        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period)
 
-        if not data["success"]:
+        if not data.get("success"):
             await ctx.send(embed=Embed(
                 title="❌ Error",
                 description="Failed to fetch user ranking. Please try again later.",
@@ -1080,17 +1075,14 @@ class BaseAutoEmbed:
             return
 
         # Calculate total pages
-        total_pages = (data["total_count"] + 9) // 10  # 10 entries per page
+        total_pages = (data["total_count"] + ENTRIES_PER_PAGE - 1) // ENTRIES_PER_PAGE
 
         # Create pagination state
         state = UserRankPaginationState(
-            message_id=0,  # Will be set after sending
             user_id=user_id,
             time_period=time_period,
             page=user_page,
-            total_pages=total_pages,
-            user_target_page=user_page,
-            entries_per_page=10
+            total_pages=total_pages
         )
 
         # Create embed and buttons
@@ -1099,8 +1091,7 @@ class BaseAutoEmbed:
             page=user_page,
             total_pages=total_pages,
             user_id=user_id,
-            time_period=time_period,
-            entries_per_page=10
+            time_period=time_period
         )
 
         buttons = UserRankPagination.create_buttons(
@@ -1109,11 +1100,7 @@ class BaseAutoEmbed:
             state=state
         )
 
-        # Send message
-        message = await ctx.send(embed=embed, components=buttons)
-
-        # Update state with message ID for button handlers
-        state.message_id = int(message.id)
+        await ctx.send(embed=embed, components=buttons)
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False, already_deferred=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
