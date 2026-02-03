@@ -198,7 +198,6 @@ class ServerRankPagination:
             value = (
                 f"🎬 Unique Clips: **{unique_clips:,}**\n"
                 f"📊 Total Embeds: **{total_embeds:,}**\n"
-                f"⚡ Rate: **{rate:.2f}**/hour"
             )
 
             embed.add_field(
@@ -460,7 +459,6 @@ class UserRankPagination:
                 f"🎬 Unique Clips: **{unique_clips:,}**\n"
                 f"📊 Total Embeds: **{total_embeds:,}**\n"
                 f"🌐 Servers: **{servers_used}**\n"
-                f"⚡ Rate: **{rate:.2f}**/hour"
             )
 
             embed.add_field(
