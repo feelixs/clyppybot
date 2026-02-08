@@ -1,5 +1,6 @@
 git+https://github.com/interactions-py/interactions.py.git
 git+https://github.com/yt-dlp/yt-dlp.git
+python-dotenv==1.0.0
 aiohappyeyeballs==2.5.0
 aiofiles
 curl_cffi===0.13.0

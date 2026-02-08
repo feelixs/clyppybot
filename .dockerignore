@@ -7,6 +7,5 @@ __pycache__/
 *.pyc
 .git/
 .github/
-.env
 *.log
 *.db-journal
