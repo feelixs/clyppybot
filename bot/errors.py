@@ -159,6 +159,8 @@ def handle_yt_dlp_err(err: str, file_path: str = None):
         raise RemoteTimeoutError
     elif 'Read timed out.' in err:
         raise RemoteTimeoutError
+    elif '401:Unauthorized' in err.replace(" ", ""):
+        raise YtDlpForbiddenError
     elif 'HTTP Error 403: Forbidden' in err or 'Use --cookies,' in err:
         raise YtDlpForbiddenError
     elif 'Temporary failure in name resolution' in err or 'Name or service not known' in err:
