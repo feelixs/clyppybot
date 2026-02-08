@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDurat
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
+from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS, is_contrib_instance, log_api_bypass
 from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
 from bot.task_queue import QuickembedTask
 from typing import List, Union, Tuple
@@ -21,6 +21,13 @@ INVALID_DL_PLATFORMS = ['discord', 'rule34', 'base']
 
 
 async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/publish/", "POST", {
+            "edit": edit_type is not None,
+            "edit_type": edit_type
+        })
+        return {"success": True, "id": "test_video_id"}
+
     try:
         url = 'https://clyppy.io/api/publish/'
         headers = {

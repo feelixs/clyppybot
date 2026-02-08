@@ -1,15 +1,76 @@
+# IDE and Editor
 .claude
-*.DS_Store
-*.env
 .idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS Files
+*.DS_Store
+Thumbs.db
+
+# Python
 *.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment and Secrets
+*.env
+.env.local
+!.env.example
+*.pem
+*.key
+
+# Logs
 logs/
+*.log
+
+# Development
 CLAUDE.md
 .aider*
+test/
+
+# Media Files
 *.mp4
 *.png
-test/
+*.jpg
+*.jpeg
+*.gif
+*.webm
+*.m3u8
 
 # Task queue data
 data/
 task_queue.pkl
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Misc
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json

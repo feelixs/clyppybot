@@ -5,7 +5,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle, Activity, ActivityType, SlashCommandChoice)
 from bot.env import SUPPORT_SERVER_URL
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, is_contrib_instance, log_api_bypass
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -997,6 +997,11 @@ class Base(Extension):
         """Download cookies from felixcreations.com every 24 hours"""
         if not self.ready:
             self.logger.info("Bot not ready, skipping cookie refresh task")
+            return
+
+        if is_contrib_instance():
+            log_api_bypass(__name__, "https://felixcreations.com/api/cookies/get", "GET")
+            self.logger.info("[CONTRIB MODE] Cookie refresh bypassed")
             return
 
         self.logger.info("Downloading cookies from server...")

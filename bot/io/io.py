@@ -1,12 +1,16 @@
 from interactions import SlashContext, Message
 
-from bot.env import CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH, EMBED_TOKEN_COST, DL_SERVER_ID, AI_EXTEND_TOKENS_COST
+from bot.env import (CLYPPYIO_USER_AGENT, MAX_VIDEO_LEN_SEC, EMBED_W_TOKEN_MAX_LEN, EMBED_TOTAL_MAX_LENGTH,
+                     EMBED_TOKEN_COST, DL_SERVER_ID, AI_EXTEND_TOKENS_COST, is_contrib_instance, log_api_bypass)
 from typing import Tuple, Union
 from math import ceil
 from os import getenv
 import aiohttp
+import logging
 
 from bot.errors import VideoLongerThanMaxLength
+
+logger = logging.getLogger(__name__)
 
 
 def get_aiohttp_session():
@@ -15,6 +19,10 @@ def get_aiohttp_session():
 
 
 async def fetch_video_status(clip_id: str):
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/clips/get-status/", "GET", {"clip_id": clip_id})
+        return {"exists": False, "code": 200}
+
     url = 'https://clyppy.io/api/clips/get-status/'
     headers = {
         'auth': getenv('clyppy_post_key'),
@@ -26,6 +34,16 @@ async def fetch_video_status(clip_id: str):
 
 
 async def push_interaction_error(parent_msg: Union[Message, SlashContext], clip_url, platform_name: str, error_info: dict, handled: bool, clip=None, logger=None):
+    if is_contrib_instance():
+        video_id = clip.clyppy_id if clip is not None else None
+        log_api_bypass(__name__, "https://clyppy.io/api/clips/publish/error/", "POST", {
+            "clyppy_id_ctx": video_id,
+            "error_type": error_info['name'],
+            "platform": platform_name,
+            "handled": handled
+        })
+        return None
+
     url = 'https://clyppy.io/api/clips/publish/error/'
     headers = {
         'X-API-Key': getenv('clyppy_post_key'),
@@ -97,6 +115,10 @@ async def is_404(url: str, logger=None) -> Tuple[bool, int]:
 
 
 async def add_reqqed_by(data, key):
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/clips/add-requested-by/", "POST", data)
+        return {"success": True, "msg": "[test] success", "code": 201}
+
     async with get_aiohttp_session() as session:
         async with session.post(
                 'https://clyppy.io/api/clips/add-requested-by/',
@@ -110,6 +132,10 @@ async def add_reqqed_by(data, key):
 
 
 async def callback_clip_delete_msg(data, key, ctx_type: str = "StoredVideo") -> dict:
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/clips/msg-get-delete/", "POST", data)
+        return {"success": True, "msg": "[test] Successfully deleted", "code": 200}
+
     async with get_aiohttp_session() as session:
         async with session.post(
                 'https://clyppy.io/api/clips/msg-get-delete/',
@@ -124,6 +150,10 @@ async def callback_clip_delete_msg(data, key, ctx_type: str = "StoredVideo") -> 
 
 
 async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
+    if is_contrib_instance():
+        log_api_bypass(__name__, f"https://clyppy.io/api/clips/get/{clip_id}", "GET", {"ctx_type": ctx_type})
+        return {'success': False, 'error': '[test] Clip not found', 'code': 404}
+
     url = f"https://clyppy.io/api/clips/get/{clip_id}"
     headers = {
         'X-API-Key': getenv('clyppy_post_key'),
@@ -142,6 +172,14 @@ async def get_clip_info(clip_id: str, ctx_type='StoredVideo'):
 
 
 async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, description: str=None):
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/tokens/subtract/", "POST", {
+            "user_id": user.id,
+            "amount": amt,
+            "reason": reason or 'Clyppy Embed'
+        })
+        return {"success": True, "user_success": True, "tokens": 999}
+
     if reason is None:
         reason = 'Clyppy Embed'
 
@@ -168,6 +206,10 @@ async def subtract_tokens(user, amt, clip_url: str=None, reason: str=None, descr
 
 
 async def refresh_clip(clip_id: str, user_id: int):
+    if is_contrib_instance():
+        log_api_bypass(__name__, f"https://clyppy.io/api/clips/refresh/{clip_id}", "POST", {"user_id": user_id})
+        return {"success": True, "msg": "[test] would initate refresh", "code": 200}
+
     url = f"https://clyppy.io/api/clips/refresh/{clip_id}"
     head = {
         'X-Discord-User-Id': str(user_id),
@@ -180,7 +222,22 @@ async def refresh_clip(clip_id: str, user_id: int):
 
 
 async def author_has_premium(user):
-    return str(user.id) == '164115540426752001'
+    # 'premium' is not a feature that exists yet
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/users/has-premium", "POST", {"user_id": str(user.id)})
+        return True
+
+    url = f"https://clyppy.io/api/users/has-premium"
+    head = {
+        'X-Discord-User-Id': str(user.id)
+    }
+    async with get_aiohttp_session() as session:
+        async with session.post(url, headers=head) as response:
+            resp = await response.json()
+            if resp['success']:
+                return resp['premium']
+
+            return False
 
 
 def get_token_cost(video_dur):

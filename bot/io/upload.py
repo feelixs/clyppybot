@@ -2,6 +2,7 @@ from bot.errors import UploadFailed
 from typing import Dict
 from math import ceil
 from bot.io import get_aiohttp_session
+from bot.env import is_contrib_instance, log_api_bypass
 import base64
 import os
 import uuid
@@ -11,6 +12,21 @@ MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
 
 
 async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None, autodelete=False):
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/addclip/", "POST", {
+            "file_path": os.path.basename(file_path),
+            "chunked": True,
+            "autodelete": autodelete
+        })
+
+        # the file won't actually exist here.
+        # contrib instances can't actually upload files anywhere except directly to discord. Please only test with files <8MB
+        return {
+            "success": True,
+            "finished": True,
+            "file_path": f"https://cdn.clyppy.io/TEST/{os.path.basename(file_path)}"
+        }
+
     file_id = str(uuid.uuid4())
     if total_size is None:
         # Read the file and get total size
@@ -75,6 +91,20 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
 
 async def upload_video(video_file_path, logger, autodelete=False) -> Dict:
     """args :remote_path -> the path where the file should be stored. the filename will be pulled from video_file_path"""
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/addclip/", "POST", {
+            "file_path": os.path.basename(video_file_path),
+            "autodelete": autodelete
+        })
+
+        # the file won't actually exist here.
+        # contrib instances can't actually upload files anywhere except directly to discord. Please only test with files <8MB
+        return {
+            "success": True,
+            "finished": True,
+            "file_path": f"https://cdn.clyppy.io/TEST/{os.path.basename(video_file_path)}"
+        }
+
     with open(video_file_path, 'rb') as f:
         file_data = f.read()
     total_size = len(file_data)

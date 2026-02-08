@@ -19,7 +19,7 @@ from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, 
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
                      CLYPPY_VOTE_URL, DL_SERVER_ID, YT_DLP_MAX_FILESIZE, MAX_FILE_SIZE_FOR_DISCORD, YT_DLP_USER_AGENT,
                      MAX_VIDEO_LEN_FOR_EXTEND, MIN_VIDEO_LEN_FOR_EXTEND, BUY_TOKENS_URL, AI_EXTEND_TOKENS_COST,
-                     GITHUB_URL)
+                     GITHUB_URL, is_contrib_instance, log_api_bypass)
 from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, VideoTooLong, VideoLongerThanMaxLength,
                         IPBlockedError, VideoUnavailable, InvalidFileType, UnsupportedError, RemoteTimeoutError,
                         YtDlpForbiddenError, UrlUnparsable, VideoSaidUnavailable, DefinitelyNoDuration,
@@ -551,6 +551,10 @@ class BaseClip(ABC):
             handle_yt_dlp_err(str(e), filename)
 
     async def overwrite_mp4(self, new_url: str):
+        if is_contrib_instance():
+            log_api_bypass(__name__, "https://clyppy.io/api/overwrite/", "POST", {'id': self.clyppy_id, 'url': new_url})
+            return {"success": True, "msg": "[test] Clip overwritten successfully", "url": "https://clyppy.io/xxxxxxxx", "code": 201}
+
         url = 'https://clyppy.io/api/overwrite/'
         headers = {
             'X-API-Key': os.getenv('clyppy_post_key'),
@@ -886,6 +890,10 @@ class BaseAutoEmbed:
 
     @staticmethod
     async def fetch_tokens(user):
+        if is_contrib_instance():
+            log_api_bypass(__name__, "https://clyppy.io/api/tokens/get/", "GET", {"user_id": user.id})
+            return 999
+
         url = 'https://clyppy.io/api/tokens/get/'
         headers = {
             'X-API-Key': os.getenv('clyppy_post_key'),

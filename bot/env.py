@@ -1,6 +1,20 @@
 from interactions import Button, ButtonStyle
 import os
+import logging
 
+# Contributor mode - bypasses API calls for contributors without access
+CONTRIB_INSTANCE = os.getenv('CONTRIB_INSTANCE') is not None
+
+def is_contrib_instance():
+    """Check if running in contributor mode (API calls bypassed)"""
+    return CONTRIB_INSTANCE
+
+def log_api_bypass(logger_name: str, endpoint: str, method: str = "POST", data: dict = None):
+    """Log that an API call would have been made in contributor mode"""
+    logger = logging.getLogger(logger_name)
+    logger.info(f"[CONTRIB MODE] Would call {method} {endpoint}")
+    if data:
+        logger.debug(f"[CONTRIB MODE] With data: {data}")
 
 def create_nexus_comps():
     return [

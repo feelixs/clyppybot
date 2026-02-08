@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from interactions import Client, Intents, listen, Task, IntervalTrigger
 from interactions.api.events import MemberAdd
-from bot.env import CLYPPY_SUPPORT_SERVER_ID
+from bot.env import CLYPPY_SUPPORT_SERVER_ID, is_contrib_instance, log_api_bypass
 from bot.io import get_aiohttp_session
 import logging
 import asyncio
@@ -99,6 +99,15 @@ class TokenGiverBot:
 
         Uses the subtract API with a negative amount to add tokens.
         """
+        if is_contrib_instance():
+            log_api_bypass(__name__, "https://clyppy.io/api/tokens/subtract/", "POST", {
+                "user_id": member.id,
+                "amount": -amount,
+                "reason": "New Member Bonus"
+            })
+            logger.info(f"[CONTRIB MODE] Would give {amount} tokens to {member.username}")
+            return {"success": True, "user_success": True, "tokens": 999}
+
         url = 'https://clyppy.io/api/tokens/subtract/'
         headers = {
             'X-API-Key': getenv('clyppy_post_key'),

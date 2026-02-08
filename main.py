@@ -4,6 +4,7 @@ from bot.setup import init_misc
 from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from bot.io.cdn import CdnSpacesClient
+from bot.env import is_contrib_instance, log_api_bypass
 from cogs.base import format_count
 import aiohttp
 import signal
@@ -19,6 +20,12 @@ async def fetch_embed_count(client=None) -> str:
     # Use cached value if available on bot
     if client and hasattr(client, 'cached_embed_count'):
         return format_count(client.cached_embed_count)
+
+    # Contributor mode - return placeholder
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://clyppy.io/api/stats/embeds-count/", "GET")
+        return "/help"
+
     # Otherwise fetch fresh
     try:
         async with aiohttp.ClientSession() as session:
@@ -80,6 +87,12 @@ GatewayClient._identify = _identify_mobile
 
 
 async def save_to_server():
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://felixcreations.com/api/products/clyppy/save_db/", "POST",
+                      {"env": 'test' if os.getenv('TEST') else 'prod'})
+        logger.info("[CONTRIB MODE] Database save bypassed")
+        return
+
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with get_aiohttp_session() as session:
         try:
@@ -102,6 +115,12 @@ async def save_to_server():
 
 
 async def load_from_server():
+    if is_contrib_instance():
+        log_api_bypass(__name__, "https://felixcreations.com/api/products/clyppy/get_db/", "GET",
+                      {"env": 'test' if os.getenv('TEST') else 'prod'})
+        logger.info("[CONTRIB MODE] Database load bypassed - using local database")
+        return
+
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with get_aiohttp_session() as session:
         try:

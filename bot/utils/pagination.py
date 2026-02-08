@@ -5,7 +5,7 @@ import json
 from os import getenv
 import base64
 from interactions import Embed, Button, ButtonStyle, ActionRow
-from bot.env import CLYPPYIO_USER_AGENT
+from bot.env import CLYPPYIO_USER_AGENT, is_contrib_instance, log_api_bypass
 
 
 @dataclass
@@ -42,6 +42,20 @@ class ServerRankPagination:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
         """
         import time
+
+        if is_contrib_instance():
+            log_api_bypass(__name__, ServerRankPagination.API_BASE_URL, "GET", {
+                "guild_id": guild_id,
+                "page": page,
+                "time_period": time_period
+            })
+            return {
+                "success": True,
+                "data": [],
+                "page": page,
+                "total_count": 0,
+                "has_more": False
+            }
 
         # Check cache first
         cache_key = f"server_ranking_{time_period}_{page}"
@@ -302,6 +316,20 @@ class UserRankPagination:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
         """
         import time
+
+        if is_contrib_instance():
+            log_api_bypass(__name__, UserRankPagination.API_BASE_URL, "GET", {
+                "user_id": user_id,
+                "page": page,
+                "time_period": time_period
+            })
+            return {
+                "success": True,
+                "data": [],
+                "page": page,
+                "total_count": 0,
+                "has_more": False
+            }
 
         # Check cache first
         cache_key = f"user_ranking_{time_period}_{page}"
