@@ -1014,37 +1014,180 @@ class BaseAutoEmbed:
             ctx.user = ctx.author
             pre = '.'
 
-        if target_user:
-            # User specified another user to view
-            # target_user can be a user ID or username
-            display_name = target_user.lstrip('@')  # Remove @ prefix if present
-            msg = f"**Check out this user's clip library!**"
-            asyncio.create_task(ctx.send(content=msg, components=[
-                Button(style=ButtonStyle.LINK, label=f"@{display_name}'s Clips", url=f"https://clyppy.io/clips/{display_name}")
-            ]))
-            asyncio.create_task(send_webhook(
-                title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called for {display_name}',
-                load=f"response - success",
-                color=COLOR_GREEN,
-                url=APPUSE_LOG_WEBHOOK,
-                logger=self.logger
-            ))
-        else:
-            # Show caller's own profile
-            msg = f"**View and share your clip library with the world!**\n\nAll the clips you've shared are saved here 🎬"
-            asyncio.create_task(ctx.send(content=msg, components=[
-                Button(style=ButtonStyle.LINK, label=f"@{ctx.user.username}'s Clips", url=f"https://clyppy.io/clips/{ctx.user.username}"),
-                Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips")
-            ]))
-            asyncio.create_task(send_webhook(
-                title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called',
-                load=f"response - success",
-                color=COLOR_GREEN,
-                url=APPUSE_LOG_WEBHOOK,
-                logger=self.logger
-            ))
+        # Defer for slash commands since we're making an API call
+        if isinstance(ctx, SlashContext):
+            await ctx.defer()
 
-    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all"):
+        # Determine target user
+        if target_user:
+            # Handle Discord mention formats: <@123>, <@!123>, or raw ID/username
+            target_clean = target_user.strip('<@!>').lstrip('@')
+            # Check if it's a numeric ID
+            if target_clean.isdigit():
+                user_id = target_clean
+                username = None
+            else:
+                user_id = None
+                username = target_clean
+            display_name = target_clean
+        else:
+            user_id = str(ctx.user.id)
+            username = ctx.user.username
+            display_name = ctx.user.username
+
+        requester_id = str(ctx.user.id)
+
+        # Fetch user stats from API
+        try:
+            from bot.env import CLYPPYIO_USER_AGENT
+            params = {'requester_id': requester_id}
+            if user_id:
+                params['user_id'] = user_id
+            elif username:
+                params['username'] = username
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    "https://clyppy.io/api/users/stats/",
+                    params=params,
+                    headers={
+                        "User-Agent": CLYPPYIO_USER_AGENT,
+                        'X-API-Key': os.getenv('clyppy_post_key'),
+                        'Content-Type': 'application/json'
+                    }
+                ) as response:
+                    data = await response.json()
+
+                    if response.status == 404 or not data.get('success'):
+                        # User not found - fall back to showing buttons
+                        if target_user:
+                            msg = f"**Check out this user's clip library!**"
+                            await ctx.send(content=msg, components=[
+                                Button(style=ButtonStyle.LINK, label=f"@{display_name}'s Clips", url=f"https://clyppy.io/clips/{display_name}")
+                            ])
+                        else:
+                            msg = f"**View and share your clip library with the world!**\n\nNo clip data found yet - share some clips to see your stats!"
+                            await ctx.send(content=msg, components=[
+                                Button(style=ButtonStyle.LINK, label=f"@{ctx.user.username}'s Clips", url=f"https://clyppy.io/clips/{ctx.user.username}"),
+                                Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips")
+                            ])
+                        return
+
+                    # Build embed with stats
+                    stats = data['data']
+                    username_display = stats.get('username') or display_name
+                    is_bot = stats.get('is_bot', False)
+                    is_private = stats.get('private_profile', False)
+                    bot_tag = " 🤖" if is_bot else ""
+                    private_tag = " private 🔒" if is_private else ""
+
+                    embed = Embed(
+                        title=f"{username_display}'s Profile{bot_tag}{private_tag}",
+                        color=0x5865F2
+                    )
+
+                    # Statistics field (always shown)
+                    unique_clips = stats.get('unique_clip_count', 0)
+                    total_embeds = stats.get('total_embed_count', 0)
+                    servers_used = stats.get('servers_used', 0)
+                    vip_tokens = stats.get('vip_tokens', 0)
+
+                    stats_text = (
+                        f"🎬 **Unique Clips:** {unique_clips:,}\n"
+                        f"📊 **Total Embeds:** {total_embeds:,}\n"
+                        f"🌐 **Servers Used:** {servers_used:,}\n"
+                        f"💎 **VIP Tokens:** {vip_tokens:,}"
+                    )
+                    embed.add_field(name="Quick Stats", value=stats_text, inline=True)
+
+                    # Only show detailed stats if profile is not private
+                    if not is_private:
+                        # Platform breakdown field
+                        platform_breakdown = stats.get('platform_breakdown', {})
+                        if platform_breakdown:
+                            # Platform emoji mapping
+                            platform_emojis = {
+                                'twitch': '💜',
+                                'youtube': '🔴',
+                                'kick': '💚',
+                                'tiktok': '🎵',
+                                'medal': '🏅',
+                                'instagram': '📸',
+                                'x': '𝕏',
+                                'twitter': '𝕏'
+                            }
+                            platform_lines = []
+                            # Sort by percentage descending, take top 3
+                            sorted_platforms = sorted(
+                                platform_breakdown.items(),
+                                key=lambda x: x[1]['percentage'],
+                                reverse=True
+                            )[:3]
+                            for platform, info in sorted_platforms:
+                                emoji = platform_emojis.get(platform.lower(), '📹')
+                                platform_lines.append(f"{emoji} **{platform.capitalize()}:** {info['percentage']}%")
+
+                            if platform_lines:
+                                embed.add_field(name="Top Platforms", value="\n".join(platform_lines), inline=True)
+
+                        # Activity field
+                        first_embed = stats.get('first_embed_at')
+                        latest_embed = stats.get('latest_embed_at')
+                        if first_embed or latest_embed:
+                            activity_lines = []
+                            if first_embed:
+                                try:
+                                    first_dt = datetime.fromisoformat(first_embed.replace('Z', '+00:00'))
+                                    activity_lines.append(f"📅 **First:** {first_dt.strftime('%b %d, %Y')}")
+                                except Exception:
+                                    pass
+                            if latest_embed:
+                                try:
+                                    latest_dt = datetime.fromisoformat(latest_embed.replace('Z', '+00:00'))
+                                    activity_lines.append(f"🕐 **Latest:** {latest_dt.strftime('%b %d, %Y')}")
+                                except Exception:
+                                    pass
+                            if activity_lines:
+                                embed.add_field(name="📆 Activity", value="\n".join(activity_lines), inline=False)
+
+                        # Favorite platform in footer
+                        favorite = stats.get('favorite_platform')
+                        if favorite:
+                            embed.set_footer(text=f"⭐ Favorite Platform: {favorite.capitalize()}")
+
+                    # Send with buttons
+                    buttons = [
+                        Button(style=ButtonStyle.LINK, label=f"@{username_display}'s Clips", url=f"https://clyppy.io/clips/{username_display}")
+                    ]
+                    if not target_user:
+                        buttons.append(Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips"))
+
+                    await ctx.send(embed=embed, components=buttons)
+
+        except Exception as e:
+            self.logger.error(f"Error fetching user stats: {e}")
+            # Fall back to simple message
+            if target_user:
+                msg = f"**Check out this user's clip library!**"
+                await ctx.send(content=msg, components=[
+                    Button(style=ButtonStyle.LINK, label=f"@{display_name}'s Clips", url=f"https://clyppy.io/clips/{display_name}")
+                ])
+            else:
+                msg = f"**View and share your clip library with the world!**\n\nAll the clips you've shared are saved here 🎬"
+                await ctx.send(content=msg, components=[
+                    Button(style=ButtonStyle.LINK, label=f"@{ctx.user.username}'s Clips", url=f"https://clyppy.io/clips/{ctx.user.username}"),
+                    Button(style=ButtonStyle.LINK, label="Manage my Profile", url=f"https://clyppy.io/profile/clips")
+                ])
+
+        asyncio.create_task(send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}profile called{" for " + display_name if target_user else ""}',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        ))
+
+    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all", include_bots: bool = False):
         """
         Display user's ranking in clip embeds with pagination.
         Shows the page where the user appears.
@@ -1053,17 +1196,19 @@ class BaseAutoEmbed:
 
         # Use provided user or default to ctx.author
         if target_user:
-            user_id = target_user.lstrip('@')
+            # Handle Discord mention formats: <@123>, <@!123>, or raw ID
+            user_id = target_user.strip('<@!>')
         else:
             user_id = str(ctx.author.id)
 
-        # Find which page the user is on
-        from bot.utils.pagination import UserRankPagination, UserRankPaginationState
+        from bot.utils.pagination import UserRankPagination, UserRankPaginationState, ENTRIES_PER_PAGE
 
-        user_page = await UserRankPagination.find_user_page(user_id, time_period)
+        requester_id = str(ctx.author.id)
+
+        # Find which page the user is on
+        user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id, include_bots)
 
         if user_page is None:
-            # User not found in ranking
             await ctx.send(embed=Embed(
                 title="❌ User Not Ranked",
                 description="This user hasn't embedded any clips yet!\n\n"
@@ -1073,13 +1218,9 @@ class BaseAutoEmbed:
             return
 
         # Fetch ranking data for the user's page
-        data = await UserRankPagination.fetch_ranking_data(
-            user_id=user_id,
-            page=user_page,
-            time_period=time_period
-        )
+        data = await UserRankPagination.fetch_ranking_data(page=user_page, time_period=time_period, requester_id=requester_id, include_bots=include_bots)
 
-        if not data["success"]:
+        if not data.get("success"):
             await ctx.send(embed=Embed(
                 title="❌ Error",
                 description="Failed to fetch user ranking. Please try again later.",
@@ -1088,17 +1229,15 @@ class BaseAutoEmbed:
             return
 
         # Calculate total pages
-        total_pages = (data["total_count"] + 9) // 10  # 10 entries per page
+        total_pages = (data["total_count"] + ENTRIES_PER_PAGE - 1) // ENTRIES_PER_PAGE
 
         # Create pagination state
         state = UserRankPaginationState(
-            message_id=0,  # Will be set after sending
             user_id=user_id,
             time_period=time_period,
             page=user_page,
             total_pages=total_pages,
-            user_target_page=user_page,
-            entries_per_page=10
+            include_bots=include_bots
         )
 
         # Create embed and buttons
@@ -1108,7 +1247,7 @@ class BaseAutoEmbed:
             total_pages=total_pages,
             user_id=user_id,
             time_period=time_period,
-            entries_per_page=10
+            top_user=data.get("top_user")
         )
 
         buttons = UserRankPagination.create_buttons(
@@ -1117,11 +1256,7 @@ class BaseAutoEmbed:
             state=state
         )
 
-        # Send message
-        message = await ctx.send(embed=embed, components=buttons)
-
-        # Update state with message ID for button handlers
-        state.message_id = int(message.id)
+        await ctx.send(embed=embed, components=buttons)
 
     async def command_embed(self, ctx: Union[Message, SlashContext], url: str, platform, slug, extend_with_ai=False, already_deferred=False):
         async def wait_for_download(clip_id: str, timeout: float = 30):
