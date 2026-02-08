@@ -439,52 +439,45 @@ class Base(Extension):
 
         from bot.utils.pagination import UserRankPagination, UserRankPaginationState
 
-        # Parse compact custom_id: ur_{action}_{user_id}_{time_period}_{page}_{total_pages}_{timestamp}
-        # action codes: f=first, p=prev, n=next, l=last
-        # time_period codes: a=all, w=week, m=month, t=today
+        # Parse compact custom_id: ur_{action}_{user_id}_{tp}_{page}_{total}_{bots}_{ts}
         parts = ctx.custom_id.split("_")
         action = parts[1]  # f, p, n, l
         user_id = parts[2]
         tp_code = parts[3]
         current_page = int(parts[4])
         total_pages = int(parts[5])
-        # parts[6] is timestamp, ignored
+        include_bots = parts[6] == "1"
 
         # Decode time period
         time_period = {"a": "all", "w": "week", "m": "month", "t": "today"}.get(tp_code, "all")
+        requester_id = str(ctx.author.id)
 
         # Calculate new page
-        if action == "f":  # first
+        if action == "f":
             new_page = 1
-        elif action == "p":  # prev
+        elif action == "p":
             new_page = max(1, current_page - 1)
-        elif action == "n":  # next
+        elif action == "n":
             new_page = min(total_pages, current_page + 1)
-        elif action == "l":  # last
+        elif action == "l":
             new_page = total_pages
         else:
-            return  # Invalid action
+            return
 
         # Fetch new page data
-        data = await UserRankPagination.fetch_ranking_data(
-            user_id=user_id,
-            page=new_page,
-            time_period=time_period
-        )
+        data = await UserRankPagination.fetch_ranking_data(page=new_page, time_period=time_period, requester_id=requester_id, include_bots=include_bots)
 
-        if not data["success"]:
+        if not data.get("success"):
             await ctx.send("Failed to load page. Please try again.", ephemeral=True)
             return
 
         # Create state for buttons
         state = UserRankPaginationState(
-            message_id=0,
             user_id=user_id,
             time_period=time_period,
             page=new_page,
             total_pages=total_pages,
-            user_target_page=new_page,
-            entries_per_page=10
+            include_bots=include_bots
         )
 
         # Create new embed and buttons
@@ -494,7 +487,7 @@ class Base(Extension):
             total_pages=total_pages,
             user_id=user_id,
             time_period=time_period,
-            entries_per_page=10
+            top_user=data.get("top_user")
         )
 
         buttons = UserRankPagination.create_buttons(
@@ -663,7 +656,7 @@ class Base(Extension):
 
     @slash_command(name="profile",
                    sub_cmd_name="info",
-                   description="View your Clyppy profile",
+                   sub_cmd_description="View your Clyppy profile",
                    options=[SlashCommandOption(
                        name="user",
                        description="User ID or username",
@@ -675,7 +668,7 @@ class Base(Extension):
 
     @slash_command(name="profile",
                    sub_cmd_name="rank",
-                   description="View your ranking in clip embeds",
+                   sub_cmd_description="View your ranking in clip embeds",
                    options=[
                        SlashCommandOption(
                            name="user",
@@ -694,10 +687,16 @@ class Base(Extension):
                                SlashCommandChoice(name="This Month", value="month"),
                                SlashCommandChoice(name="Today", value="today"),
                            ]
+                       ),
+                       SlashCommandOption(
+                           name="bots",
+                           description="Include bots in rankings (default: No)",
+                           required=False,
+                           type=OptionType.BOOLEAN
                        )
                    ])
-    async def profile_rank(self, ctx: SlashContext, user: str = None, time_period: str = "all"):
-        await self.bot.base_embedder.profile_rank_cmd(ctx, user, time_period)
+    async def profile_rank(self, ctx: SlashContext, user: str = None, time_period: str = "all", bots: bool = False):
+        await self.bot.base_embedder.profile_rank_cmd(ctx, user, time_period, bots)
 
     # todo add command that just fetches the cost to embed a specific video without uploading/embedding it
     # i'll have to fetch its duration/download it to check duration
