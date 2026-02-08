@@ -405,11 +405,11 @@ class AutoEmbedder:
                     autodelete=True  # the server will auto delete it after some time
                 )
                 asyncio.create_task(respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}"))
-                return
+                return None
             else:
                 self.logger.info(f"(is_dl_server) Video file `{the_file}` already exists on the server! Cancelling")
                 asyncio.create_task(respond_to.reply("(is_dl_server) Video file already exists on the server!"))
-                return
+                return None
         else:
             # proceed normally
 
@@ -613,7 +613,7 @@ class AutoEmbedder:
                     asyncio.create_task(self.send_welcome_dm_if_first_time(respond_to.author))
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
-                    return
+                    return None
 
                 btns_is_none = self.bot.guild_settings.get_embed_buttons(guild.id)
                 btns_is_none = POSSIBLE_EMBED_BUTTONS[btns_is_none] == "none"

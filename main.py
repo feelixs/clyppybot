@@ -14,6 +14,10 @@ import sys
 import os
 import time
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 
 async def fetch_embed_count(client=None) -> str:
     """Fetch embed count from API (or use cached value) and return formatted string"""

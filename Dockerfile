@@ -21,4 +21,7 @@ ENV PATH="${DENO_INSTALL}/bin:${PATH}"
 
 RUN chmod +x run.sh
 
-CMD ["./run.sh"]
+
+COPY .env* ./
+
+CMD ["python3", "main.py"]

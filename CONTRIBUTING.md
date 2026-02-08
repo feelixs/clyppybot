@@ -47,12 +47,21 @@ CLYPPY is a Discord bot that embeds videos from 20+ platforms directly in Discor
    - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 4. Set up environment variables:
-   - You must set an environment variable `CLYPP_TOKEN` to your test bot token
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   ```
+
+   Edit `.env` and set:
+   - `CONTRIB_INSTANCE=1` (enables Contributor Mode - bypasses API calls)
+   - `CLYPP_TOKEN=your_test_bot_token_here` (your Discord bot token)
 
 5. Run the bot:
    ```bash
    python main.py
    ```
+
+   The bot will start in **Contributor Mode** - API calls will be logged instead of executed.
 
 ## Project Structure
 
@@ -212,15 +221,59 @@ async def download_video(url: str, max_size: int = 25) -> str:
 
 ## Testing Your Changes
 
-1. Test locally with your Discord bot in a test server
-2. For many situations, your bot will not work since you won't have access to the clyppy.io API which is necessary for most of CLYPPY's operations.
-3. But, depending on what type of feature you're adding, please test your code as much as possible before opening your PR.
+**IMPORTANT: All contributors MUST test their changes in Contributor Mode before submitting a PR.**
 
+### Setting Up Contributor Mode
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Set the `CONTRIB_INSTANCE` environment variable in your `.env` file:
+   ```bash
+   CONTRIB_INSTANCE=1
+   CLYPP_TOKEN=your_test_bot_token_here
+   ```
+
+3. Run the bot locally:
+   ```bash
+   Docker build -t clyppybot .
+   Docker run clyppybot
+   ```
+
+### What Contributor Mode Does
+
+When `CONTRIB_INSTANCE=1` is set:
+- ✅ All API calls to `clyppy.io` and `felixcreations.com` are **bypassed**
+- ✅ API calls are **logged** instead of executed
+- ✅ Mock responses are returned for testing
+- ✅ **Small videos (<8MB)** can still be embedded directly to Discord
+- ✅ Large videos will be logged but not processed (since they require CDN upload)
+
+### Testing Requirements
+
+**Before submitting your PR, please do the following:**
+
+1. ✅ Test locally with your Discord bot in a test server with `CONTRIB_INSTANCE=1`
+2. ✅ Verify your changes work as expected in Contributor Mode
+3. ✅ Test with urls pointing to small videos (<8MB) if your changes affect video embedding
+4. ✅ Ensure the bot starts without errors
+5. ✅ Check that any new commands respond correctly or throw exceptions gracefully
+
+**Note:** You won't have access to the clyppy.io API, but Contributor Mode allows you to test:
+- Command structure and responses
+- Error handling
+- Discord interactions
+- Bot functionality (without full video processing)
 
 ### Manual Testing Checklist
 
-- [ ] Bot starts without errors
-- [ ] Any new Commands respond correctly, or throw Exceptions without crashing the bot
+- [ ] `CONTRIB_INSTANCE=1` is set in your `.env` file
+- [ ] Bot starts without errors in Contributor Mode
+- [ ] Any new commands respond correctly, or throw Exceptions without crashing the bot
+- [ ] Tested with small videos (<8MB) if applicable
+- [ ] Checked logs to verify API calls are being bypassed correctly
 - [ ] When you push to your fork, the Build GitHub workflow completes without errors
 
 

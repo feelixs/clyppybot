@@ -2,6 +2,10 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from interactions import Client, Intents, listen, Task, IntervalTrigger
 from interactions.api.events import MemberAdd
 from bot.env import CLYPPY_SUPPORT_SERVER_ID, is_contrib_instance, log_api_bypass
