@@ -18,6 +18,12 @@ import time
 from dotenv import load_dotenv
 load_dotenv()
 
+# Log environment setup for debugging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+startup_logger = logging.getLogger(__name__)
+startup_logger.info(f"CONTRIB_INSTANCE: {os.getenv('CONTRIB_INSTANCE', 'Not set')}")
+startup_logger.info(f"CLYPP_TOKEN: {'Set' if os.getenv('CLYPP_TOKEN') else 'Not set'}")
+
 
 async def fetch_embed_count(client=None) -> str:
     """Fetch embed count from API (or use cached value) and return formatted string"""

@@ -7,7 +7,13 @@ CONTRIB_INSTANCE = os.getenv('CONTRIB_INSTANCE') is not None
 
 def is_contrib_instance():
     """Check if running in contributor mode (API calls bypassed)"""
-    return CONTRIB_INSTANCE
+    if CONTRIB_INSTANCE:
+        print("[CONTRIB MODE: TESTING] Contributor mode enabled")
+        return True
+    else:
+        print("[CONTRIB MODE: PRODUCTION] Contributor mode disabled")
+        return False
+
 
 def log_api_bypass(logger_name: str, endpoint: str, method: str = "POST", data: dict = None):
     """Log that an API call would have been made in contributor mode"""

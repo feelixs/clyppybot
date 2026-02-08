@@ -321,11 +321,8 @@ async def process_slash_command_task(bot, task: SlashCommandTask):
 
 async def edit_deferred_response(bot, task: SlashCommandTask, content: str):
     """Edit a deferred interaction response using the webhook endpoint."""
-    import aiohttp
     from bot.io import get_aiohttp_session
-
     url = f"https://discord.com/api/v10/webhooks/{bot.user.id}/{task.interaction_token}/messages/@original"
-
     async with get_aiohttp_session() as session:
         async with session.patch(url, json={"content": content}) as resp:
             if resp.status == 200:
@@ -337,9 +334,7 @@ async def edit_deferred_response(bot, task: SlashCommandTask, content: str):
 
 async def edit_deferred_response_with_data(bot, ctx, *args, **kwargs):
     """Edit deferred response with full embed data."""
-    import aiohttp
     from bot.io import get_aiohttp_session
-
     url = f"https://discord.com/api/v10/webhooks/{bot.user.id}/{ctx.token}/messages/@original"
 
     # Build payload from args/kwargs

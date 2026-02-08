@@ -1005,10 +1005,17 @@ class Base(Extension):
             return
 
         self.logger.info("Downloading cookies from server...")
+
+        # Check if API key is available
+        api_key = os.getenv('clyppy_post_key')
+        if not api_key:
+            self.logger.warning("Cookie refresh skipped: clyppy_post_key not set")
+            return
+
         try:
             async with aiohttp.ClientSession() as session:
                 url = "https://felixcreations.com/api/cookies/get"
-                headers = {'X-API-Key': os.getenv('clyppy_post_key')}
+                headers = {'X-API-Key': api_key}
 
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -1063,16 +1070,6 @@ class Base(Extension):
                 embed=False
             )
             await self.post_servers(len(self.bot.guilds))
-
-    @listen(InviteCreate)
-    async def on_invite_create(self, event: InviteCreate):
-        if self.ready:
-            self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
-            await send_webhook(
-                content=f"here - https://discord.gg/{event.invite.code}",
-                url="https://discord.com/api/webhooks/1459637024389730416/PHFbZa4a3uLX4V8ECDThoXKcM_6MwgRVuWDE7dmAoTNDoQaW5VQs8CyC6maN71Fmhfsv",
-                logger=self.logger
-            )
 
     @listen()
     async def on_ready(self):

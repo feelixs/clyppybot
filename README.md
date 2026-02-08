@@ -49,7 +49,7 @@ As a contributor you can still run a test instance of the bot to confirm funcion
 ### Prerequisites
 
 - Python 3.12 or higher
-- FFmpeg (for video processing)
+- Docker
 - Discord Bot Token (for testing)
 - Git
 
@@ -66,30 +66,21 @@ As a contributor you can still run a test instance of the bot to confirm funcion
    pip install -r requirements.txt
    ```
 
-3. **Install FFmpeg:**
-   - **Linux**: `sudo apt-get install ffmpeg`
-   - **macOS**: `brew install ffmpeg`
-   - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
+3. **Install Docker:**
+   - Follow the online instructions depending on your OS
 
 4. **Set up environment variables:**
 
-   Create a `.env` file in the root directory (or set environment variables):
+   Copy `.env.example` into a new `.env` file and fill in the required variables:
    ```bash
-   # Required - Discord Bot Token
    CLYPP_TOKEN=your_discord_bot_token_here
-
-   # Optional - Logging webhooks
-   LOG_WEBHOOK=your_logging_webhook_url
-   APPUSE_LOG_WEBHOOK=your_app_usage_webhook_url
-
-   # Optional - Server configuration
-   DL_SERVER_ID=your_download_server_id
    CONTRIB_INSTANCE=1
    ```
 
 5. **Run the bot:**
    ```bash
-   python main.py
+   Docker build -t clyppybot .
+   Docker run clyppybot
    ```
 
 ### Project Structure
