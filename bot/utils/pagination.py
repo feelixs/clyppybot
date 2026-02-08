@@ -6,6 +6,11 @@ from os import getenv
 import base64
 from interactions import Embed, Button, ButtonStyle, ActionRow
 from bot.env import CLYPPYIO_USER_AGENT, is_contrib_instance, log_api_bypass
+import logging
+import time
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,8 +48,8 @@ class ServerRankPagination:
         """
         import time
 
-        if is_contrib_instance():
-            log_api_bypass(__name__, ServerRankPagination.API_BASE_URL, "GET", {
+        if is_contrib_instance(logger):
+            log_api_bypass(logger, ServerRankPagination.API_BASE_URL, "GET", {
                 "guild_id": guild_id,
                 "page": page,
                 "time_period": time_period
@@ -315,10 +320,8 @@ class UserRankPagination:
         Returns:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
         """
-        import time
-
-        if is_contrib_instance():
-            log_api_bypass(__name__, UserRankPagination.API_BASE_URL, "GET", {
+        if is_contrib_instance(logger):
+            log_api_bypass(logger, UserRankPagination.API_BASE_URL, "GET", {
                 "user_id": user_id,
                 "page": page,
                 "time_period": time_period

@@ -20,9 +20,9 @@ INVALID_VIEW_ON_PLATFORMS = ['discord']
 INVALID_DL_PLATFORMS = ['discord', 'rule34', 'base']
 
 
-async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://clyppy.io/api/publish/", "POST", {
+async def publish_interaction(interaction_data, apikey, logger, edit_id=None, edit_type=None):
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/publish/", "POST", {
             "edit": edit_type is not None,
             "edit_type": edit_type
         })
@@ -672,7 +672,8 @@ class AutoEmbedder:
                         interaction_data={'response_time': my_response_time, 'msg_id': msg_id},
                         apikey=self.api_key,
                         edit_id=result['id'],
-                        edit_type='response_time'
+                        edit_type='response_time',
+                        logger=self.logger
                     )
                 else:
                     self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")

@@ -93,7 +93,8 @@ class TokenGiverBot:
         conn.commit()
         conn.close()
 
-    async def give_tokens_to_user(self, member, amount: int):
+    @staticmethod
+    async def give_tokens_to_user(member, amount: int):
         """
         Give tokens to a user by calling the clyppy.io API.
 
@@ -103,8 +104,8 @@ class TokenGiverBot:
 
         Uses the subtract API with a negative amount to add tokens.
         """
-        if is_contrib_instance():
-            log_api_bypass(__name__, "https://clyppy.io/api/tokens/subtract/", "POST", {
+        if is_contrib_instance(logger):
+            log_api_bypass(logger, "https://clyppy.io/api/tokens/subtract/", "POST", {
                 "user_id": member.id,
                 "amount": -amount,
                 "reason": "New Member Bonus"

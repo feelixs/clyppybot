@@ -1,23 +1,21 @@
 from interactions import Button, ButtonStyle
 import os
-import logging
 
 # Contributor mode - bypasses API calls for contributors without access
 CONTRIB_INSTANCE = os.getenv('CONTRIB_INSTANCE') is not None
 
-def is_contrib_instance():
+def is_contrib_instance(logger):
     """Check if running in contributor mode (API calls bypassed)"""
     if CONTRIB_INSTANCE:
-        print("[CONTRIB MODE: TESTING] Contributor mode enabled")
+        logger.info("[CONTRIB MODE: TESTING] Contributor mode enabled")
         return True
     else:
-        print("[CONTRIB MODE: PRODUCTION] Contributor mode disabled")
+        logger.info("[CONTRIB MODE: PRODUCTION] Contributor mode disabled")
         return False
 
 
-def log_api_bypass(logger_name: str, endpoint: str, method: str = "POST", data: dict = None):
+def log_api_bypass(logger, endpoint: str, method: str = "POST", data: dict = None):
     """Log that an API call would have been made in contributor mode"""
-    logger = logging.getLogger(logger_name)
     logger.info(f"[CONTRIB MODE] Would call {method} {endpoint}")
     if data:
         logger.debug(f"[CONTRIB MODE] With data: {data}")

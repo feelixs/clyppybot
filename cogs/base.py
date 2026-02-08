@@ -998,8 +998,8 @@ class Base(Extension):
             self.logger.info("Bot not ready, skipping cookie refresh task")
             return
 
-        if is_contrib_instance():
-            log_api_bypass(__name__, "https://felixcreations.com/api/cookies/get", "GET")
+        if is_contrib_instance(self.logger):
+            log_api_bypass(self.logger, "https://felixcreations.com/api/cookies/get", "GET")
             self.logger.info("[CONTRIB MODE] Cookie refresh bypassed")
             return
 

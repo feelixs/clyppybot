@@ -12,8 +12,8 @@ MAX_CLYPPYIO_UPLOAD_SIZE = 70_000_000
 
 
 async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None, file_data=None, autodelete=False):
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://clyppy.io/api/addclip/", "POST", {
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/addclip/", "POST", {
             "file_path": os.path.basename(file_path),
             "chunked": True,
             "autodelete": autodelete
@@ -91,8 +91,8 @@ async def upload_video_in_chunks(file_path, logger, chunk_size, total_size=None,
 
 async def upload_video(video_file_path, logger, autodelete=False) -> Dict:
     """args :remote_path -> the path where the file should be stored. the filename will be pulled from video_file_path"""
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://clyppy.io/api/addclip/", "POST", {
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/addclip/", "POST", {
             "file_path": os.path.basename(video_file_path),
             "autodelete": autodelete
         })

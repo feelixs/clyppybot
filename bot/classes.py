@@ -551,8 +551,8 @@ class BaseClip(ABC):
             handle_yt_dlp_err(str(e), filename)
 
     async def overwrite_mp4(self, new_url: str):
-        if is_contrib_instance():
-            log_api_bypass(__name__, "https://clyppy.io/api/overwrite/", "POST", {'id': self.clyppy_id, 'url': new_url})
+        if is_contrib_instance(self.logger):
+            log_api_bypass(self.logger, "https://clyppy.io/api/overwrite/", "POST", {'id': self.clyppy_id, 'url': new_url})
             return {"success": True, "msg": "[test] Clip overwritten successfully", "url": "https://clyppy.io/xxxxxxxx", "code": 201}
 
         url = 'https://clyppy.io/api/overwrite/'
@@ -888,10 +888,9 @@ class BaseAutoEmbed:
             components=create_nexus_comps()
         )
 
-    @staticmethod
-    async def fetch_tokens(user):
-        if is_contrib_instance():
-            log_api_bypass(__name__, "https://clyppy.io/api/tokens/get/", "GET", {"user_id": user.id})
+    async def fetch_tokens(self, user):
+        if is_contrib_instance(self.logger):
+            log_api_bypass(self.logger, "https://clyppy.io/api/tokens/get/", "GET", {"user_id": user.id})
             return 999
 
         url = 'https://clyppy.io/api/tokens/get/'

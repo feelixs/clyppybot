@@ -1,3 +1,7 @@
+# Load environment variables from .env file FIRST before any other imports
+from dotenv import load_dotenv
+load_dotenv()
+
 from interactions import AutoShardedClient, Intents
 from interactions.api.gateway.gateway import GatewayClient, OPCODE, FastJson
 from bot.setup import init_misc
@@ -14,16 +18,8 @@ import sys
 import os
 import time
 
-# Load environment variables from .env file
-from dotenv import load_dotenv
-load_dotenv()
-
-# Log environment setup for debugging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-startup_logger = logging.getLogger(__name__)
-startup_logger.info(f"CONTRIB_INSTANCE: {os.getenv('CONTRIB_INSTANCE', 'Not set')}")
-startup_logger.info(f"CLYPP_TOKEN: {'Set' if os.getenv('CLYPP_TOKEN') else 'Not set'}")
-
+logger = logging.getLogger(__name__)
 
 async def fetch_embed_count(client=None) -> str:
     """Fetch embed count from API (or use cached value) and return formatted string"""
@@ -32,8 +28,8 @@ async def fetch_embed_count(client=None) -> str:
         return format_count(client.cached_embed_count)
 
     # Contributor mode - return placeholder
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://clyppy.io/api/stats/embeds-count/", "GET")
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/stats/embeds-count/", "GET")
         return "/help"
 
     # Otherwise fetch fresh
@@ -97,8 +93,8 @@ GatewayClient._identify = _identify_mobile
 
 
 async def save_to_server():
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://felixcreations.com/api/products/clyppy/save_db/", "POST",
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://felixcreations.com/api/products/clyppy/save_db/", "POST",
                       {"env": 'test' if os.getenv('TEST') else 'prod'})
         logger.info("[CONTRIB MODE] Database save bypassed")
         return
@@ -125,8 +121,8 @@ async def save_to_server():
 
 
 async def load_from_server():
-    if is_contrib_instance():
-        log_api_bypass(__name__, "https://felixcreations.com/api/products/clyppy/get_db/", "GET",
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://felixcreations.com/api/products/clyppy/get_db/", "GET",
                       {"env": 'test' if os.getenv('TEST') else 'prod'})
         logger.info("[CONTRIB MODE] Database load bypassed - using local database")
         return
@@ -152,8 +148,6 @@ async def load_from_server():
             logger.error(f"Failed to get database from server: {e}")
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client
