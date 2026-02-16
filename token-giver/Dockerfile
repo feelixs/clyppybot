@@ -11,7 +11,7 @@ COPY bot/ /app/bot/
 COPY token-giver/main.py /app/token-giver/main.py
 
 # Install dependencies
-RUN pip install --no-cache-dir discord-py-interactions
+RUN pip install --no-cache-dir discord-py-interactions dotenv
 
 # Create directory for database
 RUN mkdir -p /app/token-giver/data
