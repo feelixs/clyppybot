@@ -840,7 +840,10 @@ class Base(Extension):
 
     @slash_command(name="settings", description="Display or change Clyppy's miscellaneous settings",
                    options=[SlashCommandOption(name="quickembeds", type=OptionType.STRING,
-                                               description="Platforms: 'all', 'none', or comma-separated (e.g., 'twitch,kick,medal')",
+                                               description="Platforms: 'all', 'none', 'reset', or comma-separated (e.g., 'twitch,kick')",
+                                               required=False),
+                            SlashCommandOption(name="channel", type=OptionType.CHANNEL,
+                                               description="Apply quickembeds to specific channel (blank = server-wide)",
                                                required=False),
                             SlashCommandOption(name="on_error", type=OptionType.STRING,
                                                description="Choose what Clyppy should do upon error",
@@ -849,8 +852,8 @@ class Base(Extension):
                                                description="Configure what buttons Clyppy shows when embedding clips",
                                                required=False)
                             ])
-    async def settings(self, ctx: SlashContext, quickembeds: str = None, on_error: str = None,
-                       embed_buttons: str = None):
+    async def settings(self, ctx: SlashContext, quickembeds: str = None, channel = None,
+                       on_error: str = None, embed_buttons: str = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -867,11 +870,26 @@ class Base(Extension):
             await self._send_settings_help(ctx, False)
             return
 
-        current_qe_platforms, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
+        channel_id = channel.id if channel else None
+        current_qe_platforms, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id, channel_id)
         chosen_qe = current_qe_platforms
+        qe_scope = f"in {channel.mention}" if channel else "server-wide"
+
         if quickembeds is not None:
+            # Handle reset command to remove channel override
+            if quickembeds.lower() == 'reset':
+                if channel_id is None:
+                    await ctx.send("Cannot reset server-wide settings. Use `quickembeds=none` to disable all platforms.")
+                    return
+                success = self.bot.guild_settings.delete_channel_quickembed_setting(ctx.guild.id, channel_id)
+                if success:
+                    await ctx.send(f"Channel override removed for {channel.mention}. Now using server-wide settings.")
+                else:
+                    await ctx.send("Error removing channel override.")
+                return
+
             success, error_msg, valid_platforms = self.bot.guild_settings.set_quickembed_platforms(
-                ctx.guild.id, quickembeds)
+                ctx.guild.id, quickembeds, channel_id)
             if not success:
                 await ctx.send(f"Error setting quickembeds: {error_msg}")
                 return
@@ -913,9 +931,10 @@ class Base(Extension):
         else:
             qe_display = ', '.join(chosen_qe)
 
+        qe_scope_msg = f" ({qe_scope})" if quickembeds is not None else ""
         await ctx.send(
             "Successfully changed settings:\n\n"
-            f"**quickembeds**: {qe_display}{' (default)' if qe_is_default else ''}\n"
+            f"**quickembeds**: {qe_display}{' (default)' if qe_is_default else ''}{qe_scope_msg}\n"
             f"**on_error**: {on_error}\n"
             f"**embed_buttons**: {embed_buttons}\n\n"
         )
@@ -949,6 +968,29 @@ class Base(Extension):
 
         # Use friendly platform names for display
         valid_platforms_str = ', '.join(PLATFORM_NAME_TO_ID.keys())
+
+        # Build channel overrides section
+        overrides = self.bot.guild_settings.list_channel_overrides(ctx.guild.id)
+        channel_overrides_section = ""
+        if overrides:
+            override_lines = []
+            for channel_id, setting in overrides:
+                try:
+                    channel_obj = self.bot.get_channel(channel_id)
+                    channel_name = channel_obj.mention if channel_obj else f"<#{channel_id}>"
+                    # Parse setting for display
+                    if setting == 'none':
+                        platforms = 'none'
+                    elif setting == 'all':
+                        platforms = 'all'
+                    else:
+                        platforms = ', '.join(setting.split(','))
+                    override_lines.append(f"  {channel_name}: {platforms}")
+                except Exception:
+                    pass
+            if override_lines:
+                channel_overrides_section = "\n\n**Channel Overrides:**\n" + "\n".join(override_lines)
+
         about = (
             '**Configurable Settings:**\n'
             'Below are the settings you can configure using this command. Each setting name is in **bold** '
@@ -956,8 +998,10 @@ class Base(Extension):
             '**quickembeds** Configure which platforms Clyppy automatically embeds:\n'
             ' - `all`: Enable for all platforms\n'
             ' - `none`: Disable all quickembeds (use `/embed` command instead)\n'
+            ' - `reset`: Remove channel-specific override (use with `channel` parameter)\n'
             f' - Comma-separated list: e.g., `Twitch,Kick,Medal`\n'
-            f' - Valid platforms: `None, All, {valid_platforms_str}`\n\n'
+            f' - Valid platforms: `None, All, {valid_platforms_str}`\n'
+            ' - Use `channel` parameter to apply to specific channel (blank = server-wide)\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'
             ' - `dm`: DM the message author about the error.\n\n'
@@ -966,7 +1010,8 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
-            f'**Current Settings:**\n**quickembeds**: {qe}{" (default)" if qe_is_default else ""}\n{cs}\n**embed_buttons**: {es}\n\n'
+            f'**Current Settings:**\n**quickembeds** (server-wide): {qe}{" (default)" if qe_is_default else ""}'
+            f'{channel_overrides_section}\n{cs}\n**embed_buttons**: {es}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 

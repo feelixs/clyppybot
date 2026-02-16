@@ -110,8 +110,10 @@ class AutoEmbedder:
             elif event.message.author.id == 1341521799342588006:
                 return 1  # logger webhook
 
+            # Check if quickembeds are enabled for this platform in this channel/guild
+            channel_id = event.message.channel.id if hasattr(event.message.channel, 'id') else None
             if not self.bot.guild_settings.is_platform_quickembed_enabled(
-                    guild.id, self.platform_tools.platform_name):
+                    guild.id, self.platform_tools.platform_name, channel_id):
                 # quickembeds not enabled for this platform
                 return 1
 

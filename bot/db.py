@@ -85,8 +85,10 @@ class GuildDatabase:
                         ''')
             conn.execute('''
                             CREATE TABLE IF NOT EXISTS embed_enabled (
-                                guild_id INTEGER PRIMARY KEY,
-                                setting TEXT
+                                guild_id INTEGER NOT NULL,
+                                channel_id INTEGER,
+                                setting TEXT NOT NULL,
+                                UNIQUE(guild_id, channel_id)
                             )
                         ''')
             conn.execute('''
@@ -129,6 +131,40 @@ class GuildDatabase:
             except Exception as e:
                 logger.error(f"Migration check failed: {e}")
 
+            # Migration: Add channel_id column for channel-level quickembed settings
+            try:
+                cursor = conn.execute('PRAGMA table_info(embed_enabled)')
+                columns = {c[1]: c for c in cursor.fetchall()}
+
+                if 'channel_id' not in columns:
+                    logger.info("Migrating embed_enabled to support channel-level settings...")
+
+                    # Read existing guild-level settings
+                    cursor = conn.execute('SELECT guild_id, setting FROM embed_enabled')
+                    rows = cursor.fetchall()
+
+                    # Drop and recreate table with new schema
+                    conn.execute('DROP TABLE embed_enabled')
+                    conn.execute('''
+                        CREATE TABLE embed_enabled (
+                            guild_id INTEGER NOT NULL,
+                            channel_id INTEGER,
+                            setting TEXT NOT NULL,
+                            UNIQUE(guild_id, channel_id)
+                        )
+                    ''')
+
+                    # Re-insert all settings with channel_id = NULL (guild-level)
+                    for guild_id, setting in rows:
+                        conn.execute(
+                            'INSERT INTO embed_enabled (guild_id, channel_id, setting) VALUES (?, NULL, ?)',
+                            (guild_id, setting)
+                        )
+
+                    logger.info(f"Channel-level migration complete: {len(rows)} guild settings migrated")
+            except Exception as e:
+                logger.error(f"Channel-level migration check failed: {e}")
+
             conn.commit()
 
     def get_nsfw_enabled(self, guild_id) -> bool:
@@ -157,12 +193,42 @@ class GuildDatabase:
             logger.error(f"Database error when setting nsfw_enabled for guild {guild_id}: {e}")
             return False
 
-    def get_quickembed_platforms(self, guild_id) -> Tuple[List[str], bool]:
-        """Returns list of enabled platform IDs for this guild."""
+    def _parse_quickembed_setting(self, setting: str) -> List[str]:
+        """Helper to parse 'none', 'all', or comma-separated platforms."""
+        if setting == 'none':
+            return []
+        if setting == 'all':
+            return VALID_QUICKEMBED_PLATFORMS.copy()
+        return [p.strip().lower() for p in setting.split(',')
+                if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS]
+
+    def get_quickembed_platforms(self, guild_id, channel_id=None) -> Tuple[List[str], bool]:
+        """
+        Returns list of enabled platform IDs for this guild/channel.
+
+        Hierarchical fallback:
+        1. If channel_id provided, check channel-specific setting
+        2. Fall back to guild-level setting (channel_id IS NULL)
+        3. Fall back to default
+
+        Returns: (platforms_list, is_default)
+        """
         try:
             with self.get_db() as conn:
+                # Try channel-specific first if provided
+                if channel_id is not None:
+                    cursor = conn.execute(
+                        'SELECT setting FROM embed_enabled WHERE guild_id = ? AND channel_id = ?',
+                        (guild_id, channel_id)
+                    )
+                    result = cursor.fetchone()
+                    if result and result[0]:
+                        # Channel-specific setting found
+                        return self._parse_quickembed_setting(result[0]), False
+
+                # Fall back to guild-level (channel_id IS NULL)
                 cursor = conn.execute(
-                    'SELECT setting FROM embed_enabled WHERE guild_id = ?',
+                    'SELECT setting FROM embed_enabled WHERE guild_id = ? AND channel_id IS NULL',
                     (guild_id,)
                 )
                 result = cursor.fetchone()
@@ -170,28 +236,28 @@ class GuildDatabase:
                 if not result or not result[0]:
                     return DEFAULT_QUICKEMBED_PLATFORMS.split(','), True
 
-                setting = result[0]
-                if setting == 'none':
-                    return [], False
-                if setting == 'all':
-                    return VALID_QUICKEMBED_PLATFORMS.copy(), False
+                return self._parse_quickembed_setting(result[0]), False
 
-                return [p.strip().lower() for p in setting.split(',') if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS], False
         except sqlite3.Error as e:
             logger.error(f"Database error when getting quickembed_platforms for guild {guild_id}: {e}")
             return DEFAULT_QUICKEMBED_PLATFORMS.split(','), True
 
-    def is_platform_quickembed_enabled(self, guild_id, platform_name: str) -> bool:
-        """Check if platform is enabled for quickembeds."""
+    def is_platform_quickembed_enabled(self, guild_id, platform_name: str, channel_id=None) -> bool:
+        """Check if platform is enabled for quickembeds in this channel/guild."""
         platform_id = PLATFORM_NAME_TO_ID.get(platform_name, platform_name.lower())
-        p, _ = self.get_quickembed_platforms(guild_id)
+        p, _ = self.get_quickembed_platforms(guild_id, channel_id)
         return platform_id in p
 
-    def set_quickembed_platforms(self, guild_id: int, platforms_str: str) -> Tuple[bool, Optional[str], Optional[List[str]]]:
+    def set_quickembed_platforms(self, guild_id: int, platforms_str: str, channel_id: Optional[int] = None) -> Tuple[bool, Optional[str], Optional[List[str]]]:
         """
-        Set quickembed platforms for a guild.
-        Accepts both friendly names (Twitch, Instagram) and short identifiers (twitch, insta).
-        Returns (success, error_msg, valid_platforms)
+        Set quickembed platforms for a guild or specific channel.
+
+        Args:
+            guild_id: Discord guild ID
+            platforms_str: 'none', 'all', or comma-separated platform names
+            channel_id: Optional channel ID (None = guild-level)
+
+        Returns: (success, error_msg, valid_platforms)
         """
         platforms_str = platforms_str.strip()
 
@@ -228,14 +294,47 @@ class GuildDatabase:
         try:
             with self.get_db() as conn:
                 conn.execute('''
-                    INSERT OR REPLACE INTO embed_enabled (guild_id, setting)
-                    VALUES (?, ?)
-                ''', (guild_id, normalized))
+                    INSERT INTO embed_enabled (guild_id, channel_id, setting)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(guild_id, channel_id)
+                    DO UPDATE SET setting = excluded.setting
+                ''', (guild_id, channel_id, normalized))
                 conn.commit()
                 return True, None, valid
         except sqlite3.Error as e:
             logger.error(f"Database error when setting quickembed_platforms for guild {guild_id}: {e}")
             return False, f"Database error: {e}", None
+
+    def delete_channel_quickembed_setting(self, guild_id: int, channel_id: int) -> bool:
+        """Remove channel-specific override, reverting to guild-level setting."""
+        try:
+            with self.get_db() as conn:
+                conn.execute(
+                    'DELETE FROM embed_enabled WHERE guild_id = ? AND channel_id = ?',
+                    (guild_id, channel_id)
+                )
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Error deleting channel quickembed setting: {e}")
+            return False
+
+    def list_channel_overrides(self, guild_id: int) -> List[Tuple[int, str]]:
+        """
+        Get all channel-specific overrides for a guild.
+
+        Returns: List of (channel_id, setting) tuples
+        """
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT channel_id, setting FROM embed_enabled WHERE guild_id = ? AND channel_id IS NOT NULL',
+                    (guild_id,)
+                )
+                return cursor.fetchall()
+        except sqlite3.Error as e:
+            logger.error(f"Error listing channel overrides: {e}")
+            return []
 
     def get_embed_buttons(self, guild_id: int) -> int:
         try:
