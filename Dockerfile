@@ -19,6 +19,6 @@ RUN curl -fsSL https://deno.land/install.sh | sh
 ENV DENO_INSTALL="/root/.deno"
 ENV PATH="${DENO_INSTALL}/bin:${PATH}"
 
-RUN chmod +x run.sh
+COPY .env* ./
 
-CMD ["./run.sh"]
+CMD ["python3", "main.py"]

@@ -48,11 +48,6 @@ class Watch(Extension):
         await member.remove_roles(old_roles)
         await member.add_roles([voter_role, the_role])
 
-    @listen(MemberAdd)
-    async def on_member_add(self, event: MemberAdd):
-        self.logger.info(f"NEW MEMBER ADD in ctx: {event.guild.name} -> {event.member.nick} ({event.member.id})")
-        print(f"NEW MEMBER ADD in ctx: {event.guild.name} -> {event.member.nick} ({event.member.id})")
-
     @listen(MessageCreate)
     async def on_message_create(self, event):
         if event.message.guild is None:
@@ -77,9 +72,10 @@ class Watch(Extension):
                 else:
                     self.logger.info(f"Couldn't match pattern")
 
-            elif event.message.author.id == CLYPPY_CMD_WEBHOOK_ID:  # cmd webhook sent a command to clyppy (delete a msg, etc)
+            elif event.message.author.id == CLYPPY_CMD_WEBHOOK_ID and CLYPPY_CMD_WEBHOOK_ID is not None:
+                # cmd webhook sent a command to clyppy (delete a msg, etc)
                 # should only work in this channel (unneeded validation)
-                if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL:
+                if event.message.channel.id != CLYPPY_CMD_WEBHOOK_CHANNEL or CLYPPY_CMD_WEBHOOK_CHANNEL is None:
                     return
 
                 pattern = fr"<@{CLYPPYBOT_ID}>: <@(\d+)> \((\d+)\) said to delete these: \[(.*?)\]"

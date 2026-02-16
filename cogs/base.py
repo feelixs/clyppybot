@@ -5,7 +5,7 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle, Activity, ActivityType, SlashCommandChoice)
 from bot.env import SUPPORT_SERVER_URL
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, is_contrib_instance, log_api_bypass
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
 from bot.types import COLOR_GREEN, COLOR_RED
@@ -1043,11 +1043,23 @@ class Base(Extension):
             self.logger.info("Bot not ready, skipping cookie refresh task")
             return
 
+        if is_contrib_instance(self.logger):
+            log_api_bypass(self.logger, "https://felixcreations.com/api/cookies/get", "GET")
+            self.logger.info("[CONTRIB MODE] Cookie refresh bypassed")
+            return
+
         self.logger.info("Downloading cookies from server...")
+
+        # Check if API key is available
+        api_key = os.getenv('clyppy_post_key')
+        if not api_key:
+            self.logger.warning("Cookie refresh skipped: clyppy_post_key not set")
+            return
+
         try:
             async with aiohttp.ClientSession() as session:
                 url = "https://felixcreations.com/api/cookies/get"
-                headers = {'X-API-Key': os.getenv('clyppy_post_key')}
+                headers = {'X-API-Key': api_key}
 
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -1102,16 +1114,6 @@ class Base(Extension):
                 embed=False
             )
             await self.post_servers(len(self.bot.guilds))
-
-    @listen(InviteCreate)
-    async def on_invite_create(self, event: InviteCreate):
-        if self.ready:
-            self.logger.info(f"New invite {event.invite.code} for {event.invite.guild_preview.name} ({event.invite.guild_preview.id})")
-            await send_webhook(
-                content=f"here - https://discord.gg/{event.invite.code}",
-                url="https://discord.com/api/webhooks/1459637024389730416/PHFbZa4a3uLX4V8ECDThoXKcM_6MwgRVuWDE7dmAoTNDoQaW5VQs8CyC6maN71Fmhfsv",
-                logger=self.logger
-            )
 
     @listen()
     async def on_ready(self):

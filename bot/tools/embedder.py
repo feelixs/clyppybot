@@ -3,7 +3,7 @@ from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDurat
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS
+from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS, is_contrib_instance, log_api_bypass
 from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
 from bot.task_queue import QuickembedTask
 from typing import List, Union, Tuple
@@ -20,7 +20,14 @@ INVALID_VIEW_ON_PLATFORMS = ['discord']
 INVALID_DL_PLATFORMS = ['discord', 'rule34', 'base']
 
 
-async def publish_interaction(interaction_data, apikey, edit_id=None, edit_type=None, logger=None):
+async def publish_interaction(interaction_data, apikey, logger, edit_id=None, edit_type=None):
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/publish/", "POST", {
+            "edit": edit_type is not None,
+            "edit_type": edit_type
+        })
+        return {"success": True, "id": "test_video_id"}
+
     try:
         url = 'https://clyppy.io/api/publish/'
         headers = {
@@ -400,11 +407,11 @@ class AutoEmbedder:
                     autodelete=True  # the server will auto delete it after some time
                 )
                 asyncio.create_task(respond_to.reply(f"Success for {clip_link}, uploaded to -> {the_file}"))
-                return
+                return None
             else:
                 self.logger.info(f"(is_dl_server) Video file `{the_file}` already exists on the server! Cancelling")
                 asyncio.create_task(respond_to.reply("(is_dl_server) Video file already exists on the server!"))
-                return
+                return None
         else:
             # proceed normally
 
@@ -609,7 +616,7 @@ class AutoEmbedder:
                     asyncio.create_task(self.send_welcome_dm_if_first_time(respond_to.author))
                 else:
                     self.logger.info(f"Failed to publish interaction, got back from server {result}")
-                    return
+                    return None
 
                 btns_is_none = self.bot.guild_settings.get_embed_buttons(guild.id)
                 btns_is_none = POSSIBLE_EMBED_BUTTONS[btns_is_none] == "none"
@@ -667,7 +674,8 @@ class AutoEmbedder:
                         interaction_data={'response_time': my_response_time, 'msg_id': msg_id},
                         apikey=self.api_key,
                         edit_id=result['id'],
-                        edit_type='response_time'
+                        edit_type='response_time',
+                        logger=self.logger
                     )
                 else:
                     self.logger.info(f"Failed to publish BotInteraction to server for {clip.id} ({guild.name} - #{chn})")

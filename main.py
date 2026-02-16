@@ -1,9 +1,14 @@
+# Load environment variables from .env file FIRST before any other imports
+from dotenv import load_dotenv
+load_dotenv()
+
 from interactions import AutoShardedClient, Intents
 from interactions.api.gateway.gateway import GatewayClient, OPCODE, FastJson
 from bot.setup import init_misc
 from bot.io import get_aiohttp_session
 from bot.db import GuildDatabase
 from bot.io.cdn import CdnSpacesClient
+from bot.env import is_contrib_instance, log_api_bypass
 from cogs.base import format_count
 import aiohttp
 import signal
@@ -13,12 +18,20 @@ import sys
 import os
 import time
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 async def fetch_embed_count(client=None) -> str:
     """Fetch embed count from API (or use cached value) and return formatted string"""
     # Use cached value if available on bot
     if client and hasattr(client, 'cached_embed_count'):
         return format_count(client.cached_embed_count)
+
+    # Contributor mode - return placeholder
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/stats/embeds-count/", "GET")
+        return "/help"
+
     # Otherwise fetch fresh
     try:
         async with aiohttp.ClientSession() as session:
@@ -80,6 +93,12 @@ GatewayClient._identify = _identify_mobile
 
 
 async def save_to_server():
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://felixcreations.com/api/products/clyppy/save_db/", "POST",
+                      {"env": 'test' if os.getenv('TEST') else 'prod'})
+        logger.info("[CONTRIB MODE] Database save bypassed")
+        return
+
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with get_aiohttp_session() as session:
         try:
@@ -102,6 +121,12 @@ async def save_to_server():
 
 
 async def load_from_server():
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://felixcreations.com/api/products/clyppy/get_db/", "GET",
+                      {"env": 'test' if os.getenv('TEST') else 'prod'})
+        logger.info("[CONTRIB MODE] Database load bypassed - using local database")
+        return
+
     env = 'test' if os.getenv('TEST') is not None else 'prod'
     async with get_aiohttp_session() as session:
         try:
@@ -123,8 +148,6 @@ async def load_from_server():
             logger.error(f"Failed to get database from server: {e}")
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 Bot = AutoShardedClient(intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT)
 cdn_client = CdnSpacesClient()
 Bot.cdn_client = cdn_client

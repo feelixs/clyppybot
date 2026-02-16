@@ -1,6 +1,24 @@
 from interactions import Button, ButtonStyle
 import os
 
+# Contributor mode - bypasses API calls for contributors without access
+CONTRIB_INSTANCE = os.getenv('CONTRIB_INSTANCE') is not None
+
+def is_contrib_instance(logger):
+    """Check if running in contributor mode (API calls bypassed)"""
+    if CONTRIB_INSTANCE:
+        logger.info("[CONTRIB MODE: TESTING] Contributor mode enabled")
+        return True
+    else:
+        logger.info("[CONTRIB MODE: PRODUCTION] Contributor mode disabled")
+        return False
+
+
+def log_api_bypass(logger, endpoint: str, method: str = "POST", data: dict = None):
+    """Log that an API call would have been made in contributor mode"""
+    logger.info(f"[CONTRIB MODE] Would call {method} {endpoint}")
+    if data:
+        logger.debug(f"[CONTRIB MODE] With data: {data}")
 
 def create_nexus_comps():
     return [
@@ -37,27 +55,24 @@ DL_SERVER_ID = os.getenv("DL_SERVER_ID")
 POSSIBLE_TOO_LARGE = ["trim", "info", "dm"]
 POSSIBLE_ON_ERRORS = ["dm", "info"]
 POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
-
 CLYPPYBOT_ID = 1111723928604381314
 
-DOWNLOAD_THIS_WEBHOOK_ID = 1331035236041097326
-CLYPPY_VIDEO_REFRESHER_ID = 1361758046950396417
-CLYPPY_CMD_WEBHOOK_ID = 1352361462005370983
-CLYPPY_CMD_WEBHOOK_CHANNEL = 1352361327770992690
+DOWNLOAD_THIS_WEBHOOK_ID = 1331035236041097326 if CONTRIB_INSTANCE else None
+CLYPPY_CMD_WEBHOOK_ID = 1352361462005370983 if CONTRIB_INSTANCE else None
+CLYPPY_CMD_WEBHOOK_CHANNEL = 1352361327770992690 if CONTRIB_INSTANCE else None
 
-CLYPPY_SUPPORT_SERVER_ID = 1117149574730104872
-CLYPPY_VOTE_ROLE = 1337067081941647472
-VOTE_WEBHOOK_USERID = 1337076281040179240
+CLYPPY_SUPPORT_SERVER_ID = 1117149574730104872 if CONTRIB_INSTANCE else None
+CLYPPY_VOTE_ROLE = 1337067081941647472 if CONTRIB_INSTANCE else None
+VOTE_WEBHOOK_USERID = 1337076281040179240 if CONTRIB_INSTANCE else None
 
 GITHUB_URL = "https://github.com/feelixs/clyppybot"
 SUPPORT_SERVER_URL = "https://discord.gg/Xts5YMUbeS"
-INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=1111723928604381314"
+INVITE_LINK = "https://clyppy.io/invite"
 TOPGG_VOTE_LINK = "https://top.gg/bot/1111723928604381314/vote"
 INFINITY_VOTE_LINK = "https://infinitybots.gg/bot/1111723928604381314/vote"
 DLIST_VOTE_LINK = "https://discordbotlist.com/bots/clyppy/upvote"
 BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
 CLYPPY_VOTE_URL = "https://clyppy.io/vote/"
-
 BUY_TOKENS_URL = "https://clyppy.io/profile/tokens"
 
 NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']
