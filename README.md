@@ -2,6 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Discord Bots](https://top.gg/api/widget/upvotes/1111723928604381314.svg)](https://top.gg//bot/1111723928604381314)
 
 This is the official GitHub repository for the CLYPPY Discord bot. Add it to your Discord Server for easy video link embeds! [clyppy.io/invite](https://clyppy.io/invite)
 
