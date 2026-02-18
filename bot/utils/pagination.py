@@ -300,6 +300,7 @@ class UserRankPaginationState:
     total_pages: int = 1
     user_target_page: int = 1
     entries_per_page: int = ENTRIES_PER_PAGE
+    include_bots: bool = False
 
 
 class UserRankPagination:
@@ -310,15 +311,19 @@ class UserRankPagination:
     CACHE_TTL = 3600  # 1 hour in seconds
 
     @staticmethod
-    async def fetch_ranking_data(user_id: str, page: int = 1,
-                                  time_period: str = "all") -> Dict[str, Any]:
+    async def fetch_ranking_data(user_id: str = None, page: int = 1,
+                                  time_period: str = "all",
+                                  requester_id: str = None,
+                                  include_bots: bool = False) -> Dict[str, Any]:
         """
         Fetch user ranking from API with caching.
 
         Args:
-            user_id: Discord user ID
+            user_id: Discord user ID (optional)
             page: Page number to fetch
             time_period: Time period filter ('today', 'week', 'month', 'all')
+            requester_id: ID of the user making the request
+            include_bots: Whether to include bot accounts in results
 
         Returns:
             API response dict with 'success', 'data', 'page', 'total_count', etc.
@@ -338,7 +343,7 @@ class UserRankPagination:
             }
 
         # Check cache first
-        cache_key = f"user_ranking_{time_period}_{page}"
+        cache_key = f"user_ranking_{time_period}_{page}_{include_bots}"
         if cache_key in UserRankPagination.CACHE:
             cached_data, timestamp = UserRankPagination.CACHE[cache_key]
             if time.time() - timestamp < UserRankPagination.CACHE_TTL:
@@ -348,8 +353,11 @@ class UserRankPagination:
         try:
             params = {
                 "page": page,
-                "time_period": time_period
+                "time_period": time_period,
+                "include_bots": include_bots
             }
+            if requester_id:
+                params["requester_id"] = requester_id
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(UserRankPagination.API_BASE_URL, params=params, headers={
@@ -376,13 +384,16 @@ class UserRankPagination:
             }
 
     @staticmethod
-    async def find_user_page(user_id: str, time_period: str = "all") -> Optional[int]:
+    async def find_user_page(user_id: str, time_period: str = "all",
+                              requester_id: str = None, include_bots: bool = False) -> Optional[int]:
         """
         Find which page the user appears on in the ranking.
 
         Args:
             user_id: Discord user ID to find
             time_period: Time period filter
+            requester_id: ID of the user making the request
+            include_bots: Whether to include bot accounts in results
 
         Returns:
             Page number where user appears, or None if not found
@@ -392,7 +403,7 @@ class UserRankPagination:
 
         page = 1
         while True:
-            data = await UserRankPagination.fetch_ranking_data(user_id, page, time_period)
+            data = await UserRankPagination.fetch_ranking_data(user_id, page, time_period, requester_id, include_bots)
 
             if not data.get("success", False):
                 return None
