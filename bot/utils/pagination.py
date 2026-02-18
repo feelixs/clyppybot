@@ -95,6 +95,7 @@ class ServerRankPagination:
                             "error": f"API returned status {response.status}"
                         }
         except Exception as e:
+            logger.error(f"fetch_ranking_data failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -293,8 +294,8 @@ ENTRIES_PER_PAGE = 10
 @dataclass
 class UserRankPaginationState:
     """State for user ranking pagination."""
-    message_id: int
     user_id: str
+    message_id: int = 0
     time_period: str = "all"
     page: int = 1
     total_pages: int = 1
@@ -309,41 +310,59 @@ class UserRankPagination:
     API_BASE_URL = "https://clyppy.io/api/users/ranking/"
     CACHE = {}  # Simple in-memory cache: {cache_key: (data, timestamp)}
     CACHE_TTL = 3600  # 1 hour in seconds
+    API_ENTRIES_PER_PAGE = 100  # API returns 100 entries per page
 
     @staticmethod
-    async def fetch_ranking_data(user_id: str = None, page: int = 1,
-                                  time_period: str = "all",
-                                  requester_id: str = None,
-                                  include_bots: bool = False) -> Dict[str, Any]:
+    def _convert_display_page_to_api_page(display_page: int) -> tuple[int, int]:
         """
-        Fetch user ranking from API with caching.
+        Convert display page number to API page and start index.
+
+        Display shows 10 entries per page, API returns 100 per page.
+        So display pages 1-10 all come from API page 1, pages 11-20 from page 2, etc.
 
         Args:
-            user_id: Discord user ID (optional)
-            page: Page number to fetch
-            time_period: Time period filter ('today', 'week', 'month', 'all')
+            display_page: The page number shown to user (1-indexed)
+
+        Returns:
+            Tuple of (api_page, start_index_in_api_response)
+            Example: display_page 7 -> (1, 60) means API page 1, starting at index 60
+        """
+        api_page = (display_page - 1) // 10 + 1
+        start_index = ((display_page - 1) % 10) * ENTRIES_PER_PAGE
+        return api_page, start_index
+
+    @staticmethod
+    async def _fetch_api_page(api_page: int, time_period: str = "all",
+                              requester_id: str = None,
+                              include_bots: bool = False) -> Dict[str, Any]:
+        """
+        Internal method to fetch a full API page (100 entries) without slicing.
+        Used by find_user_page which needs to search through full pages.
+
+        Args:
+            api_page: API page number (1-indexed)
+            time_period: Time period filter
             requester_id: ID of the user making the request
             include_bots: Whether to include bot accounts in results
 
         Returns:
-            API response dict with 'success', 'data', 'page', 'total_count', etc.
+            API response dict with full 100 entries
         """
         if is_contrib_instance(logger):
             log_api_bypass(logger, UserRankPagination.API_BASE_URL, "GET", {
-                "user_id": user_id,
-                "page": page,
+                "page": api_page,
                 "time_period": time_period
             })
             return {
                 "success": True,
                 "data": [],
-                "page": page,
+                "page": api_page,
                 "total_count": 0,
                 "has_more": False
             }
 
         # Check cache first
-        cache_key = f"user_ranking_{time_period}_{page}_{include_bots}"
+        cache_key = f"user_ranking_{time_period}_{api_page}_{include_bots}"
         if cache_key in UserRankPagination.CACHE:
             cached_data, timestamp = UserRankPagination.CACHE[cache_key]
             if time.time() - timestamp < UserRankPagination.CACHE_TTL:
@@ -352,9 +371,9 @@ class UserRankPagination:
         # Fetch from API
         try:
             params = {
-                "page": page,
+                "page": api_page,
                 "time_period": time_period,
-                "include_bots": include_bots
+                "include_bots": "1" if include_bots else "0"
             }
             if requester_id:
                 params["requester_id"] = requester_id
@@ -378,16 +397,51 @@ class UserRankPagination:
                             "error": f"API returned status {response.status}"
                         }
         except Exception as e:
+            logger.error(f"_fetch_api_page failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
     @staticmethod
+    async def fetch_ranking_data(user_id: str = None, page: int = 1,
+                                  time_period: str = "all",
+                                  requester_id: str = None,
+                                  include_bots: bool = False) -> Dict[str, Any]:
+        """
+        Fetch user ranking from API with caching.
+        Handles conversion from display page (10 per page) to API page (100 per page).
+
+        Args:
+            user_id: Discord user ID (optional)
+            page: Display page number (1-indexed)
+            time_period: Time period filter ('today', 'week', 'month', 'all')
+            requester_id: ID of the user making the request
+            include_bots: Whether to include bot accounts in results
+
+        Returns:
+            API response dict with 'success', 'data', 'page', 'total_count', etc.
+            Data is sliced to show only the 10 entries for this display page.
+        """
+        # Convert display page to API page and offset
+        api_page, start_index = UserRankPagination._convert_display_page_to_api_page(page)
+
+        # Fetch full API page
+        data = await UserRankPagination._fetch_api_page(api_page, time_period, requester_id, include_bots)
+
+        if not data.get("success"):
+            return data
+
+        # Slice to get only the entries for this display page
+        data_copy = dict(data)
+        data_copy["data"] = data["data"][start_index:start_index + ENTRIES_PER_PAGE]
+        return data_copy
+
+    @staticmethod
     async def find_user_page(user_id: str, time_period: str = "all",
                               requester_id: str = None, include_bots: bool = False) -> Optional[int]:
         """
-        Find which page the user appears on in the ranking.
+        Find which display page the user appears on in the ranking.
 
         Args:
             user_id: Discord user ID to find
@@ -396,14 +450,12 @@ class UserRankPagination:
             include_bots: Whether to include bot accounts in results
 
         Returns:
-            Page number where user appears, or None if not found
+            Display page number where user appears, or None if not found
         """
-        # API returns 100 per page, we display 10 per page
-        # So we need to fetch and search through pages
-
-        page = 1
+        # Fetch full API pages to search for user
+        api_page = 1
         while True:
-            data = await UserRankPagination.fetch_ranking_data(user_id, page, time_period, requester_id, include_bots)
+            data = await UserRankPagination._fetch_api_page(api_page, time_period, requester_id, include_bots)
 
             if not data.get("success", False):
                 return None
@@ -413,7 +465,7 @@ class UserRankPagination:
                 if user.get("user_id") == user_id:
                     # Calculate which display page this user is on
                     # API page has 100 entries, we show 10 per page
-                    overall_rank = (page - 1) * 100 + idx + 1
+                    overall_rank = (api_page - 1) * 100 + idx + 1
                     display_page = (overall_rank + 9) // 10  # Ceiling division
                     return display_page
 
@@ -422,29 +474,16 @@ class UserRankPagination:
                 # User not found in ranking
                 return None
 
-            page += 1
+            api_page += 1
 
             # Safety limit to avoid infinite loops
-            if page > 100:
+            if api_page > 100:
                 return None
 
     @staticmethod
     def create_embed(ranking_data: List[Dict], page: int, total_pages: int,
-                     user_id: str, time_period: str = "all", entries_per_page: int = 10) -> Embed:
-        """
-        Create Discord embed showing user ranking.
-
-        Args:
-            ranking_data: List of user data dicts from API
-            page: Current page number
-            total_pages: Total number of pages
-            user_id: Target user ID (to highlight)
-            time_period: Time period for display
-            entries_per_page: Number of entries to show per page
-
-        Returns:
-            Discord Embed object
-        """
+                     user_id: str, time_period: str = "all", entries_per_page: int = 10,
+                     top_user: Dict = None) -> Embed:
         time_period_display = {
             "today": "Today",
             "week": "This Week",
@@ -458,12 +497,14 @@ class UserRankPagination:
         # Find target user's rank and data
         target_user_rank = None
         target_user_name = None
+        target_user_data = None
 
         for idx, user in enumerate(ranking_data):
             rank = start_rank + idx + 1
             if user.get("user_id") == user_id:
                 target_user_rank = rank
                 target_user_name = user.get("user_name", "Unknown User")
+                target_user_data = user
                 break
 
         # Create embed
@@ -478,7 +519,6 @@ class UserRankPagination:
             color=color
         )
 
-        # Add description with target user info if found
         if target_user_rank and target_user_name:
             embed.description = (
                 f"Showing users ranked by unique clips embedded\n"
@@ -486,6 +526,9 @@ class UserRankPagination:
             )
         else:
             embed.description = "Showing users ranked by unique clips embedded"
+
+        top_clips = top_user.get("unique_clip_count", 0) if top_user else 0
+        BAR_LEN = 16
 
         # Add field for each user on this page
         for idx, user in enumerate(ranking_data[:entries_per_page]):
@@ -496,20 +539,23 @@ class UserRankPagination:
             rate = user.get("embeds_per_hour", 0)
             servers_used = user.get("servers_used", 0)
 
-            # Highlight target user
+            # Highlight target user / mark bots
+            if user.get("is_bot"):
+                user_name = f"{user_name} 🤖"
             if user.get("user_id") == user_id:
                 user_name = f"**{user_name}** ⭐"
 
-            # Format the field value
-            value = (
-                f"🎬 Unique Clips: **{unique_clips:,}**\n"
-                f"📊 Total Embeds: **{total_embeds:,}**\n"
-                f"🌐 Servers: **{servers_used}**\n"
-                f"⚡ Rate: **{rate:.2f}**/hour"
-            )
+            # Progress bar: 0 → unique_clips → top_clips
+            if top_clips > 0:
+                filled = max(1 if unique_clips > 0 else 0, round((unique_clips / top_clips) * BAR_LEN))
+                bar = "█" * filled + "░" * (BAR_LEN - filled)
+                bar_line = f"`{bar}` **{unique_clips:,}** clips\n"
+            else:
+                bar_line = ""
 
+            value = f"{bar_line}"
             embed.add_field(
-                name=f"#{rank} - {user_name}",
+                name=f"#{rank} — {user_name}",
                 value=value,
                 inline=False
             )
@@ -534,10 +580,10 @@ class UserRankPagination:
             List of ActionRow components with buttons
         """
         import time
-        # Use compact format: ur_{action}_{user_id}_{time_period}_{page}_{total_pages}_{timestamp}
+        # Use compact format: ur_{action}_{user_id}_{tp}_{page}_{total_pages}_{bots}_{ts}
         # Time period codes: a=all, w=week, m=month, t=today
         tp_code = {"all": "a", "week": "w", "month": "m", "today": "t"}.get(state.time_period, "a")
-        # Add timestamp (seconds + milliseconds) for uniqueness
+        bots_flag = "1" if state.include_bots else "0"
         ts = str(int(time.time() * 1000) % 100000)  # Last 5 digits of millisecond timestamp
 
         # Create buttons with compact IDs
@@ -545,31 +591,31 @@ class UserRankPagination:
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="⏮️ First",
-                custom_id=f"ur_f_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_f_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_flag}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="◀️ Prev",
-                custom_id=f"ur_p_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_p_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_flag}_{ts}",
                 disabled=(page == 1)
             ),
             Button(
                 style=ButtonStyle.SECONDARY,
                 label=f"Page {page}/{total_pages}",
-                custom_id=f"ur_x_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_x_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_flag}_{ts}",
                 disabled=True
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Next ▶️",
-                custom_id=f"ur_n_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_n_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_flag}_{ts}",
                 disabled=(page >= total_pages)
             ),
             Button(
                 style=ButtonStyle.PRIMARY,
                 label="Last ⏭️",
-                custom_id=f"ur_l_{state.user_id}_{tp_code}_{page}_{total_pages}_{ts}",
+                custom_id=f"ur_l_{state.user_id}_{tp_code}_{page}_{total_pages}_{bots_flag}_{ts}",
                 disabled=(page >= total_pages)
             ),
         ]

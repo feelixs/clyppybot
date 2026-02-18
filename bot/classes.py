@@ -1042,15 +1042,19 @@ class BaseAutoEmbed:
             else:
                 rank_text = "You haven't voted this month yet! Vote to start climbing the ranks"
 
-            embed.add_field(name="Your Rank", value=rank_text, inline=False)
-
+            embed.add_field(name="Monthly Ranking", value=rank_text, inline=False)
             progress_text = f"{user_monthly}/{top_votes} votes\n[{bar}] {pct}%"
-            embed.add_field(name="Progress", value=progress_text, inline=True)
-
             if top_voter:
                 embed.add_field(
                     name="Current Leader",
                     value=f"**{top_voter['username']}** with {top_voter['monthly_votes']} votes",
+                    inline=True
+                )
+                embed.add_field(name="Your Position", value=progress_text, inline=True)
+            else:
+                embed.add_field(
+                    name="Current Leader",
+                    value=f"No leaders found!",
                     inline=True
                 )
 
@@ -1294,6 +1298,11 @@ class BaseAutoEmbed:
         user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id, include_bots)
 
         if user_page is None:
+            # Cache may be stale — clear it and retry once before giving up
+            UserRankPagination.CACHE.clear()
+            user_page = await UserRankPagination.find_user_page(user_id, time_period, requester_id, include_bots)
+
+        if user_page is None:
             await ctx.send(embed=Embed(
                 title="❌ User Not Ranked",
                 description="This user hasn't embedded any clips yet!\n\n"
@@ -1332,7 +1341,7 @@ class BaseAutoEmbed:
             total_pages=total_pages,
             user_id=user_id,
             time_period=time_period,
-            top_user=data.get("top_user")
+            top_user=data.get("top_user"),
         )
 
         buttons = UserRankPagination.create_buttons(
