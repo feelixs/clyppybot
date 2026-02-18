@@ -287,6 +287,9 @@ class ServerRankPagination:
         return [ActionRow(*buttons)]
 
 
+ENTRIES_PER_PAGE = 10
+
+
 @dataclass
 class UserRankPaginationState:
     """State for user ranking pagination."""
@@ -296,7 +299,7 @@ class UserRankPaginationState:
     page: int = 1
     total_pages: int = 1
     user_target_page: int = 1
-    entries_per_page: int = 10
+    entries_per_page: int = ENTRIES_PER_PAGE
 
 
 class UserRankPagination:
