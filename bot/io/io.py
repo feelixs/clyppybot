@@ -271,6 +271,45 @@ async def author_has_enough_tokens_for_ai_extend(msg, url: str):
     return False, 0, None
 
 
+async def fetch_vote_ranking(user):
+    """Fetch the user's vote ranking for the current month."""
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/votes/ranking/", "GET", {"user_id": user.id})
+        return {
+            "success": True,
+            "user": {"monthly_votes": 0, "total_votes": 0, "rank": 1},
+            "top_voter": None,
+            "total_voters": 0,
+            "vote_month": "2026-01"
+        }
+
+    url = 'https://clyppy.io/api/votes/ranking/'
+    headers = {
+        'X-API-Key': getenv('clyppy_post_key'),
+        'Content-Type': 'application/json'
+    }
+    j = {'userid': user.id}
+    async with get_aiohttp_session() as session:
+        async with session.get(url, json=j, headers=headers) as response:
+            return await response.json()
+
+
+async def fetch_previous_vote_winner():
+    """Fetch the winner of the previous month's vote competition."""
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/votes/previous-winner/", "GET")
+        return {"success": True, "winner": None, "vote_month": "2026-01"}
+
+    url = 'https://clyppy.io/api/votes/previous-winner/'
+    headers = {
+        'X-API-Key': getenv('clyppy_post_key'),
+        'Content-Type': 'application/json'
+    }
+    async with get_aiohttp_session() as session:
+        async with session.get(url, headers=headers) as response:
+            return await response.json()
+
+
 async def author_has_enough_tokens(msg, video_dur, url: str) -> tuple[bool, int, int]:
     """Returns: bool->can embed video, int->number of tokens used"""
     def is_dl_server(guild):

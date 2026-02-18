@@ -4,7 +4,7 @@ from bot.classes import BaseMisc, send_webhook
 from interactions import (Extension, Embed, slash_command, SlashContext, SlashCommandOption, OptionType, listen,
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle, Activity, ActivityType, SlashCommandChoice)
-from bot.env import SUPPORT_SERVER_URL
+from bot.env import SUPPORT_SERVER_URL, MONTHLY_WINNER_CHANNEL_ID, MONTHLY_WINNER_TOKENS
 from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, is_contrib_instance, log_api_bypass
 from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
@@ -38,6 +38,8 @@ class Base(Extension):
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
         self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60 * 6))  # refresh cookies every 6 hours
         self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60 * 5))  # update status every few minutes
+        self.monthly_winner_task = Task(self.check_monthly_winner, IntervalTrigger(seconds=60 * 60))  # check every hour
+        self.last_winner_month = None
         self.base_embedder = self.bot.base_embedder.embedder
 
     @staticmethod
@@ -637,6 +639,10 @@ class Base(Extension):
         except Exception as e:
             await ctx.send(f"Error deleting message: {e}")
 
+    @slash_command(name="rank", description="View your voting rank for this month!")
+    async def rank(self, ctx: SlashContext):
+        await self.bot.base_embedder.rank_cmd(ctx)
+
     @slash_command(name="vote", description="Vote on Clyppy to gain exclusive rewards!")
     async def vote(self, ctx: SlashContext):
         await self.bot.base_embedder.vote_cmd(ctx)
@@ -1029,6 +1035,101 @@ class Base(Extension):
             logger=self.logger
         )
 
+    async def check_monthly_winner(self):
+        if not self.ready:
+            return
+
+        now = datetime.now(tz=timezone.utc)
+        current_month_key = now.strftime('%Y-%m')
+
+        # Only announce on the 1st of the month, and only once per month
+        if now.day != 1 or self.last_winner_month == current_month_key:
+            return
+
+        self.logger.info("Monthly winner check triggered - it's the 1st of the month!")
+
+        try:
+            from bot.io.io import fetch_previous_vote_winner
+            data = await fetch_previous_vote_winner()
+
+            if not data.get('success'):
+                self.logger.error(f"Failed to fetch previous vote winner: {data}")
+                return
+
+            winner = data.get('winner')
+            vote_month = data.get('vote_month', '')
+
+            if winner is None:
+                self.logger.info("No winner for the previous month (no votes)")
+                self.last_winner_month = current_month_key
+                return
+
+            # Parse month display
+            try:
+                from datetime import datetime as dt
+                month_dt = dt.strptime(vote_month, '%Y-%m')
+                month_display = month_dt.strftime('%B %Y')
+            except Exception:
+                month_display = vote_month
+
+            winner_id = winner['user_id']
+            winner_username = winner['username']
+            winner_votes = winner['monthly_votes']
+
+            # Award tokens
+            try:
+                winner_user = await self.bot.fetch_user(winner_id)
+                await subtract_tokens(
+                    winner_user,
+                    -MONTHLY_WINNER_TOKENS,
+                    reason='Monthly Vote Champion Reward',
+                    description=f'Won the {month_display} voting competition with {winner_votes} votes'
+                )
+                self.logger.info(f"Awarded {MONTHLY_WINNER_TOKENS} tokens to {winner_username} ({winner_id})")
+            except Exception as e:
+                self.logger.error(f"Failed to award tokens to monthly winner: {e}")
+
+            # Send announcement
+            try:
+                server = self.bot.get_guild(1117149574730104872)
+                if server is None:
+                    self.logger.warning("Could not find support server for monthly winner announcement")
+                    self.last_winner_month = current_month_key
+                    return
+
+                channel = server.get_channel(MONTHLY_WINNER_CHANNEL_ID)
+                if channel is None:
+                    channel = await server.fetch_channel(MONTHLY_WINNER_CHANNEL_ID)
+
+                if channel is None:
+                    self.logger.warning(f"Could not find channel {MONTHLY_WINNER_CHANNEL_ID} for monthly winner announcement")
+                    self.last_winner_month = current_month_key
+                    return
+
+                embed = Embed(
+                    title=f"Monthly Voting Champion - {month_display}",
+                    description=(
+                        f"Congratulations to <@{winner_id}> for being the top voter of **{month_display}**!\n\n"
+                        f"They cast **{winner_votes}** vote{'s' if winner_votes != 1 else ''} and have been awarded "
+                        f"**{MONTHLY_WINNER_TOKENS} VIP tokens**!\n\n"
+                        f"Vote this month to claim the title next time!"
+                    ),
+                    color=0xFFD700
+                )
+                embed.set_footer(text=f"Use /rank to see your current standing")
+
+                from bot.env import CLYPPY_VOTE_URL
+                await channel.send(embed=embed, components=[
+                    Button(style=ButtonStyle.LINK, label="Vote Now!", url=CLYPPY_VOTE_URL),
+                ])
+                self.logger.info(f"Sent monthly winner announcement for {month_display}")
+            except Exception as e:
+                self.logger.error(f"Failed to send monthly winner announcement: {e}")
+
+            self.last_winner_month = current_month_key
+        except Exception as e:
+            self.logger.error(f"Error in check_monthly_winner: {e}")
+
     async def db_save_task(self):
         if not self.ready:
             self.logger.info("Bot not ready, skipping database save task")
@@ -1122,6 +1223,7 @@ class Base(Extension):
             self.save_task.start()
             self.cookie_refresh_task.start()
             self.status_update_task.start()
+            self.monthly_winner_task.start()
             # Download cookies immediately on startup
             await self.refresh_cookies_task()
             self.logger.info(f"bot logged in as {self.bot.user.username}")

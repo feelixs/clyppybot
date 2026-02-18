@@ -848,7 +848,8 @@ class BaseAutoEmbed:
             ".vote": self.vote_cmd,
             ".myclips": self.myclips_cmd,
             ".invite": self.invite_cmd,
-            ".profile": self.profile_cmd
+            ".profile": self.profile_cmd,
+            ".rank": self.rank_cmd,
         }
 
     async def handle_message(self, event: MessageCreate, skip_check: bool = False, url: str = None):
@@ -980,6 +981,91 @@ class BaseAutoEmbed:
         ]))
         asyncio.create_task(send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}vote called',
+            load=f"response - success",
+            color=COLOR_GREEN,
+            url=APPUSE_LOG_WEBHOOK,
+            logger=self.logger
+        ))
+
+    async def rank_cmd(self, ctx: Union[SlashContext, Message]):
+        pre = '/'
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.user = ctx.author
+            pre = '.'
+
+        # Defer for slash commands since we're making an API call
+        if isinstance(ctx, SlashContext):
+            await ctx.defer()
+
+        from bot.io.io import fetch_vote_ranking
+        try:
+            data = await fetch_vote_ranking(ctx.user)
+            if not data.get('success'):
+                await ctx.send("Failed to fetch vote ranking. Please try again later.")
+                return
+
+            user_data = data['user']
+            top_voter = data.get('top_voter')
+            total_voters = data.get('total_voters', 0)
+            vote_month = data.get('vote_month', '')
+
+            # Parse month name from vote_month (e.g. "2026-02" -> "February 2026")
+            try:
+                from datetime import datetime as dt
+                month_dt = dt.strptime(vote_month, '%Y-%m')
+                month_display = month_dt.strftime('%B %Y')
+            except Exception:
+                month_display = vote_month
+
+            user_monthly = user_data['monthly_votes']
+            user_rank = user_data['rank']
+            user_total = user_data['total_votes']
+
+            # Build progress bar
+            top_votes = top_voter['monthly_votes'] if top_voter else user_monthly
+            if top_votes > 0:
+                ratio = min(user_monthly / top_votes, 1.0)
+            else:
+                ratio = 0
+            filled = round(ratio * 10)
+            bar = '\u2588' * filled + '\u2591' * (10 - filled)
+            pct = round(ratio * 100)
+
+            embed = Embed(
+                title=f"Vote Ranking - {month_display}",
+                color=0x5865F2
+            )
+
+            if user_monthly > 0:
+                rank_text = f"You are ranked **#{user_rank}** out of {total_voters} voters with **{user_monthly}** vote{'s' if user_monthly != 1 else ''} this month"
+            else:
+                rank_text = "You haven't voted this month yet! Vote to start climbing the ranks"
+
+            embed.add_field(name="Your Rank", value=rank_text, inline=False)
+
+            progress_text = f"{user_monthly}/{top_votes} votes\n[{bar}] {pct}%"
+            embed.add_field(name="Progress", value=progress_text, inline=True)
+
+            if top_voter:
+                embed.add_field(
+                    name="Current Leader",
+                    value=f"**{top_voter['username']}** with {top_voter['monthly_votes']} votes",
+                    inline=True
+                )
+
+            embed.set_footer(text=f"All-time votes: {user_total}")
+
+            await ctx.send(embed=embed, components=[
+                Button(style=ButtonStyle.LINK, label="Vote!", url=CLYPPY_VOTE_URL),
+                Button(style=ButtonStyle.LINK, label="Buy Tokens", url=BUY_TOKENS_URL),
+            ])
+        except Exception as e:
+            self.logger.error(f"Error in rank_cmd: {e}")
+            await ctx.send("An error occurred while fetching your vote ranking. Please try again later.")
+
+        asyncio.create_task(send_webhook(
+            title=f'{"DM" if ctx.guild is None else ctx.guild.name} - {ctx.user.username} - {pre}rank called',
             load=f"response - success",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
