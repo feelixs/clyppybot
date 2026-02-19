@@ -298,7 +298,7 @@ async def fetch_previous_vote_winner():
     """Fetch the winner of the previous month's vote competition."""
     if is_contrib_instance(logger):
         log_api_bypass(logger, "https://clyppy.io/api/votes/previous-winner/", "GET")
-        return {"success": True, "winner": None, "vote_month": "2026-01"}
+        return {"success": True, "winners": [], "vote_month": "2026-01"}
 
     url = 'https://clyppy.io/api/votes/previous-winner/'
     headers = {

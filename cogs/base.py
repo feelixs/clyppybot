@@ -1056,11 +1056,11 @@ class Base(Extension):
                 self.logger.error(f"Failed to fetch previous vote winner: {data}")
                 return
 
-            winner = data.get('winner')
+            winners = data.get('winners', [])
             vote_month = data.get('vote_month', '')
 
-            if winner is None:
-                self.logger.info("No winner for the previous month (no votes)")
+            if not winners:
+                self.logger.info("No winners for the previous month (no votes)")
                 self.last_winner_month = current_month_key
                 return
 
@@ -1072,22 +1072,21 @@ class Base(Extension):
             except Exception:
                 month_display = vote_month
 
-            winner_id = winner['user_id']
-            winner_username = winner['username']
-            winner_votes = winner['monthly_votes']
+            winner_votes = winners[0]['monthly_votes']
 
-            # Award tokens
-            try:
-                winner_user = await self.bot.fetch_user(winner_id)
-                await subtract_tokens(
-                    winner_user,
-                    -MONTHLY_WINNER_TOKENS,
-                    reason='Monthly Vote Champion Reward',
-                    description=f'Won the {month_display} voting competition with {winner_votes} votes'
-                )
-                self.logger.info(f"Awarded {MONTHLY_WINNER_TOKENS} tokens to {winner_username} ({winner_id})")
-            except Exception as e:
-                self.logger.error(f"Failed to award tokens to monthly winner: {e}")
+            # Award tokens to all winners
+            for winner in winners:
+                try:
+                    winner_user = await self.bot.fetch_user(winner['user_id'])
+                    await subtract_tokens(
+                        winner_user,
+                        -MONTHLY_WINNER_TOKENS,
+                        reason='Monthly Vote Champion Reward',
+                        description=f'Won the {month_display} voting competition with {winner_votes} votes'
+                    )
+                    self.logger.info(f"Awarded {MONTHLY_WINNER_TOKENS} tokens to {winner['username']} ({winner['user_id']})")
+                except Exception as e:
+                    self.logger.error(f"Failed to award tokens to monthly winner {winner['user_id']}: {e}")
 
             # Send announcement
             try:
@@ -1106,16 +1105,26 @@ class Base(Extension):
                     self.last_winner_month = current_month_key
                     return
 
-                embed = Embed(
-                    title=f"Monthly Voting Champion - {month_display}",
-                    description=(
-                        f"Congratulations to <@{winner_id}> for being the top voter of **{month_display}**!\n\n"
+                if len(winners) == 1:
+                    w = winners[0]
+                    description = (
+                        f"Congratulations to <@{w['user_id']}> for being the top voter of **{month_display}**!\n\n"
                         f"They cast **{winner_votes}** vote{'s' if winner_votes != 1 else ''} and have been awarded "
                         f"**{MONTHLY_WINNER_TOKENS} VIP tokens**!\n\n"
                         f"Vote this month to claim the title next time!"
-                    ),
-                    color=0xFFD700
-                )
+                    )
+                    title = f"Monthly Voting Champion - {month_display}"
+                else:
+                    winner_list = ", ".join(f"<@{w['user_id']}> ({w['username']})" for w in winners)
+                    description = (
+                        f"Congratulations to our top voters of **{month_display}**!\n"
+                        f"{winner_list} — **{winner_votes}** vote{'s' if winner_votes != 1 else ''} each\n\n"
+                        f"Each winner has been awarded **{MONTHLY_WINNER_TOKENS} VIP tokens**!\n\n"
+                        f"Vote this month to claim the title next time!"
+                    )
+                    title = f"Monthly Voting Champions - {month_display}"
+
+                embed = Embed(title=title, description=description, color=0xFFD700)
                 embed.set_footer(text=f"Use /rank to see your current standing")
 
                 from bot.env import CLYPPY_VOTE_URL
