@@ -1283,7 +1283,6 @@ class BaseAutoEmbed:
         """
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
-            ctx.author = ctx.author  # already set, but explicit for clarity
 
         if isinstance(ctx, SlashContext):
             await ctx.defer()  # Show loading state
