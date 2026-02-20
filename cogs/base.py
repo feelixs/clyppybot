@@ -115,12 +115,15 @@ class Base(Extension):
                 if contains_clip_link:
                     return await p.handle_message(event)
 
-        # Check for single-word commands
+        # Check for text commands (with or without arguments)
         msg = msg.strip()
-        if len(split) == 1:  # Only check for commands with no arguments
-            for txt_command, func in self.bot.base_embedder.OTHER_TXT_COMMANDS.items():
-                if msg == txt_command:
-                    return await func(event.message)
+        TXT_COMMANDS_WITH_USER_ARG = {".profile", ".rank"}
+        for txt_command, func in self.bot.base_embedder.OTHER_TXT_COMMANDS.items():
+            if msg == txt_command:
+                return await func(event.message)
+            elif msg.startswith(txt_command + " ") and txt_command in TXT_COMMANDS_WITH_USER_ARG:
+                arg = msg[len(txt_command):].strip()
+                return await func(event.message, arg)
 
         # handle quickembed links -> both .embed and quickembed
         # will use the same function, and will both do checks to ensure if it should continue

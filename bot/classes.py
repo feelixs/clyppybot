@@ -849,7 +849,7 @@ class BaseAutoEmbed:
             ".myclips": self.myclips_cmd,
             ".invite": self.invite_cmd,
             ".profile": self.profile_cmd,
-            ".rank": self.rank_cmd,
+            ".rank": self.profile_rank_cmd,
         }
 
     async def handle_message(self, event: MessageCreate, skip_check: bool = False, url: str = None):
@@ -913,12 +913,12 @@ class BaseAutoEmbed:
         pre, cmds = "/", ""
         if isinstance(ctx, Message):
             ctx.send = ctx.reply
-            pre, cmds = ".", ("Available commands: `.help`, `.vote`, `.tokens`, `.embed url`,\n"
+            pre, cmds = ".", ("Available commands: `.help`, `.vote`, `.tokens`, `.profile [user]`, `.rank [user]`, `.embed [url]`,\n"
                               "For a better experience, remember to give me permission to use slash commands!\n\n")
 
-        about = "Clyppy converts video links into native Discord embeds! Share videos from YouTube, Twitch, Reddit, and more directly in chat.\n\n" + cmds
+        about = "Clyppy converts video links into native Discord embeds!\n\n" + cmds
         about += (
-            f"Use `/settings quickembed=True` and I will automatically respond to Twitch clips. Many other platforms are easily accessibly through the `{pre}embed` command\n\n"
+            f"All platforms are easily accessibly through the `{pre}embed` command. Use `/settings quickembed=platform1,platform2` and I will automatically respond to clips of those platform.\n\n"
             f"---------------------------------\n"
             f"- Join my [Discord server]({SUPPORT_SERVER_URL}) to be a part of the community!\n"
             f"- Star me on [GitHub]({GITHUB_URL}) to stay updated :)")
@@ -1276,12 +1276,17 @@ class BaseAutoEmbed:
             logger=self.logger
         ))
 
-    async def profile_rank_cmd(self, ctx: SlashContext, target_user: str = None, time_period: str = "all", include_bots: bool = False):
+    async def profile_rank_cmd(self, ctx: Union[SlashContext, Message], target_user: str = None, time_period: str = "all", include_bots: bool = False):
         """
         Display user's ranking in clip embeds with pagination.
         Shows the page where the user appears.
         """
-        await ctx.defer()  # Show loading state
+        if isinstance(ctx, Message):
+            ctx.send = ctx.reply
+            ctx.author = ctx.author  # already set, but explicit for clarity
+
+        if isinstance(ctx, SlashContext):
+            await ctx.defer()  # Show loading state
 
         # Use provided user or default to ctx.author
         if target_user:
