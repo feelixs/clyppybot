@@ -294,6 +294,34 @@ async def fetch_vote_ranking(user):
             return await response.json()
 
 
+async def get_pending_vote_notifications(limit: int = 50) -> list:
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/internal/votes/pending-notifications", "GET")
+        return []
+    url = 'https://clyppy.io/api/internal/votes/pending-notifications'
+    headers = {'X-API-Key': getenv('clyppy_post_key'), 'Content-Type': 'application/json'}
+    async with get_aiohttp_session() as session:
+        async with session.get(url, params={'limit': limit}, headers=headers) as response:
+            if response.status == 200:
+                return await response.json()
+            logger.warning(f"get_pending_vote_notifications returned {response.status}")
+            return []
+
+
+async def mark_votes_notified(ids: list) -> None:
+    if not ids:
+        return
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, "https://clyppy.io/api/internal/votes/mark-notified", "POST", {'ids': ids})
+        return
+    url = 'https://clyppy.io/api/internal/votes/mark-notified'
+    headers = {'X-API-Key': getenv('clyppy_post_key'), 'Content-Type': 'application/json'}
+    async with get_aiohttp_session() as session:
+        async with session.post(url, json={'ids': ids}, headers=headers) as response:
+            if response.status != 200:
+                logger.warning(f"mark_votes_notified returned {response.status}")
+
+
 async def fetch_previous_vote_winner():
     """Fetch the winner of the previous month's vote competition."""
     if is_contrib_instance(logger):

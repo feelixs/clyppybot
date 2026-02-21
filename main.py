@@ -280,6 +280,7 @@ async def main():
 
     Bot.load_extension('cogs.base')
     Bot.load_extension('cogs.watch')
+    Bot.load_extension('cogs.vote_notifier')
     await Bot.guild_settings.setup_db()
 
     # Load and process queued tasks from previous shutdown
