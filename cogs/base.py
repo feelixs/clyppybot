@@ -36,7 +36,7 @@ class Base(Extension):
         self.ready = False
         self.logger = logging.getLogger(__name__)
         self.save_task = Task(self.db_save_task, IntervalTrigger(seconds=60 * 30))  # save db every 30 minutes
-        self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60 * 6))  # refresh cookies every 6 hours
+        self.cookie_refresh_task = Task(self.refresh_cookies_task, IntervalTrigger(seconds=60 * 60))  # refresh cookies every
         self.status_update_task = Task(self.update_status, IntervalTrigger(seconds=60 * 5))  # update status every few minutes
         self.monthly_winner_task = Task(self.check_monthly_winner, IntervalTrigger(seconds=60 * 60))  # check every hour
         self.last_winner_month = None
