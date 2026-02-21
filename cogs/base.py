@@ -518,9 +518,10 @@ class Base(Extension):
     @slash_command(name="change_tokens", scopes=[759798762171662399], options=[
         SlashCommandOption(name="user_id", type=OptionType.STRING, required=True),
         SlashCommandOption(name="value", type=OptionType.INTEGER, required=True),
-        SlashCommandOption(name="add", type=OptionType.BOOLEAN, required=False)
+        SlashCommandOption(name="add", type=OptionType.BOOLEAN, required=False),
+        SlashCommandOption(name="reason", type=OptionType.STRING, required=False)
     ])
-    async def change_tokens(self, ctx, user_id: int, value: int, add=True):
+    async def change_tokens(self, ctx, user_id: int, value: int, add=True, reason: str = 'Token Adjustment'):
         try:
             u = await self.bot.fetch_user(user_id)
         except Exception as e:
@@ -530,7 +531,7 @@ class Base(Extension):
         if add:
             value *= -1  # because the api endpoint is for subtraction
         try:
-            s = await subtract_tokens(u, value, reason='Token Adjustment')
+            s = await subtract_tokens(u, value, reason=reason)
             await ctx.send(f"The change returned {s}")
         except Exception as e:
             await ctx.send(str(e))
