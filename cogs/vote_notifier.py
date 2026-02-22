@@ -7,7 +7,7 @@ from bot.env import CLYPPY_VOTE_URL
 logger = logging.getLogger(__name__)
 
 
-async def _format_vote_dm(entry: dict, bot) -> str:
+async def _format_vote_dm(entry: dict, user, bot) -> str:
     total = entry.get('vote_count') or 0
     monthly = entry.get('vote_month_count') or 0
     source = entry.get('source', 'a bot list site')
@@ -15,7 +15,7 @@ async def _format_vote_dm(entry: dict, bot) -> str:
     user_id = entry['user_id']
 
     try:
-        t = await bot.base_embedder.fetch_tokens(user_id)
+        t = await bot.base_embedder.fetch_tokens(user)
         t = f'`{t}`'
     except Exception as e:
         logger.debug(f"Could not fetch tokens for user {user_id}: {e}")
@@ -68,7 +68,9 @@ class VoteNotifier(Extension):
                     user = await self.bot.fetch_user(user_id)
                     if user:
                         dm = await user.fetch_dm(force=False)
-                        await dm.send(await _format_vote_dm(entry, self.bot))
+                        await dm.send(await _format_vote_dm(entry, user, self.bot))
+                    else:
+                        logger.debug(f"Count not DM user: user {user_id} not found.")
                 except Exception as e:
                     logger.debug(f"Could not DM user {user_id}: {e}")
                 notified_ids.append(log_id)
