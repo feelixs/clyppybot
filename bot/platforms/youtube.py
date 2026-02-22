@@ -2,6 +2,7 @@ from bot.errors import InvalidClipType, VideoTooLong
 from bot.classes import BaseClip, BaseMisc
 from bot.types import DownloadResponse
 from bot.env import YT_DLP_USER_AGENT
+from bot.utils.rate_limiter import youtube_rate_limiter
 from yt_dlp import YoutubeDL
 from typing import Optional
 import asyncio
@@ -36,6 +37,9 @@ class YtMisc(BaseMisc):
             raise InvalidClipType
         if "&list=" in url:
             url = url.split("&list=")[0]
+        
+        # Rate limit the is_shortform check
+        await youtube_rate_limiter.acquire()
         valid, tokens_used, duration = await self.is_shortform(
             url=url,
             basemsg=basemsg,
@@ -70,9 +74,11 @@ class YtClip(BaseClip):
     async def download(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, extra_opts=False) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
 
-        # Extract channel info first
+        # Extract channel info first (rate limited)
         await self._extract_clip_info()
 
+        # Rate limit before the main download
+        await youtube_rate_limiter.acquire()
         response = await super().dl_check_size(
             filename=filename,
             dlp_format=dlp_format,
@@ -88,6 +94,9 @@ class YtClip(BaseClip):
         """Extract channel info from yt-dlp (cached to avoid rate limiting)"""
         if self._cached_info is not None:
             return
+
+        # Rate limit before extracting info
+        await youtube_rate_limiter.acquire()
 
         ydl_opts = {
             'quiet': True,
