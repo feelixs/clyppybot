@@ -103,15 +103,6 @@ class AutoEmbedder:
                     if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
                         return 1
 
-                if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
-                    if self.platform_tools.is_nsfw:
-                        # GuildPublicThread has no attribute nsfw
-                        if not event.message.channel.parent_channel.nsfw:
-                            return 1
-                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
-                    # only allow nsfw in nsfw channels
-                    return 1
-
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
             elif event.message.author.id == 1341521799342588006:
@@ -126,6 +117,18 @@ class AutoEmbedder:
 
             words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
+
+            # NSFW check is done after parse_clip_url (via _get_num_clip_links) so that
+            # URL-based is_nsfw detection (e.g. base platform) is resolved before gating
+            if not guild.is_dm:
+                if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
+                    if self.platform_tools.is_nsfw:
+                        # GuildPublicThread has no attribute nsfw
+                        if not event.message.channel.parent_channel.nsfw:
+                            return 1
+                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
+                    # only allow nsfw in nsfw channels
+                    return 1
 
             # If shutting down, queue tasks instead of processing
             if self.bot.is_shutting_down:

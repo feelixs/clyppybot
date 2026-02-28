@@ -38,6 +38,7 @@ wsproto==1.2.0
 yarl==1.18.3
 moviepy==2.1.1
 webdriver-manager
+curl-cffi
 boto3
 pillow
 botocore
