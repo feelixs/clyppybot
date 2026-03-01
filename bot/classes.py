@@ -214,10 +214,15 @@ def fetch_cookies(opts, logger):
 
         # Try cookie file first (downloaded from server)
         cookie_file = os.getenv("COOKIE_FILE")
-        if cookie_file and os.path.exists(cookie_file):
-            logger.info(f"Using cookie file: {cookie_file}")
-            opts['cookiefile'] = cookie_file
-            return
+        logger.info(f"[fetch_cookies] COOKIE_FILE={cookie_file}")
+        if cookie_file:
+            exists = os.path.exists(cookie_file)
+            logger.info(f"[fetch_cookies] File exists: {exists}")
+            if exists:
+                logger.info(f"Using cookie file: {cookie_file}")
+                opts['cookiefile'] = cookie_file
+                logger.info(f"[fetch_cookies] Set cookiefile in opts")
+                return
 
         # Fallback to Firefox profile (original behavior)
         cookie_dir = os.getenv("COOKIE_DIR")
@@ -234,8 +239,11 @@ def fetch_cookies(opts, logger):
         if profile_dirs:
             profile_path = str(profile_dirs[0])
             logger.info(f"Using Firefox profile: {profile_path}")
-            cookies_string = ('firefox', profile_path, None, None)
-            opts['cookiesfrombrowser'] = cookies_string
+            try:
+                cookies_string = ('firefox', profile_path, None, None)
+                opts['cookiesfrombrowser'] = cookies_string
+            except Exception as e:
+                logger.warning(f"[COOKIES] Failed to use Firefox profile: {e}, skipping cookies")
             return
 
         logger.info("No Firefox profile found.")
@@ -509,9 +517,11 @@ class BaseClip(ABC):
         ydl_opts = {
             'format': dlp_format,
             'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,
+            'no_warnings': False,
+            'verbose': True,
             'user_agent': YT_DLP_USER_AGENT,
+            'logger': self.logger,
             'postprocessor_args': {
                 'ffmpeg': ['-fflags', '+shortest', '-max_interleave_delta', '1G']
             }
@@ -522,6 +532,7 @@ class BaseClip(ABC):
             ydl_opts.update(extra_opts)
 
         if cookies: fetch_cookies(ydl_opts, self.logger)
+
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 # Run download in a thread pool to avoid blocking
@@ -755,7 +766,7 @@ class BaseMisc(ABC):
         """
         return bool(self.parse_clip_url(url))
 
-    async def get_len(self, url: str, cookies=False, download=False) -> Optional[Union[float, LocalFileInfo]]:
+    async def get_len(self, url: str, cookies=False, download=False, extra_opts=None) -> Optional[Union[float, LocalFileInfo]]:
         """
             Uses yt-dlp to check video length of the provided url
         """
@@ -768,6 +779,10 @@ class BaseMisc(ABC):
         }
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
+
+        # Merge extra options (like impersonate for Canva)
+        if extra_opts:
+            ydl_opts.update(extra_opts)
 
         if download:
             # Add max filesize option when downloading
@@ -814,9 +829,9 @@ class BaseMisc(ABC):
             return True
         return False
 
-    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> tuple[bool, int, int]:
+    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False, extra_opts=None) -> tuple[bool, int, int]:
         try:
-            d = await self.get_len(url, cookies)
+            d = await self.get_len(url, cookies, extra_opts=extra_opts)
         except NoDuration:
             # DefinitelyNoDuration will raise out of this - won't manually check
             d = None
@@ -824,7 +839,7 @@ class BaseMisc(ABC):
         if d is None or d == 0:
             # yt-dlp unable to fetch duration directly, need to download the file to verify manually
             self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
-            file = await self.get_len(url, cookies, download=True)
+            file = await self.get_len(url, cookies, download=True, extra_opts=extra_opts)
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
             d = file.duration
 
@@ -1575,7 +1590,6 @@ class BaseAutoEmbed:
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
             clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
-
             if extend_with_ai:
                 can_extend, tokens_used, user_tokens = await author_has_enough_tokens_for_ai_extend(ctx, clip.url)
                 if not can_extend:
