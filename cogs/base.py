@@ -5,15 +5,20 @@ from interactions import (Extension, Embed, slash_command, SlashContext, SlashCo
                           Permissions, Task, IntervalTrigger, ComponentContext, Message,
                           component_callback, Button, ButtonStyle, Activity, ActivityType, SlashCommandChoice)
 from bot.env import SUPPORT_SERVER_URL, MONTHLY_WINNER_CHANNEL_ID, MONTHLY_WINNER_TOKENS
-from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, is_contrib_instance, log_api_bypass
-from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate, InviteCreate
+from bot.env import POSSIBLE_ON_ERRORS, POSSIBLE_EMBED_BUTTONS, APPUSE_LOG_WEBHOOK, VERSION, EMBED_TXT_COMMAND, is_contrib_instance, log_api_bypass, CLYPPYBOT_ID
+from interactions.api.events.discord import GuildJoin, GuildLeft, MessageCreate
 from bot.io import get_clip_info, callback_clip_delete_msg, add_reqqed_by, subtract_tokens, refresh_clip
 from bot.types import COLOR_GREEN, COLOR_RED
 from typing import Tuple, Optional
-from re import compile
+from re import compile, search as re_search
 import logging
+from random import choice as random_choice
 import aiohttp
 import os
+
+
+def random_greeting() -> str:
+    return random_choice(["hi", "hello", "sup", "hola", "how's it going,"])
 
 
 def format_count(count: int) -> str:
@@ -77,8 +82,15 @@ class Base(Extension):
             # don't respond to bot's own messages
             return
 
-        # check for text commands
+        # check for greetings mentioning the bot
         msg = event.message.content
+        if str(CLYPPYBOT_ID) in msg:
+            msg_lower = msg.lower()
+            self.logger.info(f"[greeting] Bot mentioned, checking: '{msg_lower}'")
+            if re_search(fr'(?:hi|hello|sup|hola|hai|hey)\s*[,\.;:\-]?\s*<@!?{CLYPPYBOT_ID}>', msg_lower):
+                self.logger.info(f"[greeting] Matched! Replying to {event.message.author.username}")
+                return await event.message.reply(f"{random_greeting()} <@{event.message.author.id}>")
+
         split = msg.split(' ')
         if msg.startswith(EMBED_TXT_COMMAND):
             # Check if it's ONLY ".embed" (reply-to mode)
@@ -971,13 +983,13 @@ class Base(Extension):
         # Format quickembed display
         if not qe_platforms:
             qe = "none"
-        elif set(qe_platforms) == set(VALID_QUICKEMBED_PLATFORMS):
+        elif 'all' in qe_platforms:
             qe = "all"
         else:
             qe = ', '.join(qe_platforms)
 
         # Use friendly platform names for display
-        valid_platforms_str = ', '.join(PLATFORM_NAME_TO_ID.keys())
+        valid_platforms_str = ', '.join(p.platform_name for p in self.bot.platform_list if not p.is_nsfw)
 
         # Build channel overrides section
         overrides = self.bot.guild_settings.list_channel_overrides(ctx.guild.id)
@@ -1010,7 +1022,7 @@ class Base(Extension):
             ' - `none`: Disable all quickembeds (use `/embed` command instead)\n'
             ' - `reset`: Remove channel-specific override (use with `channel` parameter)\n'
             f' - Comma-separated list: e.g., `Twitch,Kick,Medal`\n'
-            f' - Valid platforms: `None, All, {valid_platforms_str}`\n'
+            f' - Valid platforms: `None, All, {valid_platforms_str}, and more...`\n'
             ' - Use `channel` parameter to apply to specific channel (blank = server-wide)\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'

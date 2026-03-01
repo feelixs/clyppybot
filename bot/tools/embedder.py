@@ -1,9 +1,9 @@
 from interactions import Permissions, Embed, Message, Button, ButtonStyle, SlashContext, TYPE_THREAD_CHANNEL, ActionRow, errors
-from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDuration
+from bot.errors import VideoTooLong, NoDuration, UnknownError, DefinitelyNoDuration, NSFWEmbed
 from bot.io import get_aiohttp_session, is_404, fetch_video_status, get_clip_info, subtract_tokens, push_interaction_error
 from datetime import datetime, timezone, timedelta
 from interactions.api.events import MessageCreate
-from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS, is_contrib_instance, log_api_bypass
+from bot.env import DL_SERVER_ID, DOWNLOAD_THIS_WEBHOOK_ID, POSSIBLE_EMBED_BUTTONS, is_contrib_instance, log_api_bypass, LOGGER_WEBHOOK_ID
 from bot.types import DownloadResponse, LocalFileInfo, GuildType, DiscordAttachmentId
 from bot.task_queue import QuickembedTask
 from typing import List, Union, Tuple
@@ -105,7 +105,7 @@ class AutoEmbedder:
 
             if event.message.author.id == self.bot.user.id:
                 return 1  # don't respond to the bot's own messages
-            elif event.message.author.id == 1341521799342588006:
+            elif event.message.author.id == LOGGER_WEBHOOK_ID:
                 return 1  # logger webhook
 
             # Check if quickembeds are enabled for this platform in this channel/guild
@@ -117,18 +117,6 @@ class AutoEmbedder:
 
             words = self.get_words(event.message.content)
             num_links = self._get_num_clip_links(words)
-
-            # NSFW check is done after parse_clip_url (via _get_num_clip_links) so that
-            # URL-based is_nsfw detection (e.g. base platform) is resolved before gating
-            if not guild.is_dm:
-                if isinstance(event.message.channel, TYPE_THREAD_CHANNEL):
-                    if self.platform_tools.is_nsfw:
-                        # GuildPublicThread has no attribute nsfw
-                        if not event.message.channel.parent_channel.nsfw:
-                            return 1
-                elif not event.message.channel.nsfw and self.platform_tools.is_nsfw:
-                    # only allow nsfw in nsfw channels
-                    return 1
 
             # If shutting down, queue tasks instead of processing
             if self.bot.is_shutting_down:
@@ -153,7 +141,12 @@ class AutoEmbedder:
                 contains_clip_link, index = self.get_next_clip_link_loc(words, 0)
                 if not contains_clip_link:
                     return 1
-                await self._process_clip_one_at_a_time(words[index], event.message, guild)
+                await self._process_clip_one_at_a_time(
+                    clip_link=words[index],
+                    respond_to=event.message,
+                    guild=guild,
+                    channel=event.message.channel
+                )
             elif num_links > 1:
                 next_link_exists = True
                 index = -1  # we will +1 in the next step (setting it to 0 for the start)
@@ -161,12 +154,32 @@ class AutoEmbedder:
                     next_link_exists, index = self.get_next_clip_link_loc(words, index + 1)
                     if not next_link_exists:
                         return 1
-                    await self._process_clip_one_at_a_time(words[index], event.message, guild)
+                    await self._process_clip_one_at_a_time(
+                        clip_link=words[index],
+                        respond_to=event.message,
+                        guild=guild,
+                        channel=event.message.channel
+                    )
+        except NSFWEmbed:
+            pass
         except Exception as e:
             self.logger.info(f"Error in AutoEmbed on_message_create: {event.message.content}\n{traceback.format_exc()}")
 
-    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType):
+    async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, channel):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
+        if not self.platform_tools.is_nsfw:
+            self.platform_tools.is_nsfw = await self.platform_tools.check_url_is_nsfw(clip_link)
+
+        if not guild.is_dm:
+            if isinstance(channel, TYPE_THREAD_CHANNEL):
+                if self.platform_tools.is_nsfw:
+                    # GuildPublicThread has no attribute nsfw
+                    if not channel.parent_channel.nsfw:
+                        raise NSFWEmbed
+            elif not channel.nsfw and self.platform_tools.is_nsfw:
+                # only allow nsfw in nsfw channels
+                raise NSFWEmbed
+
         self.clip_id_msg_timestamps[respond_to.id] = datetime.now().timestamp()
 
         # Convert DiscordAttachmentId to string if needed

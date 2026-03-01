@@ -18,6 +18,23 @@ def get_aiohttp_session():
     return aiohttp.ClientSession(headers={"User-Agent": CLYPPYIO_USER_AGENT})
 
 
+async def check_text_is_nsfw(text: str):
+    url = f"https://clyppy.io/api/check-nsfw/?text={text}"
+    if is_contrib_instance(logger):
+        log_api_bypass(logger, url, "GET", {})
+    async with get_aiohttp_session() as session:
+        async with session.get(url) as response:
+            if response.status >= 500:
+                logger.warning(f"[CHECK-TEXT-NSFW] Server error {response.status}. API may be down. Error was: {text}")
+                return True
+            r = await response.json()
+            if nsfw := r.get('is_nsfw'):
+                return nsfw
+
+            logger.warning(f"[CHECK-TEXT-NSFW] Invalid response. Returning true")
+            return True
+
+
 async def fetch_video_status(clip_id: str):
     if is_contrib_instance(logger):
         log_api_bypass(logger, "https://clyppy.io/api/clips/get-status/", "GET", {"clip_id": clip_id})

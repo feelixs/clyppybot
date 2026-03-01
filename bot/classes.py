@@ -10,10 +10,10 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle, EmbedFooter
 from interactions.api.events import MessageCreate
 
-from bot.io.io import author_has_enough_tokens_for_ai_extend
+from bot.io.io import author_has_enough_tokens_for_ai_extend, check_text_is_nsfw
 from bot.tools.embedder import AutoEmbedder
 from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium, fetch_video_status
+from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, fetch_video_status
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
@@ -26,6 +26,7 @@ from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, V
                         handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed,
                         VideoContainsNSFWContent, ExceptionHandled)
 
+from urllib.parse import urlparse
 import hashlib
 import aiohttp
 import logging
@@ -214,10 +215,15 @@ def fetch_cookies(opts, logger):
 
         # Try cookie file first (downloaded from server)
         cookie_file = os.getenv("COOKIE_FILE")
-        if cookie_file and os.path.exists(cookie_file):
-            logger.info(f"Using cookie file: {cookie_file}")
-            opts['cookiefile'] = cookie_file
-            return
+        logger.info(f"[fetch_cookies] COOKIE_FILE={cookie_file}")
+        if cookie_file:
+            exists = os.path.exists(cookie_file)
+            logger.info(f"[fetch_cookies] File exists: {exists}")
+            if exists:
+                logger.info(f"Using cookie file: {cookie_file}")
+                opts['cookiefile'] = cookie_file
+                logger.info(f"[fetch_cookies] Set cookiefile in opts")
+                return
 
         # Fallback to Firefox profile (original behavior)
         cookie_dir = os.getenv("COOKIE_DIR")
@@ -234,8 +240,11 @@ def fetch_cookies(opts, logger):
         if profile_dirs:
             profile_path = str(profile_dirs[0])
             logger.info(f"Using Firefox profile: {profile_path}")
-            cookies_string = ('firefox', profile_path, None, None)
-            opts['cookiesfrombrowser'] = cookies_string
+            try:
+                cookies_string = ('firefox', profile_path, None, None)
+                opts['cookiesfrombrowser'] = cookies_string
+            except Exception as e:
+                logger.warning(f"[COOKIES] Failed to use Firefox profile: {e}, skipping cookies")
             return
 
         logger.info("No Firefox profile found.")
@@ -472,14 +481,18 @@ class BaseClip(ABC):
         if local_file is None: raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, extra_opts=None) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, extra_opts=None, prefetched_file=None) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
         """
-        local = None
+        local = prefetched_file
+        if local:
+            self.logger.info(f"[dl_check_size] Using prefetched file: {local.local_file_path}")
+
         if can_send_files:
-            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
+            if local is None:
+                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
             self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
@@ -509,9 +522,11 @@ class BaseClip(ABC):
         ydl_opts = {
             'format': dlp_format,
             'outtmpl': filename,
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,
+            'no_warnings': False,
+            'verbose': True,
             'user_agent': YT_DLP_USER_AGENT,
+            'logger': self.logger,
             'postprocessor_args': {
                 'ffmpeg': ['-fflags', '+shortest', '-max_interleave_delta', '1G']
             }
@@ -522,6 +537,7 @@ class BaseClip(ABC):
             ydl_opts.update(extra_opts)
 
         if cookies: fetch_cookies(ydl_opts, self.logger)
+
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 # Run download in a thread pool to avoid blocking
@@ -749,13 +765,22 @@ class BaseMisc(ABC):
         """
         ...
 
+    @staticmethod
+    async def check_url_is_nsfw(url):
+        parse = urlparse(url)
+        netloc = parse.netloc.lower()
+
+        # check if the netloc contains any nsfw trigger word
+        nsfw = await check_text_is_nsfw(netloc)
+        return nsfw
+
     def is_clip_link(self, url: str) -> bool:
         """
             Checks if a URL is a valid link format.
         """
         return bool(self.parse_clip_url(url))
 
-    async def get_len(self, url: str, cookies=False, download=False) -> Optional[Union[float, LocalFileInfo]]:
+    async def get_len(self, url: str, cookies=False, download=False, extra_opts=None) -> Optional[Union[float, LocalFileInfo]]:
         """
             Uses yt-dlp to check video length of the provided url
         """
@@ -768,6 +793,10 @@ class BaseMisc(ABC):
         }
         if cookies:
             fetch_cookies(ydl_opts, self.logger)
+
+        # Merge extra options (like impersonate for Canva)
+        if extra_opts:
+            ydl_opts.update(extra_opts)
 
         if download:
             # Add max filesize option when downloading
@@ -814,9 +843,10 @@ class BaseMisc(ABC):
             return True
         return False
 
-    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False) -> tuple[bool, int, int]:
+    async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False, extra_opts=None) -> tuple[bool, int, int]:
+        self._prefetched_file = None
         try:
-            d = await self.get_len(url, cookies)
+            d = await self.get_len(url, cookies, extra_opts=extra_opts)
         except NoDuration:
             # DefinitelyNoDuration will raise out of this - won't manually check
             d = None
@@ -824,8 +854,9 @@ class BaseMisc(ABC):
         if d is None or d == 0:
             # yt-dlp unable to fetch duration directly, need to download the file to verify manually
             self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
-            file = await self.get_len(url, cookies, download=True)
+            file = await self.get_len(url, cookies, download=True, extra_opts=extra_opts)
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
+            self._prefetched_file = file
             d = file.duration
 
         return await author_has_enough_tokens(basemsg, d, url)
@@ -1429,7 +1460,11 @@ class BaseAutoEmbed:
                     logger=self.logger
                 ))
                 return
-            elif platform.is_nsfw and not nsfw_enabed:
+
+            if not platform.is_nsfw:  # verify for base platform, that it's not flagged as nsfw
+                platform.is_nsfw = await platform.check_url_is_nsfw(url)
+
+            if platform.is_nsfw and not nsfw_enabed:
                 asyncio.create_task(ctx.send(
                     f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
                     f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"
@@ -1575,7 +1610,6 @@ class BaseAutoEmbed:
                 self.embedder.clip_id_msg_timestamps[ctx.id] = datetime.now().timestamp()
 
             clip = await self.embedder.platform_tools.get_clip(url, extended_url_formats=True, basemsg=ctx)
-
             if extend_with_ai:
                 can_extend, tokens_used, user_tokens = await author_has_enough_tokens_for_ai_extend(ctx, clip.url)
                 if not can_extend:

@@ -14,7 +14,7 @@ VALID_QUICKEMBED_PLATFORMS = [
 ]
 DEFAULT_QUICKEMBED_PLATFORMS = 'insta,tiktok,twitch,kick,medal'
 
-# Map platform_name (class attribute) to short identifier (db storage)
+# Map platform_name to short identifier
 PLATFORM_NAME_TO_ID = {
     'Twitch': 'twitch', 'Kick': 'kick', 'Instagram': 'insta',
     'Medal': 'medal', 'Reddit': 'reddit', 'Facebook': 'facebook',
@@ -198,7 +198,7 @@ class GuildDatabase:
         if setting == 'none':
             return []
         if setting == 'all':
-            return VALID_QUICKEMBED_PLATFORMS.copy()
+            return ['all']
         return [p.strip().lower() for p in setting.split(',')
                 if p.strip().lower() in VALID_QUICKEMBED_PLATFORMS]
 
@@ -226,9 +226,9 @@ class GuildDatabase:
                         # Channel-specific setting found
                         return self._parse_quickembed_setting(result[0]), False
 
-                # Fall back to guild-level (channel_id IS NULL)
+                # Fall back to guild-level (channel_id = 0)
                 cursor = conn.execute(
-                    'SELECT setting FROM embed_enabled WHERE guild_id = ? AND channel_id IS NULL',
+                    'SELECT setting FROM embed_enabled WHERE guild_id = ? AND channel_id = 0',
                     (guild_id,)
                 )
                 result = cursor.fetchone()
@@ -246,7 +246,7 @@ class GuildDatabase:
         """Check if platform is enabled for quickembeds in this channel/guild."""
         platform_id = PLATFORM_NAME_TO_ID.get(platform_name, platform_name.lower())
         p, _ = self.get_quickembed_platforms(guild_id, channel_id)
-        return platform_id in p
+        return 'all' in p or platform_id in p
 
     def set_quickembed_platforms(self, guild_id: int, platforms_str: str, channel_id: Optional[int] = None) -> Tuple[bool, Optional[str], Optional[List[str]]]:
         """
@@ -255,10 +255,12 @@ class GuildDatabase:
         Args:
             guild_id: Discord guild ID
             platforms_str: 'none', 'all', or comma-separated platform names
-            channel_id: Optional channel ID (None = guild-level)
+            channel_id: Optional channel ID (None = guild-level, stored as 0)
 
         Returns: (success, error_msg, valid_platforms)
         """
+        if channel_id is None:
+            channel_id = 0
         platforms_str = platforms_str.strip()
 
         if platforms_str.lower() == 'none':
@@ -328,7 +330,7 @@ class GuildDatabase:
         try:
             with self.get_db() as conn:
                 cursor = conn.execute(
-                    'SELECT channel_id, setting FROM embed_enabled WHERE guild_id = ? AND channel_id IS NOT NULL',
+                    'SELECT channel_id, setting FROM embed_enabled WHERE guild_id = ? AND channel_id != 0',
                     (guild_id,)
                 )
                 return cursor.fetchall()

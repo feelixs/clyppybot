@@ -49,12 +49,13 @@ class YtMisc(BaseMisc):
             self.logger.info(f"{url} is_shortform=False")
             raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
-        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client, tokens_used, duration)
+        return YtClip(slug, bool(re.search(r'youtube\.com/shorts/', url)), self.cdn_client, tokens_used, duration, prefetched_file=self._prefetched_file)
 
 
 class YtClip(BaseClip):
-    def __init__(self, slug, short, cdn_client, tokens_used: int, duration: int):
+    def __init__(self, slug, short, cdn_client, tokens_used: int, duration: int, prefetched_file=None):
         self._service = "youtube"
+        self._prefetched_file = prefetched_file
         if short:
             self._url = f"https://youtube.com/shorts/{slug}"
         else:
@@ -84,7 +85,8 @@ class YtClip(BaseClip):
             dlp_format=dlp_format,
             can_send_files=can_send_files,
             cookies=cookies,
-            upload_if_large=True
+            upload_if_large=True,
+            prefetched_file=self._prefetched_file
         )
 
         response.video_uploader_username = self._broadcaster_username

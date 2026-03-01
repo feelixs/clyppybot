@@ -16,6 +16,7 @@ from bot.platforms.youp import YoupoMisc
 from bot.platforms.xvid import XvidMisc
 from bot.platforms.facebook import FacebookMisc
 from bot.platforms.discord_attach import DiscordMisc
+from bot.platforms.canva import CanvaMisc
 from bot.platforms.x import Xmisc
 
 from bot.platforms.base import BASIC_MISC
@@ -56,6 +57,7 @@ def init_misc(bot: Client) -> Client:
     bot.vimeo = VimeoMisc(bot=bot)
     bot.drive = GoogleDriveMisc(bot=bot)
     bot.dsc = DiscordMisc(bot=bot)
+    bot.canva = CanvaMisc(bot=bot)
     bot.tools = Tools()
 
     bot.currently_embedding = []  # used in embedder.py (AutoEmbedder) -> for quickembeds (and i guess also triggers for command embeds)
@@ -89,7 +91,8 @@ def init_misc(bot: Client) -> Client:
         bot.bili,
         bot.dailymotion,
         bot.drive,
-        bot.dsc
+        bot.dsc,
+        bot.canva
     ]
 
     # Quickembed platform configuration is now per-guild in the database

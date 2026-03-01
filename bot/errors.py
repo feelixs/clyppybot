@@ -1,6 +1,10 @@
 import os
 
 
+class NSFWEmbed(Exception):
+    pass
+
+
 class UploadFailed(Exception):
     pass
 
