@@ -15,6 +15,7 @@ class BASIC_MISC(BaseMisc):
     def __init__(self, bot):
         super().__init__(bot)
         self.platform_name = "base"
+        self.is_nsfw = None  # unknown - auto detect via api
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False):
         # enable cookies without needing to make a new file for a site

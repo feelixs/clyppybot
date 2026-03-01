@@ -167,7 +167,7 @@ class AutoEmbedder:
 
     async def _process_clip_one_at_a_time(self, clip_link: str, respond_to: Message, guild: GuildType, channel):
         parsed_id = self.platform_tools.parse_clip_url(clip_link)
-        if not self.platform_tools.is_nsfw:
+        if self.platform_tools.is_nsfw is None:
             self.platform_tools.is_nsfw = await self.platform_tools.check_url_is_nsfw(clip_link)
 
         if not guild.is_dm:

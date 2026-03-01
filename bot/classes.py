@@ -1461,7 +1461,8 @@ class BaseAutoEmbed:
                 ))
                 return
 
-            if not platform.is_nsfw:  # verify for base platform, that it's not flagged as nsfw
+            if platform.is_nsfw is None:
+                # verify for base platform, that it's not flagged as nsfw
                 platform.is_nsfw = await platform.check_url_is_nsfw(url)
 
             if platform.is_nsfw and not nsfw_enabed:
