@@ -57,6 +57,7 @@ POSSIBLE_ON_ERRORS = ["dm", "info"]
 POSSIBLE_EMBED_BUTTONS = ["all", "view", "dl", "none"]
 CLYPPYBOT_ID = 1111723928604381314
 
+LOGGER_WEBHOOK_ID = 1341521799342588006
 DOWNLOAD_THIS_WEBHOOK_ID = 1331035236041097326 if CONTRIB_INSTANCE else None
 CLYPPY_CMD_WEBHOOK_ID = 1352361462005370983 if CONTRIB_INSTANCE else None
 CLYPPY_CMD_WEBHOOK_CHANNEL = 1352361327770992690 if CONTRIB_INSTANCE else None
@@ -78,30 +79,3 @@ BOTLISTME_VOTE_LINK = "https://botlist.me/bots/1111723928604381314/vote"
 CLYPPY_VOTE_URL = "https://clyppy.io/vote/"
 BUY_TOKENS_URL = "https://clyppy.io/profile/tokens"
 
-NSFW_DOMAIN_TRIGGERS = ['porn', 'sex']
-EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS = [
-    'xhamster',
-    'xstream',
-    'xxxymovies',
-    'youjizz',
-    '4tube',
-    'tube8',
-    'cam4',
-    'camsoda',
-    'fux',
-    'xvideos',
-    'redtube',
-    'motherless',
-    'moviefap',
-    'murrtube',
-    'peekvids',
-    'redgifs',
-    'slutload',
-    'spankbang',
-    'rule34',
-    'e621',
-    'gelbooru',
-    'stripchat',
-    'noodlemagazine',
-    'tnaflix'
-]

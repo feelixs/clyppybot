@@ -10,10 +10,10 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from interactions import Message, SlashContext, TYPE_THREAD_CHANNEL, Embed, Permissions, Button, ButtonStyle, EmbedFooter
 from interactions.api.events import MessageCreate
 
-from bot.io.io import author_has_enough_tokens_for_ai_extend
+from bot.io.io import author_has_enough_tokens_for_ai_extend, check_text_is_nsfw
 from bot.tools.embedder import AutoEmbedder
 from bot.io.cdn import CdnSpacesClient
-from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, author_has_premium, fetch_video_status
+from bot.io import get_aiohttp_session, get_token_cost, push_interaction_error, author_has_enough_tokens, fetch_video_status
 from bot.types import LocalFileInfo, DownloadResponse, GuildType, COLOR_GREEN, COLOR_RED
 from bot.env import (EMBED_TXT_COMMAND, create_nexus_comps, APPUSE_LOG_WEBHOOK, EMBED_TOKEN_COST, MAX_VIDEO_LEN_SEC,
                      EMBED_TOTAL_MAX_LENGTH, EMBED_W_TOKEN_MAX_LEN, LOGGER_WEBHOOK, SUPPORT_SERVER_URL, VERSION,
@@ -26,6 +26,7 @@ from bot.errors import (NoDuration, UnknownError, UploadFailed, NoPermsToView, V
                         handle_yt_dlp_err, VideoTooShortForExtend, VideoTooLongForExtend, VideoExtensionFailed,
                         VideoContainsNSFWContent, ExceptionHandled)
 
+from urllib.parse import urlparse
 import hashlib
 import aiohttp
 import logging
@@ -764,6 +765,15 @@ class BaseMisc(ABC):
         """
         ...
 
+    @staticmethod
+    async def check_url_is_nsfw(url):
+        parse = urlparse(url)
+        netloc = parse.netloc.lower()
+
+        # check if the netloc contains any nsfw trigger word
+        nsfw = await check_text_is_nsfw(netloc)
+        return nsfw
+
     def is_clip_link(self, url: str) -> bool:
         """
             Checks if a URL is a valid link format.
@@ -1450,7 +1460,11 @@ class BaseAutoEmbed:
                     logger=self.logger
                 ))
                 return
-            elif platform.is_nsfw and not nsfw_enabed:
+
+            if not platform.is_nsfw:  # verify for base platform, that it's not flagged as nsfw
+                platform.is_nsfw = await platform.check_url_is_nsfw(url)
+
+            if platform.is_nsfw and not nsfw_enabed:
                 asyncio.create_task(ctx.send(
                     f"( ͡~ ͜ʖ ͡°) This platform is not allowed in this channel. You can either:\n"
                     f" - If you're a server admin, go to `Edit Channel > Overview` and toggle `Age-Restricted Channel`\n"

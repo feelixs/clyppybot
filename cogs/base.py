@@ -983,13 +983,13 @@ class Base(Extension):
         # Format quickembed display
         if not qe_platforms:
             qe = "none"
-        elif set(qe_platforms) == set(VALID_QUICKEMBED_PLATFORMS):
+        elif 'all' in qe_platforms:
             qe = "all"
         else:
             qe = ', '.join(qe_platforms)
 
         # Use friendly platform names for display
-        valid_platforms_str = ', '.join(PLATFORM_NAME_TO_ID.keys())
+        valid_platforms_str = ', '.join(p.platform_name for p in self.bot.platform_list if not p.is_nsfw)
 
         # Build channel overrides section
         overrides = self.bot.guild_settings.list_channel_overrides(ctx.guild.id)
@@ -1022,7 +1022,7 @@ class Base(Extension):
             ' - `none`: Disable all quickembeds (use `/embed` command instead)\n'
             ' - `reset`: Remove channel-specific override (use with `channel` parameter)\n'
             f' - Comma-separated list: e.g., `Twitch,Kick,Medal`\n'
-            f' - Valid platforms: `None, All, {valid_platforms_str}`\n'
+            f' - Valid platforms: `None, All, {valid_platforms_str}, and more...`\n'
             ' - Use `channel` parameter to apply to specific channel (blank = server-wide)\n\n'
             '**on_error** Choose what Clyppy does when it encounters an error:\n'
             ' - `info`: Respond to the message with the error.\n'

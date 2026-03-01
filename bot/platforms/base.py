@@ -1,4 +1,4 @@
-from bot.env import EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS, NSFW_DOMAIN_TRIGGERS, YT_DLP_USER_AGENT
+from bot.env import YT_DLP_USER_AGENT
 from bot.classes import BaseMisc, BaseClip
 from bot.types import DownloadResponse
 from bot.errors import VideoTooLong
@@ -33,17 +33,6 @@ class BASIC_MISC(BaseMisc):
     def parse_clip_url(self, url: str, extended_url_formats=False):
         if 'http' not in url:
             return None
-
-        parse = urlparse(url)
-        netloc = parse.netloc.lower()
-
-        # check if the netloc contains any nsfw trigger word
-        self.is_nsfw = any(trigger in netloc for trigger in NSFW_DOMAIN_TRIGGERS)
-
-        # if it doesn't, check if any of the known nsfw domains are in the netloc
-        if not self.is_nsfw:
-            self.is_nsfw = any(trigger in netloc for trigger in EXTRA_YT_DLP_SUPPORTED_NSFW_DOMAINS)
-
         return url
 
 
