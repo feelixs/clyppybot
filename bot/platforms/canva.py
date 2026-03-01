@@ -14,7 +14,7 @@ class CanvaMisc(BaseMisc):
         self.platform_name = "Canva"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
-        pattern = r'https?://(?:www\.)?canva\.com/design/(?P<id>[^/]+)/(?P<token>[^/]+)/(?:watch|view|edit)'
+        pattern = r'https?://(?:www\.)?canva\.com/design/(?P<id>[^/]+)/(?P<token>[^/?#]+)/?'
         match = re.match(pattern, url)
         return match.group('id') if match else None
 
