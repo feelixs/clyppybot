@@ -480,14 +480,18 @@ class BaseClip(ABC):
         if local_file is None: raise UnknownError
         return local_file
 
-    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, extra_opts=None) -> Optional[DownloadResponse]:
+    async def dl_check_size(self, filename=None, dlp_format='best/bv*+ba', can_send_files=False, upload_if_large=False, cookies=False, extra_opts=None, prefetched_file=None) -> Optional[DownloadResponse]:
         """
             Download the clip file, and return the local file info if its within Discord's file size limit,
             otherwise return None
         """
-        local = None
+        local = prefetched_file
+        if local:
+            self.logger.info(f"[dl_check_size] Using prefetched file: {local.local_file_path}")
+
         if can_send_files:
-            local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
+            if local is None:
+                local = await self._fetch_file(filename, dlp_format, can_send_files, cookies, extra_opts)
             self.logger.info(f"[dl_check_size] Got filesize {round(local.filesize / 1024 / 1024, 2)}MB for {self.id}")
             if is_discord_compatible(local.filesize):
                 return DownloadResponse(
@@ -830,6 +834,7 @@ class BaseMisc(ABC):
         return False
 
     async def is_shortform(self, url: str, basemsg: Union[Message, SlashContext], cookies=False, extra_opts=None) -> tuple[bool, int, int]:
+        self._prefetched_file = None
         try:
             d = await self.get_len(url, cookies, extra_opts=extra_opts)
         except NoDuration:
@@ -841,6 +846,7 @@ class BaseMisc(ABC):
             self.logger.info(f"yt-dlp unable to fetch duration for {url}, downloading to verify...")
             file = await self.get_len(url, cookies, download=True, extra_opts=extra_opts)
             self.logger.info(f'Downloaded {file.local_file_path} from {url} to verify...')
+            self._prefetched_file = file
             d = file.duration
 
         return await author_has_enough_tokens(basemsg, d, url)

@@ -14,7 +14,7 @@ class CanvaMisc(BaseMisc):
         self.platform_name = "Canva"
 
     def parse_clip_url(self, url: str, extended_url_formats=False) -> Optional[str]:
-        pattern = r'https?://(?:www\.)?canva\.com/design/(?P<id>[^/]+)/(?P<token>[^/]+)/(?:watch|view)'
+        pattern = r'https?://(?:www\.)?canva\.com/design/(?P<id>[^/]+)/(?P<token>[^/]+)/(?:watch|view|edit)'
         match = re.match(pattern, url)
         return match.group('id') if match else None
 
@@ -35,14 +35,15 @@ class CanvaMisc(BaseMisc):
             raise VideoTooLong(duration)
         self.logger.info(f"{url} is_shortform=True")
 
-        return CanvaClip(shortcode, url, self.cdn_client, tokens_used, duration)
+        return CanvaClip(shortcode, url, self.cdn_client, tokens_used, duration, prefetched_file=self._prefetched_file)
 
 
 class CanvaClip(BaseClip):
-    def __init__(self, shortcode, full_url, cdn_client, tokens_used: int, duration: int):
+    def __init__(self, shortcode, full_url, cdn_client, tokens_used: int, duration: int, prefetched_file=None):
         self._service = "canva"
         self._shortcode = shortcode
         self._full_url = full_url
+        self._prefetched_file = prefetched_file
         super().__init__(shortcode, cdn_client, tokens_used, duration)
 
     @property
@@ -64,5 +65,6 @@ class CanvaClip(BaseClip):
             can_send_files=can_send_files,
             cookies=cookies,
             upload_if_large=True,
-            extra_opts=extra_opts
+            extra_opts=extra_opts,
+            prefetched_file=self._prefetched_file
         )
