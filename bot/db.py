@@ -98,6 +98,12 @@ class GuildDatabase:
                             )
                         ''')
             conn.execute('''
+                            CREATE TABLE IF NOT EXISTS auto_delete (
+                                guild_id INTEGER PRIMARY KEY,
+                                setting BOOLEAN
+                            )
+                        ''')
+            conn.execute('''
                             CREATE TABLE IF NOT EXISTS welcome_dm_sent (
                                 user_id INTEGER PRIMARY KEY,
                                 sent_at TIMESTAMP NOT NULL
@@ -197,6 +203,32 @@ class GuildDatabase:
                 return True
         except sqlite3.Error as e:
             logger.error(f"Database error when setting nsfw_enabled for guild {guild_id}: {e}")
+            return False
+
+    def get_auto_delete(self, guild_id) -> bool:
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute(
+                    'SELECT setting FROM auto_delete WHERE guild_id = ?',
+                    (guild_id,)
+                )
+                result = cursor.fetchone()
+                return result[0] if result else False
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting auto_delete for guild {guild_id}: {e}")
+            return False  # default = false
+
+    def set_auto_delete(self, guild_id: int, new: bool) -> bool:
+        try:
+            with self.get_db() as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO auto_delete (guild_id, setting)
+                    VALUES (?, ?)
+                ''', (guild_id, new))
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting auto_delete for guild {guild_id}: {e}")
             return False
 
     def _parse_quickembed_setting(self, setting: str) -> List[str]:
