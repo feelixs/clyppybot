@@ -683,6 +683,10 @@ class AutoEmbedder:
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
+
+                    if respond_to.guild.me.has_permission(Permissions.MANAGE_MESSAGES):
+                        asyncio.create_task(respond_to.delete())  # delete the parent message
+
                 if result['success']:
                     # Handle both Message objects and dict responses (from restored tasks)
                     msg_id = bot_message.id if hasattr(bot_message, 'id') else bot_message.get('id', 0)
