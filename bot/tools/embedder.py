@@ -651,29 +651,34 @@ class AutoEmbedder:
 
                 # send message
                 # Check if it's a SlashContext (or MinimalContext with send method)
+                delete_message = self.bot.guild_settings.get_auto_delete(respond_to.guild.id)
                 if isinstance(respond_to, SlashContext) or (hasattr(respond_to, 'send') and not hasattr(respond_to, 'reply')):
+                    # slash command
                     if uploading_to_discord:
                         bot_message = await respond_to.send(file=response.local_file_path, components=comp)
                     else:
                         bot_message = await respond_to.send(clip.clyppy_url, components=comp)
                 else:
+                    # message
+                    msg_content = f'<@!{respond_to.author.id}> ' if delete_message else ''
                     try:
                         if uploading_to_discord:
-                            bot_message = await respond_to.reply(file=response.local_file_path, components=comp)
+                            bot_message = await respond_to.reply(msg_content, file=response.local_file_path, components=comp)
                         else:
-                            bot_message = await respond_to.reply(clip.clyppy_url, components=comp)
+                            bot_message = await respond_to.reply(f'{msg_content}{clip.clyppy_url}', components=comp)
                     except Exception as e:
                         self.logger.info(f"Error replying to message: {str(e)} - sending to channel instead")
+                        delete_message = False
                         # assume message to reply to was deleted
                         if uploading_to_discord:
                             bot_message = await respond_to.channel.send(
-                                content=f'<@{respond_to.author.id}>',
+                                content=f'<@!{respond_to.author.id}>',
                                 file=response.local_file_path,
                                 components=comp
                             )
                         else:
                             bot_message = await respond_to.channel.send(
-                                content=f'<@{respond_to.author.id}>, {clip.clyppy_url}',
+                                content=f'<@!{respond_to.author.id}> {clip.clyppy_url}',
                                 components=comp
                             )
 
@@ -683,6 +688,14 @@ class AutoEmbedder:
                     respond_to_utc = self.clip_id_msg_timestamps[respond_to.id]
                     my_response_time = round((datetime.now().timestamp() - respond_to_utc), 2)
                     self.logger.info(f"Successfully embedded clip {clip.id} in {guild.name} - #{chn} in {my_response_time} seconds")
+
+                    try:
+                        i = respond_to.guild.me
+                        if delete_message and respond_to.channel.permissions_for(i).VIEW_CHANNEL and i.has_permission(Permissions.MANAGE_MESSAGES):
+                            asyncio.create_task(respond_to.delete())  # delete the parent message
+                    except Exception as e:
+                        self.logger.warning(f"Error while trying to delete pparent message: {str(e)}")
+
                 if result['success']:
                     # Handle both Message objects and dict responses (from restored tasks)
                     msg_id = bot_message.id if hasattr(bot_message, 'id') else bot_message.get('id', 0)
