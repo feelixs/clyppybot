@@ -573,6 +573,7 @@ class Base(Extension):
         embed_buttons = self.bot.guild_settings.get_embed_buttons(gid)
         on_error = self.bot.guild_settings.get_on_error(gid)
         nsfw_enabled = self.bot.guild_settings.get_nsfw_enabled(gid)
+        auto_delete = self.bot.guild_settings.get_auto_delete(gid)
 
         # Format response
         embed = Embed(
@@ -585,6 +586,7 @@ class Base(Extension):
         embed.add_field(name="Embed Buttons", value=POSSIBLE_EMBED_BUTTONS[embed_buttons], inline=True)
         embed.add_field(name="On Error", value=str(on_error), inline=True)
         embed.add_field(name="NSFW Enabled", value="Yes" if nsfw_enabled else "No", inline=True)
+        embed.add_field(name="Auto Delete", value="Yes" if auto_delete else "No", inline=True)
 
         await ctx.send(embed=embed)
 
@@ -872,10 +874,13 @@ class Base(Extension):
                                                required=False),
                             SlashCommandOption(name="embed_buttons", type=OptionType.STRING,
                                                description="Configure what buttons Clyppy shows when embedding clips",
+                                               required=False),
+                            SlashCommandOption(name="auto_delete", type=OptionType.BOOLEAN,
+                                               description="Automatically delete the parent message Clyppy responds to",
                                                required=False)
                             ])
     async def settings(self, ctx: SlashContext, quickembeds: str = None, channel = None,
-                       on_error: str = None, embed_buttons: str = None):
+                       on_error: str = None, embed_buttons: str = None, auto_delete: bool = None):
         await ctx.defer()
         if ctx.guild is None:
             await ctx.send("This command is only available in servers.")
@@ -888,7 +893,7 @@ class Base(Extension):
             await self._send_settings_help(ctx, True)
             return
 
-        if on_error is None and embed_buttons is None and quickembeds is None:
+        if on_error is None and embed_buttons is None and quickembeds is None and auto_delete is None:
             await self._send_settings_help(ctx, False)
             return
 
@@ -944,6 +949,12 @@ class Base(Extension):
         embed_idx = POSSIBLE_EMBED_BUTTONS.index(embed_buttons)
         self.bot.guild_settings.set_embed_buttons(ctx.guild.id, embed_idx)
 
+        # Handle auto_delete
+        if auto_delete is None:
+            auto_delete = self.bot.guild_settings.get_auto_delete(ctx.guild.id)
+        else:
+            self.bot.guild_settings.set_auto_delete(ctx.guild.id, auto_delete)
+
         # Format quickembed display
         from bot.db import VALID_QUICKEMBED_PLATFORMS
         if not chosen_qe:
@@ -958,7 +969,8 @@ class Base(Extension):
             "Successfully changed settings:\n\n"
             f"**quickembeds**: {qe_display}{' (default)' if qe_is_default else ''}{qe_scope_msg}\n"
             f"**on_error**: {on_error}\n"
-            f"**embed_buttons**: {embed_buttons}\n\n"
+            f"**embed_buttons**: {embed_buttons}\n"
+            f"**auto_delete**: {'enabled' if auto_delete else 'disabled'}\n\n"
         )
         await send_webhook(
             title=f'{"DM" if ctx.guild is None else ctx.guild.name} - /settings called',
@@ -966,7 +978,8 @@ class Base(Extension):
                  "Successfully changed settings:\n\n"
                  f"**quickembeds**: {qe_display}\n"
                  f"**on_error**: {on_error}\n"
-                 f"**embed_buttons**: {embed_buttons}\n\n",
+                 f"**embed_buttons**: {embed_buttons}\n"
+                 f"**auto_delete**: {'enabled' if auto_delete else 'disabled'}\n\n",
             color=COLOR_GREEN,
             url=APPUSE_LOG_WEBHOOK,
             logger=self.logger
@@ -977,6 +990,7 @@ class Base(Extension):
         cs = self.bot.guild_settings.get_setting_str(ctx.guild.id)
         es = self.bot.guild_settings.get_embed_buttons(ctx.guild.id)
         qe_platforms, qe_is_default = self.bot.guild_settings.get_quickembed_platforms(ctx.guild.id)
+        auto_delete = self.bot.guild_settings.get_auto_delete(ctx.guild.id)
 
         es = POSSIBLE_EMBED_BUTTONS[es]
 
@@ -1032,8 +1046,12 @@ class Base(Extension):
             ' - `view`: A button to the original clip.\n'
             ' - `dl`: A button to download the original video file (on compatible clips).\n'
             ' - `all`: Shows all available buttons.\n\n'
+            '**auto_delete** Automatically delete the parent message Clyppy responds to:\n'
+            ' - `True`: Delete the parent message after embedding.\n'
+            ' - `False`: Leave the parent message as-is.\n\n'
             f'**Current Settings:**\n**quickembeds** (server-wide): {qe}{" (default)" if qe_is_default else ""}'
-            f'{channel_overrides_section}\n{cs}\n**embed_buttons**: {es}\n\n'
+            f'{channel_overrides_section}\n{cs}\n**embed_buttons**: {es}\n'
+            f'**auto_delete**: {"enabled" if auto_delete else "disabled"}\n\n'
             f'Something missing? Please **[Suggest a Feature]({SUPPORT_SERVER_URL})**'
         )
 
