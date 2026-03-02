@@ -1058,6 +1058,10 @@ class Base(Extension):
         now = datetime.now(tz=timezone.utc)
         current_month_key = now.strftime('%Y-%m')
 
+        # Load persisted value on first run after restart
+        if self.last_winner_month is None:
+            self.last_winner_month = self.bot.guild_settings.get_bot_state('last_winner_month')
+
         # Only announce on the 1st of the month, and only once per month
         if now.day != 1 or self.last_winner_month == current_month_key:
             return
@@ -1078,6 +1082,7 @@ class Base(Extension):
             if not winners:
                 self.logger.info("No winners for the previous month (no votes)")
                 self.last_winner_month = current_month_key
+                self.bot.guild_settings.set_bot_state('last_winner_month', current_month_key)
                 return
 
             # Parse month display
@@ -1110,6 +1115,7 @@ class Base(Extension):
                 if server is None:
                     self.logger.warning("Could not find support server for monthly winner announcement")
                     self.last_winner_month = current_month_key
+                    self.bot.guild_settings.set_bot_state('last_winner_month', current_month_key)
                     return
 
                 channel = server.get_channel(MONTHLY_WINNER_CHANNEL_ID)
@@ -1119,6 +1125,7 @@ class Base(Extension):
                 if channel is None:
                     self.logger.warning(f"Could not find channel {MONTHLY_WINNER_CHANNEL_ID} for monthly winner announcement")
                     self.last_winner_month = current_month_key
+                    self.bot.guild_settings.set_bot_state('last_winner_month', current_month_key)
                     return
 
                 if len(winners) == 1:
@@ -1152,6 +1159,7 @@ class Base(Extension):
                 self.logger.error(f"Failed to send monthly winner announcement: {e}")
 
             self.last_winner_month = current_month_key
+            self.bot.guild_settings.set_bot_state('last_winner_month', current_month_key)
         except Exception as e:
             self.logger.error(f"Error in check_monthly_winner: {e}")
 

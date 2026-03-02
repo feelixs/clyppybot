@@ -42,14 +42,15 @@ class KickMisc(BaseMisc):
 
     async def get_clip(self, url: str, extended_url_formats=False, basemsg=None, cookies=False) -> 'KickClip':
         slug, user = self.parse_clip_url(url), self.get_clip_user(url)
-        return KickClip(slug, user, self.cdn_client, 0)
+        return KickClip(slug, user, self.cdn_client, 0, self._prefetched_file)
 
 
 class KickClip(BaseClip):
-    def __init__(self, slug, user, cdn_client: CdnSpacesClient, tokens_used: int):
+    def __init__(self, slug, user, cdn_client: CdnSpacesClient, tokens_used: int, prefetched_file=None):
         self._service = "kick"
         self._url = f"https://kick.com/{user}/clips/clip_{slug}"
         self.user = user
+        self._prefetched_file = prefetched_file
         # pass dummy duration because we know kick clips will never need to use vip tokens
         super().__init__(slug, cdn_client, tokens_used, 0)
         self._broadcaster_username = None
@@ -64,7 +65,7 @@ class KickClip(BaseClip):
     def url(self) -> str:
         return self._url
 
-    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, useragent=None) -> DownloadResponse:
+    async def download(self, filename: str = None, dlp_format='best/bv*+ba', can_send_files=False, cookies=True, useragent=None, ydl_opts=None) -> DownloadResponse:
         self.logger.info(f"({self.id}) run dl_check_size(upload_if_large=True)...")
 
         # Extract channel/uploader info before downloading

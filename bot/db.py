@@ -103,6 +103,12 @@ class GuildDatabase:
                                 sent_at TIMESTAMP NOT NULL
                             )
                         ''')
+            conn.execute('''
+                            CREATE TABLE IF NOT EXISTS bot_state (
+                                key TEXT PRIMARY KEY,
+                                value TEXT NOT NULL
+                            )
+                        ''')
 
             # Migration: Convert boolean embed_enabled to TEXT if needed
             try:
@@ -478,4 +484,29 @@ class GuildDatabase:
                 return True
         except sqlite3.Error as e:
             logger.error(f"Database error when recording welcome DM for user {user_id}: {e}")
+            return False
+
+    def get_bot_state(self, key: str) -> Optional[str]:
+        """Get a persistent bot state value by key."""
+        try:
+            with self.get_db() as conn:
+                cursor = conn.execute('SELECT value FROM bot_state WHERE key = ?', (key,))
+                result = cursor.fetchone()
+                return result[0] if result else None
+        except sqlite3.Error as e:
+            logger.error(f"Database error when getting bot_state '{key}': {e}")
+            return None
+
+    def set_bot_state(self, key: str, value: str) -> bool:
+        """Set a persistent bot state value by key."""
+        try:
+            with self.get_db() as conn:
+                conn.execute(
+                    'INSERT OR REPLACE INTO bot_state (key, value) VALUES (?, ?)',
+                    (key, value)
+                )
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error when setting bot_state '{key}': {e}")
             return False
