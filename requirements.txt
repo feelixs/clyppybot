@@ -45,3 +45,4 @@ botocore
 replicate
 runwayml
 google-genai
+bgutil-ytdlp-pot-provider
